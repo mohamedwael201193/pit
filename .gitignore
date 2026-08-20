@@ -1,0 +1,38 @@
+# Secrets — never commit
+.env
+.env.*
+!.env.example
+!.env.example.*
+*.pem
+*.key
+secrets/
+_gate/secrets/
+_gate/evidence/
+
+# Build artifacts
+**/node_modules/
+**/.next/
+**/dist/
+**/out/
+**/cache/
+**/*.exe
+**/coverage/
+**/coverage.out
+pit/bin/
+apps/web/.turbo/
+.DS_Store
+Thumbs.db
+
+# Foundry
+contracts/lib/
+contracts/out/
+contracts/cache/
+contracts/broadcast/
+
+# Local databases
+**/*.db
+**/*.sqlite
+**/*.sqlite-journal
+
+# OS keychain dumps
+**/*.stronghold
