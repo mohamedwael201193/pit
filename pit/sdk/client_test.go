@@ -9,7 +9,7 @@ import (
 
 func TestSDKNeverSigns(t *testing.T) {
 	c := Client{Network: config.Mainnet}
-	if c.Status().CanSign {
+	if c.Status().CanSign || c.CanHoldSession() {
 		t.Fatal("web/sdk cannot sign")
 	}
 	if !strings.Contains(c.Explorer("0xabc"), "chainscan.0g.ai") {

@@ -24,6 +24,10 @@ func (c Client) DefaultPolicy() policy.Policy {
 	return policy.Default()
 }
 
+func (c Client) CanHoldSession() bool {
+	return false
+}
+
 func (c Client) Explorer(tx string) string {
 	ch := config.For(c.Network)
 	if tx == "" {

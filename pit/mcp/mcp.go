@@ -41,7 +41,10 @@ func Handle(req Request) Response {
 	case "status":
 		return Response{OK: true, Body: map[string]any{"surface": "mcp", "authorize": false}}
 	case "verify":
-		return Response{OK: true, Body: map[string]any{"hint": "pass a receipt hash from the desktop"}}
+		return Response{OK: true, Body: map[string]any{
+			"hint":     "pass a receipt hash from the desktop",
+			"progress": []string{"PRIVATE_BOOK", "SEALING", "TEE", "TEE_SIGNATURE", "ONCHAIN_SIGNER", "STORAGE", "RECEIPT", "CALIBRATION"},
+		}}
 	default:
 		return Response{OK: true, Body: map[string]any{"tool": req.Tool, "note": "bind a workspace first"}}
 	}
