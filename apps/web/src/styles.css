@@ -30,6 +30,16 @@ h1 { font-size: 52px; line-height: 0.95; letter-spacing: -0.04em; margin: 12px 0
 .caps { padding-left: 18px; }
 .ring { font-size: 28px; line-height: 1.35; letter-spacing: -0.03em; }
 .fine { margin-top: 40px; max-width: 28rem; }
+.onboard { list-style: none; padding: 0; margin: 32px 0 0; }
+.onboard li { padding: 10px 0; border-top: 1px solid #1d1f24; opacity: 0.45; }
+.onboard li.live { opacity: 1; }
+.onboard strong { display: block; letter-spacing: 0.12em; font-size: 11px; }
+.onboard span { font-size: 14px; opacity: 0.8; }
+.verify { margin-top: 28px; display: flex; flex-direction: column; gap: 8px; }
+.verify input {
+  border: 0; border-radius: 12px; padding: 12px 14px; font: inherit; background: #f9f5e3;
+}
+.verify a { text-decoration: none; display: inline-block; text-align: center; }
 @media (max-width: 900px) {
   .split { grid-template-columns: 1fr; }
   h1 { font-size: 36px; }
