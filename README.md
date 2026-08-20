@@ -102,7 +102,7 @@ Private book path is Direct TeeML + HPKE + VerifyE2EE. Router `sk-` keys are for
 
 `pit init|login|policy|ask|opportunities|forecast|preview|authorize|cancel|status|resolve|card|verify|kill`
 
-Authorize is interactive. Piped yes is rejected in later phases.
+Authorize is interactive. Piped `yes` is rejected; type `AUTHORIZE` on a TTY with `--i-understand`.
 
 ## MCP
 
@@ -125,7 +125,7 @@ Read-only tools: market, opportunities, forecast, status, card, verify. No autho
 
 - Foundation Agentic ID transfer is not live on Aristotle.
 - Galileo sealed committee is not the same model set as mainnet.
-- Product UI onboarding beyond wallet connect is still in progress.
+- Web onboarding copy is live; Hyperliquid session creation stays on desktop/CLI.
 - Do not claim hardware quotes unless the verifier is wired.
 
 ## Demo path

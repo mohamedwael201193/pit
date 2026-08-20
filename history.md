@@ -565,3 +565,28 @@ RETRY: n/a
 FINAL STATE: implementation in progress. Web can connect a wallet; it cannot hold a session key.
 NEXT STEP: `go test ./...`, Foundry tests, then continue sealed committee wiring and live execution tests.
 
+Git: 30 commits on `main` pushed to https://github.com/mohamedwael201193/pit (HEAD `484cd0d`). `.env` not committed. Continue remaining phases; subsequent work ships as 15 commits dated the work day.
+
+---
+
+## M20 — Library phases 2/4/6–19/21/25 (2026-08-26 21:14+03)
+
+DATE/TIME: 2026-08-26 21:14+03
+PHASE: 2 wallet states · 4 session keygen · 6 committee/verify · 7 forecast · 8 watch safety · 9 exec gateway · 10 ledger recover · 11 storage proof args · 12 memory kinds · 13 8004 host · 14 DeskID host gate · 15 calibration health · 16 MCP stdin · 17 SDK no-session · 18 CLI TTY authorize · 19 Receipts/Forecasts/Memory contracts · 21 web onboarding · 25 S3 red-team matrix
+GOAL: Land fail-closed libraries and contract tests for the remaining core loop without claiming live TeeML/HL/Storage txs.
+FILES CHANGED: `pit/internal/wallet/` `session/keygen*` `compute/committee.go` `compute/verify.go` `engine/forecast*` `exec/` `ledger/recover*` `storage/proof*` `memory/` `chain8004/` `deskid/` `calib/health*` `watch/safety*` `cli/` `verify/` `redteam/` `cmd/pit/main.go` `cmd/mcp/` `mcp/mcp.go` `sdk/` `contracts/src/PitReceipts.sol` `PitForecasts.sol` `PitMemory.sol` + Foundry tests · `apps/web/src/App.tsx` `styles.css` · `.env.example` `IMPLEMENTATION_PLAN.md` `README.md` this file.
+COMMANDS RUN: `go test ./...` (all packages ok) · `forge test` (13 passed: 7 DeskID + 3 Policy + 2 Receipts/Forecasts + 1 Memory) · local `.env` public dual-env keys appended (testnet RPCs/addrs, empty receipts/forecasts/memory placeholders, `VITE_PRIVY_APP_ID`). Secrets not logged, `.env` not committed.
+EXTERNAL RESOURCES CONSULTED: Direct vs Router (deny `router-api` on book path) · Hyperliquid extraAgents / order|cancel allowlist · 0G storage Go client `--encryption-key` `0x` + `--proof` · ERC-8004 reporter ≠ owner · ERC-7857 `isAuthorized` + Aristotle `AttestorNotOnAristotle`.
+RESULT: Named connect states. Session export denied. Envelope+scheme `zg-sig-v1/e2ee-ct` + teeSigner match required. Host `p` ignores model probability. Gateway denies withdraw/leverage/sendAsset/approveAgent. Recover never blindly reposts signed/timeout. Storage TS client forbidden. Memory rejects global `PIT_MEMORY_KEY` in product mode. 8004 IDs not portable. Desk transfer refused on mainnet. Health card empty until N≥30. CLI piped authorize denied. Web shows YOU/YOUR steps and real progress labels; session keys still forbidden in browser.
+TESTS: Go unit all packages pass. Foundry 13/13.
+EVIDENCE: this entry. No private keys, tokens, or session material in git.
+TX HASH / OID: none (libraries + local Foundry). Live Seal+VerifyE2EE, HL order, Storage upload, user 8004/7857 txs still open.
+FAILURE: first `storage` proof test used Python string-repeat syntax; fixed to `strings.Repeat` (64 hex chars + `0x`).
+FIX: `proof_test.go` key length 66.
+RETRY: `go test ./internal/storage/...` pass.
+FINAL STATE: core loop is coded fail-closed. Product binary still does not send a live Direct TeeML request or a live HL order.
+NEXT STEP: vendor/promote Direct HPKE Seal+VerifyE2EE into `pit/internal/compute`, live testnet dust order, Storage `--proof` upload, desktop shell, then Chrome E2E.
+
+`.env` (gitignored): added public Galileo registry lines and empty `PIT_*_CONTRACT` placeholders for receipts/forecasts/memory. Did not print or commit secrets.
+
+

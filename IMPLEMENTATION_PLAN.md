@@ -10,6 +10,8 @@
 
 **M19 implementation:** Phase 0 revalidated live. Phase 1 workspace/SIWE libraries landed. Core host engine, session allowlist, durable ledger, compute deny-router, contracts (DeskID + Policy), CLI/MCP/SDK, wallet-connect web shell in progress.
 
+**M20 implementation (2026-08-26):** Library+unit for phases 2, 4, 6–15, 16–19, 21, 25 S3 matrix. Named wallet states. Session keygen with export denied. Committee envelope + scheme/signer checks (live HPKE still in `_gate`). Forecast discriminator. Exec gateway deny matrix. Ledger recover never blind-repost. Storage `--proof` arg contract. Memory kinds. 8004 reporter≠owner. DeskID host `isAuthorized` + transfer refused on Aristotle. Receipts/Forecasts/Memory contracts. CLI TTY `AUTHORIZE`. Web onboarding + `/verify` fields. **Still open:** live Direct Seal+VerifyE2EE in product binary, live HL order, live Storage upload, user 8004/7857 txs, desktop, Chrome E2E.
+
 Submit: **2026-08-30T15:00:00Z**. Wave 3 in-window git only.
 
 Shared core: `pit/` (Go) + `contracts/` (Foundry). Surfaces: desktop / CLI / MCP-RO / SDK / web-no-session. One policy engine. One executor.
