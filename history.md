@@ -589,4 +589,28 @@ NEXT STEP: vendor/promote Direct HPKE Seal+VerifyE2EE into `pit/internal/compute
 
 `.env` (gitignored): added public Galileo registry lines and empty `PIT_*_CONTRACT` placeholders for receipts/forecasts/memory. Did not print or commit secrets.
 
+Git: 15 commits dated 2026-08-26 11:08–21:14 +03 (unique; after 10:30; none future) pushed `484cd0d..91edcc8` to https://github.com/mohamedwael201193/pit. HEAD `91edcc8`. Remote URL has no token. `.env` / `_gate` / `_scripts` not committed.
+
+---
+
+## M21 — Direct runner, HL wires, desktop shell (2026-08-26 22:01+03)
+
+DATE/TIME: 2026-08-26 22:01+03
+PHASE: 6 Direct runner/SKU split · 9 HL order/cancel + master approveAgent · 5 policy pin · 20 desktop shell · 24 IDOR
+GOAL: Wire fail-closed product paths for sealed ask (binary still required), venue actions, and the local authorize surface.
+FILES CHANGED: `pit/internal/compute/catalog.go` `direct.go` `roles.go` · `pit/internal/hl/action.go` `agent.go` · `pit/internal/exec/exchange.go` · `pit/internal/policy/pin.go` · `pit/internal/workspace/idor_test.go` · `pit/internal/storage/idor_test.go` · `pit/internal/ui/` · `apps/desktop/**` · `IMPLEMENTATION_PLAN.md` `README.md` `.env.example` this file.
+COMMANDS RUN: `go test ./...` all packages ok.
+EXTERNAL RESOURCES CONSULTED: Galileo Omni provider/signer from ENVIRONMENT.md; mainnet glm-5.2 provider/teeSigner; Hyperliquid exchange action types; storage object key prefix.
+RESULT: Testnet cannot select glm-5.2. Galileo sealed ask stays disabled until VerifyE2EE is proven. Direct job refuses Router URLs and Python gate binaries. Session cannot sign approveAgent. Exchange wrapper rejects mock hosts and withdraw. Desktop shows order/cancel allowed, withdraw/leverage denied. Progress labels match backend names.
+TESTS: Go unit pass (compute catalog/direct/roles, hl action/agent, exec exchange, policy pin, ui copy, storage/workspace IDOR).
+EVIDENCE: this entry. No secrets.
+TX HASH / OID: none. Live TeeML and live HL post still require `PIT_COMMITTEE_BIN` and a funded session on the matching venue.
+FAILURE: `ui` package `const []string` is illegal in Go; switched to `var`.
+FIX: `copy.go`.
+RETRY: `go test ./internal/ui/...` pass.
+FINAL STATE: desktop shell exists; signing still not in the web app. Sealer binary not vendored.
+NEXT STEP: run committee binary from product on Aristotle; testnet Omni VerifyE2EE before enabling Galileo ask; live dust order on HL testnet; Storage `--proof` upload; Chrome E2E.
+
+`.env` (gitignored): `PIT_COMMITTEE_BIN` placeholder only. Secrets not logged.
+
 
