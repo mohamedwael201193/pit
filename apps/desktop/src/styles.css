@@ -1,0 +1,26 @@
+:root {
+  --coral: #d82f2f;
+  --ink: #08090b;
+  --cream: #f0e7d4;
+  --paper: #f9f5e3;
+}
+* { box-sizing: border-box; }
+html, body, #root { margin: 0; min-height: 100%; background: var(--ink); color: var(--cream); font-family: "Host Grotesk", "Geist", system-ui, sans-serif; }
+.shell { min-height: 100vh; }
+.top { display: flex; justify-content: space-between; padding: 28px 40px; }
+.word { font-size: 42px; letter-spacing: -0.06em; color: var(--coral); }
+.kicker { letter-spacing: 0.18em; font-size: 11px; text-transform: uppercase; opacity: 0.7; }
+.split { display: grid; grid-template-columns: 1.1fr 0.9fr; min-height: calc(100vh - 96px); }
+.left { padding: 48px 56px; }
+.right { background: var(--coral); color: var(--ink); padding: 56px; }
+.eyebrow { letter-spacing: 0.22em; font-size: 11px; color: var(--coral); }
+h1 { font-size: 48px; line-height: 0.95; letter-spacing: -0.04em; margin: 12px 0 20px; }
+.lead { max-width: 36rem; opacity: 0.86; }
+.card { margin-top: 24px; padding: 20px; border: 1px solid #222; border-radius: 20px; }
+.label { font-size: 11px; letter-spacing: 0.16em; }
+.perms { padding-left: 18px; }
+.ring { font-size: 26px; line-height: 1.35; letter-spacing: -0.03em; }
+.fine { margin-top: 28px; max-width: 28rem; }
+@media (max-width: 900px) {
+  .split { grid-template-columns: 1fr; }
+}
