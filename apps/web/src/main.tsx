@@ -2,7 +2,7 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { PrivyProvider } from "@privy-io/react-auth";
 import { App } from "./App";
-import "./styles.css";
+import "./index.css";
 
 const appId = import.meta.env.VITE_PRIVY_APP_ID as string;
 
