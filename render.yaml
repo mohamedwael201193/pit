@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: pit-health
+    runtime: go
+    plan: free
+    buildCommand: cd pit && go build -o ../bin/health ./cmd/health
+    startCommand: ./bin/health
+    healthCheckPath: /health
+    envVars:
+      - key: PIT_ALLOW_FALLBACKS
+        value: "false"
+      - key: PORT
+        value: "10000"
