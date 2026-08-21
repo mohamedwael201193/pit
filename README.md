@@ -220,7 +220,7 @@ cd pit
 go test -tags live ./internal/hl -count=1
 ```
 
-CI runs the same Go and Foundry suites on every push (`.github/workflows/ci.yml`).
+CI runs the same Go and Foundry suites on every push (`.github/workflows/ci.yml`). Foundry currently reports **19** tests.
 
 ### CLI
 
