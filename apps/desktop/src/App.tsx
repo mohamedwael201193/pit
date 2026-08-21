@@ -2,6 +2,7 @@ import { EmptyHome } from "./EmptyHome";
 import { NAMED } from "./namedStates";
 import { PermissionsCard } from "./Permissions";
 import { PolicyLaw } from "./PolicyLaw";
+import { Progress } from "./Progress";
 
 type Net = "mainnet" | "testnet";
 
@@ -34,6 +35,7 @@ export function App() {
           <PermissionsCard />
           <PolicyLaw />
           <EmptyHome />
+          <Progress current="WAITING_FOR_USER" />
           <p className="fine">Network: {net}. Transfer of Agentic ID is not live on mainnet.</p>
         </section>
         <section className="right">
