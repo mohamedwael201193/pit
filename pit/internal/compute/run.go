@@ -2,6 +2,8 @@ package compute
 
 import (
 	"fmt"
+	"os"
+	"os/exec"
 	"strings"
 )
 
@@ -25,8 +27,20 @@ func RunSealedAsk(j DirectJob) error {
 	if err := MustNativeSealer(j.Bin); err != nil {
 		return err
 	}
-	if _, err := PrepareDirect(j); err != nil {
+	args, err := PrepareDirect(j)
+	if err != nil {
 		return err
 	}
-	return fmt.Errorf("sealer_exec_not_attached")
+	if _, err := os.Stat(j.Bin); err != nil {
+		return fmt.Errorf("sealer_not_wired")
+	}
+	cmd := exec.Command(j.Bin, args...)
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("TEE_VERIFY_FAIL")
+	}
+	if err := RequireScheme(string(out)); err != nil {
+		return err
+	}
+	return nil
 }
