@@ -222,6 +222,8 @@ go test -tags live ./internal/hl -count=1
 
 CI runs the same Go and Foundry suites on every push (`.github/workflows/ci.yml`). Foundry currently reports **22** tests.
 
+The Go health process (`pit/cmd/health`) exposes `GET /health` and always reports `sign: false`. It must not receive session keys.
+
 ### CLI
 
 ```powershell
