@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import { EmptyWatch } from "./EmptyWatch";
 import { NetworkToggle } from "./NetworkToggle";
 import { PolicyPanel } from "./PolicyPanel";
+import { ProgressStrip } from "./ProgressStrip";
 import { Ring } from "./Ring";
 import { VerifyForm } from "./VerifyForm";
 
@@ -84,6 +85,7 @@ export function App() {
           <NetworkToggle net={net} onChange={setNet} />
           <PolicyPanel />
           <EmptyWatch />
+          <ProgressStrip current={authenticated ? "AUTHENTICATING" : "CONNECTING"} />
           <ul className="mt-6 list-disc pl-5">
             {CAP[net].map((line) => (
               <li key={line}>{line}</li>
