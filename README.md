@@ -128,6 +128,14 @@ Read-only tools: market, opportunities, forecast, status, card, verify. No autho
 - Web onboarding copy is live; Hyperliquid session creation stays on desktop/CLI.
 - Do not claim hardware quotes unless the verifier is wired.
 
-## Demo path
+## Desktop
+
+`apps/desktop` is the local authorize surface. Session keys stay on the machine. Web remains connect-and-inspect.
+
+```powershell
+cd apps\desktop
+npm install
+npm run dev
+```
 
 Connect wallet → select network → read capability list → (desktop) connect trading account → set policy → create session → first private analysis → preview → authorize → verify on explorer.
