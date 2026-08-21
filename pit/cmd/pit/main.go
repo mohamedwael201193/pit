@@ -20,6 +20,7 @@ func usage() {
 Commands:
   pit init --network mainnet|testnet --wallet 0x...
   pit login
+  pit network
   pit policy
   pit ask
   pit opportunities
@@ -63,6 +64,8 @@ func main() {
 		fmt.Println("desk: isAuthorized must be true before sealed inference")
 	case "kill":
 		fmt.Println("kill switch: set locally — signing blocked for this workspace")
+	case "network":
+		cmdNetwork()
 	case "ask", "opportunities", "forecast", "preview", "cancel", "resolve", "card":
 		fmt.Fprintf(os.Stderr, "%s requires a bound workspace and a live session. Run pit init first.\n", os.Args[1])
 		os.Exit(2)
@@ -76,6 +79,19 @@ func main() {
 		usage()
 		os.Exit(2)
 	}
+}
+
+func cmdNetwork() {
+	mn := config.For(config.Mainnet)
+	tn := config.For(config.Testnet)
+	fmt.Println("MAINNET production")
+	fmt.Printf("  chain    %d %s\n", mn.ChainID, mn.RPC)
+	fmt.Printf("  hl       %s\n", mn.HLInfo)
+	fmt.Printf("  desk     %s\n", mn.DeskID)
+	fmt.Println("TESTNET laboratory")
+	fmt.Printf("  chain    %d %s\n", tn.ChainID, tn.RPC)
+	fmt.Printf("  hl       %s\n", tn.HLInfo)
+	fmt.Println("one workspace binds one row. never mix.")
 }
 
 func cmdInit(args []string) {
