@@ -39,7 +39,22 @@ func Handle(req Request) Response {
 	}
 	switch req.Tool {
 	case "status":
-		return Response{OK: true, Body: map[string]any{"surface": "mcp", "authorize": false}}
+		return Response{OK: true, Body: map[string]any{"surface": "mcp", "authorize": false, "sign": false}}
+	case "opportunities":
+		return Response{OK: true, Body: map[string]any{
+			"count": 0,
+			"copy":  "No opportunities match your policy.",
+			"trade": false,
+		}}
+	case "market":
+		return Response{OK: true, Body: map[string]any{
+			"note":   "bind a workspace and a live venue quote with a timestamp",
+			"source": "hyperliquid",
+		}}
+	case "forecast":
+		return Response{OK: true, Body: map[string]any{"note": "forecasts are host-scored; model size is ignored"}}
+	case "card":
+		return Response{OK: true, Body: map[string]any{"copy": "Not enough resolved forecasts."}}
 	case "verify":
 		return Response{OK: true, Body: map[string]any{
 			"hint":     "pass a receipt hash from the desktop",

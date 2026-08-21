@@ -5,12 +5,14 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/mohamedwael201193/pit/internal/calib"
 	"github.com/mohamedwael201193/pit/internal/cli"
 	"github.com/mohamedwael201193/pit/internal/config"
 	"github.com/mohamedwael201193/pit/internal/identity"
 	"github.com/mohamedwael201193/pit/internal/policy"
 	"github.com/mohamedwael201193/pit/internal/session"
 	"github.com/mohamedwael201193/pit/internal/verify"
+	"github.com/mohamedwael201193/pit/internal/watch"
 	"github.com/mohamedwael201193/pit/internal/workspace"
 )
 
@@ -56,17 +58,18 @@ func main() {
 		fmt.Println("Connect your wallet in the desktop or web app, then sign the bind message.")
 		fmt.Println("PIT never asks for your private key.")
 	case "policy":
-		b, _ := json.MarshalIndent(policy.Default(), "", "  ")
-		fmt.Println(string(b))
+		cmdPolicy()
 	case "status":
-		fmt.Println("network: unset until init")
-		fmt.Println("session: none")
-		fmt.Println("desk: isAuthorized must be true before sealed inference")
+		cmdStatus()
 	case "kill":
-		fmt.Println("kill switch: set locally — signing blocked for this workspace")
+		cmdKill()
 	case "network":
 		cmdNetwork()
-	case "ask", "opportunities", "forecast", "preview", "cancel", "resolve", "card":
+	case "opportunities":
+		cmdOpportunities()
+	case "card":
+		cmdCard()
+	case "ask", "forecast", "preview", "cancel", "resolve":
 		fmt.Fprintf(os.Stderr, "%s requires a bound workspace and a live session. Run pit init first.\n", os.Args[1])
 		os.Exit(2)
 	case "authorize":
@@ -79,6 +82,15 @@ func main() {
 		usage()
 		os.Exit(2)
 	}
+}
+
+func stateDir() string {
+	d, err := cli.DefaultDir()
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+	return d
 }
 
 func cmdNetwork() {
@@ -123,11 +135,63 @@ func cmdInit(args []string) {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
+	if err := cli.Save(stateDir(), cli.DiskState{
+		WorkspaceID: ws.ID,
+		Network:     string(ws.Network),
+		Wallet:      string(ws.EVM),
+	}); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
 	fmt.Printf("workspace %s\n", ws.ID)
 	fmt.Printf("network   %s\n", ws.Network)
 	fmt.Printf("wallet    %s\n", ws.EVM)
 	fmt.Println("session   not created — pit will never withdraw")
 	_ = session.AllowedActions
+}
+
+func cmdStatus() {
+	st, err := cli.Load(stateDir())
+	if err != nil {
+		fmt.Println("network: unset until init")
+		fmt.Println("session: none")
+		fmt.Println("desk: isAuthorized must be true before sealed inference")
+		return
+	}
+	fmt.Printf("workspace %s\n", st.WorkspaceID)
+	fmt.Printf("network   %s\n", st.Network)
+	fmt.Printf("wallet    %s\n", st.Wallet)
+	fmt.Printf("kill      %v\n", st.Kill)
+	fmt.Println("session   none on this CLI until desktop or keychain bind")
+	fmt.Println("sign      never in the browser")
+}
+
+func cmdKill() {
+	if err := cli.SetKill(stateDir(), true); err != nil {
+		fmt.Fprintln(os.Stderr, "kill switch requires pit init first")
+		os.Exit(2)
+	}
+	fmt.Println("kill switch: on — signing blocked for this workspace")
+}
+
+func cmdPolicy() {
+	p := policy.Default()
+	for _, c := range policy.Cards(p) {
+		fmt.Printf("%s\n  %s\n  %s\n", c.Title, c.Value, c.Law)
+	}
+	b, _ := json.MarshalIndent(p, "", "  ")
+	fmt.Println(string(b))
+}
+
+func cmdOpportunities() {
+	fmt.Println(watch.Attention(0))
+	fmt.Println("Watch does not place orders.")
+}
+
+func cmdCard() {
+	h := calib.Card(nil, 30)
+	fmt.Println(h.Copy)
+	fmt.Println("Not enough resolved forecasts.")
 }
 
 func stdinTTY() bool {

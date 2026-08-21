@@ -19,3 +19,20 @@ func TestReadOnly(t *testing.T) {
 		t.Fatal("cancel is not an MCP tool")
 	}
 }
+
+func TestOpportunitiesDoNotTrade(t *testing.T) {
+	r := Handle(Request{Tool: "opportunities"})
+	if !r.OK {
+		t.Fatal(r)
+	}
+	body, _ := r.Body.(map[string]any)
+	if body["trade"] != false {
+		t.Fatal(body)
+	}
+	if Handle(Request{Tool: "withdraw"}).OK {
+		t.Fatal("withdraw")
+	}
+	if Handle(Request{Tool: "key"}).OK {
+		t.Fatal("key")
+	}
+}
