@@ -1,6 +1,8 @@
 import { usePrivy } from "@privy-io/react-auth";
 import { useMemo, useState } from "react";
+import { EmptyWatch } from "./EmptyWatch";
 import { NetworkToggle } from "./NetworkToggle";
+import { PolicyPanel } from "./PolicyPanel";
 import { Ring } from "./Ring";
 import { VerifyForm } from "./VerifyForm";
 
@@ -80,6 +82,8 @@ export function App() {
             </div>
           )}
           <NetworkToggle net={net} onChange={setNet} />
+          <PolicyPanel />
+          <EmptyWatch />
           <ul className="mt-6 list-disc pl-5">
             {CAP[net].map((line) => (
               <li key={line}>{line}</li>
