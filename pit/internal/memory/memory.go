@@ -10,8 +10,8 @@ import (
 )
 
 var Kinds = []string{
-	"observation", "forecast", "execution", "outcome", "error",
-	"calibration", "role_performance", "skill_performance", "risk_event", "policy_decision",
+	"observation", "thesis", "forecast", "execution", "outcome", "error",
+	"calibration", "role_performance", "skill_performance", "risk_event", "policy_decision", "regime",
 }
 
 func ValidKind(k string) bool {
