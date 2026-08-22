@@ -81,8 +81,6 @@ func main() {
 		cmdCancel()
 	case "resolve":
 		cmdResolve()
-		fmt.Fprintf(os.Stderr, "%s requires a bound workspace and a live session. Run pit init first.\n", os.Args[1])
-		os.Exit(2)
 	case "authorize":
 		cmdAuthorize(os.Args[2:])
 	case "verify":
