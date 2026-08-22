@@ -75,7 +75,9 @@ func main() {
 		cmdAsk()
 	case "forecast":
 		cmdForecast()
-	case "preview", "cancel", "resolve":
+	case "preview":
+		cmdPreview()
+	case "cancel", "resolve":
 		fmt.Fprintf(os.Stderr, "%s requires a bound workspace and a live session. Run pit init first.\n", os.Args[1])
 		os.Exit(2)
 	case "authorize":
@@ -234,6 +236,18 @@ func cmdForecast() {
 		os.Exit(2)
 	}
 	fmt.Fprintln(os.Stderr, "forecast requires a live sealed ask and a bound session")
+	os.Exit(2)
+}
+
+func cmdPreview() {
+	st, err := cli.Load(stateDir())
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "preview requires pit init first")
+		os.Exit(2)
+	}
+	fmt.Println(cli.PreviewCopy)
+	fmt.Println(cli.MutationInvalidates())
+	fmt.Fprintf(os.Stderr, "preview requires a live session for workspace %s\n", st.WorkspaceID)
 	os.Exit(2)
 }
 
