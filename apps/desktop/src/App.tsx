@@ -1,6 +1,7 @@
 import { BindNote } from "./BindNote";
 import { EmptyHome } from "./EmptyHome";
 import { NAMED } from "./namedStates";
+import { NetworkBanner } from "./NetworkBanner";
 import { PermissionsCard } from "./Permissions";
 import { PolicyLaw } from "./PolicyLaw";
 import { Progress } from "./Progress";
@@ -38,6 +39,7 @@ export function App() {
           <PolicyLaw />
           <EmptyHome />
           <Progress current="WAITING_FOR_USER" />
+          <NetworkBanner net={net} />
           <p className="fine">Network: {net}. Transfer of Agentic ID is not live on mainnet.</p>
         </section>
         <section className="right">
