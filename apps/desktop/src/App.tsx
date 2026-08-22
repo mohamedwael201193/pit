@@ -1,3 +1,4 @@
+import { BindNote } from "./BindNote";
 import { EmptyHome } from "./EmptyHome";
 import { NAMED } from "./namedStates";
 import { PermissionsCard } from "./Permissions";
@@ -32,6 +33,7 @@ export function App() {
           <p className="eyebrow">YOUR DESK</p>
           <h1>Authorize on this machine. Never in the browser.</h1>
           <p className="lead">{NAMED.SEED_FORBIDDEN}</p>
+          <BindNote />
           <PermissionsCard />
           <PolicyLaw />
           <EmptyHome />
