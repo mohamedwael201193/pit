@@ -5,6 +5,7 @@ import { NetworkToggle } from "./NetworkToggle";
 import { PolicyPanel } from "./PolicyPanel";
 import { ProgressStrip } from "./ProgressStrip";
 import { Ring } from "./Ring";
+import { SiweBind } from "./SiweBind";
 import { VerifyForm } from "./VerifyForm";
 
 type Net = "mainnet" | "testnet";
@@ -82,6 +83,7 @@ export function App() {
               </button>
             </div>
           )}
+          <SiweBind connected={authenticated} />
           <NetworkToggle net={net} onChange={setNet} />
           <PolicyPanel />
           <EmptyWatch />
