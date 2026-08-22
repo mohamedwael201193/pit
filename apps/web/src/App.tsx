@@ -1,6 +1,7 @@
 import { usePrivy } from "@privy-io/react-auth";
 import { useMemo, useState } from "react";
 import { EmptyWatch } from "./EmptyWatch";
+import { NetworkBanner } from "./NetworkBanner";
 import { NetworkToggle } from "./NetworkToggle";
 import { PolicyPanel } from "./PolicyPanel";
 import { ProgressStrip } from "./ProgressStrip";
@@ -85,6 +86,7 @@ export function App() {
           )}
           <SiweBind connected={authenticated} />
           <NetworkToggle net={net} onChange={setNet} />
+          <NetworkBanner net={net} />
           <PolicyPanel />
           <EmptyWatch />
           <ProgressStrip current={authenticated ? "AUTHENTICATING" : "CONNECTING"} />
