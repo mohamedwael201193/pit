@@ -247,6 +247,8 @@ Full command set:
 
 `opportunities` reads live venue books for the policy allowlist and never places an order. Empty Watch is a real empty state.
 
+`preview` prints the exact bound fields and refuses to authorize a mutated card.
+
 `ask` runs the sealed Direct path. Missing `PIT_COMMITTEE_BIN`, an unauthorized desk, Galileo VerifyE2EE-unproven, or a Router URL all stop the operation. There is no fallback.
 
 ### MCP (read-only)
