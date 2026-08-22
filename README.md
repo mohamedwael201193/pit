@@ -249,6 +249,8 @@ Full command set:
 
 `preview` prints the exact bound fields and refuses to authorize a mutated card.
 
+`cancel` and `resolve` require a bound workspace and a live session. Cancel cannot withdraw.
+
 `ask` runs the sealed Direct path. Missing `PIT_COMMITTEE_BIN`, an unauthorized desk, Galileo VerifyE2EE-unproven, or a Router URL all stop the operation. There is no fallback.
 
 ### MCP (read-only)
@@ -275,6 +277,8 @@ npm run dev
 ```
 
 Open http://localhost:3000
+
+MAINNET shows production copy and the Aristotle explorer. TESTNET shows the integration lab and the Galileo explorer. They never share a workspace.
 
 ### Desktop (authorize locally)
 
