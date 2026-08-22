@@ -232,6 +232,9 @@ go run ./cmd/pit init --network testnet --wallet 0xYourAddress
 go run ./cmd/pit login
 go run ./cmd/pit policy
 go run ./cmd/pit status
+go run ./cmd/pit opportunities
+go run ./cmd/pit ask
+go run ./cmd/pit forecast
 go run ./cmd/pit verify --preview 0x... --root 0x... --network mainnet --workspace <id>
 go run ./cmd/pit kill
 ```
@@ -241,6 +244,10 @@ Full command set:
 `init` `login` `policy` `ask` `opportunities` `forecast` `preview` `authorize` `cancel` `status` `resolve` `card` `verify` `kill`
 
 `authorize` requires a TTY, `--i-understand`, and the exact word `AUTHORIZE`. Piped `yes` is rejected.
+
+`opportunities` reads live venue books for the policy allowlist and never places an order. Empty Watch is a real empty state.
+
+`ask` runs the sealed Direct path. Missing `PIT_COMMITTEE_BIN`, an unauthorized desk, Galileo VerifyE2EE-unproven, or a Router URL all stop the operation. There is no fallback.
 
 ### MCP (read-only)
 
@@ -343,7 +350,7 @@ If a Direct request fails, PIT **stops**. It does not retry on the Router.
 - Foundation Agentic ID **transfer is not live on Aristotle**. The UI must say so.
 - Galileo iTransfer is an official path; PIT has **not** shown a transfer tx that changes `ownerOf`.
 - Galileo sealed committee is **not** the mainnet glm-5.2 committee. VerifyE2EE on Omni is still required before enabling testnet sealed ask.
-- Live Direct Seal + VerifyE2EE inside the product binary needs `PIT_COMMITTEE_BIN` pointed at the sealer.
+- Live Direct Seal + VerifyE2EE inside the product binary needs `PIT_COMMITTEE_BIN` pointed at a native sealer. Python and TypeScript sealers are refused. A missing binary returns `sealer_not_wired`. Plaintext sealer output returns `TEE_VERIFY_FAIL`.
 - Live Hyperliquid dust (`order` then `cancel`) still requires a funded account on the matching venue and a user `AUTHORIZE`.
 - Desktop is the local authorize shell; full OS keychain packaging (Tauri / stronghold) can still be tightened.
 - Do not claim hardware quotes unless the verifier is wired.
