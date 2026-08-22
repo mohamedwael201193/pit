@@ -77,7 +77,10 @@ func main() {
 		cmdForecast()
 	case "preview":
 		cmdPreview()
-	case "cancel", "resolve":
+	case "cancel":
+		cmdCancel()
+	case "resolve":
+		cmdResolve()
 		fmt.Fprintf(os.Stderr, "%s requires a bound workspace and a live session. Run pit init first.\n", os.Args[1])
 		os.Exit(2)
 	case "authorize":
@@ -248,6 +251,28 @@ func cmdPreview() {
 	fmt.Println(cli.PreviewCopy)
 	fmt.Println(cli.MutationInvalidates())
 	fmt.Fprintf(os.Stderr, "preview requires a live session for workspace %s\n", st.WorkspaceID)
+	os.Exit(2)
+}
+
+func cmdCancel() {
+	st, err := cli.Load(stateDir())
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "cancel requires pit init first")
+		os.Exit(2)
+	}
+	fmt.Println("cancel is order/cancel only. It cannot withdraw or change leverage.")
+	fmt.Fprintf(os.Stderr, "cancel requires a live session and a bound clientOrderId for workspace %s\n", st.WorkspaceID)
+	os.Exit(2)
+}
+
+func cmdResolve() {
+	st, err := cli.Load(stateDir())
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "resolve requires pit init first")
+		os.Exit(2)
+	}
+	fmt.Println("resolve scores host probability. It does not invent a win rate.")
+	fmt.Fprintf(os.Stderr, "resolve requires a stored forecast for workspace %s\n", st.WorkspaceID)
 	os.Exit(2)
 }
 
