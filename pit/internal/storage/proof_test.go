@@ -21,6 +21,9 @@ func TestProofArgs(t *testing.T) {
 	if !contains(down, "--proof") {
 		t.Fatal(down)
 	}
+	if err := DownloadMustProve(down); err != nil {
+		t.Fatal(err)
+	}
 	j.CLI = "sdk.ts"
 	if _, err := UploadArgs(j); err == nil {
 		t.Fatal("ts forbidden")
