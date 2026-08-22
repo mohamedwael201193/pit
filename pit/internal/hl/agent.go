@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"strings"
 	"time"
+
+	"github.com/mohamedwael201193/pit/internal/session"
 )
 
 // ApproveAgent is signed by the master wallet, never by the session key.
@@ -19,12 +21,10 @@ func BuildApproveAgent(agentAddr, workspaceID string, now time.Time) (json.RawMe
 	if agentAddr == "" {
 		return nil, fmt.Errorf("agent_required")
 	}
-	name := "PIT-"
-	short := workspaceID
-	if len(short) > 8 {
-		short = short[:8]
+	name, err := session.AgentName(workspaceID)
+	if err != nil {
+		return nil, err
 	}
-	name += short
 	if strings.Contains(strings.ToLower(agentAddr), "session") {
 		return nil, fmt.Errorf("session_cannot_approve")
 	}
