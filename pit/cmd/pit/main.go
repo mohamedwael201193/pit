@@ -7,7 +7,9 @@ import (
 
 	"github.com/mohamedwael201193/pit/internal/calib"
 	"github.com/mohamedwael201193/pit/internal/cli"
+	"github.com/mohamedwael201193/pit/internal/compute"
 	"github.com/mohamedwael201193/pit/internal/config"
+	"github.com/mohamedwael201193/pit/internal/hl"
 	"github.com/mohamedwael201193/pit/internal/identity"
 	"github.com/mohamedwael201193/pit/internal/policy"
 	"github.com/mohamedwael201193/pit/internal/session"
@@ -69,7 +71,11 @@ func main() {
 		cmdOpportunities()
 	case "card":
 		cmdCard()
-	case "ask", "forecast", "preview", "cancel", "resolve":
+	case "ask":
+		cmdAsk()
+	case "forecast":
+		cmdForecast()
+	case "preview", "cancel", "resolve":
 		fmt.Fprintf(os.Stderr, "%s requires a bound workspace and a live session. Run pit init first.\n", os.Args[1])
 		os.Exit(2)
 	case "authorize":
@@ -184,8 +190,51 @@ func cmdPolicy() {
 }
 
 func cmdOpportunities() {
-	fmt.Println(watch.Attention(0))
+	p := policy.Default()
+	net := config.Mainnet
+	if st, err := cli.Load(stateDir()); err == nil {
+		if n, err := config.ParseNetwork(st.Network); err == nil {
+			net = n
+		}
+	}
+	cands, err := watch.Live(hl.New(config.For(net)), p)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+	fmt.Println(watch.Attention(len(cands)))
 	fmt.Println("Watch does not place orders.")
+	for _, c := range cands {
+		fmt.Printf("%s  %s  mark=%g\n", c.Coin, c.Reason, c.Book.MarkPx)
+	}
+}
+
+func cmdAsk() {
+	st, err := cli.Load(stateDir())
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "ask requires pit init first")
+		os.Exit(2)
+	}
+	net, err := config.ParseNetwork(st.Network)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(2)
+	}
+	if err := compute.ProductAsk(net, false, compute.LookBin()); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(2)
+	}
+	fmt.Println("sealed ask submitted")
+}
+
+func cmdForecast() {
+	fmt.Println("host scores forecasts; model size is ignored")
+	if _, err := cli.Load(stateDir()); err != nil {
+		fmt.Fprintln(os.Stderr, "forecast requires pit init first")
+		os.Exit(2)
+	}
+	fmt.Fprintln(os.Stderr, "forecast requires a live sealed ask and a bound session")
+	os.Exit(2)
 }
 
 func cmdCard() {
