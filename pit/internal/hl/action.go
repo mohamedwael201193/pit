@@ -2,7 +2,6 @@ package hl
 
 import (
 	"encoding/json"
-	"fmt"
 
 	"github.com/mohamedwael201193/pit/internal/session"
 )
@@ -43,8 +42,8 @@ func BuildOrder(asset int, buy bool, px, sz, cloid string) (json.RawMessage, err
 	if err := session.CheckAction("order"); err != nil {
 		return nil, err
 	}
-	if px == "" || sz == "" || cloid == "" {
-		return nil, fmt.Errorf("incomplete_order")
+	if err := ValidCloid(cloid); err != nil {
+		return nil, err
 	}
 	w := OrderWire{Type: "order", Grouping: "na"}
 	item := OrderItem{A: asset, B: buy, P: px, S: sz, R: false, C: cloid}
@@ -57,8 +56,8 @@ func BuildCancel(asset int, cloid string) (json.RawMessage, error) {
 	if err := session.CheckAction("cancel"); err != nil {
 		return nil, err
 	}
-	if cloid == "" {
-		return nil, fmt.Errorf("cancel_needs_cloid")
+	if err := ValidCloid(cloid); err != nil {
+		return nil, err
 	}
 	w := CancelWire{Type: "cancel", Cancels: []CancelItem{{A: asset, C: cloid}}}
 	return json.Marshal(w)
