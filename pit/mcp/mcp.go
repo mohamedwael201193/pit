@@ -56,10 +56,7 @@ func Handle(req Request) Response {
 	case "card":
 		return Response{OK: true, Body: map[string]any{"copy": "Not enough resolved forecasts."}}
 	case "verify":
-		return Response{OK: true, Body: map[string]any{
-			"hint":     "pass a receipt hash from the desktop",
-			"progress": []string{"PRIVATE_BOOK", "SEALING", "TEE", "TEE_SIGNATURE", "ONCHAIN_SIGNER", "STORAGE", "RECEIPT", "CALIBRATION"},
-		}}
+		return Response{OK: true, Body: VerifyHint()}
 	default:
 		return Response{OK: true, Body: map[string]any{"tool": req.Tool, "note": "bind a workspace first"}}
 	}
