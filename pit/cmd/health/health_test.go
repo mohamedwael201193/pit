@@ -14,6 +14,9 @@ func TestHealthNeverSigns(t *testing.T) {
 	if err := config.GuardFallbacks(); err != nil {
 		t.Fatal(err)
 	}
+	if err := config.RefuseSessionEnv(); err != nil {
+		t.Fatal(err)
+	}
 	mux := http.NewServeMux()
 	mux.HandleFunc("/health", func(w http.ResponseWriter, _ *http.Request) {
 		_ = json.NewEncoder(w).Encode(map[string]any{"ok": true, "service": "pit", "sign": false})

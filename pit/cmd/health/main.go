@@ -14,6 +14,10 @@ func main() {
 		os.Stderr.WriteString(err.Error() + "\n")
 		os.Exit(2)
 	}
+	if err := config.RefuseSessionEnv(); err != nil {
+		os.Stderr.WriteString(err.Error() + "\n")
+		os.Exit(2)
+	}
 	mux := http.NewServeMux()
 	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
