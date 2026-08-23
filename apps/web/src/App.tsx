@@ -1,6 +1,7 @@
 import { usePrivy } from "@privy-io/react-auth";
 import { useEffect, useMemo, useState } from "react";
 import { EmptyWatch } from "./EmptyWatch";
+import { IsolateNote } from "./IsolateNote";
 import { NetworkBanner } from "./NetworkBanner";
 import { NetworkToggle } from "./NetworkToggle";
 import { PolicyPanel } from "./PolicyPanel";
@@ -100,6 +101,7 @@ export function App() {
           <RefreshNote />
           <NetworkToggle net={net} onChange={setNet} />
           <NetworkBanner net={net} />
+          <IsolateNote />
           {!verifyOnly && (
             <>
               <PolicyPanel />
