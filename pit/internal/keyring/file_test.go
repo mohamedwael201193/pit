@@ -17,6 +17,12 @@ func TestNamespaceIsolation(t *testing.T) {
 	if err != nil || string(got) != "aaa" {
 		t.Fatal(err)
 	}
+	if err := s.Delete("ws-a", "session"); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := s.Get("ws-a", "session"); err == nil {
+		t.Fatal("deleted")
+	}
 	k, err := NewMemoryKey()
 	if err != nil || len(k) != 66 {
 		t.Fatalf("%s %v", k, err)

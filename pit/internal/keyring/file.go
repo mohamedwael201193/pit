@@ -50,6 +50,15 @@ func (s *FileStore) Get(namespace, name string) ([]byte, error) {
 	return out, nil
 }
 
+func (s *FileStore) Delete(namespace, name string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if err := os.Remove(s.path(namespace, name)); err != nil {
+		return fmt.Errorf("not found")
+	}
+	return nil
+}
+
 func NewMemoryKey() (string, error) {
 	var b [32]byte
 	if _, err := rand.Read(b[:]); err != nil {
