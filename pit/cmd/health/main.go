@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/mohamedwael201193/pit/internal/config"
+	"github.com/mohamedwael201193/pit/internal/obs"
 )
 
 func main() {
@@ -22,10 +23,11 @@ func main() {
 	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(w).Encode(map[string]any{
-			"ok":      true,
-			"service": "pit",
-			"time":    time.Now().UTC().Format(time.RFC3339),
-			"sign":    false,
+			"ok":        true,
+			"service":   "pit",
+			"time":      time.Now().UTC().Format(time.RFC3339),
+			"sign":      false,
+			"requestId": obs.NewRequestID(),
 		})
 	})
 	addr := os.Getenv("PORT")
