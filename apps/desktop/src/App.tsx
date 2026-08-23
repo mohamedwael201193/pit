@@ -1,5 +1,6 @@
 import { BindNote } from "./BindNote";
 import { EmptyHome } from "./EmptyHome";
+import { RecoverNote } from "./RecoverNote";
 import { NAMED } from "./namedStates";
 import { NetworkBanner } from "./NetworkBanner";
 import { PermissionsCard } from "./Permissions";
@@ -35,11 +36,13 @@ export function App() {
           <h1>Authorize on this machine. Never in the browser.</h1>
           <p className="lead">{NAMED.SEED_FORBIDDEN}</p>
           <BindNote />
+          <RecoverNote />
           <PermissionsCard />
           <PolicyLaw />
           <EmptyHome />
           <Progress current="WAITING_FOR_USER" />
           <NetworkBanner net={net} />
+          <p className="fine">{NAMED.TWO_WALLETS}</p>
           <p className="fine">Network: {net}. Transfer of Agentic ID is not live on mainnet.</p>
         </section>
         <section className="right">

@@ -6,6 +6,7 @@ export const NAMED = {
   POLICY_BLOCK: "Your policy blocked this preview.",
   TEE_VERIFY_FAIL: "TeeML signature did not match the on-chain signer. Stopped.",
   SEED_FORBIDDEN: "PIT never asks for a seed phrase.",
+  TWO_WALLETS: "Two wallets never share a workspace, session, or memory key.",
 } as const;
 
 export const PERMISSIONS = [
