@@ -1,6 +1,7 @@
 import { BindNote } from "./BindNote";
 import { EmptyHome } from "./EmptyHome";
 import { RecoverNote } from "./RecoverNote";
+import { IsolateNote } from "./IsolateNote";
 import { NAMED } from "./namedStates";
 import { NetworkBanner } from "./NetworkBanner";
 import { PermissionsCard } from "./Permissions";
@@ -42,6 +43,7 @@ export function App() {
           <EmptyHome />
           <Progress current="WAITING_FOR_USER" />
           <NetworkBanner net={net} />
+          <IsolateNote />
           <p className="fine">{NAMED.TWO_WALLETS}</p>
           <p className="fine">Network: {net}. Transfer of Agentic ID is not live on mainnet.</p>
         </section>
