@@ -190,6 +190,18 @@ func cmdPolicy() {
 	}
 	b, _ := json.MarshalIndent(p, "", "  ")
 	fmt.Println(string(b))
+	if st, err := cli.Load(stateDir()); err == nil {
+		path, err := cli.PinWorkspace(stateDir(), st.WorkspaceID, p)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(2)
+		}
+		if err := cli.CheckPinned(stateDir(), st.WorkspaceID, p); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(2)
+		}
+		fmt.Println("pinned", path)
+	}
 }
 
 func cmdOpportunities() {
