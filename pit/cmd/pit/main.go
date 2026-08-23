@@ -173,6 +173,8 @@ func cmdStatus() {
 	fmt.Printf("kill      %v\n", st.Kill)
 	fmt.Println("session   none on this CLI until desktop or keychain bind")
 	fmt.Println("sign      never in the browser")
+	fmt.Println("expired  ", cli.ExpiredCopy)
+	fmt.Println("revoked  ", cli.RevokedCopy)
 }
 
 func cmdKill() {
