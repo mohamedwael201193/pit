@@ -5,6 +5,7 @@ import { NetworkBanner } from "./NetworkBanner";
 import { NetworkToggle } from "./NetworkToggle";
 import { PolicyPanel } from "./PolicyPanel";
 import { ProgressStrip } from "./ProgressStrip";
+import { RefreshNote } from "./RefreshNote";
 import { Ring } from "./Ring";
 import { SiweBind } from "./SiweBind";
 import { VerifyForm } from "./VerifyForm";
@@ -96,6 +97,7 @@ export function App() {
             </div>
           )}
           <SiweBind connected={authenticated} />
+          <RefreshNote />
           <NetworkToggle net={net} onChange={setNet} />
           <NetworkBanner net={net} />
           {!verifyOnly && (
