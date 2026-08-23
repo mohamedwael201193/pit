@@ -1,5 +1,5 @@
 import { usePrivy } from "@privy-io/react-auth";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { EmptyWatch } from "./EmptyWatch";
 import { NetworkBanner } from "./NetworkBanner";
 import { NetworkToggle } from "./NetworkToggle";
@@ -41,22 +41,33 @@ export function App() {
   const [net, setNet] = useState<Net>("mainnet");
   const [hash, setHash] = useState("");
   const [root, setRoot] = useState("");
+  const [route, setRoute] = useState(() => (typeof window === "undefined" ? "" : window.location.hash));
   const addr = user?.wallet?.address;
   const step = useMemo(() => (authenticated ? 1 : 0), [authenticated]);
   const explorer = net === "mainnet" ? "https://chainscan.0g.ai" : "https://chainscan-galileo.0g.ai";
+
+  useEffect(() => {
+    const onHash = () => setRoute(window.location.hash);
+    window.addEventListener("hashchange", onHash);
+    return () => window.removeEventListener("hashchange", onHash);
+  }, []);
+
+  const verifyOnly = route === "#verify";
 
   return (
     <div className="relative min-h-[100dvh]">
       <div className="grain" aria-hidden />
       <header className="flex justify-between px-10 py-7">
         <div className="text-[42px] tracking-[-0.06em] text-coral">PIT.</div>
-        <span className="text-[11px] uppercase tracking-[0.18em] opacity-70">Private Alpha OS</span>
+        <a className="text-[11px] uppercase tracking-[0.18em] text-cream no-underline opacity-80" href="#verify">
+          Verify
+        </a>
       </header>
       <main className="grid min-h-[calc(100dvh-96px)] grid-cols-1 lg:grid-cols-[1.1fr_0.9fr]">
         <section className="px-8 py-12 lg:px-14">
           <p className="text-[11px] tracking-[0.22em] text-coral">YOUR DESK</p>
           <h1 className="mt-3 max-w-3xl text-4xl leading-[0.95] tracking-[-0.04em] lg:text-5xl">
-            Private research. Controlled execution. A desk that learns.
+            {verifyOnly ? "Verify a receipt on the matching explorer." : "Private research. Controlled execution. A desk that learns."}
           </h1>
           <p className="mt-5 max-w-[36rem] text-base leading-relaxed opacity-85">
             PIT never asks for a seed phrase. Your wallet stays yours. Your session cannot withdraw.
@@ -87,9 +98,13 @@ export function App() {
           <SiweBind connected={authenticated} />
           <NetworkToggle net={net} onChange={setNet} />
           <NetworkBanner net={net} />
-          <PolicyPanel />
-          <EmptyWatch />
-          <ProgressStrip current={authenticated ? "AUTHENTICATING" : "CONNECTING"} />
+          {!verifyOnly && (
+            <>
+              <PolicyPanel />
+              <EmptyWatch />
+              <ProgressStrip current={authenticated ? "AUTHENTICATING" : "CONNECTING"} />
+            </>
+          )}
           <ul className="mt-6 list-disc pl-5">
             {CAP[net].map((line) => (
               <li key={line}>{line}</li>
