@@ -26,3 +26,10 @@ func TestParseL2RejectsEmpty(t *testing.T) {
 		t.Fatal("empty")
 	}
 }
+
+func TestL2CoinRequired(t *testing.T) {
+	c := &Client{}
+	if _, err := c.L2(""); err == nil {
+		t.Fatal("coin")
+	}
+}

@@ -6,6 +6,9 @@ import (
 )
 
 func (c *Client) L2(coin string) (L2Book, error) {
+	if coin == "" {
+		return L2Book{}, fmt.Errorf("coin_required")
+	}
 	raw, err := c.postInfo(map[string]any{"type": "l2Book", "coin": coin})
 	if err != nil {
 		return L2Book{}, err

@@ -19,3 +19,14 @@ func TestLiveETHBook(t *testing.T) {
 		t.Fatalf("%+v", b)
 	}
 }
+
+func TestLiveTestnetETHBook(t *testing.T) {
+	c := hl.New(config.TestnetChain())
+	b, err := c.PublicBook("ETH")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if b.MarkPx <= 0 {
+		t.Fatalf("%+v", b)
+	}
+}
