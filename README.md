@@ -276,9 +276,11 @@ npm install
 npm run dev
 ```
 
-Open http://localhost:3000
+Open http://localhost:3000 or http://localhost:3000/#verify
 
 MAINNET shows production copy and the Aristotle explorer. TESTNET shows the integration lab and the Galileo explorer. They never share a workspace.
+
+CI builds the web app on every push. Desktop packaging config lives in `apps/desktop/src-tauri/tauri.conf.json`. Session secrets stay in the OS keychain or a local file store. They never enter the web bundle.
 
 ### Desktop (authorize locally)
 
