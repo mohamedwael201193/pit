@@ -5,11 +5,13 @@ import {Test} from "forge-std/Test.sol";
 import {PitReceipts} from "../src/PitReceipts.sol";
 import {PitForecasts} from "../src/PitForecasts.sol";
 import {PitMemory} from "../src/PitMemory.sol";
+import {PitPolicy} from "../src/PitPolicy.sol";
 
 contract IsolationTest is Test {
     PitReceipts internal rec;
     PitForecasts internal fc;
     PitMemory internal mem;
+    PitPolicy internal pol;
     address internal alice = address(0xA11CE);
     address internal bob = address(0xB0B);
 
@@ -17,6 +19,7 @@ contract IsolationTest is Test {
         rec = new PitReceipts();
         fc = new PitForecasts();
         mem = new PitMemory();
+        pol = new PitPolicy();
     }
 
     function test_bobCannotReplayAliceReceipt() public {
@@ -46,5 +49,15 @@ contract IsolationTest is Test {
         vm.expectRevert(PitMemory.AlreadyPinned.selector);
         mem.pin(id, keccak256("root-b"));
         assertEq(mem.ownerOf(id), alice);
+    }
+
+    function test_bobCannotPinAlicePolicy() public {
+        bytes32 ws = keccak256("workspace-a");
+        vm.prank(alice);
+        pol.pin(ws, keccak256("policy-a"));
+        vm.prank(bob);
+        vm.expectRevert(PitPolicy.NotWorkspace.selector);
+        pol.pin(ws, keccak256("policy-b"));
+        assertEq(pol.walletOf(ws), alice);
     }
 }
