@@ -213,16 +213,16 @@ forge install foundry-rs/forge-std OpenZeppelin/openzeppelin-contracts
 forge test -vvv
 ```
 
-Optional live Hyperliquid public book:
+Optional live Hyperliquid public books (mainnet and testnet info endpoints; no orders):
 
 ```powershell
 cd pit
 go test -tags live ./internal/hl -count=1
 ```
 
-CI runs the same Go and Foundry suites on every push (`.github/workflows/ci.yml`). Foundry currently reports **25** tests.
+CI runs the same Go and Foundry suites on every push (`.github/workflows/ci.yml`). Foundry currently reports **26** tests.
 
-The Go health process (`pit/cmd/health`) exposes `GET /health` and always reports `sign: false`. It must not receive session keys.
+The Go health process (`pit/cmd/health`) exposes `GET /health` and always reports `sign: false`. In product mode it refuses `PIT_SESSION_KEY`, `HL_SECRET`, and `PIT_MEMORY_KEY` in the process environment.
 
 ### CLI
 
@@ -247,7 +247,11 @@ Full command set:
 
 `opportunities` reads live venue books for the policy allowlist and never places an order. Empty Watch is a real empty state.
 
-`preview` prints the exact bound fields and refuses to authorize a mutated card.
+`policy` prints the law and pins the hash for the bound workspace. A later mutation of clip, assets, or kill fails closed.
+
+`preview` prints the exact bound fields and refuses to authorize a mutated card. Restarting the process keeps a previewed action. A second click does not apply twice.
+
+Web refresh cannot sign. Desktop recovers the exact preview from the local ledger. Two wallets never share a workspace.
 
 `cancel` and `resolve` require a bound workspace and a live session. Cancel cannot withdraw.
 
@@ -346,6 +350,8 @@ Use the **official Go client** only for proofs.
 - No mnemonic field in any form (`SEED_FORBIDDEN`).
 - Named wallet states: `SIGNATURE_DECLINED`, `WRONG_NETWORK`, `SESSION_EXPIRED`, `HL_UNFUNDED`, `POLICY_BLOCK`, `TEE_VERIFY_FAIL`.
 - Preview hash mismatch, expired preview, `cloid` replay, kill switch, and policy version mismatch all deny.
+- Restart keeps a previewed action. A duplicate click does not apply twice.
+- A mismatched storage encryption key fails closed.
 - MCP and SDK cannot authorize or export a session.
 - Web bundle must not contain session private-key types.
 
