@@ -353,6 +353,10 @@ Use the **official Go client** only for proofs.
 - Restart keeps a previewed action. A duplicate click does not apply twice.
 - A mismatched storage encryption key fails closed.
 - MCP and SDK cannot authorize or export a session.
+- Expired or revoked sessions cannot order or cancel.
+- Provider, model, and teeSigner must match the catalog for that network. A tampered E2EE payload fails closed.
+- Logs never include session keys, memory keys, or the private book.
+- Two wallets never share a workspace, session, policy, or memory key.
 - Web bundle must not contain session private-key types.
 
 If a Direct request fails, PIT **stops**. It does not retry on the Router.
