@@ -357,6 +357,8 @@ Use the **official Go client** only for proofs.
 - Provider, model, and teeSigner must match the catalog for that network. A tampered E2EE payload fails closed.
 - Logs never include session keys, memory keys, or the private book.
 - Two wallets never share a workspace, session, policy, or memory key.
+- A huge model size still cannot exceed clip. Receipt hashes cannot be filed twice.
+- Switching a bound workspace from mainnet to testnet is denied.
 - Web bundle must not contain session private-key types.
 
 If a Direct request fails, PIT **stops**. It does not retry on the Router.
