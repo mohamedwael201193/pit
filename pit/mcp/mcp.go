@@ -54,7 +54,7 @@ func Handle(req Request) Response {
 	case "forecast":
 		return Response{OK: true, Body: map[string]any{"note": "forecasts are host-scored; model size is ignored"}}
 	case "card":
-		return Response{OK: true, Body: map[string]any{"copy": "Not enough resolved forecasts."}}
+		return EmptyCard()
 	case "verify":
 		return Response{OK: true, Body: VerifyHint()}
 	default:
