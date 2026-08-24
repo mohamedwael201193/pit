@@ -2,12 +2,9 @@ package sdk
 
 import "testing"
 
-func TestWatchCannotTrade(t *testing.T) {
-	c := Client{}
-	if err := c.WatchCannotTrade(); err == nil {
-		t.Fatal("trade")
-	}
-	if c.WatchCopy(0) == "" {
-		t.Fatal("copy")
+func TestWatchNeverPlaces(t *testing.T) {
+	c := Client{Network: "testnet"}
+	if !c.WatchNeverPlaces() || c.WatchMayTrade() {
+		t.Fatal("watch")
 	}
 }
