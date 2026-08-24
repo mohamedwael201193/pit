@@ -138,6 +138,12 @@ func cmdInit(args []string) {
 		fmt.Fprintln(os.Stderr, "YOUR WALLET address is required: --wallet 0x...")
 		os.Exit(2)
 	}
+	if prev, err := cli.Load(stateDir()); err == nil {
+		if err := cli.RefuseNetworkSwitch(prev.Network, string(net)); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(2)
+		}
+	}
 	st := workspace.NewStore()
 	ws, err := st.Create(addr, net)
 	if err != nil {
