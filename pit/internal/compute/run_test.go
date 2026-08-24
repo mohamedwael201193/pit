@@ -16,6 +16,9 @@ func TestMustNativeSealer(t *testing.T) {
 	if err := MustNativeSealer("sealer.ts"); err == nil {
 		t.Fatal("ts")
 	}
+	if err := MustNativeSealer("sealer.mjs"); err == nil {
+		t.Fatal("mjs")
+	}
 	if err := MustNativeSealer("/usr/local/bin/pit-sealer"); err != nil {
 		t.Fatal(err)
 	}

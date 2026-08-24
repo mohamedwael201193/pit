@@ -16,7 +16,7 @@ func MustNativeSealer(bin string) error {
 	if strings.HasSuffix(low, ".py") || strings.Contains(low, "python") {
 		return fmt.Errorf("python_gate_not_product")
 	}
-	if strings.HasSuffix(low, ".ts") || strings.HasSuffix(low, ".js") {
+	if strings.HasSuffix(low, ".ts") || strings.HasSuffix(low, ".js") || strings.HasSuffix(low, ".mjs") || strings.HasSuffix(low, ".cjs") {
 		return fmt.Errorf("script_sealer_denied")
 	}
 	return nil
