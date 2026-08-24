@@ -4,6 +4,7 @@ import { EmptyWatch } from "./EmptyWatch";
 import { IsolateNote } from "./IsolateNote";
 import { NetworkBanner } from "./NetworkBanner";
 import { NetworkToggle } from "./NetworkToggle";
+import { NoSession } from "./NoSession";
 import { PolicyPanel } from "./PolicyPanel";
 import { ProgressStrip } from "./ProgressStrip";
 import { RefreshNote } from "./RefreshNote";
@@ -98,6 +99,7 @@ export function App() {
             </div>
           )}
           <SiweBind connected={authenticated} />
+          <NoSession />
           <RefreshNote />
           <NetworkToggle net={net} onChange={setNet} />
           <NetworkBanner net={net} />
