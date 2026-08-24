@@ -284,7 +284,7 @@ Open http://localhost:3000 or http://localhost:3000/#verify
 
 MAINNET shows production copy and the Aristotle explorer. TESTNET shows the integration lab and the Galileo explorer. They never share a workspace.
 
-CI builds the web app on every push. Desktop packaging config lives in `apps/desktop/src-tauri/tauri.conf.json`. Session secrets stay in the OS keychain or a local file store. They never enter the web bundle.
+CI builds the web app and the desktop Vite shell on every push. Desktop packaging config lives in `apps/desktop/src-tauri/tauri.conf.json` with a restrictive CSP. Session secrets stay in the OS keychain or a local file store. They never enter the web bundle.
 
 ### Desktop (authorize locally)
 
@@ -364,6 +364,8 @@ Use the **official Go client** only for proofs.
 - Mock market sources are denied.
 - Mainnet RPC cannot be paired with the Galileo chain id. SIWE chain must match the workspace.
 - Open interest must be finite. Slippage above policy fails closed.
+- Mark price must be finite. Thin liquidity and cooldown fail closed. Script sealers (`.ts` / `.js` / `.mjs` / `.cjs`) are refused.
+- Watch never places orders. MCP opportunities never trade.
 - CLI never prints session secrets.
 - Web bundle must not contain session private-key types.
 
