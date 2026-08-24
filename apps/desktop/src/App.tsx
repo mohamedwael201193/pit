@@ -3,6 +3,7 @@ import { EmptyHome } from "./EmptyHome";
 import { RecoverNote } from "./RecoverNote";
 import { IsolateNote } from "./IsolateNote";
 import { NAMED } from "./namedStates";
+import { NoSession } from "./NoSession";
 import { NetworkBanner } from "./NetworkBanner";
 import { PermissionsCard } from "./Permissions";
 import { PolicyLaw } from "./PolicyLaw";
@@ -37,6 +38,7 @@ export function App() {
           <h1>Authorize on this machine. Never in the browser.</h1>
           <p className="lead">{NAMED.SEED_FORBIDDEN}</p>
           <BindNote />
+          <NoSession />
           <RecoverNote />
           <PermissionsCard />
           <PolicyLaw />
