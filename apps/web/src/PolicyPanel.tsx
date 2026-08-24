@@ -1,5 +1,6 @@
 const CARDS = [
   { title: "Max trade", value: "10 USD" },
+  { title: "Max daily loss", value: "50 USD" },
   { title: "Max leverage", value: "1x" },
   { title: "Allowed assets", value: "ETH, BTC" },
   { title: "Kill switch", value: "off" },
