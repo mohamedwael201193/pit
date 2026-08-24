@@ -359,6 +359,9 @@ Use the **official Go client** only for proofs.
 - Two wallets never share a workspace, session, policy, or memory key.
 - A huge model size still cannot exceed clip. Receipt hashes cannot be filed twice.
 - Switching a bound workspace from mainnet to testnet is denied.
+- Owner wallets cannot self-report 8004 feedback. A stranger cannot report.
+- A daily loss halt and a kill switch stop new orders. The model cannot flip either.
+- Mock market sources are denied.
 - Web bundle must not contain session private-key types.
 
 If a Direct request fails, PIT **stops**. It does not retry on the Router.
