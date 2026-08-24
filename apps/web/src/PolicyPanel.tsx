@@ -4,6 +4,9 @@ const CARDS = [
   { title: "Max leverage", value: "1x" },
   { title: "Allowed assets", value: "ETH, BTC" },
   { title: "Max slippage", value: "80 bps" },
+  { title: "Cooldown", value: "0 s" },
+  { title: "Max uncertainty", value: "1.0" },
+  { title: "Min liquidity", value: "0 USD" },
   { title: "Kill switch", value: "off" },
 ];
 
