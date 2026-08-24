@@ -21,7 +21,14 @@ func main() {
 	}
 	mux := http.NewServeMux()
 	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet && r.Method != http.MethodHead {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
 		w.Header().Set("Content-Type", "application/json")
+		if r.Method == http.MethodHead {
+			return
+		}
 		_ = json.NewEncoder(w).Encode(map[string]any{
 			"ok":        true,
 			"service":   "pit",
