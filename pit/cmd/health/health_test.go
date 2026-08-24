@@ -27,15 +27,18 @@ func TestHealthNeverSigns(t *testing.T) {
 	if rec.Code != 200 {
 		t.Fatal(rec.Code)
 	}
-	var body struct {
-		OK   bool `json:"ok"`
-		Sign bool `json:"sign"`
-	}
+	var body map[string]any
 	if err := json.Unmarshal(rec.Body.Bytes(), &body); err != nil {
 		t.Fatal(err)
 	}
-	if !body.OK || body.Sign {
+	if body["ok"] != true || body["sign"] != false {
 		t.Fatalf("%+v", body)
+	}
+	if _, ok := body["wallet"]; ok {
+		t.Fatal("wallet")
+	}
+	if _, ok := body["session"]; ok {
+		t.Fatal("session")
 	}
 	_ = os.Getenv("PORT")
 }
