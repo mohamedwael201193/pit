@@ -1,6 +1,7 @@
 export function PolicyLaw() {
   const rows = [
     ["Max trade", "10 USD"],
+    ["Max daily loss", "50 USD"],
     ["Max leverage", "1x"],
     ["Allowed", "ETH, BTC on Hyperliquid"],
     ["Kill", "off until you flip it"],
