@@ -3,6 +3,7 @@ const CARDS = [
   { title: "Max daily loss", value: "50 USD" },
   { title: "Max leverage", value: "1x" },
   { title: "Allowed assets", value: "ETH, BTC" },
+  { title: "Max slippage", value: "80 bps" },
   { title: "Kill switch", value: "off" },
 ];
 
