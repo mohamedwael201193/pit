@@ -3,6 +3,8 @@ export function PolicyLaw() {
     ["Max trade", "10 USD"],
     ["Max daily loss", "50 USD"],
     ["Max leverage", "1x"],
+    ["Max slippage", "80 bps"],
+    ["Cooldown", "0 s"],
     ["Allowed", "ETH, BTC on Hyperliquid"],
     ["Kill", "off until you flip it"],
   ];
