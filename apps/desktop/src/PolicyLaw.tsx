@@ -6,6 +6,7 @@ export function PolicyLaw() {
     ["Max slippage", "80 bps"],
     ["Cooldown", "0 s"],
     ["Session TTL", "3600 s"],
+    ["Min calibration", "0.00"],
     ["Allowed", "ETH, BTC on Hyperliquid"],
     ["Kill", "off until you flip it"],
   ];
