@@ -367,6 +367,8 @@ Use the **official Go client** only for proofs.
 - Mark price must be finite. Thin liquidity and cooldown fail closed. Script sealers (`.ts` / `.js` / `.mjs` / `.cjs`) are refused.
 - Leverage above policy, a foreign venue, `sendAsset`, and `approveAgent` fail closed. A timeout never blindly reposts.
 - Session TTL is one hour. A stale preview cannot authorize.
+- Calibration below the floor fails. SOL is outside the default universe. Galileo sealed ask stays disabled until VerifyE2EE is proven.
+- Impact prices must be finite. MCP forecasts never carry `sizeUsd`. Health JSON cannot include a session.
 - Watch never places orders. MCP opportunities never trade.
 - CLI never prints session secrets.
 - Web bundle must not contain session private-key types.
