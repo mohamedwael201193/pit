@@ -11,6 +11,7 @@ import { ProgressStrip } from "./ProgressStrip";
 import { RefreshNote } from "./RefreshNote";
 import { Ring } from "./Ring";
 import { SiweBind } from "./SiweBind";
+import { TransferNote } from "./TransferNote";
 import { VerifyForm } from "./VerifyForm";
 
 type Net = "mainnet" | "testnet";
@@ -106,6 +107,7 @@ export function App() {
           <NetworkBanner net={net} />
           <IsolateNote />
           <KillNote />
+          <TransferNote />
           {!verifyOnly && (
             <>
               <PolicyPanel />
