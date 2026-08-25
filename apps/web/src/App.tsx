@@ -63,7 +63,9 @@ export function App() {
     <div className="relative min-h-[100dvh]">
       <div className="grain" aria-hidden />
       <header className="flex justify-between px-10 py-7">
-        <div className="text-[42px] tracking-[-0.06em] text-coral">PIT.</div>
+        <a className="text-[42px] tracking-[-0.06em] text-coral no-underline" href="/">
+          PIT.
+        </a>
         <a className="text-[11px] uppercase tracking-[0.18em] text-cream no-underline opacity-80" href="#verify">
           Verify
         </a>
