@@ -6,11 +6,11 @@
 }
 * { box-sizing: border-box; }
 html, body, #root { margin: 0; min-height: 100%; background: var(--ink); color: var(--cream); font-family: "Host Grotesk", "Geist", system-ui, sans-serif; }
-.shell { min-height: 100vh; }
+.shell { min-height: 100dvh; }
 .top { display: flex; justify-content: space-between; padding: 28px 40px; }
 .word { font-size: 42px; letter-spacing: -0.06em; color: var(--coral); }
 .kicker { letter-spacing: 0.18em; font-size: 11px; text-transform: uppercase; opacity: 0.7; }
-.split { display: grid; grid-template-columns: 1.1fr 0.9fr; min-height: calc(100vh - 96px); }
+.split { display: grid; grid-template-columns: 1.1fr 0.9fr; min-height: calc(100dvh - 96px); }
 .left { padding: 48px 56px; }
 .right { background: var(--coral); color: var(--ink); padding: 56px; }
 .eyebrow { letter-spacing: 0.22em; font-size: 11px; color: var(--coral); }
