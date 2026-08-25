@@ -49,7 +49,7 @@ export function App() {
           <IsolateNote />
           <KillNote />
           <p className="fine">{NAMED.TWO_WALLETS}</p>
-          <p className="fine">Network: {net}. Transfer of Agentic ID is not live on mainnet.</p>
+          <p className="fine">Network: {net}. {NAMED.TRANSFER_NOT_LIVE}</p>
         </section>
         <section className="right">
           <ol className="ring">

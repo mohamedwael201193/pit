@@ -7,6 +7,7 @@ export const NAMED = {
   TEE_VERIFY_FAIL: "TeeML signature did not match the on-chain signer. Stopped.",
   SEED_FORBIDDEN: "PIT never asks for a seed phrase.",
   TWO_WALLETS: "Two wallets never share a workspace, session, or memory key.",
+  TRANSFER_NOT_LIVE: "Transfer of Agentic ID is not live on mainnet.",
 } as const;
 
 export const PERMISSIONS = [
