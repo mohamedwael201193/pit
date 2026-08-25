@@ -371,6 +371,7 @@ Use the **official Go client** only for proofs.
 - Impact prices must be finite. MCP forecasts never carry `sizeUsd`. Health JSON cannot include a session.
 - Strategy health needs 30 resolved samples. A TypeScript storage client is refused. MCP cannot export a session. Transfer of Agentic ID is not live on Aristotle.
 - Session keys cannot be exported as JSON. The fixture master address cannot be the product user. Spot USDC counts as funded. Signing never happens in the browser.
+- SIWE nonces cannot replay. Preview nonces must match. MCP cannot place orders. A Galileo desk address cannot be used on Aristotle.
 - Watch never places orders. MCP opportunities never trade.
 - CLI never prints session secrets.
 - Web bundle must not contain session private-key types.
