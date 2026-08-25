@@ -10,7 +10,7 @@ var AllowedTools = []string{
 }
 
 var ForbiddenTools = []string{
-	"authorize", "order", "cancel", "transfer", "withdraw", "export_session", "key",
+	"authorize", "order", "cancel", "transfer", "withdraw", "export_session", "key", "sealer", "auth_file",
 }
 
 func IsAllowed(name string) bool {
