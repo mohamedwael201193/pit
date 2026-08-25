@@ -370,6 +370,7 @@ Use the **official Go client** only for proofs.
 - Calibration below the floor fails. SOL is outside the default universe. Galileo sealed ask stays disabled until VerifyE2EE is proven.
 - Impact prices must be finite. MCP forecasts never carry `sizeUsd`. Health JSON cannot include a session.
 - Strategy health needs 30 resolved samples. A TypeScript storage client is refused. MCP cannot export a session. Transfer of Agentic ID is not live on Aristotle.
+- Session keys cannot be exported as JSON. The fixture master address cannot be the product user. Spot USDC counts as funded. Signing never happens in the browser.
 - Watch never places orders. MCP opportunities never trade.
 - CLI never prints session secrets.
 - Web bundle must not contain session private-key types.
