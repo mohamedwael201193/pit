@@ -25,10 +25,14 @@ func UploadArgs(j Job) ([]string, error) {
 	if j.InputPath == "" || j.RPC == "" || j.Indexer == "" {
 		return nil, fmt.Errorf("incomplete_upload")
 	}
-	return []string{
+	args := []string{
 		"upload", "--rpc", j.RPC, "--indexer", j.Indexer,
 		"--encryption-key", j.KeyHex, j.InputPath,
-	}, nil
+	}
+	if err := UploadMustEncrypt(args); err != nil {
+		return nil, err
+	}
+	return args, nil
 }
 
 func DownloadArgs(j Job) ([]string, error) {
