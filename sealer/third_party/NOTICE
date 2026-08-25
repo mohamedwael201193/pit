@@ -1,0 +1,3 @@
+Vendored Direct TeeML protocol (HPKE SealRequest, OpenResponse, VerifyE2EE)
+from the official 0G compute E2EE source. Used only for the native sealer.
+Judges can build without a local research checkout.
