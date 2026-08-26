@@ -16,3 +16,12 @@ func TestPipedYesDenied(t *testing.T) {
 		t.Fatal(err)
 	}
 }
+
+func TestExpiredSessionCannotAuthorize(t *testing.T) {
+	if err := ConfirmAuthorizeSession(true, "AUTHORIZE", true, false); err == nil {
+		t.Fatal("expired")
+	}
+	if err := ConfirmAuthorizeSession(true, "AUTHORIZE", true, true); err != nil {
+		t.Fatal(err)
+	}
+}

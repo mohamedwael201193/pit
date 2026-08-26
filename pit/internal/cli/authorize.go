@@ -22,6 +22,13 @@ func ConfirmAuthorize(isTTY bool, typed string, iUnderstand bool) error {
 	return nil
 }
 
+func ConfirmAuthorizeSession(isTTY bool, typed string, iUnderstand, sessionAlive bool) error {
+	if !sessionAlive {
+		return fmt.Errorf("session_expired")
+	}
+	return ConfirmAuthorize(isTTY, typed, iUnderstand)
+}
+
 func StdinIsTTY(mode uint32, isCharDevice bool) bool {
 	return isCharDevice && mode != 0
 }
