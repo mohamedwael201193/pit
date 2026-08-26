@@ -25,8 +25,43 @@ h1 { font-size: 48px; line-height: 0.95; letter-spacing: -0.04em; margin: 12px 0
 .row button { border: 0; border-radius: 999px; padding: 12px 24px; font-weight: 600; cursor: pointer; }
 .row .on { background: var(--coral); color: #fff; }
 .row .off { background: #15171b; color: var(--cream); }
+.start {
+  display: grid;
+  grid-template-columns: 1.35fr 1fr;
+  gap: 16px;
+  margin-top: 28px;
+}
+.start article {
+  border: 1px solid #222;
+  border-radius: 20px;
+  padding: 20px;
+}
+.start article:first-child { background: #111318; }
+.auth input {
+  display: block;
+  width: 100%;
+  margin-top: 12px;
+  background: #111318;
+  border: 1px solid #333;
+  color: var(--cream);
+  padding: 12px 14px;
+  border-radius: 12px;
+}
+.auth button {
+  margin-top: 12px;
+  border: 0;
+  border-radius: 999px;
+  padding: 12px 24px;
+  font-weight: 600;
+  background: var(--coral);
+  color: #fff;
+  cursor: pointer;
+}
+.auth button:disabled { opacity: 0.4; cursor: not-allowed; }
+.auth .err { color: var(--coral); margin-top: 12px; }
 @media (max-width: 900px) {
   .split { grid-template-columns: 1fr; }
+  .start { grid-template-columns: 1fr; }
 }
 @media (prefers-reduced-motion: reduce) {
   * { animation: none !important; transition: none !important; }

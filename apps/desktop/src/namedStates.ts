@@ -8,6 +8,8 @@ export const NAMED = {
   SEED_FORBIDDEN: "PIT never asks for a seed phrase.",
   TWO_WALLETS: "Two wallets never share a workspace, session, or memory key.",
   TRANSFER_NOT_LIVE: "Transfer of Agentic ID is not live on mainnet.",
+  AUTHORIZE_EXACT: "Type AUTHORIZE on the exact preview. Piped yes is never enough.",
+  AUTHORIZE_REFUSED: "Authorization refused. The token did not match.",
 } as const;
 
 export const PERMISSIONS = [

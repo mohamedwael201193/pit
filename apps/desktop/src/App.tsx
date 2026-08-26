@@ -11,6 +11,8 @@ import { NetworkToggle } from "./NetworkToggle";
 import { PermissionsCard } from "./Permissions";
 import { PolicyLaw } from "./PolicyLaw";
 import { Progress } from "./Progress";
+import { StartCards } from "./StartCards";
+import { AuthorizeGate } from "./AuthorizeGate";
 
 type Net = "mainnet" | "testnet";
 
@@ -40,7 +42,9 @@ export function App() {
           <p className="eyebrow">YOUR DESK</p>
           <h1>Authorize on this machine. Never in the browser.</h1>
           <p className="lead">{NAMED.SEED_FORBIDDEN}</p>
+          <StartCards />
           <BindNote />
+          <AuthorizeGate sessionAlive={false} />
           <NoSession />
           <RecoverNote />
           <PermissionsCard />
