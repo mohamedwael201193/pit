@@ -256,23 +256,28 @@ go run ./cmd/pit status
 go run ./cmd/pit opportunities
 go run ./cmd/pit ask --market market.json --book book.json
 go run ./cmd/pit forecast
+go run ./cmd/pit preview --market ETH --side buy --forecast <id>
 go run ./cmd/pit verify --preview 0x... --root 0x... --network mainnet --workspace <id>
 go run ./cmd/pit kill
 ```
 
 Full command set:
 
-`init` `login` `policy` `session` `ask` `opportunities` `forecast` `preview` `authorize` `cancel` `status` `resolve` `card` `verify` `kill`
+`init` `login` `policy` `session` `ask` `opportunities` `forecast` `preview` `authorize` `cancel` `status` `resolve` `card` `verify` `proof` `kill`
 
 `session` creates a one-hour order/cancel agent in the local keyring. It prints the agent address. It never prints the key. Your wallet must `approveAgent` that address.
 
-`authorize` requires a TTY, `--i-understand`, the exact word `AUTHORIZE`, and a live session. Piped `yes` is rejected. A matching token still cannot place an order until a bound preview exists.
+`preview` prints the exact bound fields from a **live mark** and the host sizer. It requires `--market`, `--side`, `--forecast`, and a live session. The model cannot set size. Any later mutation of the card invalidates `AUTHORIZE`.
+
+`proof` uses the official Go storage client with `--proof`. It does not use a global memory key.
+
+`authorize` requires a TTY, `--i-understand`, the exact word `AUTHORIZE`, a live session, and a bound preview. Piped `yes` is rejected. A matching token still does not place an order until the exchange post is a separate, bound step.
 
 `opportunities` reads live venue books for the policy allowlist and never places an order. Empty Watch is a real empty state.
 
 `policy` prints the law and pins the hash for the bound workspace. A later mutation of clip, assets, or kill fails closed.
 
-`preview` prints the exact bound fields and refuses to authorize a mutated card. Restarting the process keeps a previewed action. A second click does not apply twice.
+Restarting the process keeps a previewed action. A second click does not apply twice.
 
 Web refresh cannot sign. Desktop recovers the exact preview from the local ledger. Two wallets never share a workspace.
 
