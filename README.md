@@ -271,7 +271,7 @@ Full command set:
 
 `proof` uses the official Go storage client with `--proof`. It does not use a global memory key.
 
-`authorize` requires a TTY, `--i-understand`, the exact word `AUTHORIZE`, a live session, and a bound preview. Piped `yes` is rejected. A matching token still does not place an order until the exchange post is a separate, bound step.
+`authorize` requires a TTY, `--i-understand`, the exact word `AUTHORIZE`, a live session, and a bound preview. Piped `yes` is rejected. A matching token records `authorized` on the local ledger for that workspace and clientOrderId. A second click is `duplicate_click`. An unsigned payload never reaches the venue.
 
 `opportunities` reads live venue books for the policy allowlist and never places an order. Empty Watch is a real empty state.
 
@@ -426,6 +426,7 @@ Use the **official Go client** only for proofs.
 - Playwright specs never stub TeeML success and never place an order.
 - `pit authorize` still fails closed without a live session, even after the exact token is typed.
 - The browser SDK cannot authorize. MCP cannot bind another user's workspace.
+- An unsigned exchange payload never posts. MCP cannot `post`. The browser SDK cannot post.
 
 If a Direct request fails, PIT **stops**. It does not retry on the Router.
 
@@ -437,7 +438,7 @@ If a Direct request fails, PIT **stops**. It does not retry on the Router.
 - Galileo iTransfer is an official path; PIT has **not** shown a transfer tx that changes `ownerOf`.
 - Galileo sealed committee is **not** the mainnet glm-5.2 committee. VerifyE2EE on Omni is still required before enabling testnet sealed ask.
 - Live Direct Seal + VerifyE2EE needs `PIT_COMMITTEE_BIN` (build `sealer/`) and `PIT_DIRECT_AUTH_FILE`. Python and TypeScript sealers are refused. A missing binary returns `sealer_not_wired`. A missing Direct token returns `direct_token_required`. A Router `sk-` key returns `router_api_key_denied`. Plaintext sealer output returns `TEE_VERIFY_FAIL`. The three roles share one provider unless the auth files actually differ.
-- Live Hyperliquid dust (`order` then `cancel`) still requires a funded account on the matching venue and a user `AUTHORIZE`.
+- Live Hyperliquid dust (`order` then `cancel`) still requires a funded account on the matching venue, a user `AUTHORIZE`, a resolved asset index, and a signed exchange payload. An unsigned authorized ledger row is not a fill.
 - Desktop is the local authorize shell; full OS keychain packaging (Tauri / stronghold) can still be tightened.
 - Do not claim hardware quotes unless the verifier is wired.
 
