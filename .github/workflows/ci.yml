@@ -12,6 +12,18 @@ jobs:
         with:
           go-version: "1.22.x"
       - run: go test ./...
+  sealer:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: sealer
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.24.x"
+      - run: go test ./...
+      - run: go build -o pit-sealer .
   contracts:
     runs-on: ubuntu-latest
     defaults:
