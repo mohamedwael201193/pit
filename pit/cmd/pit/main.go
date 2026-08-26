@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/mohamedwael201193/pit/internal/calib"
 	"github.com/mohamedwael201193/pit/internal/cli"
@@ -40,7 +41,7 @@ Commands:
 
 PIT never asks for a seed phrase or a trading secret.
 Session keys stay on this machine.
-authorize requires a TTY and the exact word AUTHORIZE.
+authorize requires a TTY, the exact word AUTHORIZE, and a live session on this machine.
 `)
 }
 
@@ -336,7 +337,7 @@ func cmdAuthorize(args []string) {
 	fmt.Fprintln(os.Stderr, "Type AUTHORIZE to sign the exact preview (order or cancel only):")
 	var typed string
 	_, _ = fmt.Fscanln(os.Stdin, &typed)
-	if err := cli.ConfirmAuthorize(true, typed, true); err != nil {
+	if err := cli.RunAuthorize(true, typed, true, session.Session{}, time.Now().UnixMilli()); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(2)
 	}
