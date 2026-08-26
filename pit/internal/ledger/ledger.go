@@ -3,6 +3,7 @@ package ledger
 import (
 	"database/sql"
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -27,6 +28,9 @@ type Store struct {
 func Open(dir, network, workspaceID string) (*Store, error) {
 	if workspaceID == "" {
 		return nil, fmt.Errorf("workspace required")
+	}
+	if err := os.MkdirAll(dir, 0o700); err != nil {
+		return nil, err
 	}
 	path := filepath.Join(dir, network+"-"+workspaceID+".db")
 	db, err := sql.Open("sqlite", path)
