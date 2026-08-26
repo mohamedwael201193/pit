@@ -49,3 +49,7 @@ history.md
 **/test-results/
 **/blob-report/
 **/*.tsbuildinfo
+sealer/pit-sealer
+sealer/pit-sealer.exe
+pit/pit
+pit/pit.exe
