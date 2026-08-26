@@ -16,6 +16,7 @@ import { AuthorizeGate } from "./AuthorizeGate";
 import { LocalSign } from "./LocalSign";
 import { SessionNote } from "./SessionNote";
 import { PreviewNote } from "./PreviewNote";
+import { LedgerNote } from "./LedgerNote";
 
 type Net = "mainnet" | "testnet";
 
@@ -51,6 +52,7 @@ export function App() {
           <LocalSign />
           <SessionNote />
           <PreviewNote />
+          <LedgerNote />
           <NoSession />
           <RecoverNote />
           <PermissionsCard />
