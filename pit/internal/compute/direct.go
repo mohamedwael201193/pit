@@ -2,7 +2,6 @@ package compute
 
 import (
 	"fmt"
-	"os"
 	"strings"
 )
 
@@ -45,6 +44,3 @@ func PrepareDirect(j DirectJob) ([]string, error) {
 	}, nil
 }
 
-func LookBin() string {
-	return strings.TrimSpace(os.Getenv("PIT_COMMITTEE_BIN"))
-}
