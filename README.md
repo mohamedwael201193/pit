@@ -168,7 +168,8 @@ pit/                 Go module github.com/mohamedwael201193/pit
                      hl, engine, exec, compute, ledger, storage, memory,
                      chain8004, deskid, calib, watch, verify, cli, ui
   mcp/               Allowed tool list (no authorize / order / key export)
-  sdk/               Typed client; CanSign is always false
+  sdk/               Typed Go client; CanSign is always false
+sdk/js               Browser package; canSign is always false
 contracts/           Foundry 0.8.24 — PitDeskID, PitPolicy, PitReceipts,
                      PitForecasts, PitMemory
 sealer/              Native Direct TeeML binary (HPKE Seal + VerifyE2EE)
@@ -239,7 +240,7 @@ go test -tags live ./internal/hl -count=1
 
 CI runs the same Go and Foundry suites on every push (`.github/workflows/ci.yml`). Foundry currently reports **26** tests.
 
-The Go health process (`pit/cmd/health`) exposes `GET /health` and always reports `sign: false`. In product mode it refuses `PIT_SESSION_KEY`, `HL_SECRET`, and `PIT_MEMORY_KEY` in the process environment.
+The Go health process (`pit/cmd/health`) exposes `GET /health` and `GET /watch`. Both always report `sign: false`. `/watch` returns live venue books or a real empty list. It never places an order and never includes a private book. In product mode the process refuses `PIT_SESSION_KEY`, `HL_SECRET`, and `PIT_MEMORY_KEY` in the environment.
 
 ### CLI
 
@@ -250,7 +251,7 @@ go run ./cmd/pit login
 go run ./cmd/pit policy
 go run ./cmd/pit status
 go run ./cmd/pit opportunities
-go run ./cmd/pit ask
+go run ./cmd/pit ask --market market.json --book book.json
 go run ./cmd/pit forecast
 go run ./cmd/pit verify --preview 0x... --root 0x... --network mainnet --workspace <id>
 go run ./cmd/pit kill
@@ -272,7 +273,7 @@ Web refresh cannot sign. Desktop recovers the exact preview from the local ledge
 
 `cancel` and `resolve` require a bound workspace and a live session. Cancel cannot withdraw.
 
-`ask` runs the sealed Direct path. Missing `PIT_COMMITTEE_BIN`, missing `PIT_DIRECT_AUTH_FILE`, an unauthorized desk, Galileo VerifyE2EE-unproven, or a Router URL all stop the operation. There is no fallback. MCP cannot export the auth file or invoke the sealer.
+`ask` requires `--market` and `--book` files. Missing files return `empty_envelope`. Missing `PIT_COMMITTEE_BIN`, missing `PIT_DIRECT_AUTH_FILE`, an unauthorized desk, Galileo VerifyE2EE-unproven, or a Router URL all stop the operation. There is no fallback. MCP cannot export the auth file or invoke the sealer.
 
 ### MCP (read-only)
 
@@ -389,7 +390,7 @@ Use the **official Go client** only for proofs.
 - Strategy health needs 30 resolved samples. A TypeScript storage client is refused. MCP cannot export a session. Transfer of Agentic ID is not live on Aristotle.
 - Session keys cannot be exported as JSON. The fixture master address cannot be the product user. Spot USDC counts as funded. Signing never happens in the browser.
 - SIWE nonces cannot replay. Preview nonces must match. MCP cannot place orders. A Galileo desk address cannot be used on Aristotle.
-- Watch never places orders. MCP opportunities never trade.
+- Watch never places orders. MCP opportunities never trade. `GET /watch` cannot include a private book.
 - CLI never prints session secrets.
 - Web bundle must not contain session private-key types.
 
