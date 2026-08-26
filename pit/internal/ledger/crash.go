@@ -5,7 +5,7 @@ import "fmt"
 // AfterCrash never reposts a signed or receipted action without an exchange view.
 func AfterCrash(local Record, exchangeKnown bool, exchangeOID string) error {
 	switch local.Status {
-	case StatusSigned, StatusReceipt:
+	case StatusSigned, StatusReceipt, StatusAuthorized:
 		if !exchangeKnown {
 			return fmt.Errorf("query_exchange_after_crash")
 		}

@@ -15,4 +15,7 @@ func TestAfterCrash(t *testing.T) {
 	if err := AfterCrash(Record{Status: StatusTimeout}, false, ""); err == nil {
 		t.Fatal("timeout")
 	}
+	if err := AfterCrash(Record{Status: StatusAuthorized}, false, ""); err == nil {
+		t.Fatal("authorized")
+	}
 }
