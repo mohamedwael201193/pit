@@ -1,5 +1,5 @@
-import { Attention } from "./Attention";
+import { WatchHome } from "./WatchHome";
 
 export function EmptyWatch() {
-  return <Attention count={0} />;
+  return <WatchHome />;
 }
