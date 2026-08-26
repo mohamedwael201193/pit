@@ -224,6 +224,14 @@ func cmdStatus() {
 	fmt.Println("sign      never in the browser")
 	fmt.Println("expired  ", cli.ExpiredCopy)
 	fmt.Println("revoked  ", cli.RevokedCopy)
+	if p, h, err := cli.LoadPreview(stateDir()); err == nil {
+		fmt.Printf("preview   %s\n", h)
+		if rec, err := cli.LookupAction(stateDir(), st.Network, st.WorkspaceID, p.Cloid); err == nil {
+			fmt.Printf("ledger    %s\n", rec.Status)
+		} else {
+			fmt.Println("ledger    none")
+		}
+	}
 }
 
 func cmdKill() {
@@ -445,10 +453,30 @@ func cmdAuthorize(args []string) {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(2)
 	}
+	h := pitexec.HashForAuthorize(hash)
+	used := map[string]struct{}{}
+	if err := pitexec.Prepare(pitexec.Intent{
+		Action:    "order",
+		Preview:   card,
+		Hash:      h,
+		Workspace: live.Workspace,
+	}, time.Now().UnixMilli(), used); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(2)
+	}
+	if err := cli.RememberAuthorized(stateDir(), st.Network, live.Workspace, card.Cloid, h); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(2)
+	}
 	fmt.Println("order allowed")
 	fmt.Println("cancel allowed")
 	fmt.Println("withdraw denied")
 	fmt.Println("preview bound")
+	fmt.Println("authorized")
+	fmt.Println("ledger    recorded")
+	if err := pitexec.RefuseUnsigned(false); err != nil {
+		fmt.Println(err)
+	}
 	fmt.Println("PIT did not send an order")
 }
 
