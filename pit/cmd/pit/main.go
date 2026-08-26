@@ -26,7 +26,7 @@ Commands:
   pit login
   pit network
   pit policy
-  pit ask
+  pit ask --market market.json --book book.json
   pit opportunities
   pit forecast
   pit preview
@@ -72,7 +72,7 @@ func main() {
 	case "card":
 		cmdCard()
 	case "ask":
-		cmdAsk()
+		cmdAsk(os.Args[2:])
 	case "forecast":
 		cmdForecast()
 	case "preview":
@@ -232,7 +232,7 @@ func cmdOpportunities() {
 	}
 }
 
-func cmdAsk() {
+func cmdAsk(args []string) {
 	st, err := cli.Load(stateDir())
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "ask requires pit init first")
@@ -243,7 +243,17 @@ func cmdAsk() {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(2)
 	}
-	if err := compute.ProductAsk(net, false, compute.LookBin()); err != nil {
+	marketPath, bookPath, err := cli.ParseAskFlags(args)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "ask requires --market and --book files")
+		os.Exit(2)
+	}
+	market, book, err := compute.LoadEnvelope(marketPath, bookPath)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(2)
+	}
+	if err := compute.ProductAskEnvelope(net, false, compute.LookBin(), market, book); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(2)
 	}
