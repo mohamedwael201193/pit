@@ -27,6 +27,7 @@ Commands:
   pit login
   pit network
   pit policy
+  pit session
   pit ask --market market.json --book book.json
   pit opportunities
   pit forecast
@@ -42,6 +43,7 @@ Commands:
 PIT never asks for a seed phrase or a trading secret.
 Session keys stay on this machine.
 authorize requires a TTY, the exact word AUTHORIZE, and a live session on this machine.
+pit session creates a one-hour order/cancel agent in the local keyring. It never prints the key.
 `)
 }
 
@@ -62,6 +64,8 @@ func main() {
 		fmt.Println("PIT never asks for your private key.")
 	case "policy":
 		cmdPolicy()
+	case "session":
+		cmdSession()
 	case "status":
 		cmdStatus()
 	case "kill":
@@ -162,8 +166,34 @@ func cmdInit(args []string) {
 	fmt.Printf("workspace %s\n", ws.ID)
 	fmt.Printf("network   %s\n", ws.Network)
 	fmt.Printf("wallet    %s\n", ws.EVM)
-	fmt.Println("session   not created — pit will never withdraw")
+	fmt.Println("session   not created — pit session then your wallet approveAgent")
 	_ = session.AllowedActions
+}
+
+func cmdSession() {
+	st, err := cli.Load(stateDir())
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "session requires pit init first")
+		os.Exit(2)
+	}
+	sf, err := cli.CreateLocalSession(stateDir(), st.WorkspaceID, st.Network, "v1")
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+	name, err := session.AgentName(st.WorkspaceID)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+	fmt.Printf("agent     %s\n", sf.AgentAddr)
+	fmt.Printf("name      %s\n", name)
+	fmt.Printf("expires   %d\n", sf.Expires)
+	fmt.Println("ttl       1h")
+	fmt.Println("order     allowed")
+	fmt.Println("cancel    allowed")
+	fmt.Println("withdraw  denied")
+	fmt.Println("your wallet must approveAgent this address. PIT never prints the session key.")
 }
 
 func cmdStatus() {
@@ -178,7 +208,13 @@ func cmdStatus() {
 	fmt.Printf("network   %s\n", st.Network)
 	fmt.Printf("wallet    %s\n", st.Wallet)
 	fmt.Printf("kill      %v\n", st.Kill)
-	fmt.Println("session   none on this CLI until desktop or keychain bind")
+	if s, err := cli.LiveFromDisk(stateDir(), st.Kill, time.Now().UnixMilli()); err == nil {
+		fmt.Printf("session   live %s\n", s.AgentAddr)
+		fmt.Printf("expires   %d\n", s.Expires)
+		fmt.Println("perms     order yes  cancel yes  withdraw no")
+	} else {
+		fmt.Println("session   none on this CLI until pit session")
+	}
 	fmt.Println("sign      never in the browser")
 	fmt.Println("expired  ", cli.ExpiredCopy)
 	fmt.Println("revoked  ", cli.RevokedCopy)
@@ -337,11 +373,24 @@ func cmdAuthorize(args []string) {
 	fmt.Fprintln(os.Stderr, "Type AUTHORIZE to sign the exact preview (order or cancel only):")
 	var typed string
 	_, _ = fmt.Fscanln(os.Stdin, &typed)
-	if err := cli.RunAuthorize(true, typed, true, session.Session{}, time.Now().UnixMilli()); err != nil {
+	st, err := cli.Load(stateDir())
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "authorize requires pit init first")
+		os.Exit(2)
+	}
+	live, liveErr := cli.LiveFromDisk(stateDir(), st.Kill, time.Now().UnixMilli())
+	if err := cli.RunAuthorize(true, typed, true, live, time.Now().UnixMilli()); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(2)
 	}
-	fmt.Fprintln(os.Stderr, "authorize requires a bound workspace and a live session. Run pit init first.")
+	if liveErr != nil {
+		fmt.Fprintln(os.Stderr, liveErr)
+		os.Exit(2)
+	}
+	fmt.Println("order allowed")
+	fmt.Println("cancel allowed")
+	fmt.Println("withdraw denied")
+	fmt.Fprintf(os.Stderr, "preview required before an order for workspace %s\n", live.Workspace)
 	os.Exit(2)
 }
 
