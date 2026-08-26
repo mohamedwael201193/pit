@@ -19,4 +19,8 @@ func TestRecoverNeverBlindRepost(t *testing.T) {
 	if err == nil || ok {
 		t.Fatal("timeout")
 	}
+	ok, err = Recover(Record{Status: StatusAuthorized}, "", false)
+	if err == nil || ok {
+		t.Fatal("authorized without exchange view must not repost")
+	}
 }

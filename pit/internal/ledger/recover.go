@@ -3,10 +3,11 @@ package ledger
 import "fmt"
 
 const (
-	StatusPreviewed = "previewed"
-	StatusSigned    = "signed"
-	StatusReceipt   = "receipt"
-	StatusTimeout   = "timeout"
+	StatusPreviewed   = "previewed"
+	StatusAuthorized  = "authorized"
+	StatusSigned      = "signed"
+	StatusReceipt     = "receipt"
+	StatusTimeout     = "timeout"
 )
 
 func (s *Store) Mark(workspace, cloid, status, oid string) error {
@@ -28,7 +29,7 @@ func Recover(local Record, exchangeOID string, exchangeKnown bool) (repost bool,
 	switch local.Status {
 	case StatusPreviewed:
 		return true, nil
-	case StatusSigned, StatusReceipt:
+	case StatusAuthorized, StatusSigned, StatusReceipt:
 		if exchangeKnown && exchangeOID != "" {
 			return false, nil
 		}
