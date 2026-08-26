@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { BindNote } from "./BindNote";
 import { EmptyHome } from "./EmptyHome";
 import { RecoverNote } from "./RecoverNote";
@@ -6,6 +7,7 @@ import { KillNote } from "./KillNote";
 import { NAMED } from "./namedStates";
 import { NoSession } from "./NoSession";
 import { NetworkBanner } from "./NetworkBanner";
+import { NetworkToggle } from "./NetworkToggle";
 import { PermissionsCard } from "./Permissions";
 import { PolicyLaw } from "./PolicyLaw";
 import { Progress } from "./Progress";
@@ -24,7 +26,7 @@ const RING = [
 ];
 
 export function App() {
-  const net: Net = "mainnet";
+  const [net, setNet] = useState<Net>("mainnet");
   return (
     <div className="shell">
       <header className="top">
@@ -45,6 +47,7 @@ export function App() {
           <PolicyLaw />
           <EmptyHome />
           <Progress current="WAITING_FOR_USER" />
+          <NetworkToggle net={net} onChange={setNet} />
           <NetworkBanner net={net} />
           <IsolateNote />
           <KillNote />
