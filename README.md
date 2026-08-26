@@ -414,6 +414,8 @@ Use the **official Go client** only for proofs.
 - Web bundle must not contain session private-key types.
 - An expired session cannot type `AUTHORIZE`. A ledger record from another workspace is `wrong_workspace`.
 - Playwright specs never stub TeeML success and never place an order.
+- `pit authorize` still fails closed without a live session, even after the exact token is typed.
+- The browser SDK cannot authorize. MCP cannot bind another user's workspace.
 
 If a Direct request fails, PIT **stops**. It does not retry on the Router.
 
