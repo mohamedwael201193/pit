@@ -14,6 +14,7 @@ import { Progress } from "./Progress";
 import { StartCards } from "./StartCards";
 import { AuthorizeGate } from "./AuthorizeGate";
 import { LocalSign } from "./LocalSign";
+import { SessionNote } from "./SessionNote";
 
 type Net = "mainnet" | "testnet";
 
@@ -47,6 +48,7 @@ export function App() {
           <BindNote />
           <AuthorizeGate sessionAlive={false} />
           <LocalSign />
+          <SessionNote />
           <NoSession />
           <RecoverNote />
           <PermissionsCard />
