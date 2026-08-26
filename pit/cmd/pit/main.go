@@ -4,16 +4,19 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/mohamedwael201193/pit/internal/calib"
 	"github.com/mohamedwael201193/pit/internal/cli"
 	"github.com/mohamedwael201193/pit/internal/compute"
 	"github.com/mohamedwael201193/pit/internal/config"
+	pitexec "github.com/mohamedwael201193/pit/internal/exec"
 	"github.com/mohamedwael201193/pit/internal/hl"
 	"github.com/mohamedwael201193/pit/internal/identity"
 	"github.com/mohamedwael201193/pit/internal/policy"
 	"github.com/mohamedwael201193/pit/internal/session"
+	"github.com/mohamedwael201193/pit/internal/storage"
 	"github.com/mohamedwael201193/pit/internal/verify"
 	"github.com/mohamedwael201193/pit/internal/watch"
 	"github.com/mohamedwael201193/pit/internal/workspace"
@@ -31,13 +34,14 @@ Commands:
   pit ask --market market.json --book book.json
   pit opportunities
   pit forecast
-  pit preview
+  pit preview --market ETH --side buy --forecast <id>
   pit authorize --i-understand
   pit cancel
   pit status
   pit resolve
   pit card
   pit verify --preview 0x... --root 0x... --network mainnet --workspace <id>
+  pit proof --root 0x... --out file
   pit kill
 
 PIT never asks for a seed phrase or a trading secret.
@@ -81,7 +85,7 @@ func main() {
 	case "forecast":
 		cmdForecast()
 	case "preview":
-		cmdPreview()
+		cmdPreview(os.Args[2:])
 	case "cancel":
 		cmdCancel()
 	case "resolve":
@@ -90,6 +94,8 @@ func main() {
 		cmdAuthorize(os.Args[2:])
 	case "verify":
 		cmdVerify(os.Args[2:])
+	case "proof":
+		cmdProof(os.Args[2:])
 	case "help", "-h", "--help":
 		usage()
 	default:
@@ -307,16 +313,55 @@ func cmdForecast() {
 	os.Exit(2)
 }
 
-func cmdPreview() {
+func cmdPreview(args []string) {
+	coin, side, forecast, err := cli.ParsePreviewFlags(args)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "preview requires --market --side --forecast")
+		os.Exit(2)
+	}
 	st, err := cli.Load(stateDir())
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "preview requires pit init first")
 		os.Exit(2)
 	}
+	live, err := cli.LiveFromDisk(stateDir(), st.Kill, time.Now().UnixMilli())
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(2)
+	}
+	net, err := config.ParseNetwork(st.Network)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(2)
+	}
+	book, err := hl.New(config.For(net)).PublicBook(strings.ToUpper(coin))
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+	cloid, err := cli.NewCloid()
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+	p, err := cli.HostPreview(coin, side, forecast, book, policy.Default(), live, time.Now().UTC(), cloid, time.Now().UnixMilli())
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(2)
+	}
+	hash, err := cli.SavePreview(stateDir(), p)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
 	fmt.Println(cli.PreviewCopy)
 	fmt.Println(cli.MutationInvalidates())
-	fmt.Fprintf(os.Stderr, "preview requires a live session for workspace %s\n", st.WorkspaceID)
-	os.Exit(2)
+	fmt.Printf("hash    %s\n", hash)
+	fmt.Printf("market  %s\n", p.Market)
+	fmt.Printf("side    %s\n", p.Side)
+	fmt.Printf("sz      %g\n", p.Sz)
+	fmt.Printf("cloid   %s\n", p.Cloid)
+	fmt.Println("model size was ignored")
 }
 
 func cmdCancel() {
@@ -387,11 +432,24 @@ func cmdAuthorize(args []string) {
 		fmt.Fprintln(os.Stderr, liveErr)
 		os.Exit(2)
 	}
+	card, hash, err := cli.LoadPreview(stateDir())
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(2)
+	}
+	if card.WorkspaceID != live.Workspace || card.SessionID != live.ID {
+		fmt.Fprintln(os.Stderr, "wrong_workspace")
+		os.Exit(2)
+	}
+	if err := pitexec.RequirePreview(card, hash, time.Now().UnixMilli()); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(2)
+	}
 	fmt.Println("order allowed")
 	fmt.Println("cancel allowed")
 	fmt.Println("withdraw denied")
-	fmt.Fprintf(os.Stderr, "preview required before an order for workspace %s\n", live.Workspace)
-	os.Exit(2)
+	fmt.Println("preview bound")
+	fmt.Println("PIT did not send an order")
 }
 
 func cmdVerify(args []string) {
@@ -431,4 +489,13 @@ func cmdVerify(args []string) {
 	}
 	fmt.Println("receipt fields well-formed")
 	fmt.Println("recompute the storage proof with the official Go client --proof")
+}
+
+func cmdProof(args []string) {
+	if err := storage.RefuseMissingProof(storage.LookCLI()); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(2)
+	}
+	fmt.Fprintln(os.Stderr, "proof download needs --root, --out, and a workspace key file. PIT does not use a global memory key.")
+	os.Exit(2)
 }
