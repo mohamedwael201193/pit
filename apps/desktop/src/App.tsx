@@ -13,6 +13,7 @@ import { PolicyLaw } from "./PolicyLaw";
 import { Progress } from "./Progress";
 import { StartCards } from "./StartCards";
 import { AuthorizeGate } from "./AuthorizeGate";
+import { LocalSign } from "./LocalSign";
 
 type Net = "mainnet" | "testnet";
 
@@ -45,6 +46,7 @@ export function App() {
           <StartCards />
           <BindNote />
           <AuthorizeGate sessionAlive={false} />
+          <LocalSign />
           <NoSession />
           <RecoverNote />
           <PermissionsCard />
