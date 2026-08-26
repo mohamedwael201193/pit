@@ -18,3 +18,5 @@ export function attention(count: number): string {
 export function refuseSessionExport(): never {
   throw new Error("session_export_denied");
 }
+
+export { refuseAuthorize } from "./authorize";

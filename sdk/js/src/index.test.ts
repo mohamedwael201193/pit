@@ -1,4 +1,4 @@
-import { attention, canExecute, canSign, explorer, refuseSessionExport } from "./index.ts";
+import { attention, canExecute, canSign, explorer, refuseAuthorize, refuseSessionExport } from "./index.ts";
 
 function assert(cond: unknown, msg: string) {
   if (!cond) throw new Error(msg);
@@ -14,4 +14,10 @@ try {
   throw new Error("export");
 } catch (e) {
   if (!(e instanceof Error) || e.message !== "session_export_denied") throw e;
+}
+try {
+  refuseAuthorize();
+  throw new Error("authorize");
+} catch (e) {
+  if (!(e instanceof Error) || e.message !== "authorize_denied") throw e;
 }
