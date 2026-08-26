@@ -125,6 +125,8 @@ go build -o pit-sealer .
 # then set PIT_COMMITTEE_BIN to that file
 ```
 
+From the repository root you can also run `make sealer` then `make pit`. If `PIT_COMMITTEE_BIN` is empty, PIT looks for `sealer/pit-sealer` next to the working directory. A missing binary still returns `sealer_not_wired`.
+
 `PIT_DIRECT_AUTH_FILE` is a JSON file with the Direct provider URL, TeeML flag, on-chain teeSigner, and a wallet-signed `app-sk-` token. A Router dashboard `sk-` / `mk-` key is refused. The sealer writes evidence without the prompt or the authorization header.
 
 The product committee is three sealed roles in order: researcher, challenger, risk. Role and envelope are split. This is not three independent providers unless the auth files actually differ.
@@ -247,6 +249,7 @@ The Go health process (`pit/cmd/health`) exposes `GET /health` and `GET /watch`.
 ```powershell
 cd pit
 go run ./cmd/pit init --network testnet --wallet 0xYourAddress
+go run ./cmd/pit session
 go run ./cmd/pit login
 go run ./cmd/pit policy
 go run ./cmd/pit status
@@ -259,9 +262,11 @@ go run ./cmd/pit kill
 
 Full command set:
 
-`init` `login` `policy` `ask` `opportunities` `forecast` `preview` `authorize` `cancel` `status` `resolve` `card` `verify` `kill`
+`init` `login` `policy` `session` `ask` `opportunities` `forecast` `preview` `authorize` `cancel` `status` `resolve` `card` `verify` `kill`
 
-`authorize` requires a TTY, `--i-understand`, and the exact word `AUTHORIZE`. Piped `yes` is rejected.
+`session` creates a one-hour order/cancel agent in the local keyring. It prints the agent address. It never prints the key. Your wallet must `approveAgent` that address.
+
+`authorize` requires a TTY, `--i-understand`, the exact word `AUTHORIZE`, and a live session. Piped `yes` is rejected. A matching token still cannot place an order until a bound preview exists.
 
 `opportunities` reads live venue books for the policy allowlist and never places an order. Empty Watch is a real empty state.
 
