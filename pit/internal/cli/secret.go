@@ -7,7 +7,7 @@ import (
 
 func RefusePrint(s string) error {
 	low := strings.ToLower(s)
-	for _, w := range []string{"private_key", "mnemonic", "session_key", "hl_secret"} {
+	for _, w := range []string{"private_key", "mnemonic", "session_key", "hl_secret", "app-sk-", "authorization"} {
 		if strings.Contains(low, w) {
 			return fmt.Errorf("secret_print")
 		}

@@ -9,4 +9,7 @@ func TestRefusePrint(t *testing.T) {
 	if err := RefusePrint("session_key=0xabc"); err == nil {
 		t.Fatal("print")
 	}
+	if err := RefusePrint("Bearer app-sk-secret"); err == nil {
+		t.Fatal("token")
+	}
 }
