@@ -314,7 +314,26 @@ npm run dev
 
 Open http://localhost:3001
 
+The desk shows two start cards (wallet, session) and an authorize field. The authorize control stays disabled until a live session exists on this machine. Type `AUTHORIZE` on the exact preview. Piped yes is never enough.
+
 Session permissions card: order and cancel allowed; withdraw and leverage denied.
+
+### Playwright (labeled harness)
+
+The Playwright specs live in `apps/web/playwright/`. They assert public copy only. They never stub TeeML, never type `AUTHORIZE`, and never place an order.
+
+```powershell
+cd apps\web
+npm install
+npx playwright install chromium
+$env:VITE_PRIVY_APP_ID="cmtafcijw02av0cl1ay81om7m"
+npm run build
+npm run preview
+# in another shell, or let Playwright start preview on :4173
+npm run test:e2e
+```
+
+Copy-only harness files in `apps/web/e2e/` and `apps/desktop/e2e/` are not Playwright runners.
 
 ---
 
@@ -393,6 +412,8 @@ Use the **official Go client** only for proofs.
 - Watch never places orders. MCP opportunities never trade. `GET /watch` cannot include a private book.
 - CLI never prints session secrets.
 - Web bundle must not contain session private-key types.
+- An expired session cannot type `AUTHORIZE`. A ledger record from another workspace is `wrong_workspace`.
+- Playwright specs never stub TeeML success and never place an order.
 
 If a Direct request fails, PIT **stops**. It does not retry on the Router.
 
