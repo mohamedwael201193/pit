@@ -19,8 +19,9 @@ type Record struct {
 }
 
 type Store struct {
-	db *sql.DB
-	mu sync.Mutex
+	db        *sql.DB
+	mu        sync.Mutex
+	workspace string
 }
 
 func Open(dir, network, workspaceID string) (*Store, error) {
@@ -42,12 +43,15 @@ func Open(dir, network, workspaceID string) (*Store, error) {
 		_ = db.Close()
 		return nil, err
 	}
-	return &Store{db: db}, nil
+	return &Store{db: db, workspace: workspaceID}, nil
 }
 
 func (s *Store) Close() error { return s.db.Close() }
 
 func (s *Store) Apply(rec Record) (applied bool, err error) {
+	if err := s.RefuseForeign(rec.Workspace); err != nil {
+		return false, err
+	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	res, err := s.db.Exec(`INSERT INTO actions(cloid, workspace, preview, status, oid) VALUES(?,?,?,?,?)`,
@@ -63,6 +67,9 @@ func (s *Store) Apply(rec Record) (applied bool, err error) {
 }
 
 func (s *Store) Get(workspace, cloid string) (Record, error) {
+	if err := s.RefuseForeign(workspace); err != nil {
+		return Record{}, err
+	}
 	var r Record
 	err := s.db.QueryRow(`SELECT cloid, workspace, preview, status, oid FROM actions WHERE cloid=? AND workspace=?`, cloid, workspace).
 		Scan(&r.Cloid, &r.Workspace, &r.Preview, &r.Status, &r.OID)
