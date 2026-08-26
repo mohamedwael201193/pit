@@ -1,4 +1,4 @@
-import { attention, canExecute, canSign, explorer, refuseAuthorize, refuseSessionExport } from "./index.ts";
+import { attention, canExecute, canPostExchange, canSign, explorer, refuseAuthorize, refuseSessionExport, refuseUnsignedPost } from "./index.ts";
 
 function assert(cond: unknown, msg: string) {
   if (!cond) throw new Error(msg);
@@ -20,4 +20,11 @@ try {
   throw new Error("authorize");
 } catch (e) {
   if (!(e instanceof Error) || e.message !== "authorize_denied") throw e;
+}
+assert(canPostExchange === false, "post");
+try {
+  refuseUnsignedPost();
+  throw new Error("unsigned");
+} catch (e) {
+  if (!(e instanceof Error) || e.message !== "exchange_unsigned") throw e;
 }
