@@ -116,7 +116,18 @@ Galileo TeeML chat (ack’d, not claimed live for PIT until VerifyE2EE succeeds)
 - Provider `0xa48f01287233509FD694a22Bf840225062E67836`
 - teeSigner `0x83df4B8EbA7c0B3B740019b8c9a77ffF77D508cF`
 
-Set `PIT_COMMITTEE_BIN` to the local Direct sealer binary. A `.py` gate script is not the product path.
+Build the native sealer (Go 1.24) and point `PIT_COMMITTEE_BIN` at it. A `.py` gate script is not the product path.
+
+```powershell
+cd sealer
+go test ./...
+go build -o pit-sealer .
+# then set PIT_COMMITTEE_BIN to that file
+```
+
+`PIT_DIRECT_AUTH_FILE` is a JSON file with the Direct provider URL, TeeML flag, on-chain teeSigner, and a wallet-signed `app-sk-` token. A Router dashboard `sk-` / `mk-` key is refused. The sealer writes evidence without the prompt or the authorization header.
+
+The product committee is three sealed roles in order: researcher, challenger, risk. Role and envelope are split. This is not three independent providers unless the auth files actually differ.
 
 ---
 
@@ -160,6 +171,7 @@ pit/                 Go module github.com/mohamedwael201193/pit
   sdk/               Typed client; CanSign is always false
 contracts/           Foundry 0.8.24 — PitDeskID, PitPolicy, PitReceipts,
                      PitForecasts, PitMemory
+sealer/              Native Direct TeeML binary (HPKE Seal + VerifyE2EE)
 apps/web             Vite + Privy connect (no HL session)
 apps/desktop         Local authorize surface (session stays on the machine)
 .env.example         Public RPCs and addresses only
@@ -169,12 +181,13 @@ apps/desktop         Local authorize surface (session stays on the machine)
 
 ## Prerequisites
 
-- Go **1.22+**
+- Go **1.22+** for `pit/`
+- Go **1.24+** to build `sealer/`
 - Foundry (`forge`)
 - Node **20+** (web / desktop)
 - A wallet (Rabby / MetaMask). No seed phrase is ever collected.
 - Optional: official 0G storage Go client for `--proof` uploads
-- Optional: Direct committee binary at `PIT_COMMITTEE_BIN`
+- Direct sealer at `PIT_COMMITTEE_BIN` plus `PIT_DIRECT_AUTH_FILE` for sealed ask
 
 ---
 
@@ -207,6 +220,10 @@ Add `localhost:3000` (web) and `localhost:3001` (desktop) in the Privy dashboard
 ```powershell
 cd pit
 go test ./...
+
+cd ..\sealer
+go test ./...
+go build -o pit-sealer .
 
 cd ..\contracts
 forge install foundry-rs/forge-std OpenZeppelin/openzeppelin-contracts
@@ -255,7 +272,7 @@ Web refresh cannot sign. Desktop recovers the exact preview from the local ledge
 
 `cancel` and `resolve` require a bound workspace and a live session. Cancel cannot withdraw.
 
-`ask` runs the sealed Direct path. Missing `PIT_COMMITTEE_BIN`, an unauthorized desk, Galileo VerifyE2EE-unproven, or a Router URL all stop the operation. There is no fallback.
+`ask` runs the sealed Direct path. Missing `PIT_COMMITTEE_BIN`, missing `PIT_DIRECT_AUTH_FILE`, an unauthorized desk, Galileo VerifyE2EE-unproven, or a Router URL all stop the operation. There is no fallback. MCP cannot export the auth file or invoke the sealer.
 
 ### MCP (read-only)
 
@@ -385,7 +402,7 @@ If a Direct request fails, PIT **stops**. It does not retry on the Router.
 - Foundation Agentic ID **transfer is not live on Aristotle**. The UI must say so.
 - Galileo iTransfer is an official path; PIT has **not** shown a transfer tx that changes `ownerOf`.
 - Galileo sealed committee is **not** the mainnet glm-5.2 committee. VerifyE2EE on Omni is still required before enabling testnet sealed ask.
-- Live Direct Seal + VerifyE2EE inside the product binary needs `PIT_COMMITTEE_BIN` pointed at a native sealer. Python and TypeScript sealers are refused. A missing binary returns `sealer_not_wired`. Plaintext sealer output returns `TEE_VERIFY_FAIL`.
+- Live Direct Seal + VerifyE2EE needs `PIT_COMMITTEE_BIN` (build `sealer/`) and `PIT_DIRECT_AUTH_FILE`. Python and TypeScript sealers are refused. A missing binary returns `sealer_not_wired`. A missing Direct token returns `direct_token_required`. A Router `sk-` key returns `router_api_key_denied`. Plaintext sealer output returns `TEE_VERIFY_FAIL`. The three roles share one provider unless the auth files actually differ.
 - Live Hyperliquid dust (`order` then `cancel`) still requires a funded account on the matching venue and a user `AUTHORIZE`.
 - Desktop is the local authorize shell; full OS keychain packaging (Tauri / stronghold) can still be tightened.
 - Do not claim hardware quotes unless the verifier is wired.
