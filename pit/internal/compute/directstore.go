@@ -58,6 +58,22 @@ func LoadDirect(store keyring.Store, network, workspace, provider string) (strin
 	return auth, nil
 }
 
+func LoadDirectWithFallback(primary, secondary keyring.Store, network, workspace, provider string) (string, error) {
+	auth, err := LoadDirect(primary, network, workspace, provider)
+	if err == nil {
+		return auth, nil
+	}
+	if secondary == nil {
+		return "", err
+	}
+	auth, err = LoadDirect(secondary, network, workspace, provider)
+	if err != nil {
+		return "", err
+	}
+	_ = StoreDirect(primary, network, workspace, provider, auth)
+	return auth, nil
+}
+
 func DeleteDirect(store keyring.Store, network, workspace, provider string) error {
 	if store == nil {
 		return nil
@@ -75,8 +91,12 @@ func DeleteDirect(store keyring.Store, network, workspace, provider string) erro
 }
 
 func AuthFromKeychain(store keyring.Store, net config.Network, workspace string, now time.Time) (AuthFile, DirectMeta, error) {
+	return AuthFromStores(store, nil, net, workspace, now)
+}
+
+func AuthFromStores(primary, secondary keyring.Store, net config.Network, workspace string, now time.Time) (AuthFile, DirectMeta, error) {
 	sku := ForNetwork(net)
-	auth, err := LoadDirect(store, string(net), workspace, sku.Provider)
+	auth, err := LoadDirectWithFallback(primary, secondary, string(net), workspace, sku.Provider)
 	if err != nil {
 		return AuthFile{}, DirectMeta{}, err
 	}

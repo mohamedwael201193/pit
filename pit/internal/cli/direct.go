@@ -123,25 +123,39 @@ func ResolveWorkspaceAuth(dir string) (compute.AuthFile, compute.DirectMeta, err
 		return compute.AuthFile{}, compute.DirectMeta{}, err
 	}
 	store, err := keyring.OpenProduct(KeyringDir(dir))
-	if err == nil {
-		file, meta, err := compute.AuthFromKeychain(store, net, st.WorkspaceID, time.Now())
-		if err == nil {
-			return file, meta, nil
+	if err != nil {
+		file, err := compute.LoadEnvAuthFile()
+		if err != nil {
+			return compute.AuthFile{}, compute.DirectMeta{}, fmt.Errorf("direct_token_required")
 		}
-		if err.Error() == "direct_token_expired" {
-			return compute.AuthFile{}, compute.DirectMeta{}, err
+		tok, _, perr := compute.ParseBearer(file.Authorization)
+		meta := compute.DirectMeta{Provider: file.Provider, Model: file.Model, Source: "operator_file"}
+		if perr == nil {
+			meta = compute.PublicMeta(compute.ForNetwork(net), tok, "operator_file")
 		}
+		return file, meta, nil
 	}
-	file, err := compute.LoadEnvAuthFile()
+	var recovery keyring.Store
+	if keyring.BackendName() != "file" {
+		recovery, _ = keyring.Open(KeyringDir(dir))
+	}
+	file, meta, err := compute.AuthFromStores(store, recovery, net, st.WorkspaceID, time.Now())
+	if err == nil {
+		return file, meta, nil
+	}
+	if err.Error() == "direct_token_expired" {
+		return compute.AuthFile{}, compute.DirectMeta{}, err
+	}
+	op, err := compute.LoadEnvAuthFile()
 	if err != nil {
 		return compute.AuthFile{}, compute.DirectMeta{}, fmt.Errorf("direct_token_required")
 	}
-	tok, _, perr := compute.ParseBearer(file.Authorization)
-	meta := compute.DirectMeta{Provider: file.Provider, Model: file.Model, Source: "operator_file"}
+	tok, _, perr := compute.ParseBearer(op.Authorization)
+	meta = compute.DirectMeta{Provider: op.Provider, Model: op.Model, Source: "operator_file"}
 	if perr == nil {
 		meta = compute.PublicMeta(compute.ForNetwork(net), tok, "operator_file")
 	}
-	return file, meta, nil
+	return op, meta, nil
 }
 
 func DirectStatus(dir string) map[string]any {
@@ -178,6 +192,13 @@ func ForgetDirect(dir string) {
 }
 
 func RunWorkspaceResearch(dir, coin string) (compute.AskReport, error) {
+	return RunWorkspaceResearchStage(dir, coin, nil, nil)
+}
+
+func RunWorkspaceResearchStage(dir, coin string, stage compute.StageFn, stop func() bool) (compute.AskReport, error) {
+	if stage != nil {
+		stage("READING_MARKET")
+	}
 	st, err := Load(dir)
 	if err != nil {
 		return compute.AskReport{}, fmt.Errorf("unbound")
@@ -192,6 +213,9 @@ func RunWorkspaceResearch(dir, coin string) (compute.AskReport, error) {
 	}
 	p := policy.Default()
 	_ = CheckPinned(dir, st.WorkspaceID, p)
+	if p.KillSwitch {
+		return compute.AskReport{}, fmt.Errorf("kill_switch")
+	}
 	hash, err := p.Hash()
 	if err != nil {
 		return compute.AskReport{}, err
@@ -204,6 +228,16 @@ func RunWorkspaceResearch(dir, coin string) (compute.AskReport, error) {
 	if want == "" {
 		want = "ETH"
 	}
+	allowed := false
+	for _, a := range p.AllowedAssets {
+		if strings.EqualFold(a, want) {
+			allowed = true
+			break
+		}
+	}
+	if !allowed {
+		return compute.AskReport{}, fmt.Errorf("asset_not_allowed")
+	}
 	snap, err := hl.New(config.For(net)).PublicBook(want)
 	if err != nil || snap.MarkPx <= 0 {
 		return compute.AskReport{}, fmt.Errorf("empty_envelope")
@@ -212,5 +246,13 @@ func RunWorkspaceResearch(dir, coin string) (compute.AskReport, error) {
 	if err != nil {
 		return compute.AskReport{}, err
 	}
-	return compute.ProductAskReport(net, true, compute.LookBin(), market, book, auth)
+	last := filepath.Join(dir, "last-research.json")
+	rep, err := compute.ProductAskReportStage(net, true, compute.LookBin(), market, book, auth, last, stage, stop)
+	if err != nil {
+		return compute.AskReport{}, err
+	}
+	if stage != nil {
+		stage("POLICY")
+	}
+	return rep, nil
 }

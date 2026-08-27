@@ -44,6 +44,11 @@ export type BindResult = {
   note?: string;
   roles?: Array<{ role?: string; verify_e2ee?: string; pubkey_signer?: string; teeSigner?: string }>;
   verify?: boolean;
+  stage?: string;
+  elapsed_ms?: number;
+  running?: boolean;
+  done?: boolean;
+  evidence?: unknown;
 };
 
 type TauriWindow = Window & {
@@ -192,15 +197,41 @@ export async function directStatus(): Promise<BindResult> {
   }
 }
 
-export async function runResearch(coin: string): Promise<BindResult> {
+export async function startResearch(coin: string): Promise<BindResult> {
   try {
-    const native = await nativeJsonOrError<BindResult>("local_research", { coin });
+    const native = await nativeJsonOrError<BindResult>("local_research_start", { coin });
     if (native.sign || native.trade) return { error: "companion_denied" };
     return native;
   } catch (e) {
     const msg = e instanceof Error ? e.message : "companion_http";
     return { error: msg || "companion_http" };
   }
+}
+
+export async function researchStatus(): Promise<BindResult> {
+  try {
+    const native = await nativeJsonOrError<BindResult>("local_research_status");
+    if (native.sign || native.trade) return { error: "companion_denied" };
+    return native;
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : "companion_http";
+    return { error: msg || "companion_http" };
+  }
+}
+
+export async function cancelResearch(): Promise<BindResult> {
+  try {
+    const native = await nativeJsonOrError<BindResult>("local_research_cancel");
+    if (native.sign || native.trade) return { error: "companion_denied" };
+    return native;
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : "companion_http";
+    return { error: msg || "companion_http" };
+  }
+}
+
+export async function runResearch(coin: string): Promise<BindResult> {
+  return startResearch(coin);
 }
 
 export function prettyCode(code: string) {

@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 )
 
 func local(r *http.Request) *http.Request {
@@ -185,7 +186,7 @@ func TestLocalStatusVersionNoSecret(t *testing.T) {
 	if got["sign"] == true || got["trade"] == true {
 		t.Fatal(got)
 	}
-	if got["version"] != "0.1.4" {
+	if got["version"] != "0.1.5" {
 		t.Fatalf("version %v", got["version"])
 	}
 }
@@ -363,5 +364,53 @@ func TestDirectIntentNeverLeaksToken(t *testing.T) {
 	h.Handler().ServeHTTP(rec, req)
 	if rec.Code != http.StatusForbidden {
 		t.Fatal("web research")
+	}
+
+	req = local(httptest.NewRequest(http.MethodPost, "/local/research/start", strings.NewReader(`{"coin":"ETH"}`)))
+	req.Header.Set("Origin", "https://pit0g.vercel.app")
+	req.Header.Set("Content-Type", "application/json")
+	rec = httptest.NewRecorder()
+	h.Handler().ServeHTTP(rec, req)
+	if rec.Code != http.StatusForbidden {
+		t.Fatal("web research start")
+	}
+
+	req = local(httptest.NewRequest(http.MethodGet, "/local/research/status", nil))
+	req.Header.Set("Origin", "https://pit0g.vercel.app")
+	rec = httptest.NewRecorder()
+	h.Handler().ServeHTTP(rec, req)
+	if rec.Code != http.StatusForbidden {
+		t.Fatal("web research status")
+	}
+
+	req = local(httptest.NewRequest(http.MethodGet, "/local/research/status", nil))
+	rec = httptest.NewRecorder()
+	h.Handler().ServeHTTP(rec, req)
+	if rec.Code != 200 {
+		t.Fatal(rec.Body.String())
+	}
+	if strings.Contains(strings.ToLower(rec.Body.String()), "app-sk-") {
+		t.Fatal("status leak")
+	}
+}
+
+func TestResearchStartReturnsImmediately(t *testing.T) {
+	h := New(t.TempDir())
+	req := local(httptest.NewRequest(http.MethodPost, "/local/research/start", strings.NewReader(`{"coin":"ETH"}`)))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+	start := time.Now()
+	h.Handler().ServeHTTP(rec, req)
+	if time.Since(start) > 2*time.Second {
+		t.Fatal("start blocked on sealed ask")
+	}
+	if rec.Code != 200 {
+		t.Fatal(rec.Body.String())
+	}
+	if strings.Contains(strings.ToLower(rec.Body.String()), "app-sk-") {
+		t.Fatal("start leak")
+	}
+	if !strings.Contains(rec.Body.String(), `"running"`) {
+		t.Fatal(rec.Body.String())
 	}
 }

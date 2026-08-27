@@ -63,9 +63,24 @@ fn local_direct_status() -> Result<serde_json::Value, String> {
 }
 
 #[tauri::command]
-fn local_research(coin: String) -> Result<serde_json::Value, String> {
+fn local_research_start(coin: String) -> Result<serde_json::Value, String> {
     let body = serde_json::json!({ "coin": coin });
-    loopback_json_post_timeout("/local/research", &body, 300)
+    loopback_json_post_timeout("/local/research/start", &body, 8)
+}
+
+#[tauri::command]
+fn local_research_status() -> Result<serde_json::Value, String> {
+    loopback_json("/local/research/status")
+}
+
+#[tauri::command]
+fn local_research_cancel() -> Result<serde_json::Value, String> {
+    loopback_json_post("/local/research/cancel", &serde_json::json!({}))
+}
+
+#[tauri::command]
+fn local_research(coin: String) -> Result<serde_json::Value, String> {
+    local_research_start(coin)
 }
 
 #[tauri::command]
@@ -99,10 +114,6 @@ fn loopback_json_post_timeout(path: &str, body: &serde_json::Value, read_secs: u
 
 fn loopback_get(path: &str) -> Result<String, String> {
     loopback_exchange("GET", path, None)
-}
-
-fn loopback_post(path: &str, json: &str) -> Result<String, String> {
-    loopback_exchange("POST", path, Some(json))
 }
 
 fn loopback_exchange(method: &str, path: &str, json: Option<&str>) -> Result<String, String> {
@@ -221,7 +232,7 @@ fn same_install(path: &Path) -> bool {
     path.parent().map(|p| p == dir).unwrap_or(false)
 }
 
-const SIDECAR_VERSION: &str = "0.1.4";
+const SIDECAR_VERSION: &str = "0.1.5";
 
 fn companion_version() -> Option<String> {
     let raw = loopback_get("/health").ok()?;
@@ -259,8 +270,9 @@ fn spawn_sidecar(bin: &Path) {
         cmd.current_dir(dir);
     }
     cmd.env("PIT_ALLOW_FALLBACKS", "false");
-    cmd.env_remove("PIT_SESSION_KEY");
+	cmd.env_remove("PIT_SESSION_KEY");
     cmd.env_remove("HL_SECRET");
+    cmd.env_remove("PIT_KEYRING");
     cmd.env_remove("GIT_AUTHOR_DATE");
     cmd.env_remove("GIT_COMMITTER_DATE");
     if let Some(log) = log_file() {
@@ -324,6 +336,9 @@ pub fn run() {
             local_direct_intent,
             local_direct_status,
             local_research,
+            local_research_start,
+            local_research_status,
+            local_research_cancel,
             ensure_companion
         ])
         .run(tauri::generate_context!())

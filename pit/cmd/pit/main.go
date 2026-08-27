@@ -344,7 +344,11 @@ func cmdResearch(args []string) {
 		cmdAsk(args)
 		return
 	}
-	rep, err := cli.RunWorkspaceResearch(stateDir(), coin)
+	rep, err := cli.RunWorkspaceResearchStage(stateDir(), coin, func(s string) {
+		if !asJSON {
+			fmt.Fprintln(os.Stderr, s)
+		}
+	}, nil)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(2)

@@ -40,3 +40,28 @@ func TestStoreLoadDeleteDirect(t *testing.T) {
 	_ = config.Mainnet
 	_ = time.Now()
 }
+
+func TestLoadDirectWithFallbackMigrates(t *testing.T) {
+	primary, err := keyring.Open(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	secondary, err := keyring.Open(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	ws := identity.NewWorkspaceID()
+	sku := MainnetChat()
+	auth := "Bearer app-sk-dGVzdA=="
+	if err := StoreDirect(secondary, "mainnet", ws, sku.Provider, auth); err != nil {
+		t.Fatal(err)
+	}
+	got, err := LoadDirectWithFallback(primary, secondary, "mainnet", ws, sku.Provider)
+	if err != nil || got != auth {
+		t.Fatalf("%s %v", got, err)
+	}
+	copied, err := LoadDirect(primary, "mainnet", ws, sku.Provider)
+	if err != nil || copied != auth {
+		t.Fatal("migrate")
+	}
+}

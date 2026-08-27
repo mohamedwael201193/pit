@@ -17,6 +17,9 @@
     "allow-local-revoke-session",
     "allow-local-direct-intent",
     "allow-local-direct-status",
-    "allow-local-research"
+    "allow-local-research",
+    "allow-local-research-start",
+    "allow-local-research-status",
+    "allow-local-research-cancel"
   ]
 }

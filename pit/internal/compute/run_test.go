@@ -3,7 +3,9 @@ package compute
 import (
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"runtime"
 	"testing"
 )
 
@@ -29,6 +31,38 @@ func TestSealerExitErrorLedger(t *testing.T) {
 	err = sealerExitError(fmt.Errorf("x"), []byte("VERIFY_FAIL signer"))
 	if err == nil || err.Error() != "TEE_VERIFY_FAIL" {
 		t.Fatalf("%v", err)
+	}
+}
+
+func TestRequireSchemeRejectsHumanStdout(t *testing.T) {
+	if err := RequireScheme("COMMITTEE_OK researcher zg-sig-v1/e2ee-ct:aa"); err == nil {
+		t.Fatal("human stdout is not the signature")
+	}
+}
+
+func TestRunSealedAskHonorsEvidenceNotStdoutPrefix(t *testing.T) {
+	dir := t.TempDir()
+	bin := filepath.Join(dir, "ok-sealer")
+	if runtime.GOOS == "windows" {
+		bin += ".exe"
+	}
+	cmd := exec.Command("go", "build", "-o", bin, "./testdata/oksealer")
+	cmd.Dir = "."
+	if out, err := cmd.CombinedOutput(); err != nil {
+		t.Fatalf("build fake sealer: %v %s", err, out)
+	}
+	outPath := filepath.Join(dir, "researcher.json")
+	err := RunSealedAsk(DirectJob{
+		Bin:           bin,
+		AuthPath:      filepath.Join(dir, "a"),
+		PromptPath:    filepath.Join(dir, "p"),
+		OutPath:       outPath,
+		Role:          Researcher,
+		ProviderURL:   "https://compute-network-19.integratenetwork.work",
+		OnchainSigner: "0xA46EA4FC5889AD35A1487e1Ed04dCcfa872146B9",
+	})
+	if err != nil {
+		t.Fatal(err)
 	}
 }
 

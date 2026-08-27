@@ -295,7 +295,7 @@ Full command set:
 
 `init` `login` `wallet` `network` `policy` `session` `companion` `direct` `ask` `watch` `opportunities` `forecast` `preview` `authorize` `orders` `cancel` `status` `resolve` `card` `verify` `proof` `kill` `revoke` `doctor` `logout` `version`
 
-Every command accepts `--json`. `pit version` prints `PIT 0.1.4`. `pit doctor` probes version, wallet, network, OS keychain, memory-key hazard, Hyperliquid, 0G RPC, companion, sealer, Direct token (keychain or operator file), storage client, registry, session, and policy. It never prints secrets. A global `PIT_MEMORY_KEY` is a doctor failure. The desktop can bind a public wallet, pin policy, and mint a session without a terminal. `pit research` is an alias of `pit ask`. `pit direct` issues the official wallet-signed Direct challenge and stores the token in the keychain.
+Every command accepts `--json`. `pit version` prints `PIT 0.1.5`. `pit doctor` probes version, wallet, network, OS keychain, memory-key hazard, Hyperliquid, 0G RPC, companion, sealer, Direct token (keychain or operator file), storage client, registry, session, and policy. It never prints secrets. A global `PIT_MEMORY_KEY` is a doctor failure. The desktop can bind a public wallet, pin policy, and mint a session without a terminal. `pit research` is an alias of `pit ask`. `pit direct` issues the official wallet-signed Direct challenge and stores the token in the keychain.
 
 Official storage client (not the TypeScript SDK): `upload --url --file --key --encryption-key` and `download --proof --root --file --encryption-key`. `pit proof` requires `--key-file` per workspace and refuses a global memory key.
 

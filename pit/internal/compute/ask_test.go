@@ -1,6 +1,10 @@
 package compute
 
 import (
+	"fmt"
+	"os"
+	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/mohamedwael201193/pit/internal/config"
@@ -25,5 +29,31 @@ func TestProductAskRequiresDeskAndSealer(t *testing.T) {
 	err := ProductAsk(config.Mainnet, true, "")
 	if err == nil || err.Error() != "sealer_not_wired" {
 		t.Fatalf("%v", err)
+	}
+}
+
+func TestSavePublicEvidenceRedactsDirectToken(t *testing.T) {
+	dir := t.TempDir()
+	out := filepath.Join(dir, "researcher.json")
+	body := `{"verify_e2ee":"FAIL","post_err_clip":"Bearer app-sk-secret","verify_err":"ok","sanitized_output":"nope"}`
+	if err := os.WriteFile(out, []byte(body), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	dest := filepath.Join(dir, "last-research.json")
+	if err := SavePublicEvidence(dest, []DirectJob{{OutPath: out, Role: Researcher}}, fmt.Errorf("TEE_VERIFY_FAIL")); err != nil {
+		t.Fatal(err)
+	}
+	raw, err := os.ReadFile(dest)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(strings.ToLower(string(raw)), "app-sk-") {
+		t.Fatal(string(raw))
+	}
+	if strings.Contains(string(raw), "sanitized_output") {
+		t.Fatal(string(raw))
+	}
+	if !strings.Contains(string(raw), "TEE_VERIFY_FAIL") {
+		t.Fatal(string(raw))
 	}
 }

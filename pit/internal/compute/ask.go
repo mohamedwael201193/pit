@@ -1,6 +1,7 @@
 package compute
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"strings"
@@ -8,6 +9,14 @@ import (
 	"github.com/mohamedwael201193/pit/internal/config"
 	"github.com/mohamedwael201193/pit/internal/deskid"
 )
+
+type StageFn func(string)
+
+func notify(stage StageFn, name string) {
+	if stage != nil {
+		stage(name)
+	}
+}
 
 // ProductAsk is the sealed private-book entry. Direct fail stops the operation.
 func ProductAsk(net config.Network, deskAuthorized bool, bin string) error {
@@ -29,6 +38,10 @@ type AskReport struct {
 }
 
 func ProductAskReport(net config.Network, deskAuthorized bool, bin string, publicMarket, privateBook []byte, loaded AuthFile) (AskReport, error) {
+	return ProductAskReportStage(net, deskAuthorized, bin, publicMarket, privateBook, loaded, "", nil, nil)
+}
+
+func ProductAskReportStage(net config.Network, deskAuthorized bool, bin string, publicMarket, privateBook []byte, loaded AuthFile, lastPath string, stage StageFn, stop func() bool) (rep AskReport, err error) {
 	if err := deskid.BeforeSealedAsk(deskAuthorized); err != nil {
 		return AskReport{}, err
 	}
@@ -49,10 +62,10 @@ func ProductAskReport(net config.Network, deskAuthorized bool, bin string, publi
 		return AskReport{}, err
 	}
 	if strings.TrimSpace(loaded.Authorization) == "" {
-		var err error
-		loaded, err = LoadEnvAuthFile()
-		if err != nil {
-			return AskReport{}, err
+		var loadErr error
+		loaded, loadErr = LoadEnvAuthFile()
+		if loadErr != nil {
+			return AskReport{}, loadErr
 		}
 	}
 	if err := RefuseRouterKey(loaded.Authorization); err != nil {
@@ -71,24 +84,33 @@ func ProductAskReport(net config.Network, deskAuthorized bool, bin string, publi
 	if err != nil {
 		return AskReport{}, err
 	}
-	defer os.RemoveAll(dir)
+	var jobs []DirectJob
+	defer func() {
+		_ = SavePublicEvidence(lastPath, jobs, err)
+		os.RemoveAll(dir)
+	}()
+	notify(stage, "SEALING_PRIVATE_BOOK")
 	envelopes, err := Committee(publicMarket, privateBook)
 	if err != nil {
 		return AskReport{}, err
 	}
-	var jobs []DirectJob
 	for _, role := range CommitteeRoles() {
-		j, err := MaterializeAsk(dir, sku, role, envelopes[role], loaded.Authorization)
-		if err != nil {
-			return AskReport{}, err
+		j, merr := MaterializeAsk(dir, sku, role, envelopes[role], loaded.Authorization)
+		if merr != nil {
+			return AskReport{}, merr
 		}
 		j.Bin = bin
 		jobs = append(jobs, j)
 	}
-	if err := RunCommittee(bin, jobs); err != nil {
+	if stopped(stop) {
+		return AskReport{}, fmt.Errorf("research_cancelled")
+	}
+	notify(stage, "CONTACTING_PRIVATE_PROVIDER")
+	if err := RunCommitteeStages(bin, jobs, stage, stop); err != nil {
 		return AskReport{}, err
 	}
-	rep := AskReport{Note: HonestLabel(IndependenceNote()), Roles: make([]map[string]any, 0, len(jobs))}
+	notify(stage, "DETERMINISTIC_ENGINE")
+	rep = AskReport{Note: HonestLabel(IndependenceNote()), Roles: make([]map[string]any, 0, len(jobs))}
 	for _, j := range jobs {
 		rep.Roles = append(rep.Roles, PublicRoleEvidence(j))
 	}
@@ -99,4 +121,52 @@ func skuURLMatch(skuURL, authURL string) bool {
 	a := strings.TrimRight(strings.TrimSpace(skuURL), "/")
 	b := strings.TrimRight(strings.TrimSpace(authURL), "/")
 	return a != "" && b != "" && strings.EqualFold(a, b)
+}
+
+func SavePublicEvidence(path string, jobs []DirectJob, runErr error) error {
+	if strings.TrimSpace(path) == "" {
+		return nil
+	}
+	body := map[string]any{"sign": false, "trade": false, "roles": []any{}}
+	if runErr != nil {
+		body["error"] = runErr.Error()
+	}
+	roles := make([]any, 0, len(jobs))
+	for _, j := range jobs {
+		b, err := os.ReadFile(j.OutPath)
+		if err != nil {
+			continue
+		}
+		var m map[string]any
+		if json.Unmarshal(b, &m) != nil {
+			continue
+		}
+		delete(m, "authorization")
+		delete(m, "prompt")
+		delete(m, "sanitized_output")
+		if clip, ok := m["post_err_clip"].(string); ok {
+			m["post_err_clip"] = redactSecret(clip)
+		}
+		if verr, ok := m["verify_err"].(string); ok {
+			m["verify_err"] = redactSecret(verr)
+		}
+		roles = append(roles, m)
+	}
+	body["roles"] = roles
+	raw, err := json.MarshalIndent(body, "", "  ")
+	if err != nil {
+		return err
+	}
+	if strings.Contains(strings.ToLower(string(raw)), "app-sk-") {
+		return fmt.Errorf("companion_leak")
+	}
+	return os.WriteFile(path, raw, 0o600)
+}
+
+func redactSecret(s string) string {
+	low := strings.ToLower(s)
+	if strings.Contains(low, "app-sk-") || strings.Contains(low, "bearer ") {
+		return "[redacted]"
+	}
+	return s
 }

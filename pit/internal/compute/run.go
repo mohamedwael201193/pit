@@ -1,11 +1,13 @@
 package compute
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"os"
 	"os/exec"
 	"strings"
+	"time"
 )
 
 func MustNativeSealer(bin string) error {
@@ -88,8 +90,16 @@ func sealerExitError(err error, out []byte) error {
 	return fmt.Errorf("TEE_VERIFY_FAIL")
 }
 
+func stopped(stop func() bool) bool {
+	return stop != nil && stop()
+}
+
 // RunSealedAsk never falls back to Router or plaintext. Missing binary stops the operation.
 func RunSealedAsk(j DirectJob) error {
+	return RunSealedAskCtl(j, nil, nil)
+}
+
+func RunSealedAskCtl(j DirectJob, stage StageFn, stop func() bool) error {
 	if err := MustNativeSealer(j.Bin); err != nil {
 		return err
 	}
@@ -100,14 +110,46 @@ func RunSealedAsk(j DirectJob) error {
 	if _, err := os.Stat(j.Bin); err != nil {
 		return fmt.Errorf("sealer_not_wired")
 	}
+	if stopped(stop) {
+		return fmt.Errorf("research_cancelled")
+	}
+	notify(stage, "CONTACTING_PRIVATE_PROVIDER")
 	cmd := exec.Command(j.Bin, args...)
-	out, err := cmd.CombinedOutput()
-	if err != nil {
-		return sealerExitError(err, out)
+	var buf bytes.Buffer
+	cmd.Stdout = &buf
+	cmd.Stderr = &buf
+	if err := cmd.Start(); err != nil {
+		return sealerExitError(err, buf.Bytes())
 	}
-	if err := RequireScheme(string(out)); err != nil {
-		return err
+	done := make(chan struct{})
+	defer close(done)
+	if stop != nil {
+		go func() {
+			tick := time.NewTicker(200 * time.Millisecond)
+			defer tick.Stop()
+			for {
+				select {
+				case <-done:
+					return
+				case <-tick.C:
+					if stopped(stop) && cmd.Process != nil {
+						_ = cmd.Process.Kill()
+						return
+					}
+				}
+			}
+		}()
 	}
+	waitErr := cmd.Wait()
+	out := buf.Bytes()
+	if stopped(stop) {
+		return fmt.Errorf("research_cancelled")
+	}
+	if waitErr != nil {
+		return sealerExitError(waitErr, out)
+	}
+	notify(stage, "RECEIVING_SEALED_RESPONSE")
+	notify(stage, "VERIFYING_TEE_SIGNATURE")
 	return AcceptSealedEvidence(j.OutPath, j.OnchainSigner)
 }
 

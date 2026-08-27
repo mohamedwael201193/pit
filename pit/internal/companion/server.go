@@ -38,6 +38,9 @@ type Hub struct {
 	code    string
 	codeExp time.Time
 	devices []device
+
+	researchMu sync.Mutex
+	job        researchJob
 }
 
 func ListenAddr() (string, error) {
@@ -107,6 +110,9 @@ func (h *Hub) Handler() http.Handler {
 	mux.HandleFunc("/local/direct-complete", h.localDirectComplete)
 	mux.HandleFunc("/local/direct-status", h.localDirectStatus)
 	mux.HandleFunc("/local/research", h.localResearch)
+	mux.HandleFunc("/local/research/start", h.localResearchStart)
+	mux.HandleFunc("/local/research/status", h.localResearchStatus)
+	mux.HandleFunc("/local/research/cancel", h.localResearchCancel)
 	mux.HandleFunc("/direct/intent", h.deviceDirectIntent)
 	mux.HandleFunc("/direct/complete", h.deviceDirectComplete)
 	mux.HandleFunc("/bind", h.bind)

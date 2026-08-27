@@ -60,5 +60,20 @@ commands.allow = ["local_direct_status"]
 
 [[permission]]
 identifier = "allow-local-research"
-description = "Run sealed Direct research on this computer. Never returns the private book."
+description = "Start sealed Direct research on this computer. Never returns the private book."
 commands.allow = ["local_research"]
+
+[[permission]]
+identifier = "allow-local-research-start"
+description = "Start sealed Direct research without blocking the window. Never returns the private book."
+commands.allow = ["local_research_start"]
+
+[[permission]]
+identifier = "allow-local-research-status"
+description = "Read sealed research stage and public evidence. Never returns a Direct token."
+commands.allow = ["local_research_status"]
+
+[[permission]]
+identifier = "allow-local-research-cancel"
+description = "Cancel sealed research between roles when safe. Never places an order."
+commands.allow = ["local_research_cancel"]

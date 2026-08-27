@@ -54,8 +54,32 @@ export function explainStop(code: string | null): { title: string; body: string 
       body: "The sealed response could not be opened. PIT did not fall back to Router or plaintext. No order was placed.",
     };
   }
+  if (code === "research_cancelled") {
+    return {
+      title: "Research stopped",
+      body: "You cancelled this sealed request. No order was placed. No funds moved.",
+    };
+  }
+  if (code === "companion_http") {
+    return {
+      title: "Local PIT did not answer",
+      body: "The desktop companion rejected or dropped this request. No order was placed. Retry after the companion is live.",
+    };
+  }
+  if (code === "asset_not_allowed") {
+    return {
+      title: "Market is outside policy",
+      body: "PIT will not research a coin that is not in the pinned universe. No order was placed.",
+    };
+  }
+  if (code === "kill_switch") {
+    return {
+      title: "Kill switch is on",
+      body: "Local execution is halted. No order was placed.",
+    };
+  }
   return {
-    title: "Stopped",
+    title: "Research stopped",
     body: "PIT halted this step. No order was placed. No funds moved.",
   };
 }

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { AuthorizeGate } from "./AuthorizeGate";
 import { EmptyHome } from "./EmptyHome";
 import { NAMED } from "./namedStates";
@@ -11,14 +11,16 @@ import { SessionNote } from "./SessionNote";
 import {
   bindWallet,
   createLocalSession,
+  cancelResearch,
   describeBindError,
   doctor,
   localStatus,
   pairCode,
   pinLocalPolicy,
   prettyCode,
+  researchStatus,
   revokeLocalSession,
-  runResearch,
+  startResearch,
   wakeCompanion,
   type DoctorCheck,
   type LocalStatus,
@@ -30,6 +32,57 @@ type Net = "mainnet" | "testnet";
 type View = "home" | "watch" | "research" | "activity" | "policy" | "security" | "account" | "settings";
 
 type Coin = { coin: string; reason: string; mark: number; eligible?: boolean };
+
+const RESEARCH_STAGES = [
+  "READING_MARKET",
+  "SEALING_PRIVATE_BOOK",
+  "CONTACTING_PRIVATE_PROVIDER",
+  "RECEIVING_SEALED_RESPONSE",
+  "VERIFYING_TEE_SIGNATURE",
+  "RESEARCHER",
+  "CHALLENGER",
+  "RISK",
+  "DETERMINISTIC_ENGINE",
+  "POLICY",
+  "PREVIEW",
+] as const;
+
+function sleep(ms: number) {
+  return new Promise((resolve) => window.setTimeout(resolve, ms));
+}
+
+function ResearchProgress({
+  stage,
+  elapsedMs,
+  coin,
+  onCancel,
+}: {
+  stage: string;
+  elapsedMs: number;
+  coin: string;
+  onCancel: () => void;
+}) {
+  const current = RESEARCH_STAGES.indexOf(stage as (typeof RESEARCH_STAGES)[number]);
+  return (
+    <article className="card" role="status">
+      <p className="label">LIVE SEALED REQUEST</p>
+      <h2>{stage.replaceAll("_", " ")}</h2>
+      <p>
+        {coin || "ETH"} · {(elapsedMs / 1000).toFixed(1)}s elapsed. This is a live Direct round-trip, not a timer.
+      </p>
+      <ol className="pipe stages">
+        {RESEARCH_STAGES.map((name, i) => (
+          <li key={name} className={i === current ? "lit" : i < current ? "done" : ""}>
+            {name.replaceAll("_", " ")}
+          </li>
+        ))}
+      </ol>
+      <button type="button" className="linkish" onClick={onCancel}>
+        Cancel
+      </button>
+    </article>
+  );
+}
 
 const HEALTH = "https://pit-health.onrender.com";
 const SETUP_KEY = "pit.desk.setup";
@@ -126,10 +179,13 @@ function Setup({
   onSession,
   onPolicy,
   onResearch,
+  onCancelResearch,
   onDone,
   checks,
   researchBusy,
   researchVerified,
+  researchStage,
+  researchElapsed,
 }: {
   step: number;
   setStep: (n: number) => void;
@@ -151,10 +207,13 @@ function Setup({
   onSession: () => void;
   onPolicy: () => void;
   onResearch: () => void;
+  onCancelResearch: () => void;
   onDone: () => void;
   checks: DoctorCheck[];
   researchBusy: boolean;
   researchVerified: boolean;
+  researchStage: string;
+  researchElapsed: number;
 }) {
   const directOk = Boolean(checks.find((c) => c.name === "direct_auth" && c.ok));
   const directDetail = checks.find((c) => c.name === "direct_auth")?.detail;
@@ -270,8 +329,11 @@ function Setup({
           <p className="lead">Each row is a live probe. Waiting is honest. Green is never invented. Research is a live sealed Direct request.</p>
           <ProbeList items={items} />
           <button type="button" className="linkish" onClick={onResearch} disabled={researchBusy || !companionUp}>
-            {researchBusy ? "Sealing…" : "Run a real research test"}
+            {researchBusy ? "Research running…" : "Run a real research test"}
           </button>
+          {researchBusy ? (
+            <ResearchProgress stage={researchStage} elapsedMs={researchElapsed} coin="ETH" onCancel={onCancelResearch} />
+          ) : null}
           {researchVerified ? <p className="fine">RESEARCH VERIFIED. VerifyE2EE matched the on-chain teeSigner.</p> : null}
         </>
       ) : null}
@@ -317,6 +379,11 @@ export function App() {
   const [researchNote, setResearchNote] = useState<string | null>(null);
   const [researchRoles, setResearchRoles] = useState<Array<{ role?: string; verify_e2ee?: string; pubkey_signer?: string }>>([]);
   const [researchBusy, setResearchBusy] = useState(false);
+  const [researchStage, setResearchStage] = useState("READING_MARKET");
+  const [researchElapsed, setResearchElapsed] = useState(0);
+  const [researchCoin, setResearchCoin] = useState("ETH");
+  const [researchEvidence, setResearchEvidence] = useState<string>("");
+  const researchGen = useRef(0);
   const [techOpen, setTechOpen] = useState(false);
   const [ticks, setTicks] = useState(0);
   const [setupStep, setSetupStep] = useState(0);
@@ -480,8 +547,12 @@ export function App() {
   }
 
   async function researchThis(coin?: string) {
+    const gen = ++researchGen.current;
+    const want = (coin || "ETH").toUpperCase();
     setResearchNote(null);
     setResearchRoles([]);
+    setResearchEvidence("");
+    setResearchCoin(want);
     if (!companionUp) {
       setResearchStop("companion_down");
       setView("research");
@@ -501,21 +572,60 @@ export function App() {
     }
     setResearchBusy(true);
     setResearchStop(null);
+    setResearchStage("READING_MARKET");
+    setResearchElapsed(0);
     setView("research");
-    const r = await runResearch(coin || "ETH");
+    const wall = Date.now();
+    const tick = window.setInterval(() => {
+      if (gen === researchGen.current) setResearchElapsed(Date.now() - wall);
+    }, 250);
+    try {
+      const started = await startResearch(want);
+      if (gen !== researchGen.current) return;
+      if (started.error && !started.running) {
+        setResearchStop(started.error);
+        return;
+      }
+      if (started.stage) setResearchStage(started.stage);
+      for (;;) {
+        await sleep(400);
+        if (gen !== researchGen.current) return;
+        const st = await researchStatus();
+        if (st.stage) setResearchStage(st.stage);
+        if (typeof st.elapsed_ms === "number") setResearchElapsed(st.elapsed_ms);
+        if (st.evidence) setResearchEvidence(JSON.stringify(st.evidence, null, 2));
+        if (st.running) continue;
+        if (st.error) {
+          setResearchStop(st.error);
+          return;
+        }
+        const roles = Array.isArray(st.roles) ? st.roles : [];
+        const verified = roles.length > 0 && roles.every((x) => String(x.verify_e2ee).toUpperCase() === "OK");
+        if (!verified) {
+          setResearchStop("TEE_VERIFY_FAIL");
+          return;
+        }
+        setResearchRoles(roles);
+        setResearchNote(st.note || "Sealed committee verified on this computer.");
+        return;
+      }
+    } catch (e) {
+      if (gen !== researchGen.current) return;
+      const msg = e instanceof Error ? e.message : "companion_http";
+      setResearchStop(msg || "companion_http");
+    } finally {
+      window.clearInterval(tick);
+      if (gen === researchGen.current) setResearchBusy(false);
+    }
+  }
+
+  async function onCancelResearch() {
+    researchGen.current += 1;
     setResearchBusy(false);
-    if (r.error) {
-      setResearchStop(r.error);
-      return;
-    }
-    const roles = Array.isArray(r.roles) ? r.roles : [];
-    const verified = r.verify && roles.length > 0 && roles.every((x) => String(x.verify_e2ee).toUpperCase() === "OK");
-    if (!verified) {
-      setResearchStop("TEE_VERIFY_FAIL");
-      return;
-    }
-    setResearchRoles(roles);
-    setResearchNote(r.note || "Sealed committee verified on this computer.");
+    const r = await cancelResearch();
+    setResearchStop(r.error || "research_cancelled");
+    if (r.stage) setResearchStage(r.stage);
+    if (typeof r.elapsed_ms === "number") setResearchElapsed(r.elapsed_ms);
   }
 
   return (
@@ -523,7 +633,7 @@ export function App() {
       <aside className="rail">
         <div className="rail-brand">
           <div className="word">PIT.</div>
-          <p className="kicker">0.1.4 · local execution</p>
+          <p className="kicker">0.1.5 · local execution</p>
         </div>
         <nav className="rail-nav" aria-label="Desk">
           {RAIL.map((item) => (
@@ -543,7 +653,7 @@ export function App() {
         <div className="rail-foot">
           <p>{net === "mainnet" ? "MAINNET" : "TESTNET"}</p>
           <p>{companionUp ? "companion live" : "starting companion"}</p>
-          <p>PIT 0.1.4</p>
+          <p>PIT 0.1.5</p>
           <button type="button" className="ghost" onClick={() => setView("settings")}>
             Help / Diagnostics
           </button>
@@ -587,10 +697,13 @@ export function App() {
             onSession={() => void onSession()}
             onPolicy={() => void onPolicy()}
             onResearch={() => void researchThis()}
+            onCancelResearch={() => void onCancelResearch()}
             onDone={finishSetup}
             checks={checks}
             researchBusy={researchBusy}
             researchVerified={Boolean(researchNote && !explained)}
+            researchStage={researchStage}
+            researchElapsed={researchElapsed}
           />
         ) : null}
 
@@ -668,8 +781,15 @@ export function App() {
               Private book → Direct TeeML → researcher / challenger / risk → host size → policy → exact preview. Watch
               never places the order.
             </p>
-            {researchBusy ? <p className="fine">Sealing the private book. This is a live Direct request, not a spinner on a timer.</p> : null}
-            {researchNote && !explained ? (
+            {researchBusy ? (
+              <ResearchProgress
+                stage={researchStage}
+                elapsedMs={researchElapsed}
+                coin={researchCoin}
+                onCancel={() => void onCancelResearch()}
+              />
+            ) : null}
+            {researchNote && !explained && !researchBusy ? (
               <article className="card">
                 <p className="label">RESEARCH VERIFIED</p>
                 <p>{researchNote}</p>
@@ -682,26 +802,29 @@ export function App() {
                 </ul>
               </article>
             ) : null}
-            {explained ? (
+            {explained && !researchBusy ? (
               <article className="card stop" role="alert">
-                <p className="label">STOPPED</p>
+                <p className="label">RESEARCH STOPPED</p>
                 <h2>{explained.title}</h2>
                 <p>{explained.body}</p>
                 <button type="button" className="linkish" onClick={() => setTechOpen((v) => !v)}>
                   {techOpen ? "Hide technical evidence" : "View technical evidence"}
                 </button>
                 {techOpen ? (
-                  <p className="fine">
-                    Code {researchStop}. Verification is fail-closed. Router fallback is impossible.
-                  </p>
+                  <pre className="pipe evidence">
+                    Code {researchStop}
+                    {"\n"}
+                    {researchEvidence || "Verification is fail-closed. Router fallback is impossible."}
+                  </pre>
                 ) : null}
-                <button type="button" onClick={() => void researchThis()} disabled={researchBusy}>
+                <button type="button" onClick={() => void researchThis(researchCoin)} disabled={researchBusy}>
                   Retry
                 </button>
               </article>
-            ) : (
+            ) : null}
+            {!researchBusy && !researchNote && !explained ? (
               <p className="fine">Private research has not been run on this machine in this session.</p>
-            )}
+            ) : null}
             <PreviewNote />
             {eligible.length === 0 ? (
               <p className="fine">No policy-eligible market is waiting. Watch does not invent cards.</p>
