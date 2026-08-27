@@ -56,6 +56,7 @@ Commands:
   pit kill
   pit doctor
   pit logout [--forget]
+  pit revoke
   pit version
 
 Every command accepts --json. Exit 0 on success, 2 on usage, 1 on failed doctor.
@@ -125,6 +126,8 @@ func main() {
 		cmdDoctor()
 	case "logout":
 		cmdLogout(rest[1:])
+	case "revoke":
+		cmdRevoke()
 	case "version", "-v", "--version":
 		cmdVersion()
 	case "help", "-h", "--help":
@@ -812,6 +815,25 @@ func cmdLogout(args []string) {
 		return
 	}
 	fmt.Println("session deleted. Workspace bind remains. Re-run pit session to mint a new agent.")
+}
+
+func cmdRevoke() {
+	if err := cli.Logout(stateDir(), false); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(2)
+	}
+	if asJSON {
+		_ = json.NewEncoder(os.Stdout).Encode(map[string]any{
+			"ok":    true,
+			"local": "session_deleted",
+			"sign":  false,
+			"trade": false,
+			"next":  "remove the PIT agent from your Hyperliquid account",
+		})
+		return
+	}
+	fmt.Println("local session deleted. The key is gone from this machine.")
+	fmt.Println("Remove the PIT agent from your Hyperliquid account. PIT cannot withdraw and cannot call approveAgent from a session.")
 }
 
 func cmdCompanion() {

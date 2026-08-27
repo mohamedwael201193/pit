@@ -287,11 +287,12 @@ go run ./cmd/pit forecast
 go run ./cmd/pit preview --market ETH --side buy --forecast <id>
 go run ./cmd/pit verify --preview 0x... --root 0x... --network mainnet --workspace <id>
 go run ./cmd/pit kill
+go run ./cmd/pit revoke
 ```
 
 Full command set:
 
-`init` `login` `wallet` `network` `policy` `session` `companion` `ask` `watch` `opportunities` `forecast` `preview` `authorize` `orders` `cancel` `status` `resolve` `card` `verify` `proof` `kill` `doctor` `logout` `version`
+`init` `login` `wallet` `network` `policy` `session` `companion` `ask` `watch` `opportunities` `forecast` `preview` `authorize` `orders` `cancel` `status` `resolve` `card` `verify` `proof` `kill` `revoke` `doctor` `logout` `version`
 
 Every command accepts `--json`. `pit version` prints `PIT 0.1.1`. `pit doctor` probes version, wallet, network, OS keychain, memory-key hazard, Hyperliquid, 0G RPC, companion, sealer, storage client, registry, session, and policy. It never prints secrets. A global `PIT_MEMORY_KEY` is a doctor failure.
 

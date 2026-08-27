@@ -8,7 +8,7 @@ import { doctor, localStatus, pairCode, prettyCode, type DoctorCheck } from "./c
 import { explainStop } from "./explain";
 
 type Net = "mainnet" | "testnet";
-type View = "home" | "watch" | "security" | "settings";
+type View = "home" | "watch" | "opportunities" | "security" | "settings";
 
 type Coin = { coin: string; reason: string; mark: number; eligible?: boolean };
 
@@ -93,6 +93,21 @@ export function App() {
   const companionStuck = !companionUp && ticks >= 5;
   const doctorOk = checks.filter((c) => c.ok).length;
   const pairDisplay = code ? prettyCode(code) : companionUp ? "rotating…" : "waiting for local PIT";
+  function researchThis() {
+    if (!companionUp) {
+      setResearchStop("companion_down");
+      setView("home");
+      return;
+    }
+    const sealer = checks.find((c) => c.name === "direct_sealer");
+    if (sealer && !sealer.ok) {
+      setResearchStop("sealer_not_wired");
+      setView("home");
+      return;
+    }
+    setResearchStop("direct_token_required");
+    setView("home");
+  }
 
   return (
     <div className="shell">
@@ -102,7 +117,7 @@ export function App() {
           <p className="kicker">0.1.1 · local execution authority</p>
         </div>
         <nav className="nav">
-          {(["home", "watch", "security", "settings"] as const).map((id) => (
+          {(["home", "watch", "opportunities", "security", "settings"] as const).map((id) => (
             <button key={id} type="button" className={view === id ? "on" : ""} onClick={() => setView(id)}>
               {id}
             </button>
@@ -210,6 +225,31 @@ export function App() {
                   <p>Policy {c.eligible ? "PASS" : "BLOCKED"}</p>
                   <p className="fine">{c.reason}</p>
                   <p className="fine">Confidence NOT ENOUGH DATA. Side is not decided on this surface.</p>
+                </li>
+              ))}
+            </ul>
+          )}
+        </main>
+      ) : null}
+
+      {view === "opportunities" ? (
+        <main className="page">
+          <p className="eyebrow">POLICY FILTER</p>
+          <h1>Opportunities</h1>
+          <p className="lead">Live public marks. Research stays sealed on this machine. Nothing here places an order.</p>
+          {coins.length === 0 ? (
+            <p className="fine">Empty is honest until Hyperliquid books arrive.</p>
+          ) : (
+            <ul className="watch-grid">
+              {coins.map((c) => (
+                <li key={c.coin} className="card">
+                  <p className="label">{c.coin}</p>
+                  <p className="mark-num">{c.mark}</p>
+                  <p>Policy {c.eligible ? "PASS" : "BLOCKED"}</p>
+                  <p className="fine">{c.reason}</p>
+                  <button type="button" className="linkish" onClick={researchThis}>
+                    Research this
+                  </button>
                 </li>
               ))}
             </ul>
