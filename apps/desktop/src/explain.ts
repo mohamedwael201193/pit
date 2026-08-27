@@ -42,6 +42,18 @@ export function explainStop(code: string | null): { title: string; body: string 
       body: "PIT will not invent a book. Watch still works. No order was placed.",
     };
   }
+  if (code === "direct_ledger") {
+    return {
+      title: "0G Direct is not funded for this wallet",
+      body: "The sealed-path signature was accepted on this computer. The provider still needs Direct credit at pc.0g.ai Advanced with the same wallet. Watch still works. No order was placed.",
+    };
+  }
+  if (code === "TEE_OPEN_FAIL") {
+    return {
+      title: "Research stopped",
+      body: "The sealed response could not be opened. PIT did not fall back to Router or plaintext. No order was placed.",
+    };
+  }
   return {
     title: "Stopped",
     body: "PIT halted this step. No order was placed. No funds moved.",

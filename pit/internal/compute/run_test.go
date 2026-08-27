@@ -1,6 +1,7 @@
 package compute
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
@@ -17,6 +18,17 @@ func TestAcceptSealedEvidence(t *testing.T) {
 	}
 	if err := AcceptSealedEvidence(p, "0x0000000000000000000000000000000000000001"); err == nil {
 		t.Fatal("wrong onchain")
+	}
+}
+
+func TestSealerExitErrorLedger(t *testing.T) {
+	err := sealerExitError(fmt.Errorf("x"), []byte("POST_FAIL 401\n"))
+	if err == nil || err.Error() != "direct_ledger" {
+		t.Fatalf("%v", err)
+	}
+	err = sealerExitError(fmt.Errorf("x"), []byte("VERIFY_FAIL signer"))
+	if err == nil || err.Error() != "TEE_VERIFY_FAIL" {
+		t.Fatalf("%v", err)
 	}
 }
 

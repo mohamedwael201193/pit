@@ -54,17 +54,36 @@ func AcceptSealedEvidence(outPath, onchain string) error {
 	return nil
 }
 
-func sealerExitError(err error) error {
+func sealerExitError(err error, out []byte) error {
 	if err == nil {
 		return nil
 	}
+	text := string(out)
 	if ee, ok := err.(*exec.ExitError); ok {
 		switch ee.ExitCode() {
 		case 10:
 			return fmt.Errorf("ROUTER_DOWNGRADE_DENIED")
 		case 11:
 			return fmt.Errorf("NOT_TEEML")
+		case 1:
+			return fmt.Errorf("sealer_runtime")
+		case 3:
+			if strings.Contains(text, "POST_FAIL 401") || strings.Contains(text, "POST_FAIL 403") {
+				return fmt.Errorf("direct_ledger")
+			}
+			return fmt.Errorf("direct_provider_http")
+		case 4:
+			return fmt.Errorf("direct_no_chat_id")
+		case 5:
+			return fmt.Errorf("direct_signature_http")
+		case 6:
+			return fmt.Errorf("TEE_VERIFY_FAIL")
+		case 7:
+			return fmt.Errorf("TEE_OPEN_FAIL")
 		}
+	}
+	if strings.Contains(text, "POST_FAIL 401") || strings.Contains(text, "POST_FAIL 403") {
+		return fmt.Errorf("direct_ledger")
 	}
 	return fmt.Errorf("TEE_VERIFY_FAIL")
 }
@@ -84,7 +103,7 @@ func RunSealedAsk(j DirectJob) error {
 	cmd := exec.Command(j.Bin, args...)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
-		return sealerExitError(err)
+		return sealerExitError(err, out)
 	}
 	if err := RequireScheme(string(out)); err != nil {
 		return err

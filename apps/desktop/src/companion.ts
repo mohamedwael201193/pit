@@ -235,6 +235,12 @@ export function describeBindError(code: string) {
   if (code === "galileo_e2ee_unproven") {
     return "TESTNET sealed research is off until VerifyE2EE is proven. Switch to MAINNET.";
   }
+  if (code === "direct_ledger") {
+    return "The sealed-path signature is on this computer. Fund Direct at pc.0g.ai Advanced with the same wallet. PIT does not ask for a private key.";
+  }
+  if (code === "direct_provider_http") {
+    return "The sealed provider rejected the request. PIT did not fall back to Router.";
+  }
   if (code === "companion_down") {
     return "The local companion is not running yet.";
   }
