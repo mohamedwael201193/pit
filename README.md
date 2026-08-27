@@ -271,7 +271,7 @@ Full command set:
 
 `proof` uses the official Go storage client with `--proof`. It does not use a global memory key.
 
-`authorize` requires a TTY, `--i-understand`, the exact word `AUTHORIZE`, a live session, and a bound preview. Piped `yes` is rejected. A matching token records `authorized` on the local ledger for that workspace and clientOrderId. A second click is `duplicate_click`. An unsigned payload never reaches the venue.
+`authorize` requires a TTY, `--i-understand`, the exact word `AUTHORIZE`, a live session, and a bound preview. Piped `yes` is rejected. A matching token records `authorized` on the local ledger for that workspace and clientOrderId. A second click is `duplicate_click`. The CLI may sign an L1 envelope locally from the session key. It still does not post until the trading account has approved that agent. An unsigned payload never reaches the venue.
 
 `opportunities` reads live venue books for the policy allowlist and never places an order. Empty Watch is a real empty state.
 

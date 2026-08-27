@@ -64,6 +64,13 @@ func (k AgentKey) ExportJSON() error {
 	return fmt.Errorf("session_export_denied")
 }
 
+func (k AgentKey) WithSecret(fn func(*ecdsa.PrivateKey) error) error {
+	if k.secret == nil {
+		return fmt.Errorf("empty_session_key")
+	}
+	return fn(k.secret)
+}
+
 type Permissions struct {
 	Order    bool
 	Cancel   bool

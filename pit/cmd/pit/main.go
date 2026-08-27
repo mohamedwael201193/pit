@@ -513,7 +513,8 @@ func cmdAuthorize(args []string) {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(2)
 	}
-	if _, err := pitexec.WireFromPreview(card, book.Asset); err != nil {
+	raw, err := pitexec.WireFromPreview(card, book.Asset)
+	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(2)
 	}
@@ -528,8 +529,16 @@ func cmdAuthorize(args []string) {
 	fmt.Println("authorized")
 	fmt.Println("ledger    recorded")
 	fmt.Printf("asset    %d\n", book.Asset)
-	if err := pitexec.RefuseUnsigned(false); err != nil {
-		fmt.Println(err)
+	env, signErr := cli.SignBound(stateDir(), live, st.Network, raw, time.Now().UnixMilli())
+	if signErr != nil || !env.Signed() {
+		if err := pitexec.RefuseUnsigned(false); err != nil {
+			fmt.Println(err)
+		}
+	} else {
+		fmt.Println("signed locally")
+		if err := pitexec.RefusePostUntilLinked(false); err != nil {
+			fmt.Println(err)
+		}
 	}
 	fmt.Println("PIT did not send an order")
 }
