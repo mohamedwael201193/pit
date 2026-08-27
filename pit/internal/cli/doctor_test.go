@@ -26,6 +26,14 @@ func TestDoctorRefusesGlobalMemoryKey(t *testing.T) {
 	}
 }
 
+func TestDoctorDirectAuthUnset(t *testing.T) {
+	t.Setenv("PIT_DIRECT_AUTH_FILE", "")
+	c := checkDirectAuth()
+	if c.OK {
+		t.Fatal("unset auth must not pass")
+	}
+}
+
 func TestDoctorVersionPresent(t *testing.T) {
 	c := checkVersion()
 	if !c.OK || c.Detail == "" {

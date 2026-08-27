@@ -18,13 +18,26 @@ export function PairPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ code: code.replace(/[^A-Za-z0-9]/g, "") }),
       });
-      const body = (await r.json().catch(() => ({}))) as {
-        ok?: boolean;
-        canSign?: boolean;
-        sign?: boolean;
-        device?: string;
-      };
-      if (!r.ok || body.sign || body.canSign) {
+      const text = await r.text();
+      let body: { ok?: boolean; canSign?: boolean; sign?: boolean; device?: string } = {};
+      try {
+        body = JSON.parse(text) as typeof body;
+      } catch {
+        body = {};
+      }
+      if (body.sign || body.canSign) {
+        setErr("Pairing refused. This site cannot hold a session key.");
+        return;
+      }
+      if (!r.ok) {
+        if (text.includes("pairing_expired")) {
+          setErr("That code expired. Open PIT on this computer and type the new code shown there.");
+          return;
+        }
+        if (text.includes("pairing_denied")) {
+          setErr("Pairing refused. Open PIT on this computer and type the code shown there.");
+          return;
+        }
         setErr("Pairing refused. Open PIT on this computer and type the code shown there.");
         return;
       }
@@ -33,7 +46,9 @@ export function PairPage() {
       }
       setMsg("This browser is paired. It can read status. It cannot authorize or hold a session key.");
     } catch {
-      setErr("PIT is not running on this computer. Install the Windows app, then run it before pairing.");
+      setErr(
+        "PIT is not reachable on this computer. Launch the Windows app first. If Chrome asks to access other apps on this device, choose Allow. PIT only uses 127.0.0.1.",
+      );
     }
   }
 
@@ -49,9 +64,10 @@ export function PairPage() {
         </p>
         <ol className="mt-8 grid gap-3 text-[0.975rem] leading-6 text-[rgb(240_231_212/0.75)]">
           <li>1. Download PIT for Windows from GitHub Releases and install it.</li>
-          <li>2. Launch PIT. A pairing code appears on that window or in `pit companion`.</li>
+          <li>2. Launch PIT. A pairing code appears on that window. A terminal is not required.</li>
           <li>3. Type the code here. Expire is two minutes. One use.</li>
-          <li>4. Connect your wallet. Approve an order/cancel session on the machine.</li>
+          <li>4. If the browser asks to access other apps on this device, choose Allow. That is loopback only.</li>
+          <li>5. Connect your wallet. Approve an order/cancel session on the machine.</li>
         </ol>
         <label className="mt-10 block">
           <span className="text-[0.75rem] tracking-[0.12em] text-[rgb(240_231_212/0.5)]">ONE-TIME CODE</span>

@@ -48,7 +48,7 @@ Health (public Watch, `sign: false`): [pit-health.onrender.com](https://pit-heal
 ### How to verify your PIT download
 
 ```powershell
-Get-FileHash .\PIT_0.1.1_x64-setup.exe -Algorithm SHA256
+Get-FileHash .\PIT_0.1.2_x64-setup.exe -Algorithm SHA256
 ```
 
 Compare with `SHA256SUMS` on the same GitHub Release. The source commit is on the release tag.
@@ -294,7 +294,7 @@ Full command set:
 
 `init` `login` `wallet` `network` `policy` `session` `companion` `ask` `watch` `opportunities` `forecast` `preview` `authorize` `orders` `cancel` `status` `resolve` `card` `verify` `proof` `kill` `revoke` `doctor` `logout` `version`
 
-Every command accepts `--json`. `pit version` prints `PIT 0.1.1`. `pit doctor` probes version, wallet, network, OS keychain, memory-key hazard, Hyperliquid, 0G RPC, companion, sealer, storage client, registry, session, and policy. It never prints secrets. A global `PIT_MEMORY_KEY` is a doctor failure.
+Every command accepts `--json`. `pit version` prints `PIT 0.1.2`. `pit doctor` probes version, wallet, network, OS keychain, memory-key hazard, Hyperliquid, 0G RPC, companion, sealer, Direct auth file presence, storage client, registry, session, and policy. It never prints secrets. A global `PIT_MEMORY_KEY` is a doctor failure.
 
 Official storage client (not the TypeScript SDK): `upload --url --file --key --encryption-key` and `download --proof --root --file --encryption-key`. `pit proof` requires `--key-file` per workspace and refuses a global memory key.
 

@@ -134,10 +134,14 @@ func (h *Hub) health(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
 	}
+	listen, err := ListenAddr()
+	if err != nil {
+		listen = DefaultAddr
+	}
 	obs.WriteJSON(w, http.StatusOK, map[string]any{
 		"ok":      true,
 		"service": "pit-companion",
-		"listen":  DefaultAddr,
+		"listen":  listen,
 		"sign":    false,
 		"trade":   false,
 		"pairing": true,
@@ -214,7 +218,7 @@ func (h *Hub) localStatus(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "origin_denied", http.StatusForbidden)
 		return
 	}
-	body := map[string]any{"sign": false, "trade": false, "sessionAlive": false, "surface": "desktop"}
+	body := map[string]any{"sign": false, "trade": false, "sessionAlive": false, "surface": "desktop", "version": version.Number}
 	st, err := cli.Load(h.Dir)
 	if err == nil {
 		body["network"] = st.Network

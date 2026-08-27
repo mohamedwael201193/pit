@@ -1,13 +1,13 @@
 export function PolicyLaw() {
   const rows = [
-    ["Max trade", "10 USD"],
-    ["Max daily loss", "50 USD"],
-    ["Max leverage", "1x"],
-    ["Max slippage", "80 bps"],
-    ["Cooldown", "0 s"],
-    ["Session TTL", "3600 s"],
-    ["Min calibration", "0.00"],
-    ["Allowed", "ETH, BTC on Hyperliquid"],
+    ["Max trade", "example 10 USD until your file is pinned"],
+    ["Max daily loss", "example 50 USD until your file is pinned"],
+    ["Max leverage", "example 1x until your file is pinned"],
+    ["Max slippage", "example 80 bps until your file is pinned"],
+    ["Cooldown", "example 0 s"],
+    ["Session TTL", "example 3600 s"],
+    ["Min calibration", "NOT ENOUGH DATA until N is large enough"],
+    ["Allowed", "ETH, BTC on Hyperliquid after you pin them"],
     ["Kill", "off until you flip it"],
   ];
   return (

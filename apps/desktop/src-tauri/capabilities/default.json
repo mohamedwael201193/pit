@@ -3,5 +3,13 @@
   "identifier": "default",
   "description": "PIT desktop window. Session secrets stay in the OS keychain, never in the webview.",
   "windows": ["main"],
-  "permissions": ["core:default"]
+  "permissions": [
+    "core:default",
+    "allow-companion-url",
+    "allow-export-session",
+    "allow-local-status",
+    "allow-local-code",
+    "allow-local-doctor",
+    "allow-ensure-companion"
+  ]
 }

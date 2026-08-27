@@ -1,6 +1,8 @@
+use std::fs::{self, OpenOptions};
+use std::io::{Read, Write};
 use std::net::{SocketAddr, TcpStream};
-use std::path::PathBuf;
-use std::process::Command;
+use std::path::{Path, PathBuf};
+use std::process::{Command, Stdio};
 use std::time::Duration;
 
 #[tauri::command]
@@ -13,57 +15,238 @@ fn export_session() -> Result<String, String> {
     Err("session_export_denied".into())
 }
 
+#[tauri::command]
+fn local_status() -> Result<serde_json::Value, String> {
+    loopback_json("/local/status")
+}
+
+#[tauri::command]
+fn local_code() -> Result<serde_json::Value, String> {
+    loopback_json("/local/code")
+}
+
+#[tauri::command]
+fn local_doctor() -> Result<serde_json::Value, String> {
+    loopback_json("/local/doctor")
+}
+
+#[tauri::command]
+fn ensure_companion() -> Result<bool, String> {
+    start_companion();
+    Ok(companion_listening())
+}
+
+fn companion_addr() -> SocketAddr {
+    "127.0.0.1:17373".parse().expect("loopback companion")
+}
+
 fn companion_listening() -> bool {
-    let addr: SocketAddr = "127.0.0.1:17373".parse().expect("loopback companion");
-    TcpStream::connect_timeout(&addr, Duration::from_millis(200)).is_ok()
+    TcpStream::connect_timeout(&companion_addr(), Duration::from_millis(250)).is_ok()
+}
+
+fn loopback_json(path: &str) -> Result<serde_json::Value, String> {
+    let raw = loopback_get(path)?;
+    serde_json::from_str(&raw).map_err(|e| e.to_string())
+}
+
+fn loopback_get(path: &str) -> Result<String, String> {
+    let mut stream = TcpStream::connect_timeout(&companion_addr(), Duration::from_secs(2))
+        .map_err(|_| "companion_down".to_string())?;
+    let _ = stream.set_read_timeout(Some(Duration::from_secs(4)));
+    let req = format!("GET {path} HTTP/1.1\r\nHost: 127.0.0.1:17373\r\nConnection: close\r\n\r\n");
+    stream
+        .write_all(req.as_bytes())
+        .map_err(|_| "companion_down".to_string())?;
+    let mut buf = Vec::new();
+    stream
+        .read_to_end(&mut buf)
+        .map_err(|_| "companion_down".to_string())?;
+    let text = String::from_utf8_lossy(&buf);
+    let status_ok = text.starts_with("HTTP/1.1 200") || text.starts_with("HTTP/1.0 200");
+    let body = text
+        .split_once("\r\n\r\n")
+        .or_else(|| text.split_once("\n\n"))
+        .map(|(_, b)| b.trim().to_string())
+        .unwrap_or_default();
+    if !status_ok {
+        return Err("companion_http".into());
+    }
+    Ok(body)
+}
+
+fn install_dir() -> Option<PathBuf> {
+    std::env::current_exe()
+        .ok()
+        .and_then(|p| p.parent().map(|d| d.to_path_buf()))
 }
 
 fn sidecar_paths() -> Vec<PathBuf> {
     let mut out = Vec::new();
-    if let Ok(exe) = std::env::current_exe() {
-        if let Some(dir) = exe.parent() {
-            for name in [
-                "pit.exe",
-                "pit",
-                "pit-x86_64-pc-windows-msvc.exe",
-                "pit-aarch64-pc-windows-msvc.exe",
-            ] {
-                out.push(dir.join(name));
-            }
+    if let Some(dir) = install_dir() {
+        for name in [
+            "pit.exe",
+            "pit",
+            "pit-x86_64-pc-windows-msvc.exe",
+            "pit-aarch64-pc-windows-msvc.exe",
+        ] {
+            out.push(dir.join(name));
         }
     }
     out
 }
 
-fn spawn_companion() {
-    if companion_listening() {
-        return;
-    }
-    for bin in sidecar_paths() {
-        if !bin.exists() {
+fn first_sidecar() -> Option<PathBuf> {
+    sidecar_paths().into_iter().find(|p| p.exists())
+}
+
+fn log_file() -> Option<std::fs::File> {
+    let base = std::env::var_os("LOCALAPPDATA").map(PathBuf::from)?;
+    let dir = base.join("pit");
+    fs::create_dir_all(&dir).ok()?;
+    OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open(dir.join("companion.log"))
+        .ok()
+}
+
+fn listening_pid() -> Option<u32> {
+    let out = Command::new("netstat").args(["-ano", "-p", "tcp"]).output().ok()?;
+    let text = String::from_utf8_lossy(&out.stdout);
+    for line in text.lines() {
+        if !line.contains("127.0.0.1:17373") {
             continue;
         }
-        let mut cmd = Command::new(&bin);
-        cmd.arg("companion");
-        cmd.env("PIT_ALLOW_FALLBACKS", "false");
-        cmd.env_remove("PIT_SESSION_KEY");
-        cmd.env_remove("HL_SECRET");
-        #[cfg(windows)]
-        {
-            use std::os::windows::process::CommandExt;
-            const CREATE_NO_WINDOW: u32 = 0x0800_0000;
-            cmd.creation_flags(CREATE_NO_WINDOW);
+        if !line.to_ascii_uppercase().contains("LISTEN") {
+            continue;
         }
-        if cmd.spawn().is_ok() {
+        let pid = line.split_whitespace().last()?.parse().ok()?;
+        if pid > 0 {
+            return Some(pid);
+        }
+    }
+    None
+}
+
+fn process_path(pid: u32) -> Option<PathBuf> {
+    let cmd = format!("(Get-CimInstance Win32_Process -Filter 'ProcessId={pid}').ExecutablePath");
+    let out = Command::new("powershell")
+        .args(["-NoProfile", "-NonInteractive", "-Command", &cmd])
+        .output()
+        .ok()?;
+    let s = String::from_utf8_lossy(&out.stdout).trim().to_string();
+    if s.is_empty() {
+        None
+    } else {
+        Some(PathBuf::from(s))
+    }
+}
+
+fn same_install(path: &Path) -> bool {
+    let Some(dir) = install_dir() else {
+        return false;
+    };
+    path.parent().map(|p| p == dir).unwrap_or(false)
+}
+
+const SIDECAR_VERSION: &str = "0.1.2";
+
+fn companion_version() -> Option<String> {
+    let raw = loopback_get("/health").ok()?;
+    let v: serde_json::Value = serde_json::from_str(&raw).ok()?;
+    v.get("version")
+        .and_then(|x| x.as_str())
+        .map(|s| s.trim().to_string())
+}
+
+fn stop_our_listener() {
+    let Some(pid) = listening_pid() else {
+        return;
+    };
+    match process_path(pid) {
+        Some(path) if same_install(&path) => {}
+        _ => return,
+    }
+    let _ = Command::new("taskkill")
+        .args(["/F", "/PID", &pid.to_string()])
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .status();
+    for _ in 0..20 {
+        if !companion_listening() {
+            break;
+        }
+        std::thread::sleep(Duration::from_millis(100));
+    }
+}
+
+fn spawn_sidecar(bin: &Path) {
+    let mut cmd = Command::new(bin);
+    cmd.arg("companion");
+    if let Some(dir) = bin.parent() {
+        cmd.current_dir(dir);
+    }
+    cmd.env("PIT_ALLOW_FALLBACKS", "false");
+    cmd.env_remove("PIT_SESSION_KEY");
+    cmd.env_remove("HL_SECRET");
+    cmd.env_remove("GIT_AUTHOR_DATE");
+    cmd.env_remove("GIT_COMMITTER_DATE");
+    if let Some(log) = log_file() {
+        if let Ok(errlog) = log.try_clone() {
+            cmd.stdout(Stdio::from(log));
+            cmd.stderr(Stdio::from(errlog));
+        }
+    }
+    #[cfg(windows)]
+    {
+        use std::os::windows::process::CommandExt;
+        const CREATE_NO_WINDOW: u32 = 0x0800_0000;
+        cmd.creation_flags(CREATE_NO_WINDOW);
+    }
+    let _ = cmd.spawn();
+}
+
+fn start_companion() {
+    let bin = first_sidecar();
+    if companion_listening() {
+        let ours = listening_pid()
+            .and_then(process_path)
+            .map(|p| same_install(&p))
+            .unwrap_or(false);
+        let ver = companion_version();
+        let stale = ours && ver.as_deref().is_some_and(|v| v != SIDECAR_VERSION);
+        if stale {
+            stop_our_listener();
+        } else if companion_listening() {
             return;
         }
+    }
+    if let Some(bin) = bin {
+        if !companion_listening() {
+            spawn_sidecar(&bin);
+        }
+    } else {
+        return;
+    }
+    for _ in 0..50 {
+        if companion_listening() {
+            return;
+        }
+        std::thread::sleep(Duration::from_millis(100));
     }
 }
 
 pub fn run() {
-    spawn_companion();
+    start_companion();
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![companion_url, export_session])
+        .invoke_handler(tauri::generate_handler![
+            companion_url,
+            export_session,
+            local_status,
+            local_code,
+            local_doctor,
+            ensure_companion
+        ])
         .run(tauri::generate_context!())
         .expect("PIT desktop failed to start");
 }

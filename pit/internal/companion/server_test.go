@@ -169,3 +169,23 @@ func TestLocalCodeDesktopOnly(t *testing.T) {
 		t.Fatal("web doctor")
 	}
 }
+
+func TestLocalStatusVersionNoSecret(t *testing.T) {
+	h := New(t.TempDir())
+	req := local(httptest.NewRequest(http.MethodGet, "/local/status", nil))
+	rec := httptest.NewRecorder()
+	h.Handler().ServeHTTP(rec, req)
+	if rec.Code != 200 {
+		t.Fatal(rec.Body.String())
+	}
+	var got map[string]any
+	if err := json.Unmarshal(rec.Body.Bytes(), &got); err != nil {
+		t.Fatal(err)
+	}
+	if got["sign"] == true || got["trade"] == true {
+		t.Fatal(got)
+	}
+	if got["version"] != "0.1.2" {
+		t.Fatalf("version %v", got["version"])
+	}
+}

@@ -35,6 +35,7 @@ func Doctor(dir string) []Check {
 		checkRPC(dir),
 		checkCompanion(),
 		checkSealer(),
+		checkDirectAuth(),
 		checkStorage(),
 		checkRegistry(dir),
 		checkSession(dir),
@@ -143,6 +144,17 @@ func checkSealer() Check {
 		return Check{Name: "direct_sealer", Detail: "PIT_COMMITTEE_BIN empty and sealer/pit-sealer missing"}
 	}
 	return Check{Name: "direct_sealer", OK: true, Detail: "binary present"}
+}
+
+func checkDirectAuth() Check {
+	p := strings.TrimSpace(os.Getenv("PIT_DIRECT_AUTH_FILE"))
+	if p == "" {
+		return Check{Name: "direct_auth", Detail: "PIT_DIRECT_AUTH_FILE unset"}
+	}
+	if _, err := os.Stat(p); err != nil {
+		return Check{Name: "direct_auth", Detail: "auth file missing"}
+	}
+	return Check{Name: "direct_auth", OK: true, Detail: "file present"}
 }
 
 func checkStorage() Check {

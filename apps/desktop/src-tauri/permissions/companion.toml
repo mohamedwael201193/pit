@@ -1,0 +1,29 @@
+[[permission]]
+identifier = "allow-companion-url"
+description = "Return the loopback companion URL. Never a secret."
+commands.allow = ["companion_url"]
+
+[[permission]]
+identifier = "allow-export-session"
+description = "Always denies session export from the webview."
+commands.allow = ["export_session"]
+
+[[permission]]
+identifier = "allow-local-status"
+description = "Read companion status over a native loopback GET with no Origin."
+commands.allow = ["local_status"]
+
+[[permission]]
+identifier = "allow-local-code"
+description = "Read the one-time pairing code over a native loopback GET with no Origin."
+commands.allow = ["local_code"]
+
+[[permission]]
+identifier = "allow-local-doctor"
+description = "Read doctor checks over a native loopback GET with no Origin."
+commands.allow = ["local_doctor"]
+
+[[permission]]
+identifier = "allow-ensure-companion"
+description = "Start or replace this install's companion sidecar."
+commands.allow = ["ensure_companion"]

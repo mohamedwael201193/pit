@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "PIT",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "identifier": "os.pit.desktop",
   "build": {
     "beforeDevCommand": "npm run dev",
@@ -10,16 +10,20 @@
     "frontendDist": "../dist"
   },
   "app": {
+    "withGlobalTauri": true,
     "windows": [
       {
         "label": "main",
         "title": "PIT",
-        "width": 1280,
-        "height": 800
+        "backgroundColor": "#08090b",
+        "width": 1440,
+        "height": 900,
+        "minWidth": 1100,
+        "minHeight": 720
       }
     ],
     "security": {
-      "csp": "default-src 'self'; connect-src 'self' http://127.0.0.1:17373 https://pit0g.vercel.app https://pit-health.onrender.com https: wss:; img-src 'self' data:; style-src 'self' 'unsafe-inline'; font-src 'self' data:; script-src 'self'",
+      "csp": "default-src 'self'; connect-src 'self' http://127.0.0.1:17373 https://pit0g.vercel.app https://pit-health.onrender.com https: wss:; img-src 'self' data:; style-src 'self' 'unsafe-inline'; font-src 'self' data: https://api.fontshare.com https://cdn.fontshare.com; script-src 'self'",
       "capabilities": ["default"]
     }
   },
@@ -30,7 +34,8 @@
     "windows": {
       "nsis": {
         "installMode": "currentUser",
-        "displayLanguageSelector": false
+        "displayLanguageSelector": false,
+        "installerHooks": "./windows/hooks.nsh"
       }
     },
     "externalBin": ["binaries/pit", "binaries/pit-sealer"]

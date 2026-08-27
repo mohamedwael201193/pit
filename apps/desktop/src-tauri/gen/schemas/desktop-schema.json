@@ -177,6 +177,42 @@
       "description": "Permission identifier",
       "oneOf": [
         {
+          "description": "Return the loopback companion URL. Never a secret.",
+          "type": "string",
+          "const": "allow-companion-url",
+          "markdownDescription": "Return the loopback companion URL. Never a secret."
+        },
+        {
+          "description": "Start or replace this install's companion sidecar.",
+          "type": "string",
+          "const": "allow-ensure-companion",
+          "markdownDescription": "Start or replace this install's companion sidecar."
+        },
+        {
+          "description": "Always denies session export from the webview.",
+          "type": "string",
+          "const": "allow-export-session",
+          "markdownDescription": "Always denies session export from the webview."
+        },
+        {
+          "description": "Read the one-time pairing code over a native loopback GET with no Origin.",
+          "type": "string",
+          "const": "allow-local-code",
+          "markdownDescription": "Read the one-time pairing code over a native loopback GET with no Origin."
+        },
+        {
+          "description": "Read doctor checks over a native loopback GET with no Origin.",
+          "type": "string",
+          "const": "allow-local-doctor",
+          "markdownDescription": "Read doctor checks over a native loopback GET with no Origin."
+        },
+        {
+          "description": "Read companion status over a native loopback GET with no Origin.",
+          "type": "string",
+          "const": "allow-local-status",
+          "markdownDescription": "Read companion status over a native loopback GET with no Origin."
+        },
+        {
           "description": "Default core plugins set.\n#### This default permission set includes:\n\n- `core:path:default`\n- `core:event:default`\n- `core:window:default`\n- `core:webview:default`\n- `core:app:default`\n- `core:image:default`\n- `core:resources:default`\n- `core:menu:default`\n- `core:tray:default`",
           "type": "string",
           "const": "core:default",
