@@ -5,6 +5,7 @@ import (
 
 	"github.com/mohamedwael201193/pit/internal/config"
 	"github.com/mohamedwael201193/pit/internal/hl"
+	"github.com/mohamedwael201193/pit/internal/httpx"
 	"github.com/mohamedwael201193/pit/internal/obs"
 	"github.com/mohamedwael201193/pit/internal/watch"
 )
@@ -42,5 +43,5 @@ func newMux() http.Handler {
 		}
 		obs.WriteJSON(w, http.StatusOK, obs.WatchBody(view))
 	})
-	return mux
+	return httpx.Public(mux)
 }

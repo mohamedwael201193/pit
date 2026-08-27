@@ -6,6 +6,9 @@ jobs:
     defaults:
       run:
         working-directory: pit
+    env:
+      PIT_ALLOW_FALLBACKS: "false"
+      PIT_KEYRING: file
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
@@ -48,6 +51,12 @@ jobs:
       - run: npm run build
         env:
           VITE_PRIVY_APP_ID: cmtafcijw02av0cl1ay81om7m
+          VITE_HEALTH_URL: https://pit-health.onrender.com
+      - run: npx playwright install --with-deps chromium
+      - run: npx playwright test
+        env:
+          VITE_PRIVY_APP_ID: cmtafcijw02av0cl1ay81om7m
+          VITE_HEALTH_URL: https://pit-health.onrender.com
   desktop:
     runs-on: ubuntu-latest
     defaults:

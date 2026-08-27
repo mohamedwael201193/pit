@@ -9,9 +9,8 @@ import (
 	"sync"
 )
 
-// FileStore is a development stand-in for OS keychain.
-// Production desktop must use the platform keychain; this store is local-only
-// and never used by the web surface.
+// FileStore is the test and PIT_KEYRING=file recovery backend.
+// Production CLI and desktop use OSStore (Windows Credential Manager / macOS Keychain / libsecret).
 type FileStore struct {
 	root string
 	mu   sync.Mutex

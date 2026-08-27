@@ -17,7 +17,7 @@ func CreateLocalSession(dir, workspace, network, policyVer string) (SessionFile,
 	if err != nil {
 		return SessionFile{}, err
 	}
-	ring, err := keyring.Open(filepath.Join(dir, "keyring"))
+	ring, err := keyring.OpenProduct(filepath.Join(dir, "keyring"))
 	if err != nil {
 		return SessionFile{}, err
 	}

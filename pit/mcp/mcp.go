@@ -6,7 +6,7 @@ import (
 )
 
 var AllowedTools = []string{
-	"market", "opportunities", "forecast", "status", "card", "verify",
+	"market", "opportunities", "forecast", "status", "card", "verify", "preview",
 }
 
 var ForbiddenTools = []string{
@@ -33,6 +33,9 @@ type Response struct {
 	Body  any    `json:"body,omitempty"`
 }
 
+// LiveOpportunities is set by cmd/mcp to read public Watch. Tests leave it nil.
+var LiveOpportunities func() map[string]any
+
 func Handle(req Request) Response {
 	if !IsAllowed(req.Tool) {
 		return Response{OK: false, Error: "mcp_read_only"}
@@ -41,11 +44,20 @@ func Handle(req Request) Response {
 	case "status":
 		return Response{OK: true, Body: map[string]any{"surface": "mcp", "authorize": false, "sign": false}}
 	case "opportunities":
-		return Response{OK: true, Body: map[string]any{
+		body := map[string]any{
 			"count": 0,
 			"copy":  "No opportunities match your policy.",
 			"trade": false,
-		}}
+			"sign":  false,
+		}
+		if LiveOpportunities != nil {
+			if live := LiveOpportunities(); live != nil {
+				body = live
+			}
+		}
+		body["trade"] = false
+		body["sign"] = false
+		return Response{OK: true, Body: body}
 	case "market":
 		return Response{OK: true, Body: map[string]any{
 			"note":   "bind a workspace and a live venue quote with a timestamp",
@@ -57,6 +69,8 @@ func Handle(req Request) Response {
 		return EmptyCard()
 	case "verify":
 		return Response{OK: true, Body: VerifyHint()}
+	case "preview":
+		return PreparePreview()
 	default:
 		return Response{OK: true, Body: map[string]any{"tool": req.Tool, "note": "bind a workspace first"}}
 	}

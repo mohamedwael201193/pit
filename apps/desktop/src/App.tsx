@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { BindNote } from "./BindNote";
 import { EmptyHome } from "./EmptyHome";
 import { RecoverNote } from "./RecoverNote";
@@ -21,6 +21,7 @@ import { SignedNote } from "./SignedNote";
 import { LinkedNote } from "./LinkedNote";
 import { StatusNote } from "./StatusNote";
 import { PostedNote } from "./PostedNote";
+import { localStatus } from "./companion";
 
 type Net = "mainnet" | "testnet";
 
@@ -67,6 +68,23 @@ const BEATS = [
 export function App() {
   const [net, setNet] = useState<Net>("mainnet");
   const [beat, setBeat] = useState(0);
+  const [sessionAlive, setSessionAlive] = useState(false);
+
+  useEffect(() => {
+    let gone = false;
+    const tick = () => {
+      localStatus().then((s) => {
+        if (!gone) setSessionAlive(Boolean(s?.sessionAlive));
+      });
+    };
+    tick();
+    const id = window.setInterval(tick, 4000);
+    return () => {
+      gone = true;
+      window.clearInterval(id);
+    };
+  }, []);
+
   return (
     <div className="shell">
       <header className="top">
@@ -102,7 +120,7 @@ export function App() {
             <strong>{BEATS[beat].title}.</strong> {BEATS[beat].body} Retry from this list. Recovery is on this machine.
           </p>
           <BindNote />
-          <AuthorizeGate sessionAlive={false} />
+          <AuthorizeGate sessionAlive={sessionAlive} />
           <LocalSign />
           <SessionNote />
           <PreviewNote />

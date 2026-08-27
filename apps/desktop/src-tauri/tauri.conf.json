@@ -1,21 +1,38 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "PIT",
+  "version": "0.1.0",
   "identifier": "os.pit.desktop",
   "build": {
-    "frontendDist": "../dist",
-    "devUrl": "http://localhost:3001"
+    "beforeDevCommand": "npm run dev",
+    "devUrl": "http://localhost:3001",
+    "beforeBuildCommand": "npm run build",
+    "frontendDist": "../dist"
   },
   "app": {
     "windows": [
       {
+        "label": "main",
         "title": "PIT",
         "width": 1280,
         "height": 800
       }
     ],
     "security": {
-      "csp": "default-src 'self'; connect-src 'self' https: wss:; img-src 'self' data:; style-src 'self' 'unsafe-inline'; font-src 'self' data:"
+      "csp": "default-src 'self'; connect-src 'self' http://127.0.0.1:17373 https://pit0g.vercel.app https://pit-health.onrender.com https: wss:; img-src 'self' data:; style-src 'self' 'unsafe-inline'; font-src 'self' data:; script-src 'self'",
+      "capabilities": ["default"]
     }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["nsis"],
+    "icon": ["icons/icon.png"],
+    "windows": {
+      "nsis": {
+        "installMode": "currentUser",
+        "displayLanguageSelector": false
+      }
+    },
+    "externalBin": ["binaries/pit"]
   }
 }

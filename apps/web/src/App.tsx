@@ -9,11 +9,13 @@ import { PolicyPage } from "./app/PolicyPage";
 import { AccountPage } from "./app/AccountPage";
 import { SettingsPage } from "./app/SettingsPage";
 import { VerifyPage } from "./app/VerifyPage";
+import { PairPage } from "./PairPage";
 
 export function App() {
   return (
     <Routes>
       <Route path="/" element={<Landing />} />
+      <Route path="/pair" element={<PairPage />} />
       <Route path="/signin" element={<WalletGate />} />
       <Route path="/app" element={<AppShell />}>
         <Route index element={<Home />} />

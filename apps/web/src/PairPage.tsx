@@ -1,0 +1,91 @@
+import { useState } from "react";
+import { Link } from "react-router-dom";
+import { PitMark } from "./brand/PitMark";
+
+const COMPANION = "http://127.0.0.1:17373";
+
+export function PairPage() {
+  const [code, setCode] = useState("");
+  const [msg, setMsg] = useState<string | null>(null);
+  const [err, setErr] = useState<string | null>(null);
+
+  async function pair() {
+    setErr(null);
+    setMsg(null);
+    try {
+      const r = await fetch(`${COMPANION}/pair`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: code.replace(/[^A-Za-z0-9]/g, "") }),
+      });
+      const body = (await r.json().catch(() => ({}))) as {
+        ok?: boolean;
+        canSign?: boolean;
+        sign?: boolean;
+        device?: string;
+      };
+      if (!r.ok || body.sign || body.canSign) {
+        setErr("Pairing refused. Open PIT on this computer and type the code shown there.");
+        return;
+      }
+      if (body.device) {
+        sessionStorage.setItem("pit_device", body.device);
+      }
+      setMsg("This browser is paired. It can read status. It cannot authorize or hold a session key.");
+    } catch {
+      setErr("PIT is not running on this computer. Install the Windows app, then run it before pairing.");
+    }
+  }
+
+  return (
+    <div className="guide-shell min-h-[100dvh] bg-[#0a0a0a] px-6 py-16 text-[#f0e7d4]">
+      <div className="mx-auto max-w-[40rem]">
+        <PitMark />
+        <p className="mt-10 font-mono text-[0.75rem] tracking-[0.14em] text-[#d82f2f]">LOCAL PAIRING</p>
+        <h1 className="mt-3 text-[2.5rem] font-semibold tracking-[-0.04em]">Pair this browser with PIT on this machine.</h1>
+        <p className="mt-4 max-w-[42ch] text-[1.0625rem] leading-7 text-[rgb(240_231_212/0.7)]">
+          PIT never asks for a seed phrase. The one-time code lives on your desktop. This site never receives your
+          session key.
+        </p>
+        <ol className="mt-8 grid gap-3 text-[0.975rem] leading-6 text-[rgb(240_231_212/0.75)]">
+          <li>1. Download PIT for Windows from GitHub Releases and install it.</li>
+          <li>2. Launch PIT. A pairing code appears on that window or in `pit companion`.</li>
+          <li>3. Type the code here. Expire is two minutes. One use.</li>
+          <li>4. Connect your wallet. Approve an order/cancel session on the machine.</li>
+        </ol>
+        <label className="mt-10 block">
+          <span className="text-[0.75rem] tracking-[0.12em] text-[rgb(240_231_212/0.5)]">ONE-TIME CODE</span>
+          <input
+            className="mt-2 w-full border border-[rgb(240_231_212/0.25)] bg-[#141414] px-4 py-3 font-mono text-[1.25rem] tracking-[0.2em] outline-none focus:border-[#d82f2f]"
+            autoComplete="off"
+            spellCheck={false}
+            value={code}
+            onChange={(e) => setCode(e.target.value.toUpperCase())}
+            placeholder="ABCD-EFGH"
+            aria-label="pairing code"
+          />
+        </label>
+        <button
+          type="button"
+          className="mt-6 rounded-full bg-[#d82f2f] px-6 py-3 font-semibold text-[#f0e7d4]"
+          onClick={() => void pair()}
+        >
+          Pair this browser
+        </button>
+        {msg ? <p className="mt-4 text-[0.975rem] text-[#f0e7d4]">{msg}</p> : null}
+        {err ? (
+          <p className="mt-4 text-[0.975rem] text-[#ff7a7a]" role="alert">
+            {err}
+          </p>
+        ) : null}
+        <p className="mt-10 text-[0.875rem] text-[rgb(240_231_212/0.5)]">
+          macOS and Linux installers are not claimed until they are packaged and tested. Source build is documented in
+          the README.
+        </p>
+        <Link className="mt-6 inline-block text-[#d82f2f]" to="/">
+          Back to PIT
+        </Link>
+      </div>
+    </div>
+  );
+}

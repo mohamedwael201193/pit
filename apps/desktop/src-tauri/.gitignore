@@ -1,2 +1,6 @@
 /target/
 WixTools/
+binaries/*.exe
+binaries/pit
+binaries/pit-*
+

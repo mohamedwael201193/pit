@@ -1,0 +1,57 @@
+name: release
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+jobs:
+  windows:
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.22.x"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Build pit sidecar
+        env:
+          PIT_ALLOW_FALLBACKS: "false"
+          PIT_KEYRING: file
+        run: |
+          New-Item -ItemType Directory -Force -Path apps/desktop/src-tauri/binaries | Out-Null
+          Push-Location pit
+          go build -o ../apps/desktop/src-tauri/binaries/pit-x86_64-pc-windows-msvc.exe ./cmd/pit
+          Pop-Location
+      - name: Install desktop frontend
+        working-directory: apps/desktop
+        run: npm install
+      - uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          projectPath: apps/desktop
+          tagName: ${{ github.ref_name }}
+          releaseName: PIT ${{ github.ref_name }}
+          releaseBody: |
+            Windows installer (NSIS). Not Authenticode-signed until a code-signing certificate is issued.
+            Verify SHA256 against the attached checksums. Session keys never leave this machine.
+            Pair at https://pit0g.vercel.app/pair after launch.
+          releaseDraft: false
+          prerelease: true
+      - name: Checksums
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          Get-ChildItem -Recurse -Include *.exe,*.msi | ForEach-Object {
+            $h = Get-FileHash $_.FullName -Algorithm SHA256
+            "{0}  {1}" -f $h.Hash.ToLower(), $_.Name
+          } | Out-File -Encoding ascii SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-installer
+          path: |
+            SHA256SUMS.txt
+            apps/desktop/src-tauri/target/release/bundle/**/*

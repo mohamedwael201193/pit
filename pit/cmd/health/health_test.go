@@ -52,3 +52,23 @@ func TestWatchNeverTrades(t *testing.T) {
 		t.Fatal("auth")
 	}
 }
+
+func TestWatchCORSForProductionOrigin(t *testing.T) {
+	req := httptest.NewRequest(http.MethodOptions, "/watch?network=mainnet", nil)
+	req.Header.Set("Origin", "https://pit0g.vercel.app")
+	rec := httptest.NewRecorder()
+	newMux().ServeHTTP(rec, req)
+	if rec.Code != http.StatusNoContent {
+		t.Fatal(rec.Code)
+	}
+	if rec.Header().Get("Access-Control-Allow-Origin") != "https://pit0g.vercel.app" {
+		t.Fatal(rec.Header().Get("Access-Control-Allow-Origin"))
+	}
+	req = httptest.NewRequest(http.MethodGet, "/health", nil)
+	req.Header.Set("Origin", "https://evil.example")
+	rec = httptest.NewRecorder()
+	newMux().ServeHTTP(rec, req)
+	if rec.Header().Get("Access-Control-Allow-Origin") != "" {
+		t.Fatal("evil origin")
+	}
+}

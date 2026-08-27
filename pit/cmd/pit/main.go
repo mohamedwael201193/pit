@@ -3,12 +3,15 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"net"
+	"net/http"
 	"os"
 	"strings"
 	"time"
 
 	"github.com/mohamedwael201193/pit/internal/calib"
 	"github.com/mohamedwael201193/pit/internal/cli"
+	"github.com/mohamedwael201193/pit/internal/companion"
 	"github.com/mohamedwael201193/pit/internal/compute"
 	"github.com/mohamedwael201193/pit/internal/config"
 	pitexec "github.com/mohamedwael201193/pit/internal/exec"
@@ -23,32 +26,43 @@ import (
 	"github.com/mohamedwael201193/pit/internal/workspace"
 )
 
+var asJSON bool
+
 func usage() {
 	fmt.Fprint(os.Stderr, `PIT — Private Alpha OS
 
 Commands:
   pit init --network mainnet|testnet --wallet 0x...
   pit login
+  pit wallet
   pit network
   pit policy
   pit session
+  pit companion
   pit ask --market market.json --book book.json
+  pit watch
   pit opportunities
   pit forecast
   pit preview --market ETH --side buy --forecast <id>
   pit authorize --i-understand
+  pit orders
   pit cancel
   pit status
   pit resolve
   pit card
   pit verify --preview 0x... --root 0x... --network mainnet --workspace <id>
-  pit proof --root 0x... --out file
+  pit proof --root 0x... --out file --key-file key.hex
   pit kill
+  pit doctor
+  pit logout [--forget]
+
+Every command accepts --json. Exit 0 on success, 2 on usage, 1 on failed doctor.
 
 PIT never asks for a seed phrase or a trading secret.
-Session keys stay on this machine.
+Session keys stay on this machine (OS keychain unless PIT_KEYRING=file).
 authorize requires a TTY, the exact word AUTHORIZE, and a live session on this machine.
-pit session creates a one-hour order/cancel agent in the local keyring. It never prints the key.
+pit session creates a one-hour order/cancel agent. It never prints the key.
+pit companion listens on 127.0.0.1 only. Pairing does not send the session key to the browser.
 `)
 }
 
@@ -57,46 +71,58 @@ func main() {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(2)
 	}
-	if len(os.Args) < 2 {
+	rest, args := []string{}, os.Args[1:]
+	asJSON, rest = cli.WantJSON(args)
+	if len(rest) < 1 {
 		usage()
 		os.Exit(2)
 	}
-	switch os.Args[1] {
+	switch rest[0] {
 	case "init":
-		cmdInit(os.Args[2:])
+		cmdInit(rest[1:])
 	case "login":
 		fmt.Println("Connect your wallet in the desktop or web app, then sign the bind message.")
 		fmt.Println("PIT never asks for your private key.")
+	case "wallet":
+		cmdWallet()
 	case "policy":
 		cmdPolicy()
 	case "session":
 		cmdSession()
+	case "companion":
+		cmdCompanion()
 	case "status":
 		cmdStatus()
 	case "kill":
 		cmdKill()
 	case "network":
 		cmdNetwork()
-	case "opportunities":
+	case "watch", "opportunities":
 		cmdOpportunities()
+	case "orders":
+		cmdOrders()
 	case "card":
 		cmdCard()
 	case "ask":
-		cmdAsk(os.Args[2:])
+		cmdAsk(rest[1:])
 	case "forecast":
 		cmdForecast()
 	case "preview":
-		cmdPreview(os.Args[2:])
+		cmdPreview(rest[1:])
 	case "cancel":
 		cmdCancel()
 	case "resolve":
 		cmdResolve()
 	case "authorize":
-		cmdAuthorize(os.Args[2:])
+		cmdAuthorize(rest[1:])
 	case "verify":
-		cmdVerify(os.Args[2:])
+		cmdVerify(rest[1:])
 	case "proof":
-		cmdProof(os.Args[2:])
+		cmdProof(rest[1:])
+	case "doctor":
+		cmdDoctor()
+	case "logout":
+		cmdLogout(rest[1:])
 	case "help", "-h", "--help":
 		usage()
 	default:
@@ -659,10 +685,143 @@ func cmdVerify(args []string) {
 }
 
 func cmdProof(args []string) {
+	flags, err := cli.ParseProofFlags(args)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(2)
+	}
 	if err := storage.RefuseMissingProof(storage.LookCLI()); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(2)
 	}
-	fmt.Fprintln(os.Stderr, "proof download needs --root, --out, and a workspace key file. PIT does not use a global memory key.")
-	os.Exit(2)
+	key, err := cli.LoadProofKey(flags.KeyFile, os.Getenv("PIT_MEMORY_KEY"))
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(2)
+	}
+	st, err := cli.Load(stateDir())
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "proof requires pit init first")
+		os.Exit(2)
+	}
+	net, err := config.ParseNetwork(st.Network)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(2)
+	}
+	ch := config.For(net)
+	job, err := storage.ProofJob(storage.LookCLI(), ch.RPC, ch.StorageIndexer, key, flags.Root, flags.Out)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(2)
+	}
+	argv, err := storage.DownloadArgs(job)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(2)
+	}
+	fmt.Println("download", strings.Join(storage.RedactArgs(argv), " "))
+	cmd := storage.Command(job, argv)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	if err := cmd.Run(); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+}
+
+func cmdWallet() {
+	st, err := cli.Load(stateDir())
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "wallet unbound until pit init")
+		os.Exit(2)
+	}
+	if asJSON {
+		_ = json.NewEncoder(os.Stdout).Encode(map[string]any{
+			"wallet": st.Wallet, "network": st.Network, "workspace": st.WorkspaceID, "sign": false,
+		})
+		return
+	}
+	fmt.Println("wallet   ", st.Wallet)
+	fmt.Println("network  ", st.Network)
+	fmt.Println("workspace", st.WorkspaceID)
+	fmt.Println("PIT never asks for a seed phrase.")
+}
+
+func cmdOrders() {
+	st, err := cli.Load(stateDir())
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "orders require pit init first")
+		os.Exit(2)
+	}
+	net, err := config.ParseNetwork(st.Network)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(2)
+	}
+	raw, err := hl.New(config.For(net)).OpenOrders(st.Wallet)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+	if asJSON {
+		_ = json.NewEncoder(os.Stdout).Encode(map[string]any{"orders": json.RawMessage(raw), "sign": false, "trade": false})
+		return
+	}
+	fmt.Println("open orders for", st.Wallet)
+	fmt.Println(string(raw))
+}
+
+func cmdDoctor() {
+	checks := cli.Doctor(stateDir())
+	cli.PrintDoctor(os.Stdout, checks, asJSON)
+	if cli.DoctorFailed(checks) {
+		os.Exit(1)
+	}
+}
+
+func cmdLogout(args []string) {
+	forget := false
+	for _, a := range args {
+		if a == "--forget" {
+			forget = true
+		}
+	}
+	if err := cli.Logout(stateDir(), forget); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(2)
+	}
+	if asJSON {
+		_ = json.NewEncoder(os.Stdout).Encode(map[string]any{"ok": true, "forget": forget, "sign": false})
+		return
+	}
+	if forget {
+		fmt.Println("workspace unbound. Session secrets deleted.")
+		return
+	}
+	fmt.Println("session deleted. Workspace bind remains. Re-run pit session to mint a new agent.")
+}
+
+func cmdCompanion() {
+	addr, err := companion.ListenAddr()
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(2)
+	}
+	h := companion.New(stateDir())
+	code, exp := h.Code()
+	pretty := code[:4] + "-" + code[4:]
+	fmt.Printf("PIT companion on %s\n", addr)
+	fmt.Printf("Pairing code %s (expires %s)\n", pretty, exp.Format(time.RFC3339))
+	fmt.Println("Type this code at https://pit0g.vercel.app/pair")
+	fmt.Println("Session keys stay on this machine. The browser never receives them.")
+	ln, err := net.Listen("tcp", addr)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+	if err := http.Serve(ln, h.Handler()); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
 }

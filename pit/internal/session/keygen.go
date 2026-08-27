@@ -35,7 +35,7 @@ func (k AgentKey) Name(workspaceID string) string {
 	return "PIT-" + short
 }
 
-func (k AgentKey) Store(ring *keyring.FileStore, workspaceID, sessionID string) error {
+func (k AgentKey) Store(ring keyring.Store, workspaceID, sessionID string) error {
 	if k.secret == nil {
 		return fmt.Errorf("empty_session_key")
 	}
@@ -43,7 +43,7 @@ func (k AgentKey) Store(ring *keyring.FileStore, workspaceID, sessionID string) 
 	return ring.Put(workspaceID+"/session", sessionID, []byte(raw))
 }
 
-func LoadAgent(ring *keyring.FileStore, workspaceID, sessionID string) (AgentKey, error) {
+func LoadAgent(ring keyring.Store, workspaceID, sessionID string) (AgentKey, error) {
 	b, err := ring.Get(workspaceID+"/session", sessionID)
 	if err != nil {
 		return AgentKey{}, err

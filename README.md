@@ -27,6 +27,34 @@ Copy in the product is **YOU / YOUR WALLET / YOUR TRADING ACCOUNT / YOUR SESSION
 
 ---
 
+## Install (Windows first)
+
+Ordinary path:
+
+1. Open [pit0g.vercel.app](https://pit0g.vercel.app)
+2. Download the Windows installer from [GitHub Releases](https://github.com/mohamedwael201193/pit/releases)
+3. Verify SHA256 against `SHA256SUMS` in that release
+4. Install and launch PIT
+5. Pair the browser at [/pair](https://pit0g.vercel.app/pair) with the one-time code shown on the machine
+6. Connect **your wallet**. PIT never asks for a seed phrase.
+7. Pick MAINNET or TESTNET. Connect **your Hyperliquid account**. Set **your policy**. Approve the printed agent (order and cancel only).
+
+macOS and Linux: source build only until those installers are packaged and tested. Do not claim they are production-ready.
+
+The installer is **not Authenticode-signed** until a code-signing certificate exists. Windows SmartScreen may warn. Verify the checksum. Do not skip that step.
+
+Health (public Watch, `sign: false`): [pit-health.onrender.com](https://pit-health.onrender.com/health)
+
+### How to verify your PIT download
+
+```powershell
+Get-FileHash .\PIT_0.1.0_x64-setup.exe -Algorithm SHA256
+```
+
+Compare with `SHA256SUMS` on the same GitHub Release. The source commit is on the release tag.
+
+---
+
 ## 20 seconds
 
 1. Connect **your wallet**. PIT never asks for a seed phrase.
@@ -263,9 +291,15 @@ go run ./cmd/pit kill
 
 Full command set:
 
-`init` `login` `policy` `session` `ask` `opportunities` `forecast` `preview` `authorize` `cancel` `status` `resolve` `card` `verify` `proof` `kill`
+`init` `login` `wallet` `network` `policy` `session` `companion` `ask` `watch` `opportunities` `forecast` `preview` `authorize` `orders` `cancel` `status` `resolve` `card` `verify` `proof` `kill` `doctor` `logout`
 
-`session` creates a one-hour order/cancel agent in the local keyring. It prints the agent address. It never prints the key. Your wallet must `approveAgent` that address.
+Every command accepts `--json`. `pit doctor` probes wallet, network, OS keychain, Hyperliquid, 0G RPC, companion, sealer, storage client, registry, session, and policy. It never prints secrets.
+
+`session` creates a one-hour order/cancel agent in the OS keychain (or `PIT_KEYRING=file` for tests). It prints the agent address. It never prints the key. Your wallet must `approveAgent` that address.
+
+`companion` listens on `127.0.0.1:17373` only. Pairing is a one-time code. The browser receives a device token, never the session key. Foreign origins and non-loopback clients are refused.
+
+`proof` requires `--root`, `--out`, and `--key-file`. It never uses `PIT_MEMORY_KEY`.
 
 `status` prints the bound workspace, live session address, extraAgents link, ledger row, and whether the bound cloid is on the venue. It never prints a session key and never places an order.
 
@@ -294,8 +328,10 @@ cd pit
 go run ./cmd/mcp
 ```
 
-Tools: `market` `opportunities` `forecast` `status` `card` `verify`  
+Tools: `market` `opportunities` `forecast` `status` `card` `verify` `preview`  
 Not tools: `authorize` `order` `cancel` `export_session`
+
+`preview` is prepare-only. MCP cannot authorize. Live `opportunities` are public Watch cards with `trade: false`.
 
 ### SDK
 
@@ -310,13 +346,15 @@ npm install
 npm run dev
 ```
 
-Routes: `/` landing, `/signin` wallet gate, `/app` Watch home, `/app/start` onboarding, `/app/activity` named states, `/app/policy` clip cards, `/app/account` verify, `/verify` receipt form. Open http://localhost:3000 or `#verify`.
+Routes: `/` landing, `/signin` wallet gate, `/pair` local pairing, `/app` Watch home, `/app/start` onboarding, `/app/activity` named states, `/app/policy` clip cards, `/app/account` verify, `/verify` receipt form. Open http://localhost:3000 or `#verify`.
 
 Web can connect, bind, inspect Watch, policy, and receipts. It cannot create a Hyperliquid session or present Authorize.
 
+Production Watch reads `VITE_HEALTH_URL` (https://pit-health.onrender.com). That process never signs.
+
 MAINNET shows production copy and the Aristotle explorer. TESTNET shows the integration lab and the Galileo explorer. They never share a workspace.
 
-CI builds the web app and the desktop Vite shell on every push. Desktop packaging config lives in `apps/desktop/src-tauri/tauri.conf.json` with a restrictive CSP. Session secrets stay in the OS keychain or a local file store. They never enter the web bundle.
+CI builds the web app, runs Playwright copy tests, and builds the desktop frontend on every push. Windows NSIS packaging runs from `.github/workflows/release.yml` on version tags. Session secrets stay in the OS keychain (`PIT_KEYRING=os`) or a local file store in tests. They never enter the web bundle.
 
 ### Desktop (authorize locally)
 

@@ -50,6 +50,12 @@ export function Home() {
           onClick={() => navigate("/app/start")}
         />
         <ChoiceCard
+          title="Pair this computer"
+          body="One-time code. The browser never holds a session key."
+          Diagram={DiagramSession}
+          onClick={() => navigate("/pair")}
+        />
+        <ChoiceCard
           title="Read the law"
           body="Clip, assets, kill. The model cannot raise them."
           Diagram={DiagramPolicy}

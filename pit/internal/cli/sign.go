@@ -14,7 +14,7 @@ func SignBound(dir string, live session.Session, network string, raw []byte, non
 	if live.ID == "" || live.Workspace == "" {
 		return hl.Envelope{}, fmt.Errorf("session_expired")
 	}
-	ring, err := keyring.Open(KeyringDir(dir))
+	ring, err := keyring.OpenProduct(KeyringDir(dir))
 	if err != nil {
 		return hl.Envelope{}, err
 	}
