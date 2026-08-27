@@ -2,7 +2,7 @@ export function SiweBind({ connected }: { connected: boolean }) {
   if (!connected) {
     return (
       <p className="mt-4 max-w-[40ch] text-sm opacity-80">
-        After you connect, you sign a bind message. PIT never asks for a seed phrase.
+        After you connect, you sign a bind message. No seed field exists.
       </p>
     );
   }

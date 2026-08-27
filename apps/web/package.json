@@ -12,8 +12,10 @@
   "dependencies": {
     "@privy-io/react-auth": "^2.21.0",
     "@tailwindcss/vite": "^4.3.3",
+    "motion": "^13.1.1",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
+    "react-router-dom": "^7.18.2",
     "tailwindcss": "^4.3.3",
     "viem": "^2.31.0"
   },

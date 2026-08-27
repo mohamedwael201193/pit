@@ -1,4 +1,4 @@
-const RING = [
+export const RING = [
   "PRIVATE_BOOK",
   "SEALING",
   "TEE",
@@ -7,7 +7,7 @@ const RING = [
   "STORAGE",
   "RECEIPT",
   "CALIBRATION",
-];
+] as const;
 
 export function Ring() {
   return (

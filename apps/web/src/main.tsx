@@ -1,13 +1,16 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
+import { BrowserRouter } from "react-router-dom";
 import { PrivyProvider } from "@privy-io/react-auth";
 import { App } from "./App";
 import "./index.css";
+import "./styles/guide.css";
 
 const appId = import.meta.env.VITE_PRIVY_APP_ID as string;
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
+    <BrowserRouter>
     <PrivyProvider
       appId={appId}
       config={{
@@ -33,5 +36,6 @@ createRoot(document.getElementById("root")!).render(
     >
       <App />
     </PrivyProvider>
+    </BrowserRouter>
   </StrictMode>,
 );

@@ -1,0 +1,172 @@
+html[data-theme="guide"],
+html[data-theme="guide"] body {
+  background-color: #1a1a1a;
+  color: #f0e7d4;
+}
+
+.guide-shell {
+  color-scheme: dark;
+  --guide-coral: #d82f2f;
+  --guide-ink: #1a1a1a;
+  --guide-cream: #f0e7d4;
+  --guide-paper: #f9f5e3;
+  --guide-white: #ebebeb;
+  --guide-black: #0a0a0a;
+  --color-fg: var(--guide-cream);
+  --color-fg-muted: rgb(240 231 212 / 0.72);
+  --color-fg-faint: rgb(240 231 212 / 0.45);
+  --font-sans: "Host Grotesk", "Geist", ui-sans-serif, system-ui, sans-serif;
+  --pit-focus: 0 0 0 2px #1a1a1a, 0 0 0 4px var(--guide-cream);
+  background: #1a1a1a;
+  color: var(--guide-cream);
+  font-family: var(--font-sans);
+  min-height: 100dvh;
+}
+
+.guide-shell ::selection {
+  background: var(--guide-coral);
+  color: #fff;
+}
+
+.guide-grain {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  opacity: 0.28;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 160px 160px;
+}
+
+.guide-coral {
+  background: var(--guide-coral);
+  color: var(--guide-black);
+}
+
+.guide-pin {
+  position: relative;
+  height: 180vh;
+}
+
+.guide-pin__sticky {
+  position: sticky;
+  top: 0;
+  min-height: 100svh;
+  overflow: hidden;
+}
+
+.guide-rule {
+  border: 0;
+  border-top: 1px solid currentColor;
+  opacity: 0.9;
+  margin: 0;
+}
+
+.guide-kicker {
+  font-size: clamp(3.25rem, 9vw, 6.25rem);
+  font-weight: 700;
+  letter-spacing: -0.055em;
+  line-height: 0.9;
+  color: var(--guide-white);
+}
+
+.guide-mega {
+  font-size: clamp(5rem, 18vw, 12.5rem);
+  font-weight: 800;
+  letter-spacing: -0.075em;
+  line-height: 0.78;
+  color: var(--guide-black);
+}
+
+.guide-display {
+  font-size: clamp(2.75rem, 7.5vw, 5.75rem);
+  font-weight: 700;
+  letter-spacing: -0.055em;
+  line-height: 0.92;
+  color: var(--guide-cream);
+}
+
+.container-pit {
+  width: 100%;
+  max-width: 1400px;
+  margin-inline: auto;
+  padding-inline: 1.5rem;
+}
+
+@media (min-width: 768px) {
+  .container-pit {
+    padding-inline: 2.5rem;
+  }
+}
+
+@keyframes guide-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.guide-spin {
+  animation: guide-spin 28s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .guide-grain,
+  .guide-spin {
+    animation: none;
+  }
+  .guide-grain {
+    display: none;
+  }
+}
+
+.guide-track {
+  display: flex;
+  gap: 1rem;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  padding-bottom: 1.25rem;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}
+.guide-track > * {
+  scroll-snap-align: start;
+  flex: 0 0 min(82vw, 18rem);
+}
+
+.guide-app {
+  --color-fg: #f0e7d4;
+  --color-fg-muted: rgb(240 231 212 / 0.72);
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 3rem;
+  padding: 0 1.5rem;
+  border-radius: 999px;
+  font-size: 1rem;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  border: 0;
+}
+.pill:active {
+  transform: scale(0.98);
+}
+.pill-ink {
+  background: #0a0a0a;
+  color: #f0e7d4;
+}
+.pill-ghost {
+  background: transparent;
+  color: #0a0a0a;
+  border: 1px solid #0a0a0a;
+}
+.pill-coral {
+  background: #d82f2f;
+  color: #fff;
+}
+.pill-line {
+  background: transparent;
+  color: #f0e7d4;
+  border: 1px solid rgb(240 231 212 / 0.35);
+}

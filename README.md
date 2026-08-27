@@ -310,7 +310,9 @@ npm install
 npm run dev
 ```
 
-Open http://localhost:3000 or http://localhost:3000/#verify
+Routes: `/` landing, `/signin` wallet gate, `/app` Watch home, `/app/start` twelve-beat onboarding, `/verify` receipt form. Open http://localhost:3000 or `#verify`.
+
+Web can connect, bind, inspect Watch, policy, and receipts. It cannot create a Hyperliquid session or present Authorize.
 
 MAINNET shows production copy and the Aristotle explorer. TESTNET shows the integration lab and the Galileo explorer. They never share a workspace.
 
@@ -326,7 +328,7 @@ npm run dev
 
 Open http://localhost:3001
 
-The desk shows two start cards (wallet, session) and an authorize field. The authorize control stays disabled until a live session exists on this machine. Type `AUTHORIZE` on the exact preview. Piped yes is never enough.
+The desk shows a twelve-beat start, the pipeline, permissions, and an authorize field. The authorize control stays disabled until a live session exists on this machine. Type `AUTHORIZE` on the exact preview. Piped yes is never enough.
 
 Session permissions card: order and cancel allowed; withdraw and leverage denied.
 
