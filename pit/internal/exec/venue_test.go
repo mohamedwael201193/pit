@@ -1,17 +1,12 @@
 package exec
 
-import (
-	"testing"
+import "testing"
 
-	"github.com/mohamedwael201193/pit/internal/policy"
-)
-
-func TestRefuseVenue(t *testing.T) {
-	p := policy.Default()
-	if err := RefuseVenue(p, "binance"); err == nil {
-		t.Fatal("venue")
+func TestNeedOnVenue(t *testing.T) {
+	if err := NeedOnVenue(false); err == nil {
+		t.Fatal("missing")
 	}
-	if err := RefuseVenue(p, "hyperliquid"); err != nil {
+	if err := NeedOnVenue(true); err != nil {
 		t.Fatal(err)
 	}
 }

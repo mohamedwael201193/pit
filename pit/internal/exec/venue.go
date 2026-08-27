@@ -1,18 +1,10 @@
 package exec
 
-import (
-	"fmt"
-	"strings"
+import "fmt"
 
-	"github.com/mohamedwael201193/pit/internal/policy"
-)
-
-func RefuseVenue(p policy.Policy, venue string) error {
-	want := strings.ToLower(strings.TrimSpace(venue))
-	for _, v := range p.AllowedVenues {
-		if strings.EqualFold(v, want) {
-			return nil
-		}
+func NeedOnVenue(found bool) error {
+	if !found {
+		return fmt.Errorf("not_on_venue")
 	}
-	return fmt.Errorf("venue")
+	return nil
 }

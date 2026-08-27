@@ -413,6 +413,17 @@ func cmdCancel() {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(2)
 	}
+	found, qerr := cli.LiveOnVenue(st.Network, st.Wallet, card.Cloid)
+	if qerr != nil {
+		fmt.Fprintln(os.Stderr, qerr)
+		if err := pitexec.QueryBeforeRetry(false, rec.OID, ""); err != nil {
+			fmt.Println(err)
+		}
+	} else if err := pitexec.NeedOnVenue(found); err != nil {
+		fmt.Println(err)
+	} else {
+		fmt.Println("on venue")
+	}
 	fmt.Println("cancel is order/cancel only. It cannot withdraw or change leverage.")
 	fmt.Printf("cloid    %s\n", card.Cloid)
 	fmt.Printf("asset    %d\n", book.Asset)

@@ -281,7 +281,7 @@ Restarting the process keeps a previewed action. A second click does not apply t
 
 Web refresh cannot sign. Desktop recovers the exact preview from the local ledger. Two wallets never share a workspace.
 
-`cancel` requires a live session and an authorized preview. It builds a cancel wire from the live asset index, may sign locally, and queries extraAgents. An unsigned or unlinked cancel never reaches the venue. Cancel cannot withdraw.
+`cancel` requires a live session and an authorized preview. It queries `frontendOpenOrders` for the bound cloid, builds a cancel wire from the live asset index, may sign locally, and checks extraAgents. Missing venue state is `not_on_venue` or `query_exchange_first`. An unsigned or unlinked cancel never reaches the venue. Cancel cannot withdraw.
 
 `ask` requires `--market` and `--book` files. Missing files return `empty_envelope`. Missing `PIT_COMMITTEE_BIN`, missing `PIT_DIRECT_AUTH_FILE`, an unauthorized desk, Galileo VerifyE2EE-unproven, or a Router URL all stop the operation. There is no fallback. MCP cannot export the auth file or invoke the sealer.
 
