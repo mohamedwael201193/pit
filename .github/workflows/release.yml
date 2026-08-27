@@ -26,6 +26,9 @@ jobs:
           Push-Location pit
           go build -o ../apps/desktop/src-tauri/binaries/pit-x86_64-pc-windows-msvc.exe ./cmd/pit
           Pop-Location
+          Push-Location sealer
+          go build -o ../apps/desktop/src-tauri/binaries/pit-sealer-x86_64-pc-windows-msvc.exe .
+          Pop-Location
       - name: Install desktop frontend
         working-directory: apps/desktop
         run: npm install

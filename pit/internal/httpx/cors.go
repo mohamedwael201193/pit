@@ -6,8 +6,22 @@ import (
 	"strings"
 )
 
+func canonOrigin(origin string) string {
+	return strings.TrimRight(strings.TrimSpace(origin), "/")
+}
+
+func desktopShellOrigin(origin string) bool {
+	switch canonOrigin(origin) {
+	case "https://tauri.localhost", "http://tauri.localhost", "tauri://localhost",
+		"http://ipc.localhost", "https://ipc.localhost":
+		return true
+	default:
+		return false
+	}
+}
+
 func HealthOriginOK(origin string) bool {
-	o := strings.TrimSpace(origin)
+	o := canonOrigin(origin)
 	if o == "" {
 		return false
 	}
@@ -20,17 +34,20 @@ func HealthOriginOK(origin string) bool {
 	if loopbackHTTP(o) {
 		return true
 	}
-	return o == "https://tauri.localhost" || o == "tauri://localhost"
+	return desktopShellOrigin(o)
 }
 
 func CompanionOriginOK(origin string) bool {
-	switch strings.TrimSpace(origin) {
+	o := canonOrigin(origin)
+	if desktopShellOrigin(o) {
+		return true
+	}
+	switch o {
 	case "https://pit0g.vercel.app",
 		"http://127.0.0.1:4173", "http://localhost:4173",
 		"http://127.0.0.1:5173", "http://localhost:5173",
 		"http://127.0.0.1:3000", "http://localhost:3000",
-		"http://127.0.0.1:3001", "http://localhost:3001",
-		"https://tauri.localhost", "tauri://localhost":
+		"http://127.0.0.1:3001", "http://localhost:3001":
 		return true
 	default:
 		return false
@@ -38,10 +55,12 @@ func CompanionOriginOK(origin string) bool {
 }
 
 func CodeOriginOK(origin string) bool {
-	switch strings.TrimSpace(origin) {
-	case "",
-		"http://127.0.0.1:3001", "http://localhost:3001",
-		"https://tauri.localhost", "tauri://localhost":
+	o := canonOrigin(origin)
+	if o == "" || desktopShellOrigin(o) {
+		return true
+	}
+	switch o {
+	case "http://127.0.0.1:3001", "http://localhost:3001":
 		return true
 	default:
 		return false

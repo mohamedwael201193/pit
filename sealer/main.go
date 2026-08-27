@@ -84,6 +84,13 @@ func runSeal(a authFile, prompt []byte, role, outPath string, tamperCT, wrongSig
 	}
 	result["key_id"] = pk.KeyID
 	result["pubkey_signer"] = pk.SignerAddress
+	if err := requirePubKeyMatchesOnchain(pk.SignerAddress, a.TeeSigner); err != nil {
+		result["verify_e2ee"] = "FAIL"
+		result["verify_err"] = err.Error()
+		_ = writeEvidence(outPath, result)
+		fmt.Println("VERIFY_FAIL", err)
+		return 6
+	}
 	encPub, err := base64.RawURLEncoding.DecodeString(pk.EncPub)
 	if err != nil {
 		encPub, err = base64.StdEncoding.DecodeString(pk.EncPub)

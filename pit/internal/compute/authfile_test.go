@@ -42,6 +42,33 @@ func TestWriteAuthWritesTeeML(t *testing.T) {
 	}
 }
 
+func TestMaterializeAskIsolatesRoles(t *testing.T) {
+	dir := t.TempDir()
+	sku := MainnetChat()
+	r, err := MaterializeAsk(dir, sku, Researcher, []byte("researcher-book"), "Bearer app-sk-x")
+	if err != nil {
+		t.Fatal(err)
+	}
+	c, err := MaterializeAsk(dir, sku, Challenger, []byte("challenger-book"), "Bearer app-sk-x")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if r.PromptPath == c.PromptPath || r.OutPath == c.OutPath || r.AuthPath == c.AuthPath {
+		t.Fatal("roles must not share files")
+	}
+	rb, err := os.ReadFile(r.PromptPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	cb, err := os.ReadFile(c.PromptPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(rb) != "researcher-book" || string(cb) != "challenger-book" {
+		t.Fatalf("%s %s", rb, cb)
+	}
+}
+
 func TestProductAskRequiresDirectAuthFile(t *testing.T) {
 	t.Setenv("PIT_DIRECT_AUTH_FILE", "")
 	err := ProductAsk(config.Mainnet, true, "/opt/pit/sealer")

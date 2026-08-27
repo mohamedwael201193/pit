@@ -1,12 +1,12 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "PIT",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "identifier": "os.pit.desktop",
   "build": {
     "beforeDevCommand": "npm run dev",
     "devUrl": "http://localhost:3001",
-    "beforeBuildCommand": "npm run build",
+    "beforeBuildCommand": "npm run sidecar && npm run build",
     "frontendDist": "../dist"
   },
   "app": {
@@ -33,6 +33,6 @@
         "displayLanguageSelector": false
       }
     },
-    "externalBin": ["binaries/pit"]
+    "externalBin": ["binaries/pit", "binaries/pit-sealer"]
   }
 }

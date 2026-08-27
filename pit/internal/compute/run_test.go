@@ -6,6 +6,20 @@ import (
 	"testing"
 )
 
+func TestAcceptSealedEvidence(t *testing.T) {
+	p := filepath.Join(t.TempDir(), "ev.json")
+	body := `{"verify_e2ee":"OK","sig_text":"zg-sig-v1/e2ee-ct:aa","pubkey_signer":"0xA46EA4FC5889AD35A1487e1Ed04dCcfa872146B9","teeSigner":"0xA46EA4FC5889AD35A1487e1Ed04dCcfa872146B9"}`
+	if err := os.WriteFile(p, []byte(body), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := AcceptSealedEvidence(p, "0xa46ea4fc5889ad35a1487e1ed04dccfa872146b9"); err != nil {
+		t.Fatal(err)
+	}
+	if err := AcceptSealedEvidence(p, "0x0000000000000000000000000000000000000001"); err == nil {
+		t.Fatal("wrong onchain")
+	}
+}
+
 func TestMustNativeSealer(t *testing.T) {
 	if err := MustNativeSealer(""); err == nil {
 		t.Fatal("empty")

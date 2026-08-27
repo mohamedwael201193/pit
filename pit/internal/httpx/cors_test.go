@@ -34,6 +34,15 @@ func TestCodeOriginNeverWeb(t *testing.T) {
 	if !CodeOriginOK("tauri://localhost") {
 		t.Fatal("tauri")
 	}
+	if !CodeOriginOK("http://tauri.localhost") {
+		t.Fatal("windows webview")
+	}
+	if !CompanionOriginOK("http://tauri.localhost") {
+		t.Fatal("companion windows webview")
+	}
+	if !HealthOriginOK("http://tauri.localhost") {
+		t.Fatal("health windows webview")
+	}
 }
 
 func TestCompanionLoopbackAndOrigin(t *testing.T) {

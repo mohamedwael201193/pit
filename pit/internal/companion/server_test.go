@@ -153,6 +153,14 @@ func TestLocalCodeDesktopOnly(t *testing.T) {
 		t.Fatal("desktop code")
 	}
 
+	req = local(httptest.NewRequest(http.MethodGet, "/local/code", nil))
+	req.Header.Set("Origin", "http://tauri.localhost")
+	rec = httptest.NewRecorder()
+	h.Handler().ServeHTTP(rec, req)
+	if rec.Code != 200 {
+		t.Fatal("windows webview pairing")
+	}
+
 	req = local(httptest.NewRequest(http.MethodGet, "/local/doctor", nil))
 	req.Header.Set("Origin", "https://pit0g.vercel.app")
 	rec = httptest.NewRecorder()

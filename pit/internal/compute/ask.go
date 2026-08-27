@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/mohamedwael201193/pit/internal/config"
 	"github.com/mohamedwael201193/pit/internal/deskid"
@@ -80,5 +81,7 @@ func ProductAskEnvelope(net config.Network, deskAuthorized bool, bin string, pub
 }
 
 func skuURLMatch(skuURL, authURL string) bool {
-	return skuURL != "" && authURL != "" && (skuURL == authURL)
+	a := strings.TrimRight(strings.TrimSpace(skuURL), "/")
+	b := strings.TrimRight(strings.TrimSpace(authURL), "/")
+	return a != "" && b != "" && strings.EqualFold(a, b)
 }

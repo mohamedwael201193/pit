@@ -61,8 +61,8 @@ func MaterializeAsk(dir string, sku SKU, role Role, envelope []byte, authorizati
 	if err := os.MkdirAll(dir, 0o700); err != nil {
 		return DirectJob{}, err
 	}
-	authPath := filepath.Join(dir, "auth.json")
-	promptPath := filepath.Join(dir, "prompt.txt")
+	authPath := filepath.Join(dir, "auth-"+string(role)+".json")
+	promptPath := filepath.Join(dir, "prompt-"+string(role)+".txt")
 	outPath := filepath.Join(dir, string(role)+".json")
 	if err := WriteAuth(authPath, sku, authorization); err != nil {
 		return DirectJob{}, err
