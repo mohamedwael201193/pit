@@ -91,3 +91,20 @@ func RunSealedAsk(j DirectJob) error {
 	}
 	return AcceptSealedEvidence(j.OutPath, j.OnchainSigner)
 }
+
+func PublicRoleEvidence(j DirectJob) map[string]any {
+	b, err := os.ReadFile(j.OutPath)
+	if err != nil {
+		return map[string]any{"role": string(j.Role), "verify_e2ee": "FAIL"}
+	}
+	var ev sealedEvidence
+	if err := json.Unmarshal(b, &ev); err != nil {
+		return map[string]any{"role": string(j.Role), "verify_e2ee": "FAIL"}
+	}
+	return map[string]any{
+		"role":          string(j.Role),
+		"verify_e2ee":   ev.VerifyE2EE,
+		"pubkey_signer": ev.PubkeySigner,
+		"teeSigner":     ev.TeeSigner,
+	}
+}

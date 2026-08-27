@@ -32,6 +32,27 @@ func DirectAuthPath() string {
 	return strings.TrimSpace(os.Getenv("PIT_DIRECT_AUTH_FILE"))
 }
 
+func ReadAuthFile(path string) (AuthFile, error) {
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		return AuthFile{}, fmt.Errorf("direct_token_required")
+	}
+	var loaded AuthFile
+	if err := json.Unmarshal(raw, &loaded); err != nil {
+		return AuthFile{}, fmt.Errorf("direct_token_required")
+	}
+	if err := RefuseRouterKey(loaded.Authorization); err != nil {
+		return AuthFile{}, err
+	}
+	if err := DenyRouter(loaded.URL); err != nil {
+		return AuthFile{}, err
+	}
+	if strings.TrimSpace(loaded.Authorization) == "" {
+		return AuthFile{}, fmt.Errorf("direct_token_required")
+	}
+	return loaded, nil
+}
+
 func WriteAuth(path string, sku SKU, authorization string) error {
 	if err := DenyRouter(sku.URL); err != nil {
 		return err

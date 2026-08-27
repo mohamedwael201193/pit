@@ -16,7 +16,7 @@ function fromCheck(id: string, label: string, c: DoctorCheck | undefined, waitin
   return { id, label, state: "waiting", detail: c.detail || waitingDetail };
 }
 
-export function probes(checks: DoctorCheck[], status: LocalStatus | null, companionUp: boolean): Probe[] {
+export function probes(checks: DoctorCheck[], status: LocalStatus | null, companionUp: boolean, teeVerified = false): Probe[] {
   const wallet = fromCheck("wallet", "Wallet", checkNamed(checks, "wallet"), "Connect your wallet, then bind this machine.");
   const hl = fromCheck("hyperliquid", "Hyperliquid", checkNamed(checks, "hyperliquid"), "Public book not reached yet.");
   const sealer = checkNamed(checks, "direct_sealer");
@@ -25,31 +25,39 @@ export function probes(checks: DoctorCheck[], status: LocalStatus | null, compan
     id: "direct",
     label: "0G Direct",
     state: "waiting",
-    detail: "Direct TeeML is not armed until the sealer binary and PIT_DIRECT_AUTH_FILE are present.",
+    detail: "Direct TeeML is not armed until you sign Protect my strategy on the paired browser.",
   };
   if (sealer?.ok && auth?.ok) {
-    direct = { id: "direct", label: "0G Direct", state: "ok", detail: "Sealer and auth file present. Research still verifies each response." };
+    direct = { id: "direct", label: "0G Direct", state: "ok", detail: "Wallet-signed Direct token on this computer. Research still verifies each response." };
   } else if (sealer && !sealer.ok) {
     direct = { id: "direct", label: "0G Direct", state: "waiting", detail: sealer.detail };
   } else if (auth && !auth.ok) {
     direct = { id: "direct", label: "0G Direct", state: "waiting", detail: auth.detail };
   }
-  const tee: Probe = {
-    id: "tee",
-    label: "TEE verification",
-    state: "waiting",
-    detail: "No sealed research has been verified on this machine in this session.",
-  };
+  const tee: Probe = teeVerified
+    ? { id: "tee", label: "TEE verification", state: "ok", detail: "VerifyE2EE matched the on-chain teeSigner for this session." }
+    : {
+        id: "tee",
+        label: "TEE verification",
+        state: "waiting",
+        detail: "No sealed research has been verified on this machine in this session.",
+      };
   const storage = fromCheck("storage", "Storage", checkNamed(checks, "storage"), "Official Go storage client not found.");
   if (storage.state === "ok") {
     storage.detail = "Official client present. A proof is verified only after an upload/download.";
   }
   const policy = fromCheck("policy", "Policy", checkNamed(checks, "policy"), "Policy is not pinned for this workspace.");
+  const agent = fromCheck(
+    "hl_agent",
+    "Hyperliquid agent",
+    checkNamed(checks, "hl_agent"),
+    "Create a local session, then approve it on Hyperliquid. PIT cannot withdraw.",
+  );
   const session: Probe = status?.sessionAlive
     ? { id: "session", label: "Session", state: "ok", detail: "Live order/cancel session on this machine." }
     : fromCheck("session", "Session", checkNamed(checks, "session"), "Approve an order/cancel agent on this machine.");
   const local: Probe = companionUp
     ? { id: "local", label: "Local companion", state: "ok", detail: status?.version ? `PIT ${status.version}` : "Loopback companion is up." }
     : { id: "local", label: "Local companion", state: "waiting", detail: "Waiting for 127.0.0.1:17373." };
-  return [local, wallet, hl, direct, tee, storage, policy, session];
+  return [local, wallet, hl, direct, tee, storage, policy, session, agent];
 }

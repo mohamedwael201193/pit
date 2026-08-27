@@ -10,6 +10,7 @@ import { ChoiceCard } from "../ui/ChoiceCard";
 import { Bezel } from "../ui/Surface";
 import { NetworkBanner } from "../NetworkBanner";
 import { PolicyPanel } from "../PolicyPanel";
+import { DirectSign } from "../DirectSign";
 import { namedState } from "../namedStates";
 import { cn } from "../lib/cn";
 import {
@@ -46,10 +47,10 @@ const STEPS = [
   },
   {
     id: 3,
-    title: "Create workspace",
-    why: "Policy, memory, and ledger bind to this workspace, not to a global master address.",
-    action: "Confirm the workspace created on connect.",
-    fail: namedState("WRONG_NETWORK"),
+    title: "Protect my strategy",
+    why: "PIT sends your private strategy only through 0G’s verified sealed path. The website never receives the token.",
+    action: "Sign the Direct message from the bound wallet. Pair this browser first.",
+    fail: namedState("SIGNATURE_DECLINED"),
     Diagram: DiagramSealed,
   },
   {
@@ -199,6 +200,17 @@ export function StartFlow() {
             </>
           ) : null}
 
+          {current.id === 3 ? (
+            <div className="mt-10">
+              <DirectSign />
+              <div className="mt-8">
+                <Button type="button" trailingArrow size="lg" onClick={next}>
+                  Continue
+                </Button>
+              </div>
+            </div>
+          ) : null}
+
           {current.id === 5 ? (
             <div className="mt-10 grid gap-4 sm:grid-cols-2">
               <ChoiceCard
@@ -222,13 +234,13 @@ export function StartFlow() {
             </div>
           ) : null}
 
-          {current.id !== 2 && current.id !== 5 ? (
+          {current.id !== 2 && current.id !== 3 && current.id !== 5 ? (
             <figure className="mt-10 max-w-[36rem] overflow-hidden border border-[rgb(240_231_212/0.28)]">
               <Diagram className="aspect-[16/10] w-full" />
             </figure>
           ) : null}
 
-          {current.id !== 2 && current.id !== 5 ? (
+          {current.id !== 2 && current.id !== 3 && current.id !== 5 ? (
             <Bezel className="mt-8 max-w-[36rem]">
               <p className="text-[0.8125rem] text-[rgb(240_231_212/0.55)]">{current.id} of 12</p>
               <p className="mt-4 text-[1.0625rem] leading-7 text-[rgb(240_231_212/0.8)]">
@@ -241,7 +253,7 @@ export function StartFlow() {
             </Bezel>
           ) : null}
 
-          {current.id !== 2 && current.id !== 5 ? (
+          {current.id !== 2 && current.id !== 3 && current.id !== 5 ? (
             <div className="mt-10">
               {step < 12 ? (
                 <Button type="button" trailingArrow size="lg" onClick={next}>

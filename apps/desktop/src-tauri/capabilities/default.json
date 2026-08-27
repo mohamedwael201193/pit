@@ -14,6 +14,9 @@
     "allow-local-init",
     "allow-local-session",
     "allow-local-policy",
-    "allow-local-revoke-session"
+    "allow-local-revoke-session",
+    "allow-local-direct-intent",
+    "allow-local-direct-status",
+    "allow-local-research"
   ]
 }

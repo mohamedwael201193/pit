@@ -1,7 +1,6 @@
 package compute
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 	"strings"
@@ -16,68 +15,84 @@ func ProductAsk(net config.Network, deskAuthorized bool, bin string) error {
 }
 
 func ProductAskEnvelope(net config.Network, deskAuthorized bool, bin string, publicMarket, privateBook []byte) error {
+	return ProductAskAuth(net, deskAuthorized, bin, publicMarket, privateBook, AuthFile{})
+}
+
+func ProductAskAuth(net config.Network, deskAuthorized bool, bin string, publicMarket, privateBook []byte, loaded AuthFile) error {
+	_, err := ProductAskReport(net, deskAuthorized, bin, publicMarket, privateBook, loaded)
+	return err
+}
+
+type AskReport struct {
+	Roles []map[string]any `json:"roles"`
+	Note  string           `json:"note"`
+}
+
+func ProductAskReport(net config.Network, deskAuthorized bool, bin string, publicMarket, privateBook []byte, loaded AuthFile) (AskReport, error) {
 	if err := deskid.BeforeSealedAsk(deskAuthorized); err != nil {
-		return err
+		return AskReport{}, err
 	}
 	sku := ForNetwork(net)
 	if err := SealedAskEnabled(sku); err != nil {
-		return err
+		return AskReport{}, err
 	}
 	if err := RefuseSKUCopy(net, sku.Model); err != nil {
-		return err
+		return AskReport{}, err
 	}
 	if err := DenyRouter(sku.URL); err != nil && sku.URL != "" {
-		return err
+		return AskReport{}, err
 	}
 	if sku.URL == "" {
-		return fmt.Errorf("provider_url_required")
+		return AskReport{}, fmt.Errorf("provider_url_required")
 	}
 	if err := MustNativeSealer(bin); err != nil {
-		return err
+		return AskReport{}, err
 	}
-	authPath := DirectAuthPath()
-	if authPath == "" {
-		return fmt.Errorf("direct_token_required")
-	}
-	raw, err := os.ReadFile(authPath)
-	if err != nil {
-		return fmt.Errorf("direct_token_required")
-	}
-	var loaded AuthFile
-	if err := json.Unmarshal(raw, &loaded); err != nil {
-		return fmt.Errorf("direct_token_required")
+	if strings.TrimSpace(loaded.Authorization) == "" {
+		var err error
+		loaded, err = LoadEnvAuthFile()
+		if err != nil {
+			return AskReport{}, err
+		}
 	}
 	if err := RefuseRouterKey(loaded.Authorization); err != nil {
-		return err
+		return AskReport{}, err
 	}
 	if err := DenyRouter(loaded.URL); err != nil {
-		return err
+		return AskReport{}, err
 	}
 	if !skuURLMatch(sku.URL, loaded.URL) {
-		return fmt.Errorf("provider_url_mismatch")
+		return AskReport{}, fmt.Errorf("provider_url_mismatch")
 	}
 	if len(publicMarket) == 0 || len(privateBook) == 0 {
-		return fmt.Errorf("empty_envelope")
+		return AskReport{}, fmt.Errorf("empty_envelope")
 	}
 	dir, err := os.MkdirTemp("", "pit-ask-")
 	if err != nil {
-		return err
+		return AskReport{}, err
 	}
 	defer os.RemoveAll(dir)
 	envelopes, err := Committee(publicMarket, privateBook)
 	if err != nil {
-		return err
+		return AskReport{}, err
 	}
 	var jobs []DirectJob
 	for _, role := range CommitteeRoles() {
 		j, err := MaterializeAsk(dir, sku, role, envelopes[role], loaded.Authorization)
 		if err != nil {
-			return err
+			return AskReport{}, err
 		}
 		j.Bin = bin
 		jobs = append(jobs, j)
 	}
-	return RunCommittee(bin, jobs)
+	if err := RunCommittee(bin, jobs); err != nil {
+		return AskReport{}, err
+	}
+	rep := AskReport{Note: HonestLabel(IndependenceNote()), Roles: make([]map[string]any, 0, len(jobs))}
+	for _, j := range jobs {
+		rep.Roles = append(rep.Roles, PublicRoleEvidence(j))
+	}
+	return rep, nil
 }
 
 func skuURLMatch(skuURL, authURL string) bool {

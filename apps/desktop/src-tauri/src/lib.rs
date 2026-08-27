@@ -52,6 +52,23 @@ fn local_revoke_session() -> Result<serde_json::Value, String> {
 }
 
 #[tauri::command]
+fn local_direct_intent() -> Result<serde_json::Value, String> {
+    let raw = loopback_exchange_timeout("GET", "/local/direct-intent", None, 20)?;
+    serde_json::from_str(&raw).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn local_direct_status() -> Result<serde_json::Value, String> {
+    loopback_json("/local/direct-status")
+}
+
+#[tauri::command]
+fn local_research(coin: String) -> Result<serde_json::Value, String> {
+    let body = serde_json::json!({ "coin": coin });
+    loopback_json_post_timeout("/local/research", &body, 300)
+}
+
+#[tauri::command]
 fn ensure_companion() -> Result<bool, String> {
     start_companion();
     Ok(companion_listening())
@@ -71,8 +88,12 @@ fn loopback_json(path: &str) -> Result<serde_json::Value, String> {
 }
 
 fn loopback_json_post(path: &str, body: &serde_json::Value) -> Result<serde_json::Value, String> {
+    loopback_json_post_timeout(path, body, 8)
+}
+
+fn loopback_json_post_timeout(path: &str, body: &serde_json::Value, read_secs: u64) -> Result<serde_json::Value, String> {
     let payload = body.to_string();
-    let raw = loopback_post(path, &payload)?;
+    let raw = loopback_exchange_timeout("POST", path, Some(&payload), read_secs)?;
     serde_json::from_str(&raw).map_err(|e| e.to_string())
 }
 
@@ -85,9 +106,13 @@ fn loopback_post(path: &str, json: &str) -> Result<String, String> {
 }
 
 fn loopback_exchange(method: &str, path: &str, json: Option<&str>) -> Result<String, String> {
+    loopback_exchange_timeout(method, path, json, 8)
+}
+
+fn loopback_exchange_timeout(method: &str, path: &str, json: Option<&str>, read_secs: u64) -> Result<String, String> {
     let mut stream = TcpStream::connect_timeout(&companion_addr(), Duration::from_secs(2))
         .map_err(|_| "companion_down".to_string())?;
-    let _ = stream.set_read_timeout(Some(Duration::from_secs(8)));
+    let _ = stream.set_read_timeout(Some(Duration::from_secs(read_secs)));
     let mut req = format!("{method} {path} HTTP/1.1\r\nHost: 127.0.0.1:17373\r\nConnection: close\r\n");
     if let Some(body) = json {
         req.push_str("Content-Type: application/json\r\n");
@@ -196,7 +221,7 @@ fn same_install(path: &Path) -> bool {
     path.parent().map(|p| p == dir).unwrap_or(false)
 }
 
-const SIDECAR_VERSION: &str = "0.1.3";
+const SIDECAR_VERSION: &str = "0.1.4";
 
 fn companion_version() -> Option<String> {
     let raw = loopback_get("/health").ok()?;
@@ -296,6 +321,9 @@ pub fn run() {
             local_session,
             local_policy,
             local_revoke_session,
+            local_direct_intent,
+            local_direct_status,
+            local_research,
             ensure_companion
         ])
         .run(tauri::generate_context!())

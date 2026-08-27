@@ -1,15 +1,21 @@
 export function explainStop(code: string | null): { title: string; body: string } | null {
   if (!code) return null;
+  if (code === "direct_token_required" || code === "sealer_not_wired") {
+    return {
+      title: "Private research is not armed",
+      body: "Pair the browser and sign Protect my strategy. PIT never asks you to edit an env file. Watch still works. No order was placed.",
+    };
+  }
+  if (code === "direct_token_expired") {
+    return {
+      title: "Sealed-path signature expired",
+      body: "Sign Protect my strategy again. The previous token lasted 24 hours. No order was placed.",
+    };
+  }
   if (code === "TEE_VERIFY_FAIL") {
     return {
       title: "Research stopped",
       body: "We could not verify that the AI result came from the provider PIT expected. No order was placed. No funds moved.",
-    };
-  }
-  if (code === "direct_token_required" || code === "sealer_not_wired") {
-    return {
-      title: "Private research is not armed",
-      body: "This computer does not have a Direct TeeML token yet. Watch still works. No order was placed.",
     };
   }
   if (code === "companion_down") {
@@ -22,6 +28,18 @@ export function explainStop(code: string | null): { title: string; body: string 
     return {
       title: "TESTNET sealed research is off",
       body: "Galileo TeeML is not enabled until VerifyE2EE is proven. Switch to MAINNET for production research, or keep TESTNET as the lab.",
+    };
+  }
+  if (code === "signature_mismatch") {
+    return {
+      title: "Wrong wallet signed",
+      body: "The bound wallet must sign Protect my strategy. No token was stored. No order was placed.",
+    };
+  }
+  if (code === "empty_envelope") {
+    return {
+      title: "Not enough market data",
+      body: "PIT will not invent a book. Watch still works. No order was placed.",
     };
   }
   return {

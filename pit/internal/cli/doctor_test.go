@@ -28,9 +28,12 @@ func TestDoctorRefusesGlobalMemoryKey(t *testing.T) {
 
 func TestDoctorDirectAuthUnset(t *testing.T) {
 	t.Setenv("PIT_DIRECT_AUTH_FILE", "")
-	c := checkDirectAuth()
+	c := checkDirectAuth(t.TempDir())
 	if c.OK {
 		t.Fatal("unset auth must not pass")
+	}
+	if c.Detail == "PIT_DIRECT_AUTH_FILE unset" {
+		t.Fatal("must not send a normal user to an env file")
 	}
 }
 
@@ -55,6 +58,16 @@ func TestWantJSONStripsFlag(t *testing.T) {
 	want, rest := WantJSON([]string{"status", "--json", "--i-understand"})
 	if !want || rest[0] != "status" || rest[1] != "--i-understand" {
 		t.Fatalf("%v %v", want, rest)
+	}
+}
+
+func TestDoctorHLAgentUnbound(t *testing.T) {
+	c := checkHLAgent(t.TempDir())
+	if c.OK {
+		t.Fatal("unbound agent must wait")
+	}
+	if c.Name != "hl_agent" {
+		t.Fatal(c.Name)
 	}
 }
 

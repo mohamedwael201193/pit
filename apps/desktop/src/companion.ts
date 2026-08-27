@@ -34,6 +34,16 @@ export type BindResult = {
   error?: string;
   sign?: boolean;
   trade?: boolean;
+  provider?: string;
+  model?: string;
+  expiresAt?: number;
+  source?: string;
+  digest?: string;
+  message?: string;
+  explain?: string;
+  note?: string;
+  roles?: Array<{ role?: string; verify_e2ee?: string; pubkey_signer?: string; teeSigner?: string }>;
+  verify?: boolean;
 };
 
 type TauriWindow = Window & {
@@ -160,6 +170,39 @@ export async function revokeLocalSession(): Promise<BindResult> {
   }
 }
 
+export async function directIntent(): Promise<BindResult> {
+  try {
+    const native = await nativeJsonOrError<BindResult>("local_direct_intent");
+    if (native.sign || native.trade) return { error: "companion_denied" };
+    return native;
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : "companion_http";
+    return { error: msg || "companion_http" };
+  }
+}
+
+export async function directStatus(): Promise<BindResult> {
+  try {
+    const native = await nativeJsonOrError<BindResult>("local_direct_status");
+    if (native.sign || native.trade) return { error: "companion_denied" };
+    return native;
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : "companion_http";
+    return { error: msg || "companion_http" };
+  }
+}
+
+export async function runResearch(coin: string): Promise<BindResult> {
+  try {
+    const native = await nativeJsonOrError<BindResult>("local_research", { coin });
+    if (native.sign || native.trade) return { error: "companion_denied" };
+    return native;
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : "companion_http";
+    return { error: msg || "companion_http" };
+  }
+}
+
 export function prettyCode(code: string) {
   const raw = code.replace(/[^A-Za-z0-9]/g, "").toUpperCase();
   if (raw.length !== 8) return raw;
@@ -182,6 +225,15 @@ export function describeBindError(code: string) {
   }
   if (code === "unbound") {
     return "Bind your public wallet on this computer first.";
+  }
+  if (code === "direct_token_required" || code === "direct_challenge_required") {
+    return "Pair the browser, then sign Protect my strategy. PIT never asks you to edit an env file.";
+  }
+  if (code === "direct_token_expired") {
+    return "The sealed-path signature expired. Sign again in the paired browser.";
+  }
+  if (code === "galileo_e2ee_unproven") {
+    return "TESTNET sealed research is off until VerifyE2EE is proven. Switch to MAINNET.";
   }
   if (code === "companion_down") {
     return "The local companion is not running yet.";

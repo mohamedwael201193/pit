@@ -37,7 +37,8 @@ Ordinary path:
 4. Install and launch PIT
 5. Pair the browser at [/pair](https://pit0g.vercel.app/pair) with the one-time code shown on the machine
 6. Connect **your wallet**. PIT never asks for a seed phrase.
-7. Pick MAINNET or TESTNET. Connect **your Hyperliquid account**. Set **your policy**. Approve the printed agent (order and cancel only).
+7. Sign **Protect my strategy** in the paired browser. The Direct token stays on this computer.
+8. Pick MAINNET or TESTNET. Connect **your Hyperliquid account**. Set **your policy**. Approve the printed agent (order and cancel only).
 
 macOS and Linux: source build only until those installers are packaged and tested. Do not claim they are production-ready.
 
@@ -48,7 +49,7 @@ Health (public Watch, `sign: false`): [pit-health.onrender.com](https://pit-heal
 ### How to verify your PIT download
 
 ```powershell
-Get-FileHash .\PIT_0.1.3_x64-setup.exe -Algorithm SHA256
+Get-FileHash .\PIT_0.1.4_x64-setup.exe -Algorithm SHA256
 ```
 
 Compare with `SHA256SUMS` on the same GitHub Release. The source commit is on the release tag.
@@ -155,7 +156,7 @@ go build -o pit-sealer .
 
 From the repository root you can also run `make sealer` then `make pit`. If `PIT_COMMITTEE_BIN` is empty, PIT looks for `sealer/pit-sealer` next to the working directory. A missing binary still returns `sealer_not_wired`.
 
-`PIT_DIRECT_AUTH_FILE` is a JSON file with the Direct provider URL, TeeML flag, on-chain teeSigner, and a wallet-signed `app-sk-` token. A Router dashboard `sk-` / `mk-` key is refused. The sealer writes evidence without the prompt or the authorization header.
+Normal users sign a Direct challenge from the paired browser (`pit direct` or Protect my strategy). PIT stores the wallet-signed `app-sk-` token in the OS keychain. `PIT_DIRECT_AUTH_FILE` is an operator override only. A Router dashboard `sk-` / `mk-` key is refused. The sealer writes evidence without the prompt or the authorization header.
 
 The product committee is three sealed roles in order: researcher, challenger, risk. Role and envelope are split. This is not three independent providers unless the auth files actually differ.
 
@@ -218,7 +219,7 @@ apps/desktop         Local authorize surface (session stays on the machine)
 - Node **20+** (web / desktop)
 - A wallet (Rabby / MetaMask). No seed phrase is ever collected.
 - Optional: official 0G storage Go client for `--proof` uploads
-- Direct sealer at `PIT_COMMITTEE_BIN` plus `PIT_DIRECT_AUTH_FILE` for sealed ask
+- Direct sealer beside `pit.exe` or at `PIT_COMMITTEE_BIN`. Normal users sign Direct in the paired browser. `PIT_DIRECT_AUTH_FILE` is an operator override only.
 
 ---
 
@@ -292,9 +293,9 @@ go run ./cmd/pit revoke
 
 Full command set:
 
-`init` `login` `wallet` `network` `policy` `session` `companion` `ask` `watch` `opportunities` `forecast` `preview` `authorize` `orders` `cancel` `status` `resolve` `card` `verify` `proof` `kill` `revoke` `doctor` `logout` `version`
+`init` `login` `wallet` `network` `policy` `session` `companion` `direct` `ask` `watch` `opportunities` `forecast` `preview` `authorize` `orders` `cancel` `status` `resolve` `card` `verify` `proof` `kill` `revoke` `doctor` `logout` `version`
 
-Every command accepts `--json`. `pit version` prints `PIT 0.1.3`. `pit doctor` probes version, wallet, network, OS keychain, memory-key hazard, Hyperliquid, 0G RPC, companion, sealer, Direct auth file presence, storage client, registry, session, and policy. It never prints secrets. A global `PIT_MEMORY_KEY` is a doctor failure. The desktop can bind a public wallet, pin policy, and mint a session without a terminal. `pit research` is an alias of `pit ask`.
+Every command accepts `--json`. `pit version` prints `PIT 0.1.4`. `pit doctor` probes version, wallet, network, OS keychain, memory-key hazard, Hyperliquid, 0G RPC, companion, sealer, Direct token (keychain or operator file), storage client, registry, session, and policy. It never prints secrets. A global `PIT_MEMORY_KEY` is a doctor failure. The desktop can bind a public wallet, pin policy, and mint a session without a terminal. `pit research` is an alias of `pit ask`. `pit direct` issues the official wallet-signed Direct challenge and stores the token in the keychain.
 
 Official storage client (not the TypeScript SDK): `upload --url --file --key --encryption-key` and `download --proof --root --file --encryption-key`. `pit proof` requires `--key-file` per workspace and refuses a global memory key.
 
@@ -322,7 +323,7 @@ Web refresh cannot sign. Desktop recovers the exact preview from the local ledge
 
 `cancel` requires a live session and an authorized preview. It queries `frontendOpenOrders` for the bound cloid, builds a cancel wire from the live asset index, signs locally, and checks extraAgents. Missing venue state is `not_on_venue` or `query_exchange_first`. A linked cancel posts only when the cloid is on the venue. Cancel cannot withdraw.
 
-`ask` requires `--market` and `--book` files. Missing files return `empty_envelope`. Missing `PIT_COMMITTEE_BIN`, missing `PIT_DIRECT_AUTH_FILE`, an unauthorized desk, Galileo VerifyE2EE-unproven, or a Router URL all stop the operation. There is no fallback. MCP cannot export the auth file or invoke the sealer.
+`ask` requires `--market` and `--book` files. Missing files return `empty_envelope`. Missing sealer binary, missing Direct token (keychain or operator file), Galileo VerifyE2EE-unproven, or a Router URL all stop the operation. There is no fallback. MCP cannot export the token or invoke the sealer.
 
 ### MCP (read-only)
 
@@ -482,7 +483,7 @@ If a Direct request fails, PIT **stops**. It does not retry on the Router.
 - Foundation Agentic ID **transfer is not live on Aristotle**. The UI must say so.
 - Galileo iTransfer is an official path; PIT has **not** shown a transfer tx that changes `ownerOf`.
 - Galileo sealed committee is **not** the mainnet glm-5.2 committee. VerifyE2EE on Omni is still required before enabling testnet sealed ask.
-- Live Direct Seal + VerifyE2EE needs `PIT_COMMITTEE_BIN` (build `sealer/`) and `PIT_DIRECT_AUTH_FILE`. Python and TypeScript sealers are refused. A missing binary returns `sealer_not_wired`. A missing Direct token returns `direct_token_required`. A Router `sk-` key returns `router_api_key_denied`. Plaintext sealer output returns `TEE_VERIFY_FAIL`. The three roles share one provider unless the auth files actually differ.
+- Live Direct Seal + VerifyE2EE needs the native sealer and a wallet-signed Direct token in the OS keychain (or an operator `PIT_DIRECT_AUTH_FILE`). Python and TypeScript sealers are refused. A missing binary returns `sealer_not_wired`. A missing Direct token returns `direct_token_required`. A Router `sk-` key returns `router_api_key_denied`. Plaintext sealer output returns `TEE_VERIFY_FAIL`. The three roles share one provider unless the auth files actually differ. The provider Ledger still requires the user wallet to have Direct credit; PIT does not invent that credit.
 - Live Hyperliquid dust (`order` then `cancel`) requires a funded account on the matching venue, a user `AUTHORIZE`, a resolved asset index, a signed exchange payload, and an unexpired extraAgents row for the session agent. An unsigned or unlinked authorized ledger row is not a fill.
 - Desktop is the local authorize shell; full OS keychain packaging (Tauri / stronghold) can still be tightened.
 - Do not claim hardware quotes unless the verifier is wired.

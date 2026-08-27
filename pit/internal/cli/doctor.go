@@ -35,10 +35,11 @@ func Doctor(dir string) []Check {
 		checkRPC(dir),
 		checkCompanion(),
 		checkSealer(),
-		checkDirectAuth(),
+		checkDirectAuth(dir),
 		checkStorage(),
 		checkRegistry(dir),
 		checkSession(dir),
+		checkHLAgent(dir),
 		checkPolicy(dir),
 	}
 	return out
@@ -146,15 +147,25 @@ func checkSealer() Check {
 	return Check{Name: "direct_sealer", OK: true, Detail: "binary present"}
 }
 
-func checkDirectAuth() Check {
-	p := strings.TrimSpace(os.Getenv("PIT_DIRECT_AUTH_FILE"))
-	if p == "" {
-		return Check{Name: "direct_auth", Detail: "PIT_DIRECT_AUTH_FILE unset"}
+func checkDirectAuth(dir string) Check {
+	_, meta, err := ResolveWorkspaceAuth(dir)
+	if err == nil {
+		src := meta.Source
+		if src == "" {
+			src = "keychain"
+		}
+		return Check{Name: "direct_auth", OK: true, Detail: "wallet-signed Direct token in " + src}
 	}
-	if _, err := os.Stat(p); err != nil {
-		return Check{Name: "direct_auth", Detail: "auth file missing"}
+	switch err.Error() {
+	case "unbound":
+		return Check{Name: "direct_auth", Detail: "unbound until wallet is bound"}
+	case "direct_token_expired":
+		return Check{Name: "direct_auth", Detail: "Direct token expired. Sign again in the paired browser."}
+	case "galileo_e2ee_unproven":
+		return Check{Name: "direct_auth", Detail: "Galileo TeeML is unproven. Switch to MAINNET for sealed research."}
+	default:
+		return Check{Name: "direct_auth", Detail: "Direct token missing. Pair the browser and sign the sealed-path message."}
 	}
-	return Check{Name: "direct_auth", OK: true, Detail: "file present"}
 }
 
 func checkStorage() Check {
@@ -187,6 +198,25 @@ func checkSession(dir string) Check {
 		return Check{Name: "session", Detail: err.Error()}
 	}
 	return Check{Name: "session", OK: true, Detail: "live order/cancel only"}
+}
+
+func checkHLAgent(dir string) Check {
+	st, err := Load(dir)
+	if err != nil {
+		return Check{Name: "hl_agent", Detail: "unbound"}
+	}
+	live, err := LiveFromDisk(dir, st.Kill, time.Now().UnixMilli())
+	if err != nil {
+		return Check{Name: "hl_agent", Detail: "Create a local session, then approve it on Hyperliquid. PIT cannot withdraw."}
+	}
+	linked, err := LiveLinked(st.Network, st.Wallet, live.Workspace, live.AgentAddr, time.Now().UnixMilli())
+	if err != nil {
+		return Check{Name: "hl_agent", Detail: "extraAgents query failed. AUTHORIZE stays off until Hyperliquid lists this agent."}
+	}
+	if !linked {
+		return Check{Name: "hl_agent", Detail: "Approve this agent on Hyperliquid. extraAgents must list it. PIT never signs withdraw, transfer, leverage, or account admin."}
+	}
+	return Check{Name: "hl_agent", OK: true, Detail: "extraAgents lists this session. PIT still refuses withdraw, transfer, leverage, and account admin."}
 }
 
 func checkPolicy(dir string) Check {

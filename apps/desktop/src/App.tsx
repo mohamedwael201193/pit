@@ -18,6 +18,7 @@ import {
   pinLocalPolicy,
   prettyCode,
   revokeLocalSession,
+  runResearch,
   wakeCompanion,
   type DoctorCheck,
   type LocalStatus,
@@ -124,7 +125,11 @@ function Setup({
   onBind,
   onSession,
   onPolicy,
+  onResearch,
   onDone,
+  checks,
+  researchBusy,
+  researchVerified,
 }: {
   step: number;
   setStep: (n: number) => void;
@@ -145,9 +150,16 @@ function Setup({
   onBind: () => void;
   onSession: () => void;
   onPolicy: () => void;
+  onResearch: () => void;
   onDone: () => void;
+  checks: DoctorCheck[];
+  researchBusy: boolean;
+  researchVerified: boolean;
 }) {
-  const last = 8;
+  const directOk = Boolean(checks.find((c) => c.name === "direct_auth" && c.ok));
+  const directDetail = checks.find((c) => c.name === "direct_auth")?.detail;
+  const hlAgent = checks.find((c) => c.name === "hl_agent");
+  const last = 9;
   return (
     <section className="setup">
       <p className="eyebrow">FIRST RUN · {step + 1} / {last + 1}</p>
@@ -215,6 +227,20 @@ function Setup({
       ) : null}
       {step === 5 ? (
         <>
+          <h1>Protect my strategy.</h1>
+          <p className="lead">
+            PIT sends your private strategy only through 0G’s verified sealed path. Sign in the paired browser. This
+            computer stores the token. The website never receives it.
+          </p>
+          <p className="fine">This is not a withdraw. It cannot place a Hyperliquid order. It lasts 24 hours.</p>
+          <p className="fine">{directOk ? "Sealed-path signature is on this computer." : directDetail || "Waiting for the paired-browser signature."}</p>
+          <a className="linkish" href={PAIR_URL.replace("/pair", "/app")} target="_blank" rel="noreferrer">
+            Open paired site
+          </a>
+        </>
+      ) : null}
+      {step === 6 ? (
+        <>
           <h1>Hyperliquid is order and cancel only.</h1>
           <p className="lead">order ✓ cancel ✓ withdraw ✗ leverage ✗ transfer ✗</p>
           <PermissionsCard />
@@ -223,6 +249,7 @@ function Setup({
             {sessionAlive ? "Local session is live" : "Create local session"}
           </button>
           {agent ? <p className="fine">Agent {agent}. Approve this agent on Hyperliquid. PIT cannot withdraw.</p> : null}
+          {hlAgent ? <p className="fine">{hlAgent.ok ? "extraAgents lists this session." : hlAgent.detail}</p> : null}
           {bindError ? (
             <p className="err" role="alert">
               {bindError}
@@ -230,21 +257,25 @@ function Setup({
           ) : null}
         </>
       ) : null}
-      {step === 6 ? (
+      {step === 7 ? (
         <>
           <h1>Pin a policy before research.</h1>
           <p className="lead">The model cannot raise clip, leverage, or permissions. Pin writes a hash file on this computer.</p>
           <PolicyLaw pinned={pinned} onPin={onPolicy} busy={bindBusy || !boundWallet} />
         </>
       ) : null}
-      {step === 7 ? (
+      {step === 8 ? (
         <>
-          <h1>Security check</h1>
-          <p className="lead">Each row is a live probe. Waiting is honest. Green is never invented.</p>
+          <h1>Security check, then a real research test.</h1>
+          <p className="lead">Each row is a live probe. Waiting is honest. Green is never invented. Research is a live sealed Direct request.</p>
           <ProbeList items={items} />
+          <button type="button" className="linkish" onClick={onResearch} disabled={researchBusy || !companionUp}>
+            {researchBusy ? "Sealing…" : "Run a real research test"}
+          </button>
+          {researchVerified ? <p className="fine">RESEARCH VERIFIED. VerifyE2EE matched the on-chain teeSigner.</p> : null}
         </>
       ) : null}
-      {step === 8 ? (
+      {step === 9 ? (
         <>
           <h1>Ready when the probes are real.</h1>
           <p className="lead">Watch is live public marks. Private research stays sealed. Authorize stays on this computer.</p>
@@ -283,6 +314,9 @@ export function App() {
   const [checks, setChecks] = useState<DoctorCheck[]>([]);
   const [coins, setCoins] = useState<Coin[]>([]);
   const [researchStop, setResearchStop] = useState<string | null>(null);
+  const [researchNote, setResearchNote] = useState<string | null>(null);
+  const [researchRoles, setResearchRoles] = useState<Array<{ role?: string; verify_e2ee?: string; pubkey_signer?: string }>>([]);
+  const [researchBusy, setResearchBusy] = useState(false);
   const [techOpen, setTechOpen] = useState(false);
   const [ticks, setTicks] = useState(0);
   const [setupStep, setSetupStep] = useState(0);
@@ -371,7 +405,10 @@ export function App() {
 
   const explained = explainStop(researchStop);
   const companionStuck = !companionUp && ticks >= 5;
-  const items = useMemo(() => probes(checks, status, companionUp), [checks, status, companionUp]);
+  const items = useMemo(
+    () => probes(checks, status, companionUp, researchRoles.some((r) => String(r.verify_e2ee).toUpperCase() === "OK")),
+    [checks, status, companionUp, researchRoles],
+  );
   const eligible = coins.filter((c) => c.eligible);
   const walletCheck = checks.find((c) => c.name === "wallet");
 
@@ -442,7 +479,9 @@ export function App() {
     setChecks(await doctor());
   }
 
-  function researchThis() {
+  async function researchThis(coin?: string) {
+    setResearchNote(null);
+    setResearchRoles([]);
     if (!companionUp) {
       setResearchStop("companion_down");
       setView("research");
@@ -454,8 +493,29 @@ export function App() {
       setView("research");
       return;
     }
-    setResearchStop("direct_token_required");
+    const auth = checks.find((c) => c.name === "direct_auth");
+    if (auth && !auth.ok) {
+      setResearchStop("direct_token_required");
+      setView("research");
+      return;
+    }
+    setResearchBusy(true);
+    setResearchStop(null);
     setView("research");
+    const r = await runResearch(coin || "ETH");
+    setResearchBusy(false);
+    if (r.error) {
+      setResearchStop(r.error);
+      return;
+    }
+    const roles = Array.isArray(r.roles) ? r.roles : [];
+    const verified = r.verify && roles.length > 0 && roles.every((x) => String(x.verify_e2ee).toUpperCase() === "OK");
+    if (!verified) {
+      setResearchStop("TEE_VERIFY_FAIL");
+      return;
+    }
+    setResearchRoles(roles);
+    setResearchNote(r.note || "Sealed committee verified on this computer.");
   }
 
   return (
@@ -463,7 +523,7 @@ export function App() {
       <aside className="rail">
         <div className="rail-brand">
           <div className="word">PIT.</div>
-          <p className="kicker">0.1.3 · local execution</p>
+          <p className="kicker">0.1.4 · local execution</p>
         </div>
         <nav className="rail-nav" aria-label="Desk">
           {RAIL.map((item) => (
@@ -483,7 +543,7 @@ export function App() {
         <div className="rail-foot">
           <p>{net === "mainnet" ? "MAINNET" : "TESTNET"}</p>
           <p>{companionUp ? "companion live" : "starting companion"}</p>
-          <p>PIT 0.1.3</p>
+          <p>PIT 0.1.4</p>
           <button type="button" className="ghost" onClick={() => setView("settings")}>
             Help / Diagnostics
           </button>
@@ -526,7 +586,11 @@ export function App() {
             onBind={() => void onBind()}
             onSession={() => void onSession()}
             onPolicy={() => void onPolicy()}
+            onResearch={() => void researchThis()}
             onDone={finishSetup}
+            checks={checks}
+            researchBusy={researchBusy}
+            researchVerified={Boolean(researchNote && !explained)}
           />
         ) : null}
 
@@ -583,7 +647,7 @@ export function App() {
                       <td>{c.eligible ? "PASS" : "BLOCKED"}</td>
                       <td>{c.reason}</td>
                       <td>
-                        <button type="button" className="linkish" onClick={researchThis}>
+                        <button type="button" className="linkish" onClick={() => void researchThis(c.coin)}>
                           Research this
                         </button>
                       </td>
@@ -604,6 +668,20 @@ export function App() {
               Private book → Direct TeeML → researcher / challenger / risk → host size → policy → exact preview. Watch
               never places the order.
             </p>
+            {researchBusy ? <p className="fine">Sealing the private book. This is a live Direct request, not a spinner on a timer.</p> : null}
+            {researchNote && !explained ? (
+              <article className="card">
+                <p className="label">RESEARCH VERIFIED</p>
+                <p>{researchNote}</p>
+                <ul className="doctor">
+                  {researchRoles.map((role) => (
+                    <li key={role.role}>
+                      <strong>{role.verify_e2ee}</strong> {role.role} {role.pubkey_signer}
+                    </li>
+                  ))}
+                </ul>
+              </article>
+            ) : null}
             {explained ? (
               <article className="card stop" role="alert">
                 <p className="label">STOPPED</p>
@@ -617,7 +695,7 @@ export function App() {
                     Code {researchStop}. Verification is fail-closed. Router fallback is impossible.
                   </p>
                 ) : null}
-                <button type="button" onClick={() => setResearchStop(null)}>
+                <button type="button" onClick={() => void researchThis()} disabled={researchBusy}>
                   Retry
                 </button>
               </article>
@@ -635,7 +713,7 @@ export function App() {
                     <p className="mark-num">{c.mark}</p>
                     <p>Policy PASS</p>
                     <p className="fine">{c.reason}</p>
-                    <button type="button" className="linkish" onClick={researchThis}>
+                    <button type="button" className="linkish" onClick={() => void researchThis(c.coin)}>
                       Research this
                     </button>
                   </li>

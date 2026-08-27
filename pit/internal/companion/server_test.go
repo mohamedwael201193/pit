@@ -185,7 +185,7 @@ func TestLocalStatusVersionNoSecret(t *testing.T) {
 	if got["sign"] == true || got["trade"] == true {
 		t.Fatal(got)
 	}
-	if got["version"] != "0.1.3" {
+	if got["version"] != "0.1.4" {
 		t.Fatalf("version %v", got["version"])
 	}
 }
@@ -311,5 +311,57 @@ func TestBrowserBindRequiresDeviceAndIsolatesUserB(t *testing.T) {
 	h.Handler().ServeHTTP(rec, req)
 	if rec.Code != http.StatusConflict {
 		t.Fatalf("user B bind %d %s", rec.Code, rec.Body.String())
+	}
+}
+
+func TestDirectIntentNeverLeaksToken(t *testing.T) {
+	t.Setenv("PIT_KEYRING", "file")
+	t.Setenv("PIT_DIRECT_AUTH_FILE", "")
+	h := New(t.TempDir())
+	req := local(httptest.NewRequest(http.MethodPost, "/local/init", strings.NewReader(`{"wallet":"0x1111111111111111111111111111111111111111","network":"mainnet"}`)))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+	h.Handler().ServeHTTP(rec, req)
+	if rec.Code != 200 {
+		t.Fatal(rec.Body.String())
+	}
+
+	req = local(httptest.NewRequest(http.MethodGet, "/local/direct-intent", nil))
+	rec = httptest.NewRecorder()
+	h.Handler().ServeHTTP(rec, req)
+	if rec.Code != 200 {
+		t.Fatal(rec.Body.String())
+	}
+	body := rec.Body.String()
+	if strings.Contains(strings.ToLower(body), "app-sk-") {
+		t.Fatal("token leak")
+	}
+	if !strings.Contains(body, `"digest"`) || !strings.Contains(body, `"message"`) {
+		t.Fatal(body)
+	}
+
+	req = local(httptest.NewRequest(http.MethodGet, "/local/direct-intent", nil))
+	req.Header.Set("Origin", "https://pit0g.vercel.app")
+	rec = httptest.NewRecorder()
+	h.Handler().ServeHTTP(rec, req)
+	if rec.Code != http.StatusForbidden {
+		t.Fatal("web must not read local direct intent")
+	}
+
+	req = local(httptest.NewRequest(http.MethodPost, "/direct/intent", nil))
+	req.Header.Set("Origin", "https://pit0g.vercel.app")
+	rec = httptest.NewRecorder()
+	h.Handler().ServeHTTP(rec, req)
+	if rec.Code != http.StatusUnauthorized {
+		t.Fatal("device required")
+	}
+
+	req = local(httptest.NewRequest(http.MethodPost, "/local/research", strings.NewReader(`{"coin":"ETH"}`)))
+	req.Header.Set("Origin", "https://pit0g.vercel.app")
+	req.Header.Set("Content-Type", "application/json")
+	rec = httptest.NewRecorder()
+	h.Handler().ServeHTTP(rec, req)
+	if rec.Code != http.StatusForbidden {
+		t.Fatal("web research")
 	}
 }

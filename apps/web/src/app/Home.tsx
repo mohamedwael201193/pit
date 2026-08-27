@@ -8,6 +8,7 @@ import { EmptyWatch } from "../EmptyWatch";
 import { NetworkToggle } from "../NetworkToggle";
 import { NetworkBanner } from "../NetworkBanner";
 import { BindDesk } from "../BindDesk";
+import { DirectSign } from "../DirectSign";
 import { DiagramPolicy, DiagramSession } from "../diagrams/pitGuide";
 
 type Net = "mainnet" | "testnet";
@@ -35,6 +36,7 @@ export function Home() {
         <NetworkToggle net={net} onChange={setNet} />
         <NetworkBanner net={net} />
         <BindDesk network={net} />
+        <DirectSign />
       </Bezel>
 
       <section aria-labelledby="watch-heading">

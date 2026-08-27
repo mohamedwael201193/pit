@@ -67,7 +67,7 @@ export function PairPage() {
           <li>2. Launch PIT. A pairing code appears on that window. A terminal is not required.</li>
           <li>3. Type the code here. Expire is two minutes. One use.</li>
           <li>4. If the browser asks to access other apps on this device, choose Allow. That is loopback only.</li>
-          <li>5. Connect your wallet. Approve an order/cancel session on the machine.</li>
+          <li>5. Connect your wallet. Sign Protect my strategy. Approve an order/cancel session on the machine.</li>
         </ol>
         <label className="mt-10 block">
           <span className="text-[0.75rem] tracking-[0.12em] text-[rgb(240_231_212/0.5)]">ONE-TIME CODE</span>

@@ -201,6 +201,18 @@
           "markdownDescription": "Read the one-time pairing code over a native loopback GET with no Origin."
         },
         {
+          "description": "Issue a Direct challenge. Never returns the assembled token.",
+          "type": "string",
+          "const": "allow-local-direct-intent",
+          "markdownDescription": "Issue a Direct challenge. Never returns the assembled token."
+        },
+        {
+          "description": "Read whether a Direct token exists. Never returns the token.",
+          "type": "string",
+          "const": "allow-local-direct-status",
+          "markdownDescription": "Read whether a Direct token exists. Never returns the token."
+        },
+        {
           "description": "Read doctor checks over a native loopback GET with no Origin.",
           "type": "string",
           "const": "allow-local-doctor",
@@ -217,6 +229,12 @@
           "type": "string",
           "const": "allow-local-policy",
           "markdownDescription": "Pin the default policy file for this workspace."
+        },
+        {
+          "description": "Run sealed Direct research on this computer. Never returns the private book.",
+          "type": "string",
+          "const": "allow-local-research",
+          "markdownDescription": "Run sealed Direct research on this computer. Never returns the private book."
         },
         {
           "description": "Delete the local session. Never exports the key.",

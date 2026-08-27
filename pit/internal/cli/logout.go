@@ -12,10 +12,13 @@ func Logout(dir string, forget bool) error {
 		return err
 	}
 	sf, _ := LoadSession(dir)
-	if sf.ID != "" && st.WorkspaceID != "" {
+	if st.WorkspaceID != "" {
 		if ring, err := keyring.OpenProduct(KeyringDir(dir)); err == nil {
-			_ = ring.Delete(st.WorkspaceID+"/session", sf.ID)
+			if sf.ID != "" {
+				_ = ring.Delete(st.WorkspaceID+"/session", sf.ID)
+			}
 		}
+		ForgetDirect(dir)
 	}
 	_ = os.Remove(SessionPath(dir))
 	if forget {

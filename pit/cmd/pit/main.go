@@ -49,7 +49,10 @@ Session
 Research
   pit watch
   pit opportunities
+  pit direct
+  pit direct --sig 0x...
   pit ask --market market.json --book book.json
+  pit research [ETH|BTC]
   pit research --market market.json --book book.json
   pit forecast
   pit preview --market ETH --side buy --forecast <id>
@@ -118,8 +121,12 @@ func main() {
 		cmdOrders()
 	case "card":
 		cmdCard()
-	case "ask", "research":
+	case "ask":
 		cmdAsk(rest[1:])
+	case "research":
+		cmdResearch(rest[1:])
+	case "direct":
+		cmdDirect(rest[1:])
 	case "forecast":
 		cmdForecast()
 	case "preview":
@@ -321,6 +328,44 @@ func cmdOpportunities() {
 	}
 }
 
+func cmdResearch(args []string) {
+	coin := "ETH"
+	hasFiles := false
+	for _, a := range args {
+		if a == "--market" || a == "--book" {
+			hasFiles = true
+			break
+		}
+		if !strings.HasPrefix(a, "-") && a != "" {
+			coin = a
+		}
+	}
+	if hasFiles {
+		cmdAsk(args)
+		return
+	}
+	rep, err := cli.RunWorkspaceResearch(stateDir(), coin)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(2)
+	}
+	if asJSON {
+		_ = json.NewEncoder(os.Stdout).Encode(map[string]any{
+			"ok":     true,
+			"roles":  rep.Roles,
+			"note":   rep.Note,
+			"sign":   false,
+			"trade":  false,
+			"verify": true,
+		})
+		return
+	}
+	fmt.Println(rep.Note)
+	for _, role := range rep.Roles {
+		fmt.Printf("%v  %v  %v\n", role["role"], role["verify_e2ee"], role["pubkey_signer"])
+	}
+}
+
 func cmdAsk(args []string) {
 	st, err := cli.Load(stateDir())
 	if err != nil {
@@ -342,11 +387,75 @@ func cmdAsk(args []string) {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(2)
 	}
-	if err := compute.ProductAskEnvelope(net, false, compute.LookBin(), market, book); err != nil {
+	auth, _, err := cli.ResolveWorkspaceAuth(stateDir())
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(2)
+	}
+	if err := compute.ProductAskAuth(net, true, compute.LookBin(), market, book, auth); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(2)
 	}
 	fmt.Println("sealed ask submitted")
+}
+
+func cmdDirect(args []string) {
+	dir := stateDir()
+	var sig string
+	for i := 0; i < len(args); i++ {
+		switch args[i] {
+		case "--sig", "--signature":
+			if i+1 >= len(args) {
+				fmt.Fprintln(os.Stderr, "direct --sig requires a hex signature")
+				os.Exit(2)
+			}
+			sig = args[i+1]
+			i++
+		}
+	}
+	if sig == "" {
+		ch, err := cli.IssueDirectChallenge(dir)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(2)
+		}
+		if asJSON {
+			_ = json.NewEncoder(os.Stdout).Encode(map[string]any{
+				"message":   ch.Message,
+				"digest":    ch.Digest,
+				"provider":  ch.Provider,
+				"model":     ch.Model,
+				"explain":   ch.Explain,
+				"expiresAt": ch.ExpiresAt,
+				"sign":      false,
+				"trade":     false,
+			})
+			return
+		}
+		fmt.Println(ch.Explain)
+		fmt.Println("Digest", ch.Digest)
+		fmt.Println("Sign this digest with the bound wallet (raw 32-byte personal_sign). Then run pit direct --sig 0x...")
+		fmt.Println("PIT never asks for a seed or a private key.")
+		return
+	}
+	meta, err := cli.CompleteDirect(dir, "", sig)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(2)
+	}
+	if asJSON {
+		_ = json.NewEncoder(os.Stdout).Encode(map[string]any{
+			"ok":        true,
+			"provider":  meta.Provider,
+			"model":     meta.Model,
+			"expiresAt": meta.ExpiresAt,
+			"source":    meta.Source,
+			"sign":      false,
+			"trade":     false,
+		})
+		return
+	}
+	fmt.Println("Direct token stored in the OS keychain. The token is not printed.")
 }
 
 func cmdForecast() {

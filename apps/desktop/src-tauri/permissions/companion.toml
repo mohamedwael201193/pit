@@ -47,3 +47,18 @@ commands.allow = ["local_policy"]
 identifier = "allow-local-revoke-session"
 description = "Delete the local session. Never exports the key."
 commands.allow = ["local_revoke_session"]
+
+[[permission]]
+identifier = "allow-local-direct-intent"
+description = "Issue a Direct challenge. Never returns the assembled token."
+commands.allow = ["local_direct_intent"]
+
+[[permission]]
+identifier = "allow-local-direct-status"
+description = "Read whether a Direct token exists. Never returns the token."
+commands.allow = ["local_direct_status"]
+
+[[permission]]
+identifier = "allow-local-research"
+description = "Run sealed Direct research on this computer. Never returns the private book."
+commands.allow = ["local_research"]
