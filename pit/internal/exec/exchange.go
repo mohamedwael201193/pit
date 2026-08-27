@@ -31,10 +31,7 @@ func (e *Exchange) Guard(raw json.RawMessage) error {
 	return hl.AssertActionType(raw)
 }
 
-func (e *Exchange) Post(raw json.RawMessage) ([]byte, error) {
-	if err := e.Guard(raw); err != nil {
-		return nil, err
-	}
+func (e *Exchange) postBytes(raw []byte) ([]byte, error) {
 	req, err := http.NewRequest(http.MethodPost, e.URL, bytes.NewReader(raw))
 	if err != nil {
 		return nil, err
@@ -47,4 +44,25 @@ func (e *Exchange) Post(raw json.RawMessage) ([]byte, error) {
 	}
 	defer resp.Body.Close()
 	return io.ReadAll(resp.Body)
+}
+
+func (e *Exchange) Post(raw json.RawMessage) ([]byte, error) {
+	if err := e.Guard(raw); err != nil {
+		return nil, err
+	}
+	return e.postBytes(raw)
+}
+
+func (e *Exchange) PostEnvelope(env hl.Envelope) ([]byte, error) {
+	if err := e.Guard(env.Action); err != nil {
+		return nil, err
+	}
+	if err := RefuseUnsigned(env.Signed()); err != nil {
+		return nil, err
+	}
+	raw, err := json.Marshal(env)
+	if err != nil {
+		return nil, err
+	}
+	return e.postBytes(raw)
 }

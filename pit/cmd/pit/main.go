@@ -437,21 +437,41 @@ func cmdCancel() {
 		if err := pitexec.RefuseUnsigned(false); err != nil {
 			fmt.Println(err)
 		}
-	} else {
-		fmt.Println("signed locally")
-		linked, linkErr := cli.LiveLinked(st.Network, st.Wallet, live.Workspace, live.AgentAddr, time.Now().UnixMilli())
-		if linkErr != nil {
-			fmt.Fprintln(os.Stderr, linkErr)
-			linked = false
-		}
-		if linked {
-			fmt.Println("agent linked")
-		}
-		if err := pitexec.RefusePostUntilLinked(linked); err != nil {
-			fmt.Println(err)
-		}
+		fmt.Println("PIT did not send a cancel")
+		return
 	}
-	fmt.Println("PIT did not send a cancel")
+	fmt.Println("signed locally")
+	linked, linkErr := cli.LiveLinked(st.Network, st.Wallet, live.Workspace, live.AgentAddr, time.Now().UnixMilli())
+	if linkErr != nil {
+		fmt.Fprintln(os.Stderr, linkErr)
+		linked = false
+	}
+	if linked {
+		fmt.Println("agent linked")
+	}
+	if err := pitexec.RefusePostUntilLinked(linked); err != nil {
+		fmt.Println(err)
+		fmt.Println("PIT did not send a cancel")
+		return
+	}
+	if qerr != nil || !found {
+		fmt.Println("PIT did not send a cancel")
+		return
+	}
+	body, err := cli.PostLinked(st.Network, env, linked, hash)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		fmt.Println("PIT did not send a cancel")
+		os.Exit(2)
+	}
+	oid := pitexec.ReceiptOID(body)
+	if err := cli.RememberPosted(stateDir(), st.Network, live.Workspace, card.Cloid, oid); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+	}
+	fmt.Println("posted")
+	if oid != "" {
+		fmt.Printf("oid      %s\n", oid)
+	}
 }
 
 func cmdResolve() {
@@ -566,21 +586,37 @@ func cmdAuthorize(args []string) {
 		if err := pitexec.RefuseUnsigned(false); err != nil {
 			fmt.Println(err)
 		}
-	} else {
-		fmt.Println("signed locally")
-		linked, linkErr := cli.LiveLinked(st.Network, st.Wallet, live.Workspace, live.AgentAddr, time.Now().UnixMilli())
-		if linkErr != nil {
-			fmt.Fprintln(os.Stderr, linkErr)
-			linked = false
-		}
-		if linked {
-			fmt.Println("agent linked")
-		}
-		if err := pitexec.RefusePostUntilLinked(linked); err != nil {
-			fmt.Println(err)
-		}
+		fmt.Println("PIT did not send an order")
+		return
 	}
-	fmt.Println("PIT did not send an order")
+	fmt.Println("signed locally")
+	linked, linkErr := cli.LiveLinked(st.Network, st.Wallet, live.Workspace, live.AgentAddr, time.Now().UnixMilli())
+	if linkErr != nil {
+		fmt.Fprintln(os.Stderr, linkErr)
+		linked = false
+	}
+	if linked {
+		fmt.Println("agent linked")
+	}
+	if err := pitexec.RefusePostUntilLinked(linked); err != nil {
+		fmt.Println(err)
+		fmt.Println("PIT did not send an order")
+		return
+	}
+	body, err := cli.PostLinked(st.Network, env, linked, h)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		fmt.Println("PIT did not send an order")
+		os.Exit(2)
+	}
+	oid := pitexec.ReceiptOID(body)
+	if err := cli.RememberPosted(stateDir(), st.Network, live.Workspace, card.Cloid, oid); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+	}
+	fmt.Println("posted")
+	if oid != "" {
+		fmt.Printf("oid      %s\n", oid)
+	}
 }
 
 func cmdVerify(args []string) {

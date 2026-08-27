@@ -21,4 +21,11 @@ func TestRememberAuthorizedOnce(t *testing.T) {
 	if err != nil || got.Status != ledger.StatusAuthorized {
 		t.Fatalf("%v %+v", err, got)
 	}
+	if err := RememberPosted(dir, "testnet", ws, cloid, "42"); err != nil {
+		t.Fatal(err)
+	}
+	got, err = LookupAction(dir, "testnet", ws, cloid)
+	if err != nil || got.Status != ledger.StatusReceipt || got.OID != "42" {
+		t.Fatalf("%v %+v", err, got)
+	}
 }

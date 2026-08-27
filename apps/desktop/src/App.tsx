@@ -21,6 +21,7 @@ import { CancelNote } from "./CancelNote";
 import { SignedNote } from "./SignedNote";
 import { LinkedNote } from "./LinkedNote";
 import { StatusNote } from "./StatusNote";
+import { PostedNote } from "./PostedNote";
 
 type Net = "mainnet" | "testnet";
 
@@ -61,6 +62,7 @@ export function App() {
           <SignedNote />
           <LinkedNote />
           <StatusNote />
+          <PostedNote />
           <NoSession />
           <RecoverNote />
           <PermissionsCard />

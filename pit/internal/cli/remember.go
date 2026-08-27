@@ -26,6 +26,15 @@ func RememberAuthorized(dir, network, workspace, cloid, previewHash string) erro
 	return exec.DuplicateClick(ok, err)
 }
 
+func RememberPosted(dir, network, workspace, cloid, oid string) error {
+	st, err := ledger.Open(LedgerDir(dir), network, workspace)
+	if err != nil {
+		return err
+	}
+	defer st.Close()
+	return st.Mark(workspace, cloid, ledger.StatusReceipt, oid)
+}
+
 func LookupAction(dir, network, workspace, cloid string) (ledger.Record, error) {
 	st, err := ledger.Open(LedgerDir(dir), network, workspace)
 	if err != nil {
