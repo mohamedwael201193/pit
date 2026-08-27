@@ -10,8 +10,8 @@ export function NetworkToggle({ net, onChange }: { net: Net; onChange: (n: Net) 
           onClick={() => onChange(n)}
           className={
             net === n
-              ? "rounded-full bg-coral px-6 py-3 font-semibold text-white"
-              : "rounded-full bg-[#15171b] px-6 py-3 font-semibold text-cream"
+              ? "rounded-full border border-[#f0e7d4] bg-[#f0e7d4] px-5 py-2.5 text-[0.9375rem] font-medium text-black"
+              : "rounded-full border border-[rgb(240_231_212/0.35)] px-5 py-2.5 text-[0.9375rem] font-medium text-[#f0e7d4] hover:border-[#f0e7d4]"
           }
         >
           {n === "mainnet" ? "MAINNET" : "TESTNET"}

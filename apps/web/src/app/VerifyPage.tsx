@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { PageHead } from "../ui/PageHead";
 import { NetworkToggle } from "../NetworkToggle";
 import { VerifyForm } from "../VerifyForm";
 
@@ -11,12 +12,14 @@ export function VerifyPage() {
   const explorer = net === "mainnet" ? "https://chainscan.0g.ai" : "https://chainscan-galileo.0g.ai";
   return (
     <div className="mx-auto max-w-[40rem]">
-      <h1 className="text-4xl tracking-[-0.04em]">Verify a receipt on the matching explorer.</h1>
-      <p className="mt-4 max-w-[48ch] text-[rgb(240_231_212/0.75)]">
-        Recompute from chain and storage proof. Not from a screenshot.
-      </p>
+      <PageHead
+        title="Verify a receipt"
+        lede="Recompute from chain and storage proof. Not from a screenshot."
+      />
       <NetworkToggle net={net} onChange={setNet} />
-      <VerifyForm hash={hash} root={root} explorer={explorer} net={net} onHash={setHash} onRoot={setRoot} />
+      <div className="mt-8 border border-[rgb(240_231_212/0.25)] p-6">
+        <VerifyForm hash={hash} root={root} explorer={explorer} net={net} onHash={setHash} onRoot={setRoot} />
+      </div>
     </div>
   );
 }

@@ -1,10 +1,13 @@
 import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { usePrivy } from "@privy-io/react-auth";
-import { NetworkToggle } from "../NetworkToggle";
+import { ArrowLeft } from "@phosphor-icons/react";
+import { PageHead } from "../ui/PageHead";
+import { Button, ButtonLink } from "../ui/Button";
 import { NetworkBanner } from "../NetworkBanner";
 import { PolicyPanel } from "../PolicyPanel";
 import { namedState } from "../namedStates";
+import { cn } from "../lib/cn";
 
 type Net = "mainnet" | "testnet";
 
@@ -13,7 +16,7 @@ const STEPS = [
     id: 1,
     title: "Connect wallet",
     why: "Your address is the desk identity. PIT never asks for a seed phrase.",
-    action: "Connect with Privy.",
+    action: "Connect with Privy. You already did if you can see this screen.",
     fail: namedState("SIGNATURE_DECLINED"),
   },
   {
@@ -34,7 +37,7 @@ const STEPS = [
     id: 4,
     title: "Connect Hyperliquid",
     why: "PIT needs YOUR trading account. Spot USDC counts as funded.",
-    action: "Open Hyperliquid in your wallet's network. PIT reads public state only from the web.",
+    action: "Open Hyperliquid in your wallet. PIT reads public state only from the web.",
     fail: namedState("BACKEND_UNREACHABLE"),
   },
   {
@@ -62,7 +65,7 @@ const STEPS = [
     id: 8,
     title: "Approve scoped agent",
     why: "Your wallet must approveAgent the printed address. Withdraw stays denied.",
-    action: "Approve on Hyperliquid. extraAgents must list PIT-{workspace}.",
+    action: "Approve on Hyperliquid. extraAgents must list PIT and the workspace.",
     fail: namedState("SESSION_EXPIRED"),
   },
   {
@@ -97,73 +100,115 @@ const STEPS = [
 
 export function StartFlow() {
   const { authenticated } = usePrivy();
+  const navigate = useNavigate();
   const [step, setStep] = useState(authenticated ? 2 : 1);
   const [net, setNet] = useState<Net>("mainnet");
   const current = useMemo(() => STEPS.find((s) => s.id === step) ?? STEPS[0], [step]);
 
   return (
     <div className="mx-auto max-w-[80rem]">
-      <Link to="/app" className="mb-6 inline-block text-[0.875rem] text-[rgb(240_231_212/0.6)]">
+      <button
+        type="button"
+        onClick={() => (step <= 1 ? navigate("/app") : setStep((s) => Math.max(1, s - 1)))}
+        className="mb-6 inline-flex items-center gap-2 text-[0.875rem] text-[rgb(240_231_212/0.6)] hover:text-[var(--guide-cream)]"
+      >
+        <ArrowLeft size={16} aria-hidden="true" />
         Back
-      </Link>
-      <p className="text-[11px] tracking-[0.18em] text-[#d82f2f]">GET STARTED</p>
-      <h1 className="mt-2 text-4xl tracking-[-0.04em]">Get started</h1>
-      <p className="mt-3 max-w-[48ch] text-[1.05rem] leading-7 text-[rgb(240_231_212/0.75)]">
-        Twelve beats. Each one has a reason, an action, and a recovery. None of them ask for a seed phrase.
-      </p>
-      <ol className="mt-10 grid gap-3 sm:grid-cols-2">
-        {STEPS.map((s) => (
-          <li key={s.id}>
-            <button
-              type="button"
-              onClick={() => setStep(s.id)}
-              className={`w-full rounded-2xl border p-5 text-left ${
-                s.id === step ? "border-[#d82f2f] bg-[#141414]" : "border-[rgb(240_231_212/0.22)]"
-              }`}
-            >
-              <p className="font-semibold">{s.title}</p>
-              <p className="mt-1 text-[0.875rem] text-[rgb(240_231_212/0.65)]">{s.why}</p>
-            </button>
-          </li>
-        ))}
-      </ol>
-      <article className="mt-10 max-w-[40rem] border border-[rgb(240_231_212/0.22)] p-6">
-        <p className="text-[11px] tracking-[0.16em] text-[#d82f2f]">STEP {current.id} OF 12</p>
-        <h2 className="mt-2 text-2xl">{current.title}</h2>
-        <p className="mt-3 text-[rgb(240_231_212/0.8)]">{current.why}</p>
-        <p className="mt-4">
-          <strong>Do this:</strong> {current.action}
-        </p>
-        <p className="mt-3 text-[0.875rem] text-[rgb(240_231_212/0.6)]">
-          If it fails: {current.fail.title}. {current.fail.next}
-        </p>
-        {current.id === 2 ? (
-          <div className="mt-4">
-            <NetworkToggle net={net} onChange={setNet} />
-            <NetworkBanner net={net} />
-          </div>
-        ) : null}
-        {current.id === 6 ? <PolicyPanel /> : null}
-        <div className="mt-6 flex flex-wrap gap-3">
-          <button
-            className="pill pill-line"
-            type="button"
-            disabled={step <= 1}
-            onClick={() => setStep((s) => Math.max(1, s - 1))}
-          >
-            Retry previous
-          </button>
-          {step < 12 ? (
-            <button className="pill pill-coral" type="button" onClick={() => setStep((s) => Math.min(12, s + 1))}>
-              Continue
-            </button>
-          ) : (
-            <Link to="/app" className="pill pill-coral">
-              Open Home
-            </Link>
-          )}
+      </button>
+      <PageHead title={current.title} lede={current.why} />
+
+      {current.id === 2 ? (
+        <div className="mt-10 grid gap-4 sm:grid-cols-2">
+          <ChoiceCard
+            title="MAINNET"
+            body="Production. Aristotle and Hyperliquid mainnet. Transfer of Agentic ID is not live."
+            onClick={() => setNet("mainnet")}
+            active={net === "mainnet"}
+          />
+          <ChoiceCard
+            title="TESTNET"
+            body="Protocol laboratory. Galileo and Hyperliquid testnet. Sealed ask stays off until proven."
+            onClick={() => setNet("testnet")}
+            active={net === "testnet"}
+          />
         </div>
-      </article>
+      ) : null}
+
+      {current.id === 2 ? <NetworkBanner net={net} /> : null}
+
+      {current.id === 5 ? (
+        <div className="mt-10 grid gap-4 sm:grid-cols-2">
+          <ChoiceCard title="10 USD clip" body="Default until you raise it on purpose." onClick={() => undefined} active />
+          <ChoiceCard
+            title="Raise later"
+            body="Change clip on desktop or CLI. The model cannot raise it."
+            onClick={() => undefined}
+          />
+        </div>
+      ) : null}
+
+      {current.id === 6 ? <PolicyPanel /> : null}
+
+      {current.id !== 2 && current.id !== 5 && current.id !== 6 ? (
+        <div className="mt-10 max-w-[40rem] rounded-2xl border border-[rgb(240_231_212/0.25)] bg-[#141414] p-6">
+          <p className="text-[0.8125rem] text-[rgb(240_231_212/0.55)]">
+            {current.id} of 12
+          </p>
+          <p className="mt-4 text-[1.0625rem] leading-7 text-[rgb(240_231_212/0.8)]">
+            <strong className="text-[var(--guide-cream)]">Do this. </strong>
+            {current.action}
+          </p>
+          <p className="mt-4 text-[0.875rem] text-[rgb(240_231_212/0.6)]">
+            If it fails: {current.fail.title}. {current.fail.next}
+          </p>
+        </div>
+      ) : (
+        <p className="mt-8 max-w-[48ch] text-[0.9375rem] text-[rgb(240_231_212/0.65)]">
+          Do this: {current.action} If it fails: {current.fail.title}. {current.fail.next}
+        </p>
+      )}
+
+      <div className="mt-10 flex flex-wrap gap-3">
+        <Button variant="secondary" type="button" disabled={step <= 1} onClick={() => setStep((s) => Math.max(1, s - 1))}>
+          Retry previous
+        </Button>
+        {step < 12 ? (
+          <Button type="button" trailingArrow onClick={() => setStep((s) => Math.min(12, s + 1))}>
+            Continue
+          </Button>
+        ) : (
+          <ButtonLink as={Link} to="/app" trailingArrow>
+            Open Home
+          </ButtonLink>
+        )}
+      </div>
     </div>
+  );
+}
+
+function ChoiceCard({
+  title,
+  body,
+  onClick,
+  active,
+}: {
+  title: string;
+  body: string;
+  onClick: () => void;
+  active?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "rounded-2xl border bg-[#141414] p-6 text-left transition-colors",
+        "hover:border-[#d82f2f]/50 active:scale-[0.99]",
+        active ? "border-[#d82f2f]" : "border-[rgb(240_231_212/0.25)]",
+      )}
+    >
+      <h3 className="text-[1.25rem] font-semibold tracking-[-0.03em] text-[var(--guide-cream)]">{title}</h3>
+      <p className="mt-2 text-[0.9375rem] leading-6 text-[rgb(240_231_212/0.65)]">{body}</p>
+    </button>
   );
 }

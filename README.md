@@ -310,7 +310,7 @@ npm install
 npm run dev
 ```
 
-Routes: `/` landing, `/signin` wallet gate, `/app` Watch home, `/app/start` twelve-beat onboarding, `/verify` receipt form. Open http://localhost:3000 or `#verify`.
+Routes: `/` landing, `/signin` wallet gate, `/app` Watch home, `/app/start` onboarding, `/app/activity` named states, `/app/policy` clip cards, `/app/account` verify, `/verify` receipt form. Open http://localhost:3000 or `#verify`.
 
 Web can connect, bind, inspect Watch, policy, and receipts. It cannot create a Hyperliquid session or present Authorize.
 

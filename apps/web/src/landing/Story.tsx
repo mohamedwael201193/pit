@@ -1,5 +1,7 @@
 import { useRef } from "react";
 import { motion, useReducedMotion, useScroll, useTransform } from "motion/react";
+import { DiagramPrivate } from "../diagrams/pitGuide";
+import { Reveal } from "../ui/Reveal";
 
 const BEATS = [
   {
@@ -33,9 +35,12 @@ export function Story() {
   return (
     <section id="story" className="relative border-t border-[rgb(240_231_212/0.25)]">
       <div className="container-pit py-20 md:py-28">
-        <p className="max-w-[52ch] text-[1.35rem] leading-9 text-[rgb(240_231_212/0.85)]">
-          You already have a terminal. PIT is the desk that hunts without spending, seals the book, and waits for you.
-        </p>
+        <Reveal>
+          <p className="text-[1.25rem] font-medium text-[var(--guide-cream)]">Story</p>
+          <p className="mt-6 max-w-[52ch] text-[1.35rem] leading-9 text-[rgb(240_231_212/0.85)]">
+            You already have a terminal. PIT is the desk that hunts without spending, seals the book, and waits for you.
+          </p>
+        </Reveal>
       </div>
       <div ref={pinRef} className="relative min-h-[140vh]">
         <div className="sticky top-0 flex min-h-[100svh] items-center overflow-hidden bg-[#1a1a1a]">
@@ -53,11 +58,14 @@ export function Story() {
             </div>
             <div className="mt-16 grid gap-8 border-t border-[rgb(240_231_212/0.25)] pt-10 md:grid-cols-3">
               {BEATS.map((b) => (
-                <p key={b.title} className="max-w-[36ch] text-[1.05rem] leading-7 text-[rgb(240_231_212/0.75)]">
+                <p key={b.title} className="max-w-[36ch] text-[1.0625rem] leading-7 text-[rgb(240_231_212/0.72)]">
                   {b.body}
                 </p>
               ))}
             </div>
+            <figure className="mt-14 max-w-xl border border-[rgb(240_231_212/0.35)]">
+              <DiagramPrivate className="aspect-[16/10] w-full" />
+            </figure>
           </div>
         </div>
       </div>

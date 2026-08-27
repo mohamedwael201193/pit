@@ -2,8 +2,7 @@ import { useRef } from "react";
 import { usePrivy } from "@privy-io/react-auth";
 import { motion, useReducedMotion, useScroll, useSpring, useTransform } from "motion/react";
 import { WireTurn } from "../diagrams/WireTurn";
-import { PipelineCard } from "../diagrams/PipelineCard";
-import { LandingNav } from "./Nav";
+import { DiagramHeroPostcard } from "../diagrams/pitGuide";
 
 export function Hero() {
   const { ready, authenticated, login } = usePrivy();
@@ -19,7 +18,6 @@ export function Hero() {
     <div ref={pinRef} className="guide-pin">
       <section className="guide-pin__sticky guide-coral isolate">
         <div className="guide-grain" aria-hidden="true" />
-        <LandingNav />
         <div className="container-pit relative flex min-h-[100svh] flex-col pt-20 pb-8 md:pt-24">
           <div className="grid flex-1 items-start gap-6 pt-4 lg:grid-cols-[1.25fr_0.75fr] lg:gap-10">
             <div>
@@ -65,9 +63,18 @@ export function Hero() {
             >
               PIT.
             </motion.h2>
-            <motion.div className="w-full max-w-[16rem] justify-self-end md:w-52" {...(!reduce ? { style: { y: postcardY } } : {})}>
-              <PipelineCard />
-            </motion.div>
+            <motion.figure
+              className="w-full max-w-[16rem] justify-self-end border border-black bg-black/5 md:w-52"
+              {...(!reduce ? { style: { y: postcardY } } : {})}
+            >
+              <DiagramHeroPostcard className="aspect-[4/3] w-full" />
+              <figcaption className="border-t border-black bg-[#f0e7d4] px-3 py-2 text-[0.75rem] leading-4 text-black/75">
+                <span className="mr-1.5 rounded-sm border border-black/25 px-1 py-px text-[0.625rem] font-semibold tracking-wide uppercase">
+                  Illustration
+                </span>
+                Example desk. One lit seat is yours to sign.
+              </figcaption>
+            </motion.figure>
           </div>
 
           <hr className="guide-rule border-black" />

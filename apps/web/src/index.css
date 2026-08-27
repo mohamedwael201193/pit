@@ -6,7 +6,12 @@
   --color-cream: #f0e7d4;
   --color-paper: #f9f5e3;
   --color-black: #0a0a0a;
-  --font-sans: "Host Grotesk", "Geist", ui-sans-serif, system-ui, sans-serif;
+  --color-fg: #f0e7d4;
+  --color-fg-muted: rgb(240 231 212 / 0.72);
+  --color-surface: #222222;
+  --color-surface-2: #2a2a2a;
+  --color-hairline: rgb(240 231 212 / 0.28);
+  --font-sans: "Host Grotesk Variable", "Host Grotesk", "Geist Variable", ui-sans-serif, system-ui, sans-serif;
 }
 
 html,

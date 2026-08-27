@@ -15,17 +15,19 @@ const CARDS = [
 
 export function PolicyPanel() {
   return (
-    <div className="mt-8 border-t border-[#1d1f24] pt-6">
-      <h2 className="text-xl tracking-tight">Your policy is the law</h2>
-      <dl className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+    <div className="mt-8">
+      <h2 className="text-[1.25rem] font-semibold tracking-[-0.03em]">Your policy is the law</h2>
+      <dl className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {CARDS.map((c) => (
-          <div key={c.title}>
-            <dt className="text-sm opacity-70">{c.title}</dt>
-            <dd className="font-mono text-lg">{c.value}</dd>
+          <div key={c.title} className="rounded-2xl border border-[rgb(240_231_212/0.22)] bg-[#141414] p-5">
+            <dt className="text-[0.8125rem] text-[rgb(240_231_212/0.55)]">{c.title}</dt>
+            <dd className="mt-2 font-mono text-[1.125rem]">{c.value}</dd>
           </div>
         ))}
       </dl>
-      <p className="mt-3 max-w-[40ch] text-sm opacity-80">The model cannot raise clip, leverage, or permissions.</p>
+      <p className="mt-4 max-w-[40ch] text-[0.875rem] text-[rgb(240_231_212/0.7)]">
+        The model cannot raise clip, leverage, or permissions.
+      </p>
     </div>
   );
 }

@@ -6,6 +6,8 @@ import { App } from "./App";
 import "./index.css";
 import "./styles/guide.css";
 
+document.documentElement.dataset.theme = "guide";
+
 const appId = import.meta.env.VITE_PRIVY_APP_ID as string;
 
 createRoot(document.getElementById("root")!).render(

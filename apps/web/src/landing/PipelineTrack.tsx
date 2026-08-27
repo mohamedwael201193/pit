@@ -1,4 +1,4 @@
-import { PIPELINE } from "../diagrams/PipelineCard";
+import { PIPELINE } from "../diagrams/pipeline";
 
 export function PipelineTrack() {
   return (

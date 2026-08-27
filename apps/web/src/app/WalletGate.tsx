@@ -2,8 +2,10 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { usePrivy } from "@privy-io/react-auth";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { PipelineCard } from "../diagrams/PipelineCard";
+import { PitMark } from "../brand/PitMark";
+import { DiagramHeroPostcard } from "../diagrams/pitGuide";
 import { classifyError } from "../namedStates";
+import { Button, ButtonLink } from "../ui/Button";
 
 export function WalletGate() {
   const { ready, authenticated, login, logout, user } = usePrivy();
@@ -25,8 +27,8 @@ export function WalletGate() {
     <div className="guide-shell guide-app grid min-h-[100dvh] lg:grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)]">
       <div className="flex flex-col justify-center px-5 py-16 sm:px-10 lg:px-16">
         <div className="w-full max-w-[28rem]">
-          <Link to="/" className="text-[1.5rem] font-bold tracking-[-0.06em] text-[#d82f2f] no-underline" aria-label="PIT home">
-            PIT.
+          <Link to="/" aria-label="PIT home">
+            <PitMark />
           </Link>
           <p className="mt-10 text-[0.8125rem] font-bold tracking-[0.18em] text-[#d82f2f] uppercase">YOUR DESK</p>
           <h1 className="guide-display mt-3 !text-[clamp(2.25rem,5vw,3.5rem)]">
@@ -41,36 +43,40 @@ export function WalletGate() {
               transition={{ duration: 0.32, ease: [0.16, 1, 0.3, 1] }}
             >
               <p className="mt-5 max-w-[46ch] text-[1.125rem] leading-8 text-[rgb(240_231_212/0.75)]">
-                PIT never asks for a seed phrase. Connect the wallet you already use. Session keys stay on desktop.
+                Connect the wallet you already use. No seed field exists. Session keys stay on desktop.
               </p>
               {!ready ? (
                 <p className="mt-8">Loading wallet connect</p>
               ) : authenticated ? (
-                <div className="mt-8 rounded-none border border-[rgb(240_231_212/0.28)] p-5">
-                  <p className="text-[11px] tracking-[0.16em]">YOUR WALLET</p>
-                  <p className="font-mono break-all">{addr}</p>
-                  <div className="mt-4 flex flex-wrap gap-3">
-                    <Link to="/app/start" className="pill pill-coral">
+                <div className="mt-8 border border-[rgb(240_231_212/0.28)] p-5">
+                  <p className="text-[0.75rem] tracking-[0.16em] text-[rgb(240_231_212/0.55)]">YOUR WALLET</p>
+                  <p className="mt-2 font-mono break-all text-[0.9375rem]">{addr}</p>
+                  <div className="mt-5 flex flex-wrap gap-3">
+                    <ButtonLink as={Link} to="/app/start" trailingArrow size="lg">
                       Continue
-                    </Link>
-                    <button className="pill pill-line" type="button" onClick={logout}>
+                    </ButtonLink>
+                    <Button variant="secondary" type="button" onClick={logout}>
                       Disconnect
-                    </button>
+                    </Button>
                   </div>
                 </div>
               ) : (
                 <div className="mt-8 flex flex-col gap-3">
-                  <button className="pill pill-coral h-12 w-full" type="button" onClick={() => void run()}>
+                  <button
+                    className="inline-flex h-12 w-full items-center justify-center rounded-full bg-[#d82f2f] px-6 text-base font-medium text-black"
+                    type="button"
+                    onClick={() => void run()}
+                  >
                     Connect your wallet
                   </button>
-                  <Link to="/" className="pill pill-line h-12 w-full">
+                  <ButtonLink as={Link} to="/" variant="ghost" size="lg" className="w-full">
                     Browse first
-                  </Link>
+                  </ButtonLink>
                 </div>
               )}
               {error ? (
-                <p role="alert" className="mt-6 text-[0.875rem] leading-6 text-[#ff7a7a]">
-                  {error}
+                <p role="alert" className="mt-6 border-t border-[rgb(240_231_212/0.25)] pt-6 text-[0.875rem] leading-6 text-[#ff7a7a]">
+                  Connection issue: {error} Try again in a moment.
                 </p>
               ) : null}
             </motion.div>
@@ -80,7 +86,7 @@ export function WalletGate() {
       <aside className="relative hidden items-center justify-center border-l border-[rgb(240_231_212/0.25)] bg-[#d82f2f] lg:flex">
         <div className="guide-grain opacity-30" aria-hidden="true" />
         <div className="relative w-full max-w-[26rem] px-10">
-          <PipelineCard className="w-full shadow-none" />
+          <DiagramHeroPostcard className="w-full border border-black" />
           <p className="mt-8 text-center text-[1rem] leading-7 font-medium text-black">
             Your EVM address is the login. Orders stay on desktop. Transfer of Agentic ID is not live on mainnet.
           </p>

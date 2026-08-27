@@ -1,39 +1,55 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { PageHead } from "../ui/PageHead";
 import { EmptyWatch } from "../EmptyWatch";
 import { NetworkToggle } from "../NetworkToggle";
 import { NetworkBanner } from "../NetworkBanner";
-import { IsolateNote } from "../IsolateNote";
-import { KillNote } from "../KillNote";
-import { TransferNote } from "../TransferNote";
-import { NoSession } from "../NoSession";
-import { PolicyPanel } from "../PolicyPanel";
-import { ProgressStrip } from "../ProgressStrip";
+import { ButtonLink } from "../ui/Button";
+import { cn } from "../lib/cn";
 
 type Net = "mainnet" | "testnet";
 
 export function Home() {
   const [net, setNet] = useState<Net>("mainnet");
   return (
-    <div className="mx-auto max-w-[80rem]">
-      <p className="text-[11px] tracking-[0.18em] text-[#d82f2f]">WHAT NEEDS YOUR ATTENTION</p>
-      <h1 className="mt-2 max-w-4xl text-4xl tracking-[-0.04em] md:text-5xl">Your Watch. Live books only.</h1>
-      <p className="mt-4 max-w-[48ch] text-[1.05rem] leading-7 text-[rgb(240_231_212/0.75)]">
-        PIT may research and notify. PIT may not sign automatically. Authorize lives on desktop.
-      </p>
+    <div className="mx-auto flex max-w-[80rem] flex-col gap-10">
+      <PageHead
+        title="What needs your attention"
+        lede="Live books only. PIT may research and notify. PIT may not sign automatically. Authorize lives on desktop."
+      />
       <NetworkToggle net={net} onChange={setNet} />
       <NetworkBanner net={net} />
       <EmptyWatch network={net} />
-      <PolicyPanel />
-      <ProgressStrip current="WAITING_FOR_USER" />
-      <NoSession />
-      <IsolateNote />
-      <KillNote />
-      <TransferNote />
-      <p className="mt-8">
-        <Link to="/app/start" className="pill pill-coral">
-          Resume onboarding
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Link
+          to="/app/start"
+          className={cn(
+            "rounded-2xl border border-[rgb(240_231_212/0.25)] bg-[#141414] p-6 text-left no-underline transition-colors",
+            "hover:border-[#d82f2f]/50 active:scale-[0.99]",
+          )}
+        >
+          <h3 className="text-[1.25rem] font-semibold tracking-[-0.03em] text-[var(--guide-cream)]">Finish setup</h3>
+          <p className="mt-2 text-[0.9375rem] leading-6 text-[rgb(240_231_212/0.65)]">
+            Twelve beats. Wallet, network, policy, then a session on the machine.
+          </p>
         </Link>
+        <Link
+          to="/app/policy"
+          className={cn(
+            "rounded-2xl border border-[rgb(240_231_212/0.25)] bg-[#141414] p-6 text-left no-underline transition-colors",
+            "hover:border-[#d82f2f]/50 active:scale-[0.99]",
+          )}
+        >
+          <h3 className="text-[1.25rem] font-semibold tracking-[-0.03em] text-[var(--guide-cream)]">Read the law</h3>
+          <p className="mt-2 text-[0.9375rem] leading-6 text-[rgb(240_231_212/0.65)]">
+            Clip, assets, kill. The model cannot raise them.
+          </p>
+        </Link>
+      </div>
+      <p>
+        <ButtonLink as={Link} to="/app/start" trailingArrow size="lg">
+          Resume onboarding
+        </ButtonLink>
       </p>
     </div>
   );
