@@ -7,6 +7,7 @@ import { ChoiceCard } from "../ui/ChoiceCard";
 import { EmptyWatch } from "../EmptyWatch";
 import { NetworkToggle } from "../NetworkToggle";
 import { NetworkBanner } from "../NetworkBanner";
+import { BindDesk } from "../BindDesk";
 import { DiagramPolicy, DiagramSession } from "../diagrams/pitGuide";
 
 type Net = "mainnet" | "testnet";
@@ -33,6 +34,7 @@ export function Home() {
         </p>
         <NetworkToggle net={net} onChange={setNet} />
         <NetworkBanner net={net} />
+        <BindDesk network={net} />
       </Bezel>
 
       <section aria-labelledby="watch-heading">

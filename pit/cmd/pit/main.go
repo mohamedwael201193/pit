@@ -16,7 +16,6 @@ import (
 	"github.com/mohamedwael201193/pit/internal/config"
 	pitexec "github.com/mohamedwael201193/pit/internal/exec"
 	"github.com/mohamedwael201193/pit/internal/hl"
-	"github.com/mohamedwael201193/pit/internal/identity"
 	"github.com/mohamedwael201193/pit/internal/ledger"
 	"github.com/mohamedwael201193/pit/internal/policy"
 	"github.com/mohamedwael201193/pit/internal/session"
@@ -24,7 +23,6 @@ import (
 	"github.com/mohamedwael201193/pit/internal/verify"
 	"github.com/mohamedwael201193/pit/internal/version"
 	"github.com/mohamedwael201193/pit/internal/watch"
-	"github.com/mohamedwael201193/pit/internal/workspace"
 )
 
 var asJSON bool
@@ -32,31 +30,44 @@ var asJSON bool
 func usage() {
 	fmt.Fprint(os.Stderr, `PIT — Private Alpha OS
 
-Commands:
+Workspace
   pit init --network mainnet|testnet --wallet 0x...
   pit login
   pit wallet
   pit network
+  pit logout [--forget]
+  pit revoke
+
+Policy
   pit policy
+  pit kill
+
+Session
   pit session
   pit companion
-  pit ask --market market.json --book book.json
+
+Research
   pit watch
   pit opportunities
+  pit ask --market market.json --book book.json
+  pit research --market market.json --book book.json
   pit forecast
   pit preview --market ETH --side buy --forecast <id>
   pit authorize --i-understand
+
+Orders
   pit orders
   pit cancel
   pit status
   pit resolve
   pit card
+
+Proof
   pit verify --preview 0x... --root 0x... --network mainnet --workspace <id>
   pit proof --root 0x... --out file --key-file key.hex
-  pit kill
+
+System
   pit doctor
-  pit logout [--forget]
-  pit revoke
   pit version
 
 Every command accepts --json. Exit 0 on success, 2 on usage, 1 on failed doctor.
@@ -66,6 +77,7 @@ Session keys stay on this machine (OS keychain unless PIT_KEYRING=file).
 authorize requires a TTY, the exact word AUTHORIZE, and a live session on this machine.
 pit session creates a one-hour order/cancel agent. It never prints the key.
 pit companion listens on 127.0.0.1 only. Pairing does not send the session key to the browser.
+The desktop can bind, pin policy, and mint a session without a terminal.
 `)
 }
 
@@ -106,7 +118,7 @@ func main() {
 		cmdOrders()
 	case "card":
 		cmdCard()
-	case "ask":
+	case "ask", "research":
 		cmdAsk(rest[1:])
 	case "forecast":
 		cmdForecast()
@@ -178,34 +190,22 @@ func cmdInit(args []string) {
 			wallet = args[i]
 		}
 	}
-	addr, err := identity.NormalizeAddress(wallet)
+	st, err := cli.Bind(stateDir(), string(net), wallet)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "YOUR WALLET address is required: --wallet 0x...")
-		os.Exit(2)
-	}
-	if prev, err := cli.Load(stateDir()); err == nil {
-		if err := cli.RefuseNetworkSwitch(prev.Network, string(net)); err != nil {
-			fmt.Fprintln(os.Stderr, err)
+		if err.Error() == "wallet_required" {
+			fmt.Fprintln(os.Stderr, "YOUR WALLET address is required: --wallet 0x...")
 			os.Exit(2)
 		}
-	}
-	st := workspace.NewStore()
-	ws, err := st.Create(addr, net)
-	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
+		os.Exit(2)
 	}
-	if err := cli.Save(stateDir(), cli.DiskState{
-		WorkspaceID: ws.ID,
-		Network:     string(ws.Network),
-		Wallet:      string(ws.EVM),
-	}); err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
+	if asJSON {
+		_ = json.NewEncoder(os.Stdout).Encode(cli.PublicBind(st))
+		return
 	}
-	fmt.Printf("workspace %s\n", ws.ID)
-	fmt.Printf("network   %s\n", ws.Network)
-	fmt.Printf("wallet    %s\n", ws.EVM)
+	fmt.Printf("workspace %s\n", st.WorkspaceID)
+	fmt.Printf("network   %s\n", st.Network)
+	fmt.Printf("wallet    %s\n", st.Wallet)
 	fmt.Println("session   not created — pit session then your wallet approveAgent")
 	_ = session.AllowedActions
 }
@@ -216,7 +216,7 @@ func cmdSession() {
 		fmt.Fprintln(os.Stderr, "session requires pit init first")
 		os.Exit(2)
 	}
-	sf, err := cli.CreateLocalSession(stateDir(), st.WorkspaceID, st.Network, "v1")
+	sf, _, err := cli.EnsureLocalSession(stateDir())
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)

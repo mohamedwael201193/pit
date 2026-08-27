@@ -18,6 +18,7 @@ import (
 	"github.com/mohamedwael201193/pit/internal/hl"
 	"github.com/mohamedwael201193/pit/internal/httpx"
 	"github.com/mohamedwael201193/pit/internal/obs"
+	"github.com/mohamedwael201193/pit/internal/policy"
 	"github.com/mohamedwael201193/pit/internal/session"
 	"github.com/mohamedwael201193/pit/internal/version"
 	"github.com/mohamedwael201193/pit/internal/watch"
@@ -98,6 +99,11 @@ func (h *Hub) Handler() http.Handler {
 	mux.HandleFunc("/local/status", h.localStatus)
 	mux.HandleFunc("/local/code", h.localCode)
 	mux.HandleFunc("/local/doctor", h.localDoctor)
+	mux.HandleFunc("/local/init", h.localInit)
+	mux.HandleFunc("/local/session", h.localSession)
+	mux.HandleFunc("/local/policy", h.localPolicy)
+	mux.HandleFunc("/local/revoke-session", h.localRevokeSession)
+	mux.HandleFunc("/bind", h.bind)
 	mux.HandleFunc("/watch", h.watch)
 	mux.HandleFunc("/devices", h.devicesList)
 	mux.HandleFunc("/revoke", h.revoke)
@@ -222,6 +228,8 @@ func (h *Hub) localStatus(w http.ResponseWriter, r *http.Request) {
 	st, err := cli.Load(h.Dir)
 	if err == nil {
 		body["network"] = st.Network
+		body["wallet"] = st.Wallet
+		body["workspace"] = st.WorkspaceID
 		body["kill"] = st.Kill
 		if s, err := cli.LiveFromDisk(h.Dir, st.Kill, time.Now().UnixMilli()); err == nil {
 			body["sessionAlive"] = session.Alive(s, time.Now().UnixMilli())
@@ -264,6 +272,134 @@ func (h *Hub) localDoctor(w http.ResponseWriter, r *http.Request) {
 		"sign":    false,
 		"trade":   false,
 		"version": version.Number,
+	})
+}
+
+func desktopOnly(w http.ResponseWriter, r *http.Request) bool {
+	if r.Method != http.MethodPost {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return false
+	}
+	if !httpx.CodeOriginOK(r.Header.Get("Origin")) {
+		http.Error(w, "origin_denied", http.StatusForbidden)
+		return false
+	}
+	return true
+}
+
+func writeBindErr(w http.ResponseWriter, err error) {
+	code := err.Error()
+	status := http.StatusBadRequest
+	switch code {
+	case "workspace_owned", "network_switch_denied":
+		status = http.StatusConflict
+	case "unbound":
+		status = http.StatusConflict
+	}
+	writeLocal(w, status, map[string]any{"ok": false, "error": code, "sign": false, "trade": false})
+}
+
+func (h *Hub) localInit(w http.ResponseWriter, r *http.Request) {
+	if !desktopOnly(w, r) {
+		return
+	}
+	var body struct {
+		Wallet  string `json:"wallet"`
+		Network string `json:"network"`
+	}
+	_ = json.NewDecoder(r.Body).Decode(&body)
+	st, err := cli.Bind(h.Dir, body.Network, body.Wallet)
+	if err != nil {
+		writeBindErr(w, err)
+		return
+	}
+	writeLocal(w, http.StatusOK, cli.PublicBind(st))
+}
+
+func (h *Hub) bind(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+	if !h.bearer(r) {
+		http.Error(w, "device_required", http.StatusUnauthorized)
+		return
+	}
+	var body struct {
+		Wallet  string `json:"wallet"`
+		Network string `json:"network"`
+	}
+	_ = json.NewDecoder(r.Body).Decode(&body)
+	st, err := cli.Bind(h.Dir, body.Network, body.Wallet)
+	if err != nil {
+		writeBindErr(w, err)
+		return
+	}
+	writeLocal(w, http.StatusOK, cli.PublicBind(st))
+}
+
+func (h *Hub) localSession(w http.ResponseWriter, r *http.Request) {
+	if !desktopOnly(w, r) {
+		return
+	}
+	sf, _, err := cli.EnsureLocalSession(h.Dir)
+	if err != nil {
+		writeBindErr(w, err)
+		return
+	}
+	writeLocal(w, http.StatusOK, cli.SessionPublic(sf))
+}
+
+func (h *Hub) localPolicy(w http.ResponseWriter, r *http.Request) {
+	if !desktopOnly(w, r) {
+		return
+	}
+	st, err := cli.Load(h.Dir)
+	if err != nil {
+		writeBindErr(w, fmt.Errorf("unbound"))
+		return
+	}
+	p := policy.Default()
+	path, err := cli.PinWorkspace(h.Dir, st.WorkspaceID, p)
+	if err != nil {
+		writeBindErr(w, err)
+		return
+	}
+	if err := cli.CheckPinned(h.Dir, st.WorkspaceID, p); err != nil {
+		writeBindErr(w, err)
+		return
+	}
+	hash, err := p.Hash()
+	if err != nil {
+		writeBindErr(w, err)
+		return
+	}
+	writeLocal(w, http.StatusOK, map[string]any{
+		"ok":        true,
+		"pinned":    path,
+		"hash":      hash,
+		"version":   p.Version,
+		"workspace": st.WorkspaceID,
+		"sign":      false,
+		"trade":     false,
+	})
+}
+
+func (h *Hub) localRevokeSession(w http.ResponseWriter, r *http.Request) {
+	if !desktopOnly(w, r) {
+		return
+	}
+	if err := cli.Logout(h.Dir, false); err != nil {
+		writeBindErr(w, err)
+		return
+	}
+	writeLocal(w, http.StatusOK, map[string]any{
+		"ok":     true,
+		"local":  "session_deleted",
+		"sign":   false,
+		"trade":  false,
+		"order":  false,
+		"cancel": false,
 	})
 }
 

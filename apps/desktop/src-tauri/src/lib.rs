@@ -31,6 +31,27 @@ fn local_doctor() -> Result<serde_json::Value, String> {
 }
 
 #[tauri::command]
+fn local_init(wallet: String, network: String) -> Result<serde_json::Value, String> {
+    let body = serde_json::json!({ "wallet": wallet, "network": network });
+    loopback_json_post("/local/init", &body)
+}
+
+#[tauri::command]
+fn local_session() -> Result<serde_json::Value, String> {
+    loopback_json_post("/local/session", &serde_json::json!({}))
+}
+
+#[tauri::command]
+fn local_policy() -> Result<serde_json::Value, String> {
+    loopback_json_post("/local/policy", &serde_json::json!({}))
+}
+
+#[tauri::command]
+fn local_revoke_session() -> Result<serde_json::Value, String> {
+    loopback_json_post("/local/revoke-session", &serde_json::json!({}))
+}
+
+#[tauri::command]
 fn ensure_companion() -> Result<bool, String> {
     start_companion();
     Ok(companion_listening())
@@ -49,11 +70,31 @@ fn loopback_json(path: &str) -> Result<serde_json::Value, String> {
     serde_json::from_str(&raw).map_err(|e| e.to_string())
 }
 
+fn loopback_json_post(path: &str, body: &serde_json::Value) -> Result<serde_json::Value, String> {
+    let payload = body.to_string();
+    let raw = loopback_post(path, &payload)?;
+    serde_json::from_str(&raw).map_err(|e| e.to_string())
+}
+
 fn loopback_get(path: &str) -> Result<String, String> {
+    loopback_exchange("GET", path, None)
+}
+
+fn loopback_post(path: &str, json: &str) -> Result<String, String> {
+    loopback_exchange("POST", path, Some(json))
+}
+
+fn loopback_exchange(method: &str, path: &str, json: Option<&str>) -> Result<String, String> {
     let mut stream = TcpStream::connect_timeout(&companion_addr(), Duration::from_secs(2))
         .map_err(|_| "companion_down".to_string())?;
-    let _ = stream.set_read_timeout(Some(Duration::from_secs(4)));
-    let req = format!("GET {path} HTTP/1.1\r\nHost: 127.0.0.1:17373\r\nConnection: close\r\n\r\n");
+    let _ = stream.set_read_timeout(Some(Duration::from_secs(8)));
+    let mut req = format!("{method} {path} HTTP/1.1\r\nHost: 127.0.0.1:17373\r\nConnection: close\r\n");
+    if let Some(body) = json {
+        req.push_str("Content-Type: application/json\r\n");
+        req.push_str(&format!("Content-Length: {}\r\n\r\n{}", body.len(), body));
+    } else {
+        req.push_str("\r\n");
+    }
     stream
         .write_all(req.as_bytes())
         .map_err(|_| "companion_down".to_string())?;
@@ -62,13 +103,19 @@ fn loopback_get(path: &str) -> Result<String, String> {
         .read_to_end(&mut buf)
         .map_err(|_| "companion_down".to_string())?;
     let text = String::from_utf8_lossy(&buf);
-    let status_ok = text.starts_with("HTTP/1.1 200") || text.starts_with("HTTP/1.0 200");
+    let status_line = text.lines().next().unwrap_or("");
+    let ok = status_line.contains(" 200 ") || status_line.ends_with(" 200");
     let body = text
         .split_once("\r\n\r\n")
         .or_else(|| text.split_once("\n\n"))
         .map(|(_, b)| b.trim().to_string())
         .unwrap_or_default();
-    if !status_ok {
+    if !ok {
+        if let Ok(v) = serde_json::from_str::<serde_json::Value>(&body) {
+            if let Some(err) = v.get("error").and_then(|x| x.as_str()) {
+                return Err(err.to_string());
+            }
+        }
         return Err("companion_http".into());
     }
     Ok(body)
@@ -149,7 +196,7 @@ fn same_install(path: &Path) -> bool {
     path.parent().map(|p| p == dir).unwrap_or(false)
 }
 
-const SIDECAR_VERSION: &str = "0.1.2";
+const SIDECAR_VERSION: &str = "0.1.3";
 
 fn companion_version() -> Option<String> {
     let raw = loopback_get("/health").ok()?;
@@ -245,6 +292,10 @@ pub fn run() {
             local_status,
             local_code,
             local_doctor,
+            local_init,
+            local_session,
+            local_policy,
+            local_revoke_session,
             ensure_companion
         ])
         .run(tauri::generate_context!())

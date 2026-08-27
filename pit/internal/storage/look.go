@@ -3,11 +3,52 @@ package storage
 import (
 	"fmt"
 	"os"
+	"os/exec"
+	"path/filepath"
 	"strings"
 )
 
+func clientNames() []string {
+	return []string{"0g-storage-client.exe", "0g-storage-client"}
+}
+
+func discoverClient(roots ...string) string {
+	for _, root := range roots {
+		if root == "" {
+			continue
+		}
+		for _, n := range clientNames() {
+			p := filepath.Join(root, n)
+			st, err := os.Stat(p)
+			if err == nil && !st.IsDir() {
+				return p
+			}
+		}
+	}
+	return ""
+}
+
 func LookCLI() string {
-	return strings.TrimSpace(os.Getenv("PIT_STORAGE_CLI"))
+	if env := strings.TrimSpace(os.Getenv("PIT_STORAGE_CLI")); env != "" {
+		return env
+	}
+	var roots []string
+	if exe, err := os.Executable(); err == nil {
+		roots = append(roots, filepath.Dir(exe))
+	}
+	if wd, err := os.Getwd(); err == nil {
+		roots = append(roots, wd)
+	}
+	if found := discoverClient(roots...); found != "" {
+		return found
+	}
+	if p, err := exec.LookPath("0g-storage-client"); err == nil {
+		return p
+	}
+	if p, err := exec.LookPath("0g-storage-client.exe"); err == nil {
+		return p
+	}
+	return ""
 }
 
 func ProofJob(cliPath, rpc, indexer, keyHex, root, out string) (Job, error) {

@@ -9,10 +9,15 @@ import { PolicyLaw } from "./PolicyLaw";
 import { PreviewNote } from "./PreviewNote";
 import { SessionNote } from "./SessionNote";
 import {
+  bindWallet,
+  createLocalSession,
+  describeBindError,
   doctor,
   localStatus,
   pairCode,
+  pinLocalPolicy,
   prettyCode,
+  revokeLocalSession,
   wakeCompanion,
   type DoctorCheck,
   type LocalStatus,
@@ -108,6 +113,17 @@ function Setup({
   code,
   expires,
   companionUp,
+  walletDraft,
+  setWalletDraft,
+  bindError,
+  bindBusy,
+  boundWallet,
+  pinned,
+  agent,
+  sessionAlive,
+  onBind,
+  onSession,
+  onPolicy,
   onDone,
 }: {
   step: number;
@@ -118,6 +134,17 @@ function Setup({
   code: string;
   expires: string;
   companionUp: boolean;
+  walletDraft: string;
+  setWalletDraft: (v: string) => void;
+  bindError: string | null;
+  bindBusy: boolean;
+  boundWallet: string;
+  pinned: boolean;
+  agent: string;
+  sessionAlive: boolean;
+  onBind: () => void;
+  onSession: () => void;
+  onPolicy: () => void;
   onDone: () => void;
 }) {
   const last = 8;
@@ -146,15 +173,44 @@ function Setup({
       ) : null}
       {step === 3 ? (
         <>
-          <h1>Connect your wallet in the browser.</h1>
-          <p className="lead">Open pit0g.vercel.app after pairing. Approve nothing that looks like a seed or a withdraw permission.</p>
+          <h1>Pick one world and stay there.</h1>
+          <NetworkToggle net={net} onChange={setNet} />
+          <NetworkBanner net={net} />
         </>
       ) : null}
       {step === 4 ? (
         <>
-          <h1>Pick one world and stay there.</h1>
-          <NetworkToggle net={net} onChange={setNet} />
-          <NetworkBanner net={net} />
+          <h1>Connect your wallet.</h1>
+          <p className="lead">
+            Paste the public 0x address on this computer, or pair the browser and connect with Privy. PIT never asks for
+            a seed or a private key.
+          </p>
+          <form
+            className="bind-form card"
+            onSubmit={(e) => {
+              e.preventDefault();
+              onBind();
+            }}
+          >
+            <label htmlFor="desk-wallet">Public wallet</label>
+            <input
+              id="desk-wallet"
+              autoComplete="off"
+              spellCheck={false}
+              placeholder="0x…"
+              value={walletDraft}
+              onChange={(e) => setWalletDraft(e.target.value)}
+            />
+            <button type="submit" className="linkish" disabled={bindBusy || !companionUp}>
+              {boundWallet ? "Wallet bound on this computer" : "Bind this computer"}
+            </button>
+            {boundWallet ? <p className="fine">Bound {boundWallet}</p> : null}
+            {bindError ? (
+              <p className="err" role="alert">
+                {bindError}
+              </p>
+            ) : null}
+          </form>
         </>
       ) : null}
       {step === 5 ? (
@@ -163,13 +219,22 @@ function Setup({
           <p className="lead">order ✓ cancel ✓ withdraw ✗ leverage ✗ transfer ✗</p>
           <PermissionsCard />
           <SessionNote />
+          <button type="button" className="linkish" onClick={onSession} disabled={bindBusy || !companionUp || !boundWallet}>
+            {sessionAlive ? "Local session is live" : "Create local session"}
+          </button>
+          {agent ? <p className="fine">Agent {agent}. Approve this agent on Hyperliquid. PIT cannot withdraw.</p> : null}
+          {bindError ? (
+            <p className="err" role="alert">
+              {bindError}
+            </p>
+          ) : null}
         </>
       ) : null}
       {step === 6 ? (
         <>
           <h1>Pin a policy before research.</h1>
-          <p className="lead">These are example defaults until your workspace pins a file. The model cannot raise them.</p>
-          <PolicyLaw />
+          <p className="lead">The model cannot raise clip, leverage, or permissions. Pin writes a hash file on this computer.</p>
+          <PolicyLaw pinned={pinned} onPin={onPolicy} busy={bindBusy || !boundWallet} />
         </>
       ) : null}
       {step === 7 ? (
@@ -221,6 +286,10 @@ export function App() {
   const [techOpen, setTechOpen] = useState(false);
   const [ticks, setTicks] = useState(0);
   const [setupStep, setSetupStep] = useState(0);
+  const [walletDraft, setWalletDraft] = useState("");
+  const [bindError, setBindError] = useState<string | null>(null);
+  const [bindBusy, setBindBusy] = useState(false);
+  const [pinned, setPinned] = useState(false);
   const [setupDone, setSetupDone] = useState(() => {
     try {
       return window.localStorage.getItem(SETUP_KEY) === "1";
@@ -235,6 +304,7 @@ export function App() {
 
   useEffect(() => {
     let gone = false;
+    let timer = 0;
     const tick = () => {
       setTicks((n) => n + 1);
       localStatus()
@@ -245,6 +315,7 @@ export function App() {
           setSessionAlive(Boolean(s?.sessionAlive));
           setAgent(s?.agent || "");
           if (s?.network === "testnet" || s?.network === "mainnet") setNet(s.network);
+          if (s?.wallet) setWalletDraft((cur) => cur || s.wallet || "");
         })
         .catch(() => {
           if (!gone) {
@@ -261,7 +332,10 @@ export function App() {
         .catch(() => undefined);
       doctor()
         .then((c) => {
-          if (!gone) setChecks(c);
+          if (!gone) {
+            setChecks(c);
+            setPinned(Boolean(c.find((x) => x.name === "policy" && x.ok)));
+          }
         })
         .catch(() => undefined);
       fetch(`${HEALTH}/watch?network=${net}`)
@@ -274,13 +348,16 @@ export function App() {
           if (!gone) setCoins([]);
         });
     };
-    tick();
-    const id = window.setInterval(tick, 4000);
+    const loop = () => {
+      tick();
+      timer = window.setTimeout(loop, companionUp ? 4000 : 800);
+    };
+    loop();
     return () => {
       gone = true;
-      window.clearInterval(id);
+      window.clearTimeout(timer);
     };
-  }, [net]);
+  }, [net, companionUp]);
 
   useEffect(() => {
     if (!sessionAlive) return;
@@ -308,6 +385,63 @@ export function App() {
     setView("home");
   }
 
+  async function onBind() {
+    setBindBusy(true);
+    setBindError(null);
+    const r = await bindWallet(walletDraft, net);
+    setBindBusy(false);
+    if (r.error) {
+      setBindError(describeBindError(r.error));
+      return;
+    }
+    const s = await localStatus();
+    if (s) {
+      setStatus(s);
+      if (s.wallet) setWalletDraft(s.wallet);
+    }
+    setChecks(await doctor());
+  }
+
+  async function onSession() {
+    setBindBusy(true);
+    setBindError(null);
+    const r = await createLocalSession();
+    setBindBusy(false);
+    if (r.error) {
+      setBindError(describeBindError(r.error));
+      return;
+    }
+    if (r.agent) setAgent(r.agent);
+    setSessionAlive(true);
+    setChecks(await doctor());
+  }
+
+  async function onPolicy() {
+    setBindBusy(true);
+    setBindError(null);
+    const r = await pinLocalPolicy();
+    setBindBusy(false);
+    if (r.error) {
+      setBindError(describeBindError(r.error));
+      return;
+    }
+    setPinned(true);
+    setChecks(await doctor());
+  }
+
+  async function onRevoke() {
+    setBindBusy(true);
+    const r = await revokeLocalSession();
+    setBindBusy(false);
+    if (r.error) {
+      setBindError(describeBindError(r.error));
+      return;
+    }
+    setSessionAlive(false);
+    setAgent("");
+    setChecks(await doctor());
+  }
+
   function researchThis() {
     if (!companionUp) {
       setResearchStop("companion_down");
@@ -329,7 +463,7 @@ export function App() {
       <aside className="rail">
         <div className="rail-brand">
           <div className="word">PIT.</div>
-          <p className="kicker">0.1.2 · local execution</p>
+          <p className="kicker">0.1.3 · local execution</p>
         </div>
         <nav className="rail-nav" aria-label="Desk">
           {RAIL.map((item) => (
@@ -349,7 +483,7 @@ export function App() {
         <div className="rail-foot">
           <p>{net === "mainnet" ? "MAINNET" : "TESTNET"}</p>
           <p>{companionUp ? "companion live" : "starting companion"}</p>
-          <p>PIT 0.1.2</p>
+          <p>PIT 0.1.3</p>
           <button type="button" className="ghost" onClick={() => setView("settings")}>
             Help / Diagnostics
           </button>
@@ -360,7 +494,7 @@ export function App() {
         <header className="bar">
           <div>
             <p className="eyebrow">WORKSPACE</p>
-            <p>{status?.workspace || walletCheck?.detail || "unbound"}</p>
+            <p>{status?.workspace || status?.wallet || walletCheck?.detail || "unbound"}</p>
           </div>
           <NetworkToggle net={net} onChange={setNet} />
           <div className="bar-meta">
@@ -381,6 +515,17 @@ export function App() {
             code={code}
             expires={expires}
             companionUp={companionUp}
+            walletDraft={walletDraft}
+            setWalletDraft={setWalletDraft}
+            bindError={bindError}
+            bindBusy={bindBusy}
+            boundWallet={status?.wallet || ""}
+            pinned={pinned}
+            agent={agent}
+            sessionAlive={sessionAlive}
+            onBind={() => void onBind()}
+            onSession={() => void onSession()}
+            onPolicy={() => void onPolicy()}
             onDone={finishSetup}
           />
         ) : null}
@@ -517,7 +662,7 @@ export function App() {
             <p className="eyebrow">CONSTRAINTS</p>
             <h1>Policy</h1>
             <p className="lead">Host engine enforces this. The model cannot raise clip, leverage, or permissions.</p>
-            <PolicyLaw />
+            <PolicyLaw pinned={pinned} onPin={() => void onPolicy()} busy={bindBusy} />
           </main>
         ) : null}
 
@@ -532,6 +677,9 @@ export function App() {
             <article className="card">
               <p className="label">REVOKE</p>
               <p>Kill the local session, then remove the PIT agent from your Hyperliquid account.</p>
+              <button type="button" className="linkish" onClick={() => void onRevoke()} disabled={bindBusy || !sessionAlive}>
+                Revoke local session
+              </button>
             </article>
           </main>
         ) : null}

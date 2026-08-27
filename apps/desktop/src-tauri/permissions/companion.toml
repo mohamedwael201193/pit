@@ -27,3 +27,23 @@ commands.allow = ["local_doctor"]
 identifier = "allow-ensure-companion"
 description = "Start or replace this install's companion sidecar."
 commands.allow = ["ensure_companion"]
+
+[[permission]]
+identifier = "allow-local-init"
+description = "Bind a public wallet on this machine. Never a secret."
+commands.allow = ["local_init"]
+
+[[permission]]
+identifier = "allow-local-session"
+description = "Mint or reuse a local order/cancel session. Never returns the key."
+commands.allow = ["local_session"]
+
+[[permission]]
+identifier = "allow-local-policy"
+description = "Pin the default policy file for this workspace."
+commands.allow = ["local_policy"]
+
+[[permission]]
+identifier = "allow-local-revoke-session"
+description = "Delete the local session. Never exports the key."
+commands.allow = ["local_revoke_session"]

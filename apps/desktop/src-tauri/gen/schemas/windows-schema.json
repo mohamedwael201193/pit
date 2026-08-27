@@ -207,6 +207,30 @@
           "markdownDescription": "Read doctor checks over a native loopback GET with no Origin."
         },
         {
+          "description": "Bind a public wallet on this machine. Never a secret.",
+          "type": "string",
+          "const": "allow-local-init",
+          "markdownDescription": "Bind a public wallet on this machine. Never a secret."
+        },
+        {
+          "description": "Pin the default policy file for this workspace.",
+          "type": "string",
+          "const": "allow-local-policy",
+          "markdownDescription": "Pin the default policy file for this workspace."
+        },
+        {
+          "description": "Delete the local session. Never exports the key.",
+          "type": "string",
+          "const": "allow-local-revoke-session",
+          "markdownDescription": "Delete the local session. Never exports the key."
+        },
+        {
+          "description": "Mint or reuse a local order/cancel session. Never returns the key.",
+          "type": "string",
+          "const": "allow-local-session",
+          "markdownDescription": "Mint or reuse a local order/cancel session. Never returns the key."
+        },
+        {
           "description": "Read companion status over a native loopback GET with no Origin.",
           "type": "string",
           "const": "allow-local-status",

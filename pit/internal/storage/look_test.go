@@ -1,6 +1,8 @@
 package storage
 
 import (
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -25,5 +27,20 @@ func TestProofJobRequiresOfficialClientAndProof(t *testing.T) {
 	}
 	if !strings.Contains(joined, "--proof") {
 		t.Fatal("proof")
+	}
+}
+
+func TestLookCLIFindsBesideDir(t *testing.T) {
+	t.Setenv("PIT_STORAGE_CLI", "")
+	dir := t.TempDir()
+	p := filepath.Join(dir, "0g-storage-client.exe")
+	if err := os.WriteFile(p, []byte("x"), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if got := discoverClient(dir); got != p {
+		t.Fatalf("got %q", got)
+	}
+	if err := RefuseMissingProof(discoverClient(dir)); err != nil {
+		t.Fatal(err)
 	}
 }

@@ -44,7 +44,7 @@ export function PairPage() {
       if (body.device) {
         sessionStorage.setItem("pit_device", body.device);
       }
-      setMsg("This browser is paired. It can read status. It cannot authorize or hold a session key.");
+      setMsg("This browser is paired. Connect your wallet next. It can read status. It cannot authorize or hold a session key.");
     } catch {
       setErr(
         "PIT is not reachable on this computer. Launch the Windows app first. If Chrome asks to access other apps on this device, choose Allow. PIT only uses 127.0.0.1.",
@@ -98,8 +98,8 @@ export function PairPage() {
           macOS and Linux installers are not claimed until they are packaged and tested. Source build is documented in
           the README.
         </p>
-        <Link className="mt-6 inline-block text-[#d82f2f]" to="/">
-          Back to PIT
+        <Link className="mt-6 inline-block text-[#d82f2f]" to="/app">
+          Connect wallet
         </Link>
       </div>
     </div>

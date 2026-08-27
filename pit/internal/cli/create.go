@@ -9,6 +9,38 @@ import (
 	"github.com/mohamedwael201193/pit/internal/session"
 )
 
+func SessionPublic(sf SessionFile) map[string]any {
+	return map[string]any{
+		"ok":        true,
+		"agent":     sf.AgentAddr,
+		"expires":   sf.Expires,
+		"workspace": sf.Workspace,
+		"network":   sf.Network,
+		"order":     true,
+		"cancel":    true,
+		"withdraw":  false,
+		"transfer":  false,
+		"leverage":  false,
+		"sign":      false,
+		"trade":     false,
+	}
+}
+
+func EnsureLocalSession(dir string) (SessionFile, bool, error) {
+	st, err := Load(dir)
+	if err != nil {
+		return SessionFile{}, false, fmt.Errorf("unbound")
+	}
+	if _, err := LiveFromDisk(dir, st.Kill, time.Now().UnixMilli()); err == nil {
+		sf, err := LoadSession(dir)
+		if err == nil {
+			return sf, false, nil
+		}
+	}
+	sf, err := CreateLocalSession(dir, st.WorkspaceID, st.Network, "v1")
+	return sf, true, err
+}
+
 func CreateLocalSession(dir, workspace, network, policyVer string) (SessionFile, error) {
 	if err := session.CapTTLHours(1); err != nil {
 		return SessionFile{}, err

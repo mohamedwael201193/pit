@@ -185,7 +185,131 @@ func TestLocalStatusVersionNoSecret(t *testing.T) {
 	if got["sign"] == true || got["trade"] == true {
 		t.Fatal(got)
 	}
-	if got["version"] != "0.1.2" {
+	if got["version"] != "0.1.3" {
 		t.Fatalf("version %v", got["version"])
+	}
+}
+
+func TestDesktopInitSessionPolicyUserB(t *testing.T) {
+	h := New(t.TempDir())
+	a := "0x1111111111111111111111111111111111111111"
+	b := "0x2222222222222222222222222222222222222222"
+
+	req := local(httptest.NewRequest(http.MethodPost, "/local/init", strings.NewReader(`{"wallet":"`+a+`","network":"mainnet"}`)))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+	h.Handler().ServeHTTP(rec, req)
+	if rec.Code != 200 {
+		t.Fatal(rec.Body.String())
+	}
+	if strings.Contains(strings.ToLower(rec.Body.String()), "private") {
+		t.Fatal("secret")
+	}
+
+	req = local(httptest.NewRequest(http.MethodPost, "/local/init", strings.NewReader(`{"wallet":"`+b+`","network":"mainnet"}`)))
+	req.Header.Set("Content-Type", "application/json")
+	rec = httptest.NewRecorder()
+	h.Handler().ServeHTTP(rec, req)
+	if rec.Code != http.StatusConflict {
+		t.Fatalf("user B %d %s", rec.Code, rec.Body.String())
+	}
+
+	req = local(httptest.NewRequest(http.MethodPost, "/local/init", strings.NewReader(`{"wallet":"`+a+`","network":"mainnet"}`)))
+	req.Header.Set("Origin", "https://pit0g.vercel.app")
+	req.Header.Set("Content-Type", "application/json")
+	rec = httptest.NewRecorder()
+	h.Handler().ServeHTTP(rec, req)
+	if rec.Code != http.StatusForbidden {
+		t.Fatal("web must not init")
+	}
+
+	req = local(httptest.NewRequest(http.MethodPost, "/local/session", nil))
+	rec = httptest.NewRecorder()
+	h.Handler().ServeHTTP(rec, req)
+	if rec.Code != 200 {
+		t.Fatal(rec.Body.String())
+	}
+	var sess map[string]any
+	if err := json.Unmarshal(rec.Body.Bytes(), &sess); err != nil {
+		t.Fatal(err)
+	}
+	if sess["withdraw"] != false || sess["sign"] != false || sess["agent"] == nil || sess["agent"] == "" {
+		t.Fatal(sess)
+	}
+	if strings.Contains(strings.ToLower(rec.Body.String()), "private_key") {
+		t.Fatal("key leak")
+	}
+
+	req = local(httptest.NewRequest(http.MethodPost, "/local/session", nil))
+	req.Header.Set("Origin", "https://pit0g.vercel.app")
+	rec = httptest.NewRecorder()
+	h.Handler().ServeHTTP(rec, req)
+	if rec.Code != http.StatusForbidden {
+		t.Fatal("web session")
+	}
+
+	req = local(httptest.NewRequest(http.MethodPost, "/local/policy", nil))
+	rec = httptest.NewRecorder()
+	h.Handler().ServeHTTP(rec, req)
+	if rec.Code != 200 {
+		t.Fatal(rec.Body.String())
+	}
+
+	req = local(httptest.NewRequest(http.MethodGet, "/local/status", nil))
+	rec = httptest.NewRecorder()
+	h.Handler().ServeHTTP(rec, req)
+	if rec.Code != 200 {
+		t.Fatal(rec.Body.String())
+	}
+	if !strings.Contains(rec.Body.String(), a) {
+		t.Fatal("wallet missing")
+	}
+}
+
+func TestBrowserBindRequiresDeviceAndIsolatesUserB(t *testing.T) {
+	h := New(t.TempDir())
+	code, _ := h.Code()
+	body, _ := json.Marshal(map[string]string{"code": code})
+	req := local(httptest.NewRequest(http.MethodPost, "/pair", bytes.NewReader(body)))
+	req.Header.Set("Origin", "https://pit0g.vercel.app")
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+	h.Handler().ServeHTTP(rec, req)
+	if rec.Code != 200 {
+		t.Fatal(rec.Body.String())
+	}
+	var paired map[string]any
+	if err := json.Unmarshal(rec.Body.Bytes(), &paired); err != nil {
+		t.Fatal(err)
+	}
+	tok, _ := paired["device"].(string)
+
+	req = local(httptest.NewRequest(http.MethodPost, "/bind", strings.NewReader(`{"wallet":"0x1111111111111111111111111111111111111111","network":"mainnet"}`)))
+	req.Header.Set("Origin", "https://pit0g.vercel.app")
+	req.Header.Set("Content-Type", "application/json")
+	rec = httptest.NewRecorder()
+	h.Handler().ServeHTTP(rec, req)
+	if rec.Code != http.StatusUnauthorized {
+		t.Fatal("no bearer")
+	}
+
+	req = local(httptest.NewRequest(http.MethodPost, "/bind", strings.NewReader(`{"wallet":"0x1111111111111111111111111111111111111111","network":"mainnet"}`)))
+	req.Header.Set("Origin", "https://pit0g.vercel.app")
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+tok)
+	rec = httptest.NewRecorder()
+	h.Handler().ServeHTTP(rec, req)
+	if rec.Code != 200 {
+		t.Fatal(rec.Body.String())
+	}
+
+	req = local(httptest.NewRequest(http.MethodPost, "/bind", strings.NewReader(`{"wallet":"0x2222222222222222222222222222222222222222","network":"mainnet"}`)))
+	req.Header.Set("Origin", "https://pit0g.vercel.app")
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+tok)
+	rec = httptest.NewRecorder()
+	h.Handler().ServeHTTP(rec, req)
+	if rec.Code != http.StatusConflict {
+		t.Fatalf("user B bind %d %s", rec.Code, rec.Body.String())
 	}
 }

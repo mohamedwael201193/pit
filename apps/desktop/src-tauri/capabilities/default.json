@@ -10,6 +10,10 @@
     "allow-local-status",
     "allow-local-code",
     "allow-local-doctor",
-    "allow-ensure-companion"
+    "allow-ensure-companion",
+    "allow-local-init",
+    "allow-local-session",
+    "allow-local-policy",
+    "allow-local-revoke-session"
   ]
 }

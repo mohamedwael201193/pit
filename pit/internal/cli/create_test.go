@@ -31,3 +31,29 @@ func TestCreateLocalSessionDoesNotExport(t *testing.T) {
 		t.Fatal("boundary")
 	}
 }
+
+func TestEnsureLocalSessionDoesNotRotateLiveAgent(t *testing.T) {
+	dir := t.TempDir()
+	ws := identity.NewWorkspaceID()
+	if err := Save(dir, DiskState{WorkspaceID: ws, Network: "mainnet", Wallet: "0x1111111111111111111111111111111111111111"}); err != nil {
+		t.Fatal(err)
+	}
+	first, minted, err := EnsureLocalSession(dir)
+	if err != nil || !minted {
+		t.Fatalf("mint %v %v", minted, err)
+	}
+	second, minted, err := EnsureLocalSession(dir)
+	if err != nil || minted {
+		t.Fatalf("reuse %v %v", minted, err)
+	}
+	if first.ID != second.ID || first.AgentAddr != second.AgentAddr {
+		t.Fatal("rotated")
+	}
+	pub := SessionPublic(first)
+	if pub["withdraw"] != false || pub["sign"] != false {
+		t.Fatal(pub)
+	}
+	if _, ok := pub["private_key"]; ok {
+		t.Fatal("secret")
+	}
+}
