@@ -19,6 +19,7 @@ import { PreviewNote } from "./PreviewNote";
 import { LedgerNote } from "./LedgerNote";
 import { CancelNote } from "./CancelNote";
 import { SignedNote } from "./SignedNote";
+import { LinkedNote } from "./LinkedNote";
 
 type Net = "mainnet" | "testnet";
 
@@ -57,6 +58,7 @@ export function App() {
           <LedgerNote />
           <CancelNote />
           <SignedNote />
+          <LinkedNote />
           <NoSession />
           <RecoverNote />
           <PermissionsCard />

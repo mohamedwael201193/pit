@@ -536,7 +536,15 @@ func cmdAuthorize(args []string) {
 		}
 	} else {
 		fmt.Println("signed locally")
-		if err := pitexec.RefusePostUntilLinked(false); err != nil {
+		linked, linkErr := cli.LiveLinked(st.Network, st.Wallet, live.Workspace, live.AgentAddr, time.Now().UnixMilli())
+		if linkErr != nil {
+			fmt.Fprintln(os.Stderr, linkErr)
+			linked = false
+		}
+		if linked {
+			fmt.Println("agent linked")
+		}
+		if err := pitexec.RefusePostUntilLinked(linked); err != nil {
 			fmt.Println(err)
 		}
 	}
