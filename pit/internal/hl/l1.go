@@ -34,6 +34,16 @@ type packLimit struct {
 	Tif string `msgpack:"tif"`
 }
 
+type packCancel struct {
+	Type    string           `msgpack:"type"`
+	Cancels []packCancelItem `msgpack:"cancels"`
+}
+
+type packCancelItem struct {
+	A int    `msgpack:"a"`
+	C string `msgpack:"c"`
+}
+
 func packAction(raw json.RawMessage) ([]byte, error) {
 	var head struct {
 		Type string `json:"type"`
@@ -69,7 +79,11 @@ func packAction(raw json.RawMessage) ([]byte, error) {
 		if err := json.Unmarshal(raw, &w); err != nil {
 			return nil, err
 		}
-		if err := enc.Encode(w); err != nil {
+		p := packCancel{Type: w.Type}
+		for _, it := range w.Cancels {
+			p.Cancels = append(p.Cancels, packCancelItem{A: it.A, C: it.C})
+		}
+		if err := enc.Encode(p); err != nil {
 			return nil, err
 		}
 	default:

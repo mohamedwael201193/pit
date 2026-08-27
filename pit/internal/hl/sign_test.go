@@ -32,3 +32,26 @@ func TestSignL1RecoversAgent(t *testing.T) {
 		t.Fatalf("%s %s", got, want)
 	}
 }
+
+func TestSignL1CancelRecoversAgent(t *testing.T) {
+	key, err := crypto.GenerateKey()
+	if err != nil {
+		t.Fatal(err)
+	}
+	raw, err := BuildCancel(1, "0x11111111111111111111111111111111")
+	if err != nil {
+		t.Fatal(err)
+	}
+	env, err := SignL1(key, raw, 1700000000001, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	got, err := RecoverL1(env, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := strings.ToLower(crypto.PubkeyToAddress(key.PublicKey).Hex())
+	if got != want {
+		t.Fatalf("%s %s", got, want)
+	}
+}

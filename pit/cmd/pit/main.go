@@ -408,7 +408,8 @@ func cmdCancel() {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(2)
 	}
-	if _, err := cli.CancelWire(book.Asset, card.Cloid); err != nil {
+	raw, err := cli.CancelWire(book.Asset, card.Cloid)
+	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(2)
 	}
@@ -416,8 +417,24 @@ func cmdCancel() {
 	fmt.Printf("cloid    %s\n", card.Cloid)
 	fmt.Printf("asset    %d\n", book.Asset)
 	fmt.Printf("preview  %s\n", hash)
-	if err := pitexec.RefuseUnsigned(false); err != nil {
-		fmt.Println(err)
+	env, signErr := cli.SignBound(stateDir(), live, st.Network, raw, time.Now().UnixMilli())
+	if signErr != nil || !env.Signed() {
+		if err := pitexec.RefuseUnsigned(false); err != nil {
+			fmt.Println(err)
+		}
+	} else {
+		fmt.Println("signed locally")
+		linked, linkErr := cli.LiveLinked(st.Network, st.Wallet, live.Workspace, live.AgentAddr, time.Now().UnixMilli())
+		if linkErr != nil {
+			fmt.Fprintln(os.Stderr, linkErr)
+			linked = false
+		}
+		if linked {
+			fmt.Println("agent linked")
+		}
+		if err := pitexec.RefusePostUntilLinked(linked); err != nil {
+			fmt.Println(err)
+		}
 	}
 	fmt.Println("PIT did not send a cancel")
 }
