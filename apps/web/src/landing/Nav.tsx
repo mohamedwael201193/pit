@@ -6,6 +6,7 @@ import { PitMark } from "../brand/PitMark";
 
 const LINKS = [
   { to: "#story", label: "How it works" },
+  { to: "https://github.com/mohamedwael201193/pit/releases/latest", label: "Download" },
   { to: "#verify", label: "Help" },
 ] as const;
 

@@ -91,6 +91,9 @@ export function Hero() {
                 Connect your wallet
               </button>
             )}
+            <a href="https://github.com/mohamedwael201193/pit/releases/latest" className="pill pill-ghost">
+              Download PIT
+            </a>
             <a href="#story" className="pill pill-ghost">
               Read the story
             </a>

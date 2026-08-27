@@ -19,6 +19,7 @@ import (
 	"github.com/mohamedwael201193/pit/internal/httpx"
 	"github.com/mohamedwael201193/pit/internal/obs"
 	"github.com/mohamedwael201193/pit/internal/session"
+	"github.com/mohamedwael201193/pit/internal/version"
 	"github.com/mohamedwael201193/pit/internal/watch"
 )
 
@@ -95,6 +96,8 @@ func (h *Hub) Handler() http.Handler {
 	mux.HandleFunc("/pair", h.pair)
 	mux.HandleFunc("/status", h.status)
 	mux.HandleFunc("/local/status", h.localStatus)
+	mux.HandleFunc("/local/code", h.localCode)
+	mux.HandleFunc("/local/doctor", h.localDoctor)
 	mux.HandleFunc("/watch", h.watch)
 	mux.HandleFunc("/devices", h.devicesList)
 	mux.HandleFunc("/revoke", h.revoke)
@@ -138,6 +141,7 @@ func (h *Hub) health(w http.ResponseWriter, r *http.Request) {
 		"sign":    false,
 		"trade":   false,
 		"pairing": true,
+		"version": version.Number,
 	})
 }
 
@@ -221,6 +225,42 @@ func (h *Hub) localStatus(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	writeLocal(w, http.StatusOK, body)
+}
+
+func (h *Hub) localCode(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+	if !httpx.CodeOriginOK(r.Header.Get("Origin")) {
+		http.Error(w, "origin_denied", http.StatusForbidden)
+		return
+	}
+	code, exp := h.Code()
+	writeLocal(w, http.StatusOK, map[string]any{
+		"code":    code,
+		"expires": exp.UTC().Format(time.RFC3339),
+		"sign":    false,
+		"trade":   false,
+	})
+}
+
+func (h *Hub) localDoctor(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+	if !httpx.CodeOriginOK(r.Header.Get("Origin")) {
+		http.Error(w, "origin_denied", http.StatusForbidden)
+		return
+	}
+	checks := cli.Doctor(h.Dir)
+	writeLocal(w, http.StatusOK, map[string]any{
+		"checks":  checks,
+		"sign":    false,
+		"trade":   false,
+		"version": version.Number,
+	})
 }
 
 func (h *Hub) status(w http.ResponseWriter, r *http.Request) {

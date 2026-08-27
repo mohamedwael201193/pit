@@ -268,7 +268,7 @@ cd pit
 go test -tags live ./internal/hl -count=1
 ```
 
-CI runs the same Go and Foundry suites on every push (`.github/workflows/ci.yml`). Foundry currently reports **26** tests.
+CI runs the same Go and Foundry suites on every push (`.github/workflows/ci.yml`). Foundry currently reports **26** tests. `go test ./...` currently reports **373** passing tests (re-run the command; do not invent a count).
 
 The Go health process (`pit/cmd/health`) exposes `GET /health` and `GET /watch`. Both always report `sign: false`. `/watch` returns live venue books or a real empty list. It never places an order and never includes a private book. In product mode the process refuses `PIT_SESSION_KEY`, `HL_SECRET`, and `PIT_MEMORY_KEY` in the environment.
 
@@ -291,9 +291,11 @@ go run ./cmd/pit kill
 
 Full command set:
 
-`init` `login` `wallet` `network` `policy` `session` `companion` `ask` `watch` `opportunities` `forecast` `preview` `authorize` `orders` `cancel` `status` `resolve` `card` `verify` `proof` `kill` `doctor` `logout`
+`init` `login` `wallet` `network` `policy` `session` `companion` `ask` `watch` `opportunities` `forecast` `preview` `authorize` `orders` `cancel` `status` `resolve` `card` `verify` `proof` `kill` `doctor` `logout` `version`
 
-Every command accepts `--json`. `pit doctor` probes wallet, network, OS keychain, Hyperliquid, 0G RPC, companion, sealer, storage client, registry, session, and policy. It never prints secrets.
+Every command accepts `--json`. `pit version` prints `PIT 0.1.0`. `pit doctor` probes version, wallet, network, OS keychain, memory-key hazard, Hyperliquid, 0G RPC, companion, sealer, storage client, registry, session, and policy. It never prints secrets. A global `PIT_MEMORY_KEY` is a doctor failure.
+
+Official storage client (not the TypeScript SDK): `upload --url --file --key --encryption-key` and `download --proof --root --file --encryption-key`. `pit proof` requires `--key-file` per workspace and refuses a global memory key.
 
 `session` creates a one-hour order/cancel agent in the OS keychain (or `PIT_KEYRING=file` for tests). It prints the agent address. It never prints the key. Your wallet must `approveAgent` that address.
 

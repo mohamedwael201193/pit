@@ -22,6 +22,7 @@ import (
 	"github.com/mohamedwael201193/pit/internal/session"
 	"github.com/mohamedwael201193/pit/internal/storage"
 	"github.com/mohamedwael201193/pit/internal/verify"
+	"github.com/mohamedwael201193/pit/internal/version"
 	"github.com/mohamedwael201193/pit/internal/watch"
 	"github.com/mohamedwael201193/pit/internal/workspace"
 )
@@ -55,6 +56,7 @@ Commands:
   pit kill
   pit doctor
   pit logout [--forget]
+  pit version
 
 Every command accepts --json. Exit 0 on success, 2 on usage, 1 on failed doctor.
 
@@ -123,6 +125,8 @@ func main() {
 		cmdDoctor()
 	case "logout":
 		cmdLogout(rest[1:])
+	case "version", "-v", "--version":
+		cmdVersion()
 	case "help", "-h", "--help":
 		usage()
 	default:
@@ -778,6 +782,14 @@ func cmdDoctor() {
 	if cli.DoctorFailed(checks) {
 		os.Exit(1)
 	}
+}
+
+func cmdVersion() {
+	if asJSON {
+		_ = json.NewEncoder(os.Stdout).Encode(map[string]any{"ok": true, "version": version.Number, "name": version.Name, "sign": false})
+		return
+	}
+	fmt.Println(version.String())
 }
 
 func cmdLogout(args []string) {

@@ -22,7 +22,8 @@ func RedactArgs(args []string) []string {
 	out := make([]string, len(args))
 	copy(out, args)
 	for i := 0; i < len(out)-1; i++ {
-		if out[i] == "--encryption-key" {
+		switch out[i] {
+		case "--encryption-key", "--key", "--private-key":
 			out[i+1] = "[redacted]"
 		}
 	}

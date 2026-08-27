@@ -13,8 +13,23 @@ func TestDoctorUnboundIsHonest(t *testing.T) {
 	if w.OK || s.OK {
 		t.Fatal("unbound")
 	}
-	if !DoctorFailed([]Check{w, {Name: "network"}, {Name: "keychain"}, {Name: "hyperliquid"}, {Name: "0g_rpc"}}) {
+	if !DoctorFailed([]Check{w, {Name: "network"}, {Name: "keychain"}, {Name: "hyperliquid"}, {Name: "0g_rpc"}, {Name: "memory_key"}}) {
 		t.Fatal("required")
+	}
+}
+
+func TestDoctorRefusesGlobalMemoryKey(t *testing.T) {
+	t.Setenv("PIT_MEMORY_KEY", "0xabc")
+	c := checkMemoryEnv()
+	if c.OK {
+		t.Fatal("must refuse global memory key")
+	}
+}
+
+func TestDoctorVersionPresent(t *testing.T) {
+	c := checkVersion()
+	if !c.OK || c.Detail == "" {
+		t.Fatal(c)
 	}
 }
 

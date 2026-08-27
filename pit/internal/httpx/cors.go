@@ -37,6 +37,17 @@ func CompanionOriginOK(origin string) bool {
 	}
 }
 
+func CodeOriginOK(origin string) bool {
+	switch strings.TrimSpace(origin) {
+	case "",
+		"http://127.0.0.1:3001", "http://localhost:3001",
+		"https://tauri.localhost", "tauri://localhost":
+		return true
+	default:
+		return false
+	}
+}
+
 func loopbackHTTP(o string) bool {
 	return strings.HasPrefix(o, "http://127.0.0.1:") || strings.HasPrefix(o, "http://localhost:") ||
 		o == "http://127.0.0.1" || o == "http://localhost"

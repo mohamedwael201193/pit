@@ -15,6 +15,7 @@ import (
 	"github.com/mohamedwael201193/pit/internal/hl"
 	"github.com/mohamedwael201193/pit/internal/keyring"
 	"github.com/mohamedwael201193/pit/internal/storage"
+	"github.com/mohamedwael201193/pit/internal/version"
 )
 
 type Check struct {
@@ -25,9 +26,11 @@ type Check struct {
 
 func Doctor(dir string) []Check {
 	out := []Check{
+		checkVersion(),
 		checkWallet(dir),
 		checkNetwork(dir),
 		checkKeychain(dir),
+		checkMemoryEnv(),
 		checkHyperliquid(dir),
 		checkRPC(dir),
 		checkCompanion(),
@@ -38,6 +41,17 @@ func Doctor(dir string) []Check {
 		checkPolicy(dir),
 	}
 	return out
+}
+
+func checkVersion() Check {
+	return Check{Name: "version", OK: true, Detail: version.String()}
+}
+
+func checkMemoryEnv() Check {
+	if strings.TrimSpace(os.Getenv("PIT_MEMORY_KEY")) != "" {
+		return Check{Name: "memory_key", Detail: "global PIT_MEMORY_KEY is set. Product refuses it. Use a generated --key-file per workspace."}
+	}
+	return Check{Name: "memory_key", OK: true, Detail: "no global memory key"}
 }
 
 func checkWallet(dir string) Check {
@@ -175,7 +189,7 @@ func checkPolicy(dir string) Check {
 }
 
 func DoctorFailed(checks []Check) bool {
-	required := map[string]bool{"wallet": true, "network": true, "keychain": true, "hyperliquid": true, "0g_rpc": true}
+	required := map[string]bool{"wallet": true, "network": true, "keychain": true, "hyperliquid": true, "0g_rpc": true, "memory_key": true}
 	for _, c := range checks {
 		if required[c.Name] && !c.OK {
 			return true
@@ -186,7 +200,7 @@ func DoctorFailed(checks []Check) bool {
 
 func PrintDoctor(w io.Writer, checks []Check, asJSON bool) {
 	if asJSON {
-		_ = json.NewEncoder(w).Encode(map[string]any{"checks": checks, "sign": false})
+		_ = json.NewEncoder(w).Encode(map[string]any{"checks": checks, "sign": false, "version": version.Number})
 		return
 	}
 	for _, c := range checks {

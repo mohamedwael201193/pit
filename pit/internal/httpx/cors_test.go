@@ -24,6 +24,18 @@ func TestCompanionRejectsForeignOrigin(t *testing.T) {
 	}
 }
 
+func TestCodeOriginNeverWeb(t *testing.T) {
+	if CodeOriginOK("https://pit0g.vercel.app") {
+		t.Fatal("web must not read pairing code")
+	}
+	if !CodeOriginOK("") {
+		t.Fatal("desktop empty origin")
+	}
+	if !CodeOriginOK("tauri://localhost") {
+		t.Fatal("tauri")
+	}
+}
+
 func TestCompanionLoopbackAndOrigin(t *testing.T) {
 	ok := Companion(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNoContent)

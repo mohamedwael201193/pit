@@ -19,6 +19,9 @@ func TestDownloadMustProve(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	if !contains(args, "--root") || !contains(args, "--file") || contains(args, "--rpc") {
+		t.Fatal(args)
+	}
 	if err := DownloadMustProve(args); err != nil {
 		t.Fatal(err)
 	}

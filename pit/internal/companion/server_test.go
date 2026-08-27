@@ -130,3 +130,34 @@ func TestHealthOmitsPairingCode(t *testing.T) {
 		t.Fatal("code leak")
 	}
 }
+
+func TestLocalCodeDesktopOnly(t *testing.T) {
+	h := New(t.TempDir())
+	want, _ := h.Code()
+
+	req := local(httptest.NewRequest(http.MethodGet, "/local/code", nil))
+	req.Header.Set("Origin", "https://pit0g.vercel.app")
+	rec := httptest.NewRecorder()
+	h.Handler().ServeHTTP(rec, req)
+	if rec.Code != http.StatusForbidden {
+		t.Fatal("web must not read pairing code")
+	}
+
+	req = local(httptest.NewRequest(http.MethodGet, "/local/code", nil))
+	rec = httptest.NewRecorder()
+	h.Handler().ServeHTTP(rec, req)
+	if rec.Code != 200 {
+		t.Fatal(rec.Body.String())
+	}
+	if !strings.Contains(rec.Body.String(), want) {
+		t.Fatal("desktop code")
+	}
+
+	req = local(httptest.NewRequest(http.MethodGet, "/local/doctor", nil))
+	req.Header.Set("Origin", "https://pit0g.vercel.app")
+	rec = httptest.NewRecorder()
+	h.Handler().ServeHTTP(rec, req)
+	if rec.Code != http.StatusForbidden {
+		t.Fatal("web doctor")
+	}
+}

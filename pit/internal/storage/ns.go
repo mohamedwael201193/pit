@@ -37,3 +37,17 @@ func RequireHexKey(key string) error {
 	}
 	return nil
 }
+
+func NormalizePayerKey(key string) (string, error) {
+	k := strings.TrimSpace(key)
+	if k == "" {
+		return "", fmt.Errorf("payer_key_required")
+	}
+	if !strings.HasPrefix(k, "0x") && !strings.HasPrefix(k, "0X") {
+		k = "0x" + k
+	}
+	if err := RequireHexKey(k); err != nil {
+		return "", fmt.Errorf("payer_key_required")
+	}
+	return strings.ToLower(k), nil
+}

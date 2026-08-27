@@ -73,18 +73,33 @@ export function WatchHome({ network = "mainnet" }: { network?: "mainnet" | "test
                     <dd className="font-mono">{c.mark}</dd>
                   </div>
                   <div>
+                    <dt className="text-[rgb(240_231_212/0.5)]">Side</dt>
+                    <dd>not decided on this website</dd>
+                  </div>
+                  <div>
+                    <dt className="text-[rgb(240_231_212/0.5)]">Entry / invalidation / edge</dt>
+                    <dd>not invented. Open desktop to seal the book.</dd>
+                  </div>
+                  <div>
                     <dt className="text-[rgb(240_231_212/0.5)]">Policy</dt>
-                    <dd>{c.eligible ? "eligible to research" : "blocked"}</dd>
+                    <dd>{c.eligible ? "PASS" : "BLOCKED"}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-[rgb(240_231_212/0.5)]">Research</dt>
+                    <dd>not sealed on web</dd>
+                  </div>
+                  <div>
+                    <dt className="text-[rgb(240_231_212/0.5)]">Confidence</dt>
+                    <dd>NOT ENOUGH DATA</dd>
                   </div>
                   <div className="sm:col-span-2">
-                    <dt className="text-[rgb(240_231_212/0.5)]">Why it is on Watch</dt>
+                    <dt className="text-[rgb(240_231_212/0.5)]">Why</dt>
                     <dd>{c.reason}</dd>
                   </div>
                   <div className="sm:col-span-2">
-                    <dt className="text-[rgb(240_231_212/0.5)]">Thesis / size / calibration</dt>
+                    <dt className="text-[rgb(240_231_212/0.5)]">Action</dt>
                     <dd>
-                      Open desktop to seal the private book. Web does not invent a thesis. NOT ENOUGH DATA until 30
-                      resolved forecasts.
+                      AUTHORIZE exists only on desktop or CLI after a verified preview. This card cannot trade.
                     </dd>
                   </div>
                 </dl>

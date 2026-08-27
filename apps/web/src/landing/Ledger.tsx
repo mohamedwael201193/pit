@@ -6,7 +6,7 @@ const ROWS = [
   { human: "Galileo sealed ask", call: "VerifyE2EE", status: "unverified" },
   { human: "Transfer of Agentic ID", call: "iTransfer", status: "unavailable" },
   { human: "Hyperliquid order", call: "extraAgents + AUTHORIZE", status: "desktop" },
-  { human: "Storage proof", call: "official Go client --proof", status: "workspace key" },
+  { human: "Storage proof", call: "0g-storage-client upload/download --proof", status: "workspace key" },
 ] as const;
 
 export function Ledger() {

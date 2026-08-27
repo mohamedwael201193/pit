@@ -12,3 +12,12 @@ func TestSameWorkspace(t *testing.T) {
 		t.Fatal("idor")
 	}
 }
+
+func TestGuessedWorkspaceDenied(t *testing.T) {
+	if err := SameWorkspace("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", NewWorkspaceID()); err == nil {
+		t.Fatal("guessed id")
+	}
+	if err := SameWorkspace("not-an-id", NewWorkspaceID()); err == nil {
+		t.Fatal("garbage id")
+	}
+}

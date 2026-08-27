@@ -36,6 +36,20 @@ h1 { font-size: 48px; line-height: 0.95; letter-spacing: -0.04em; margin: 12px 0
   gap: 16px;
   margin-top: 28px;
 }
+.pair-card .pair-code {
+  font-family: ui-monospace, monospace;
+  font-size: 42px;
+  letter-spacing: 0.18em;
+  margin: 12px 0;
+}
+.doctor {
+  list-style: none;
+  padding: 0;
+  margin: 12px 0 0;
+  font-family: ui-monospace, monospace;
+  font-size: 12px;
+  line-height: 1.6;
+}
 .start article {
   border: 1px solid #222;
   border-radius: 20px;

@@ -24,6 +24,12 @@ export function CtaBand() {
               Get started
             </Link>
             <a
+              href="https://github.com/mohamedwael201193/pit/releases/latest"
+              className="inline-flex h-12 items-center rounded-full border border-[var(--guide-cream)] px-6 text-base font-medium text-[var(--guide-cream)] no-underline"
+            >
+              Download PIT
+            </a>
+            <a
               href="#story"
               className="inline-flex h-12 items-center rounded-full border border-[var(--guide-cream)] px-6 text-base font-medium text-[var(--guide-cream)] no-underline"
             >

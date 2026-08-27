@@ -27,6 +27,14 @@ const QUESTIONS: readonly { q: string; a: string }[] = [
     q: "How does it learn?",
     a: "After a real outcome, PIT scores Brier and ECE. Until thirty resolved forecasts it says not enough data. It never prints a fake 72 percent.",
   },
+  {
+    q: "How do I install PIT?",
+    a: "Download the Windows installer from GitHub Releases. Verify SHA256 against SHA256SUMS. The installer is not Authenticode-signed until a certificate exists. Pair at /pair with the code shown on this machine.",
+  },
+  {
+    q: "How do I revoke PIT?",
+    a: "Kill the session on desktop, then revoke the Hyperliquid agent from your account. Logout deletes the local session. PIT never holds your seed, so there is nothing to export.",
+  },
 ];
 
 export function Faq() {

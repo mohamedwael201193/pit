@@ -13,7 +13,7 @@ fn export_session() -> Result<String, String> {
 fn spawn_companion() {
     if let Ok(exe) = std::env::current_exe() {
         if let Some(dir) = exe.parent() {
-            for name in ["pit.exe", "pit"] {
+            for name in ["pit.exe", "pit", "pit-x86_64-pc-windows-msvc.exe"] {
                 let bin = dir.join(name);
                 if bin.exists() {
                     let mut cmd = Command::new(bin);

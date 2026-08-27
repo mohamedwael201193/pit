@@ -8,4 +8,8 @@ test("home asks to connect and never collects a seed", async ({ page }) => {
   await expect(page.getByText("PIT never asks for a seed phrase.")).toBeVisible();
   await expect(page.locator('input[type="password"]')).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Authorize" })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: "Download PIT" }).first()).toHaveAttribute(
+    "href",
+    "https://github.com/mohamedwael201193/pit/releases/latest",
+  );
 });

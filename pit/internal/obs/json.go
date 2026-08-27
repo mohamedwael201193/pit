@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/mohamedwael201193/pit/internal/version"
 	"github.com/mohamedwael201193/pit/internal/watch"
 )
 
@@ -25,6 +26,7 @@ func HealthBody(requestID string) map[string]any {
 		"time":      time.Now().UTC().Format(time.RFC3339),
 		"sign":      false,
 		"requestId": requestID,
+		"version":   version.Number,
 	}
 }
 

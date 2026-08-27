@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/mohamedwael201193/pit/internal/config"
@@ -29,5 +30,19 @@ func TestObjectKeyIsolation(t *testing.T) {
 	}
 	if err := RequireHexKey("not-hex"); err == nil {
 		t.Fatal("key prefix")
+	}
+}
+
+func TestNormalizePayerKey(t *testing.T) {
+	raw := strings.Repeat("ab", 32)
+	got, err := NormalizePayerKey(raw)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got != "0x"+raw {
+		t.Fatal(got)
+	}
+	if _, err := NormalizePayerKey(""); err == nil {
+		t.Fatal("empty")
 	}
 }
