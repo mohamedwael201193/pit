@@ -219,6 +219,8 @@ func cmdStatus() {
 		fmt.Printf("session   live %s\n", s.AgentAddr)
 		fmt.Printf("expires   %d\n", s.Expires)
 		fmt.Println("perms     order yes  cancel yes  withdraw no")
+		linked, linkErr := cli.LiveLinked(st.Network, st.Wallet, s.Workspace, s.AgentAddr, time.Now().UnixMilli())
+		fmt.Println(cli.LinkCopy(linked, linkErr))
 	} else {
 		fmt.Println("session   none on this CLI until pit session")
 	}
@@ -232,6 +234,8 @@ func cmdStatus() {
 		} else {
 			fmt.Println("ledger    none")
 		}
+		found, vErr := cli.LiveOnVenue(st.Network, st.Wallet, p.Cloid)
+		fmt.Println(cli.VenueCopy(found, vErr))
 	}
 }
 

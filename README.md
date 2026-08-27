@@ -267,6 +267,8 @@ Full command set:
 
 `session` creates a one-hour order/cancel agent in the local keyring. It prints the agent address. It never prints the key. Your wallet must `approveAgent` that address.
 
+`status` prints the bound workspace, live session address, extraAgents link, ledger row, and whether the bound cloid is on the venue. It never prints a session key and never places an order.
+
 `preview` prints the exact bound fields from a **live mark** and the host sizer. It requires `--market`, `--side`, `--forecast`, and a live session. The model cannot set size. Any later mutation of the card invalidates `AUTHORIZE`.
 
 `proof` uses the official Go storage client with `--proof`. It does not use a global memory key.
