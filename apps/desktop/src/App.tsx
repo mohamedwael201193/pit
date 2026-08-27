@@ -17,6 +17,7 @@ import { LocalSign } from "./LocalSign";
 import { SessionNote } from "./SessionNote";
 import { PreviewNote } from "./PreviewNote";
 import { LedgerNote } from "./LedgerNote";
+import { CancelNote } from "./CancelNote";
 
 type Net = "mainnet" | "testnet";
 
@@ -53,6 +54,7 @@ export function App() {
           <SessionNote />
           <PreviewNote />
           <LedgerNote />
+          <CancelNote />
           <NoSession />
           <RecoverNote />
           <PermissionsCard />

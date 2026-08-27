@@ -139,12 +139,13 @@ func (c *Client) Account(user string) (AccountView, error) {
 }
 
 type BookSnapshot struct {
-	Coin       string  `json:"coin"`
-	MarkPx     float64 `json:"markPx"`
-	OraclePx   float64 `json:"oraclePx"`
-	Funding    float64 `json:"funding"`
+	Coin         string  `json:"coin"`
+	Asset        int     `json:"asset"`
+	MarkPx       float64 `json:"markPx"`
+	OraclePx     float64 `json:"oraclePx"`
+	Funding      float64 `json:"funding"`
 	OpenInterest float64 `json:"openInterest"`
-	SzDecimals int     `json:"szDecimals"`
+	SzDecimals   int     `json:"szDecimals"`
 }
 
 func metaCoinDecimals(universe []map[string]any, coin string) int {
@@ -188,13 +189,17 @@ func (c *Client) PublicBook(coin string) (BookSnapshot, error) {
 	if idx < 0 || idx >= len(ctxs) {
 		return BookSnapshot{}, fmt.Errorf("unknown coin")
 	}
+	if _, err := IndexInUniverse(meta.Universe, coin); err != nil {
+		return BookSnapshot{}, err
+	}
 	ctx := ctxs[idx]
 	return BookSnapshot{
-		Coin:          coin,
-		MarkPx:        asFloat(ctx["markPx"]),
-		OraclePx:      asFloat(ctx["oraclePx"]),
-		Funding:       asFloat(ctx["funding"]),
-		OpenInterest:  asFloat(ctx["openInterest"]),
-		SzDecimals:    metaCoinDecimals(meta.Universe, coin),
+		Coin:         coin,
+		Asset:        idx,
+		MarkPx:       asFloat(ctx["markPx"]),
+		OraclePx:     asFloat(ctx["oraclePx"]),
+		Funding:      asFloat(ctx["funding"]),
+		OpenInterest: asFloat(ctx["openInterest"]),
+		SzDecimals:   metaCoinDecimals(meta.Universe, coin),
 	}, nil
 }

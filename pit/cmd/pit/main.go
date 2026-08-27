@@ -14,6 +14,7 @@ import (
 	pitexec "github.com/mohamedwael201193/pit/internal/exec"
 	"github.com/mohamedwael201193/pit/internal/hl"
 	"github.com/mohamedwael201193/pit/internal/identity"
+	"github.com/mohamedwael201193/pit/internal/ledger"
 	"github.com/mohamedwael201193/pit/internal/policy"
 	"github.com/mohamedwael201193/pit/internal/session"
 	"github.com/mohamedwael201193/pit/internal/storage"
@@ -378,9 +379,47 @@ func cmdCancel() {
 		fmt.Fprintln(os.Stderr, "cancel requires pit init first")
 		os.Exit(2)
 	}
+	live, err := cli.LiveFromDisk(stateDir(), st.Kill, time.Now().UnixMilli())
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(2)
+	}
+	card, hash, err := cli.LoadPreview(stateDir())
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(2)
+	}
+	if card.WorkspaceID != live.Workspace {
+		fmt.Fprintln(os.Stderr, "wrong_workspace")
+		os.Exit(2)
+	}
+	rec, err := cli.LookupAction(stateDir(), st.Network, live.Workspace, card.Cloid)
+	if err != nil || rec.Status != ledger.StatusAuthorized {
+		fmt.Fprintln(os.Stderr, "cancel requires an authorized preview")
+		os.Exit(2)
+	}
+	coin, err := pitexec.CoinFromMarket(card.Market)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(2)
+	}
+	book, err := cli.LiveAsset(st.Network, coin)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(2)
+	}
+	if _, err := cli.CancelWire(book.Asset, card.Cloid); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(2)
+	}
 	fmt.Println("cancel is order/cancel only. It cannot withdraw or change leverage.")
-	fmt.Fprintf(os.Stderr, "cancel requires a live session and a bound clientOrderId for workspace %s\n", st.WorkspaceID)
-	os.Exit(2)
+	fmt.Printf("cloid    %s\n", card.Cloid)
+	fmt.Printf("asset    %d\n", book.Asset)
+	fmt.Printf("preview  %s\n", hash)
+	if err := pitexec.RefuseUnsigned(false); err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println("PIT did not send a cancel")
 }
 
 func cmdResolve() {
@@ -464,6 +503,20 @@ func cmdAuthorize(args []string) {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(2)
 	}
+	coin, err := pitexec.CoinFromMarket(card.Market)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(2)
+	}
+	book, err := cli.LiveAsset(st.Network, coin)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(2)
+	}
+	if _, err := pitexec.WireFromPreview(card, book.Asset); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(2)
+	}
 	if err := cli.RememberAuthorized(stateDir(), st.Network, live.Workspace, card.Cloid, h); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(2)
@@ -474,6 +527,7 @@ func cmdAuthorize(args []string) {
 	fmt.Println("preview bound")
 	fmt.Println("authorized")
 	fmt.Println("ledger    recorded")
+	fmt.Printf("asset    %d\n", book.Asset)
 	if err := pitexec.RefuseUnsigned(false); err != nil {
 		fmt.Println(err)
 	}
