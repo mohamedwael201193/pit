@@ -17,9 +17,9 @@ export function PolicyPanel() {
   return (
     <div className="mt-8">
       <h2 className="text-[1.25rem] font-semibold tracking-[-0.03em]">Your policy is the law</h2>
-      <dl className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      <dl className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
         {CARDS.map((c) => (
-          <div key={c.title} className="rounded-2xl border border-[rgb(240_231_212/0.22)] bg-[#141414] p-5">
+          <div key={c.title} className="border border-[rgb(240_231_212/0.22)] bg-[#141414] p-5">
             <dt className="text-[0.8125rem] text-[rgb(240_231_212/0.55)]">{c.title}</dt>
             <dd className="mt-2 font-mono text-[1.125rem]">{c.value}</dd>
           </div>

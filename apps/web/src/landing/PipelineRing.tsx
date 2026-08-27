@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { PIPELINE } from "../diagrams/pipeline";
 import { cn } from "../lib/cn";
@@ -22,6 +22,14 @@ export function PipelineRing() {
   const reduce = useReducedMotion();
   const label = PIPELINE[active]!;
   const r = 42;
+
+  useEffect(() => {
+    if (reduce) return;
+    const t = window.setInterval(() => {
+      setActive((i) => (i + 1) % PIPELINE.length);
+    }, 2600);
+    return () => window.clearInterval(t);
+  }, [reduce]);
 
   return (
     <section className="overflow-hidden border-t border-[rgb(240_231_212/0.25)] py-20 md:py-28">

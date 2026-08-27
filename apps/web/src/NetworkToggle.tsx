@@ -2,7 +2,7 @@ type Net = "mainnet" | "testnet";
 
 export function NetworkToggle({ net, onChange }: { net: Net; onChange: (n: Net) => void }) {
   return (
-    <div className="mt-8 flex gap-2">
+    <div className="mt-4 flex gap-2">
       {(["mainnet", "testnet"] as const).map((n) => (
         <button
           key={n}

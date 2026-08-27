@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { PageHead } from "../ui/PageHead";
+import { Bezel } from "../ui/Surface";
 import { NetworkToggle } from "../NetworkToggle";
 import { VerifyForm } from "../VerifyForm";
 
@@ -17,9 +18,9 @@ export function VerifyPage() {
         lede="Recompute from chain and storage proof. Not from a screenshot."
       />
       <NetworkToggle net={net} onChange={setNet} />
-      <div className="mt-8 border border-[rgb(240_231_212/0.25)] p-6">
+      <Bezel className="mt-8">
         <VerifyForm hash={hash} root={root} explorer={explorer} net={net} onHash={setHash} onRoot={setRoot} />
-      </div>
+      </Bezel>
     </div>
   );
 }

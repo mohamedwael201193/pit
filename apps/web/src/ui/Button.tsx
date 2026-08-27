@@ -6,7 +6,7 @@ type Variant = "primary" | "secondary" | "ghost";
 type Size = "md" | "lg";
 
 const VARIANTS: Record<Variant, string> = {
-  primary: "bg-[#d82f2f] text-black hover:opacity-90",
+  primary: "bg-[#d82f2f] text-[#f0e7d4] hover:opacity-90",
   secondary: "border border-[rgb(240_231_212/0.35)] text-[var(--guide-cream)] hover:border-[var(--guide-cream)]",
   ghost: "bg-transparent text-[rgb(240_231_212/0.72)] hover:text-[var(--guide-cream)]",
 };
@@ -78,7 +78,7 @@ function ArrowWell() {
   return (
     <span
       aria-hidden="true"
-      className="grid size-7 place-items-center rounded-full bg-black/12 transition-transform duration-200 group-hover:translate-x-0.5"
+      className="grid size-7 place-items-center rounded-full bg-black/20 text-current transition-transform duration-200 group-hover:translate-x-0.5"
     >
       <ArrowRight size={14} weight="bold" />
     </span>

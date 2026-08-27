@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { usePrivy } from "@privy-io/react-auth";
 import { PageHead } from "../ui/PageHead";
+import { Bezel } from "../ui/Surface";
 import { NetworkToggle } from "../NetworkToggle";
 import { NetworkBanner } from "../NetworkBanner";
 import { IsolateNote } from "../IsolateNote";
@@ -22,20 +23,32 @@ export function AccountPage() {
   const addr = user?.wallet?.address;
 
   return (
-    <div className="mx-auto max-w-[80rem]">
+    <div className="mx-auto flex max-w-[80rem] flex-col gap-8">
       <PageHead title="Account" lede="Wallet, network, kill, and verify. Session keys never live here." />
-      {addr ? <p className="mt-6 font-mono text-[0.9375rem] break-all text-[rgb(240_231_212/0.75)]">{addr}</p> : null}
-      <SiweBind connected={authenticated} />
-      <NetworkToggle net={net} onChange={setNet} />
-      <NetworkBanner net={net} />
-      <NoSession />
-      <RefreshNote />
-      <IsolateNote />
-      <KillNote />
-      <TransferNote />
-      <div className="mt-10 max-w-[36rem] border border-[rgb(240_231_212/0.25)] p-6">
+
+      <Bezel>
+        {addr ? <p className="font-mono text-[0.9375rem] break-all text-[var(--guide-cream)]">{addr}</p> : null}
+        <div className="mt-4">
+          <SiweBind connected={authenticated} />
+        </div>
+        <NoSession />
+        <RefreshNote />
+      </Bezel>
+
+      <Bezel>
+        <NetworkToggle net={net} onChange={setNet} />
+        <NetworkBanner net={net} />
+      </Bezel>
+
+      <Bezel>
+        <IsolateNote />
+        <KillNote />
+        <TransferNote />
+      </Bezel>
+
+      <Bezel className="max-w-[36rem]">
         <VerifyForm hash={hash} root={root} explorer={explorer} net={net} onHash={setHash} onRoot={setRoot} />
-      </div>
+      </Bezel>
     </div>
   );
 }

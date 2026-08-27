@@ -1,56 +1,61 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { usePrivy } from "@privy-io/react-auth";
 import { PageHead } from "../ui/PageHead";
+import { Bezel } from "../ui/Surface";
+import { ChoiceCard } from "../ui/ChoiceCard";
 import { EmptyWatch } from "../EmptyWatch";
 import { NetworkToggle } from "../NetworkToggle";
 import { NetworkBanner } from "../NetworkBanner";
-import { ButtonLink } from "../ui/Button";
-import { cn } from "../lib/cn";
+import { DiagramPolicy, DiagramSession } from "../diagrams/pitGuide";
 
 type Net = "mainnet" | "testnet";
 
 export function Home() {
+  const { user } = usePrivy();
+  const navigate = useNavigate();
   const [net, setNet] = useState<Net>("mainnet");
+  const addr = user?.wallet?.address;
+
   return (
     <div className="mx-auto flex max-w-[80rem] flex-col gap-10">
       <PageHead
-        title="What needs your attention"
-        lede="Live books only. PIT may research and notify. PIT may not sign automatically. Authorize lives on desktop."
+        title="You do not have a session yet"
+        lede="Watch is live public books. Authorize stays on the machine."
       />
-      <NetworkToggle net={net} onChange={setNet} />
-      <NetworkBanner net={net} />
-      <EmptyWatch network={net} />
+
+      <Bezel>
+        <p className="text-[1.0625rem] leading-7 text-[rgb(240_231_212/0.78)]">
+          Connected as{" "}
+          <span className="font-mono text-[var(--guide-cream)]">
+            {addr ? `${addr.slice(0, 8)}...${addr.slice(-4)}` : "wallet"}
+          </span>
+        </p>
+        <NetworkToggle net={net} onChange={setNet} />
+        <NetworkBanner net={net} />
+      </Bezel>
+
+      <section aria-labelledby="watch-heading">
+        <h2 id="watch-heading" className="sr-only">
+          Watch
+        </h2>
+        <EmptyWatch network={net} />
+      </section>
+
       <div className="grid gap-4 sm:grid-cols-2">
-        <Link
-          to="/app/start"
-          className={cn(
-            "rounded-2xl border border-[rgb(240_231_212/0.25)] bg-[#141414] p-6 text-left no-underline transition-colors",
-            "hover:border-[#d82f2f]/50 active:scale-[0.99]",
-          )}
-        >
-          <h3 className="text-[1.25rem] font-semibold tracking-[-0.03em] text-[var(--guide-cream)]">Finish setup</h3>
-          <p className="mt-2 text-[0.9375rem] leading-6 text-[rgb(240_231_212/0.65)]">
-            Twelve beats. Wallet, network, policy, then a session on the machine.
-          </p>
-        </Link>
-        <Link
-          to="/app/policy"
-          className={cn(
-            "rounded-2xl border border-[rgb(240_231_212/0.25)] bg-[#141414] p-6 text-left no-underline transition-colors",
-            "hover:border-[#d82f2f]/50 active:scale-[0.99]",
-          )}
-        >
-          <h3 className="text-[1.25rem] font-semibold tracking-[-0.03em] text-[var(--guide-cream)]">Read the law</h3>
-          <p className="mt-2 text-[0.9375rem] leading-6 text-[rgb(240_231_212/0.65)]">
-            Clip, assets, kill. The model cannot raise them.
-          </p>
-        </Link>
+        <ChoiceCard
+          title="Finish setup"
+          body="Twelve beats. Wallet, network, policy, then a session on the machine."
+          Diagram={DiagramSession}
+          onClick={() => navigate("/app/start")}
+        />
+        <ChoiceCard
+          title="Read the law"
+          body="Clip, assets, kill. The model cannot raise them."
+          Diagram={DiagramPolicy}
+          onClick={() => navigate("/app/policy")}
+        />
       </div>
-      <p>
-        <ButtonLink as={Link} to="/app/start" trailingArrow size="lg">
-          Resume onboarding
-        </ButtonLink>
-      </p>
     </div>
   );
 }

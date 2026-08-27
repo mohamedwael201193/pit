@@ -1,4 +1,4 @@
-import { Suspense } from "react";
+import { Suspense, useEffect } from "react";
 import { Link, NavLink, Outlet } from "react-router-dom";
 import { usePrivy } from "@privy-io/react-auth";
 import {
@@ -31,6 +31,11 @@ const ITEMS: readonly NavItem[] = [
 export function AppShell() {
   const { ready, authenticated, user, logout } = usePrivy();
   const addr = user?.wallet?.address;
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = "guide";
+    document.querySelector('meta[name="theme-color"]')?.setAttribute("content", "#D82F2F");
+  }, []);
 
   if (!ready) {
     return (
@@ -70,7 +75,7 @@ function Rail() {
       </Link>
       <Link
         to="/app/start"
-        className="mb-4 inline-flex items-center justify-center gap-2 rounded-full bg-[#d82f2f] px-3 py-2.5 text-[0.9375rem] font-semibold text-black no-underline transition-transform active:scale-[0.98]"
+        className="mb-4 inline-flex items-center justify-center gap-2 rounded-full bg-[#d82f2f] px-3 py-2.5 text-[0.9375rem] font-semibold text-[#f0e7d4] no-underline transition-transform active:scale-[0.98]"
       >
         <Plus size={16} weight="bold" aria-hidden="true" />
         Start
@@ -137,7 +142,7 @@ function TopBar({ address, onSignOut }: { address?: string; onSignOut: () => voi
         <div className="flex items-center gap-2">
           <Link
             to="/app/start"
-            className="inline-flex items-center gap-1 rounded-full bg-[#d82f2f] px-3 py-1.5 text-[0.8125rem] font-semibold text-black no-underline lg:hidden"
+            className="inline-flex items-center gap-1 rounded-full bg-[#d82f2f] px-3 py-1.5 text-[0.8125rem] font-semibold text-[#f0e7d4] no-underline lg:hidden"
           >
             <Plus size={14} weight="bold" aria-hidden="true" />
             Start

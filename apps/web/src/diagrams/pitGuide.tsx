@@ -94,16 +94,14 @@ export function DiagramHeroPostcard({ className = "" }: { className?: string }) 
             <circle
               cx={x}
               cy={y}
-              r={lit ? 18 : 11}
+              r={lit ? 18 : 14}
               fill={lit ? C.cream : C.black}
               stroke={C.black}
               strokeWidth="1.5"
             />
-            {lit ? (
-              <Face x={x} y={y + 4} textAnchor="middle" fill={C.black} size={8} weight="800">
-                YOU
-              </Face>
-            ) : null}
+            <Face x={x} y={y + 4} textAnchor="middle" fill={lit ? C.black : C.cream} size={11} weight="700">
+              {i + 1}
+            </Face>
           </g>
         );
       })}
@@ -305,6 +303,119 @@ export function DiagramLearn({ className = "" }: { className?: string }) {
       </Face>
       <Face x="60" y="336" fill={C.muted} size={15}>
         Need 30 resolved forecasts before skill scores.
+      </Face>
+    </Frame>
+  );
+}
+
+export function DiagramMainnet({ className = "" }: { className?: string }) {
+  return (
+    <Frame className={className} label="MAINNET production desk" fill={C.coral}>
+      <Face x="40" y="56" fill={C.cream} size={14} letterSpacing="0.16em">
+        PRODUCTION
+      </Face>
+      <Face x="40" y="140" fill={C.cream} size={36} weight="800" letterSpacing="-0.05em">
+        Aristotle
+      </Face>
+      <Face x="40" y="188" fill={C.black} size={22} weight="700">
+        16661
+      </Face>
+      <rect x="40" y="230" width="560" height="160" fill={C.ink} />
+      <Face x="60" y="290" fill={C.cream} size={16} weight="700">
+        Hyperliquid mainnet
+      </Face>
+      <Face x="60" y="328" fill="rgb(240 231 212 / 0.65)" size={14}>
+        Transfer of Agentic ID is not live.
+      </Face>
+    </Frame>
+  );
+}
+
+export function DiagramTestnet({ className = "" }: { className?: string }) {
+  return (
+    <Frame className={className} label="TESTNET laboratory desk">
+      <Face x="40" y="56" fill={C.coral} size={14} letterSpacing="0.16em">
+        LABORATORY
+      </Face>
+      <Face x="40" y="140" fill={C.ink} size={36} weight="800" letterSpacing="-0.05em">
+        Galileo
+      </Face>
+      <Face x="40" y="188" fill={C.coral} size={22} weight="700">
+        16602
+      </Face>
+      <rect x="40" y="230" width="560" height="160" fill={C.ink} />
+      <Face x="60" y="290" fill={C.cream} size={16} weight="700">
+        Hyperliquid testnet
+      </Face>
+      <Face x="60" y="328" fill="rgb(240 231 212 / 0.65)" size={14}>
+        Sealed ask stays off until proven.
+      </Face>
+    </Frame>
+  );
+}
+
+export function DiagramSession({ className = "" }: { className?: string }) {
+  return (
+    <Frame className={className} label="Session lives in the OS keychain" fill={C.ink}>
+      <Face x="40" y="56" fill={C.cream} size={14} letterSpacing="0.16em">
+        KEYCHAIN
+      </Face>
+      <rect x="80" y="110" width="480" height="220" fill="none" stroke={C.cream} strokeWidth="2" />
+      <rect x="140" y="160" width="360" height="120" fill={C.coral} />
+      <Face x="320" y="214" textAnchor="middle" fill={C.black} size={14} weight="700" letterSpacing="0.12em">
+        ONE HOUR
+      </Face>
+      <Face x="320" y="250" textAnchor="middle" fill={C.cream} size={28} weight="800">
+        local session
+      </Face>
+      <Face x="40" y="400" fill="rgb(240 231 212 / 0.7)" size={15}>
+        This browser cannot hold the agent. Desktop or CLI.
+      </Face>
+    </Frame>
+  );
+}
+
+export function DiagramHyperliquid({ className = "" }: { className?: string }) {
+  return (
+    <Frame className={className} label="Connect your Hyperliquid trading account">
+      <Face x="40" y="56" fill={C.coral} size={14} letterSpacing="0.16em">
+        VENUE
+      </Face>
+      <circle cx="200" cy="240" r="90" fill={C.ink} />
+      <Face x="200" y="236" textAnchor="middle" fill={C.cream} size={18} weight="800">
+        YOU
+      </Face>
+      <path d="M300 240 H360" stroke={C.coral} strokeWidth="3" />
+      <path d="M348 228 L364 240 L348 252" fill="none" stroke={C.coral} strokeWidth="3" />
+      <rect x="380" y="150" width="200" height="180" fill={C.coral} />
+      <Face x="480" y="230" textAnchor="middle" fill={C.cream} size={16} weight="800">
+        HL
+      </Face>
+      <Face x="480" y="262" textAnchor="middle" fill={C.black} size={13}>
+        public state
+      </Face>
+      <Face x="40" y="420" fill={C.ink} size={15}>
+        Spot USDC counts as funded. Web reads. It does not trade.
+      </Face>
+    </Frame>
+  );
+}
+
+export function DiagramEmptyWatch({ className = "" }: { className?: string }) {
+  return (
+    <Frame className={className} label="Empty Watch is an honest state" fill={C.ink}>
+      <Face x="40" y="56" fill={C.cream} size={14} letterSpacing="0.16em">
+        WATCH
+      </Face>
+      <circle cx="320" cy="210" r="70" fill="none" stroke={C.cream} strokeWidth="2" strokeDasharray="6 8" />
+      <Face x="320" y="216" textAnchor="middle" fill={C.coral} size={18} weight="800">
+        0
+      </Face>
+      <Face x="40" y="360" fill={C.cream} size={28} weight="800" letterSpacing="-0.04em">
+        No invented cards.
+      </Face>
+      <Face x="40" y="410" fill="rgb(240 231 212 / 0.6)" size={15}>
+        Live books only. PIT will not fill the home to look busy.
       </Face>
     </Frame>
   );

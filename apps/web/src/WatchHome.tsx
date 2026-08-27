@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { Attention } from "./Attention";
+import { Bezel } from "./ui/Surface";
+import { DiagramEmptyWatch } from "./diagrams/pitGuide";
 import { namedState } from "./namedStates";
 
 type WatchPayload = {
@@ -59,42 +61,44 @@ export function WatchHome({ network = "mainnet" }: { network?: "mainnet" | "test
       {coins.length > 0 ? (
         <ul className="mt-6 grid gap-4 lg:grid-cols-2">
           {coins.map((c) => (
-            <li
-              key={c.coin}
-              className="rounded-2xl border border-[rgb(240_231_212/0.22)] bg-[#141414] p-6"
-            >
-              <p className="font-mono text-[0.75rem] tracking-[0.12em] text-[#d82f2f]">
-                hyperliquid:perp:{c.coin}
-              </p>
-              <p className="mt-2 text-[1.35rem] font-semibold tracking-[-0.03em]">{c.coin}</p>
-              <dl className="mt-4 grid gap-3 text-[0.875rem] sm:grid-cols-2">
-                <div>
-                  <dt className="text-[rgb(240_231_212/0.5)]">Mark</dt>
-                  <dd className="font-mono">{c.mark}</dd>
-                </div>
-                <div>
-                  <dt className="text-[rgb(240_231_212/0.5)]">Policy</dt>
-                  <dd>{c.eligible ? "eligible to research" : "blocked"}</dd>
-                </div>
-                <div className="sm:col-span-2">
-                  <dt className="text-[rgb(240_231_212/0.5)]">Why it is on Watch</dt>
-                  <dd>{c.reason}</dd>
-                </div>
-                <div className="sm:col-span-2">
-                  <dt className="text-[rgb(240_231_212/0.5)]">Thesis / size / calibration</dt>
-                  <dd>
-                    Open desktop to seal the private book. Web does not invent a thesis. NOT ENOUGH DATA until 30
-                    resolved forecasts.
-                  </dd>
-                </div>
-              </dl>
+            <li key={c.coin} className="overflow-hidden border border-[rgb(240_231_212/0.22)] bg-[#141414]">
+              <div className="p-6">
+                <p className="font-mono text-[0.75rem] tracking-[0.12em] text-[#d82f2f]">
+                  hyperliquid:perp:{c.coin}
+                </p>
+                <p className="mt-2 text-[1.35rem] font-semibold tracking-[-0.03em]">{c.coin}</p>
+                <dl className="mt-4 grid gap-3 text-[0.875rem] sm:grid-cols-2">
+                  <div>
+                    <dt className="text-[rgb(240_231_212/0.5)]">Mark</dt>
+                    <dd className="font-mono">{c.mark}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-[rgb(240_231_212/0.5)]">Policy</dt>
+                    <dd>{c.eligible ? "eligible to research" : "blocked"}</dd>
+                  </div>
+                  <div className="sm:col-span-2">
+                    <dt className="text-[rgb(240_231_212/0.5)]">Why it is on Watch</dt>
+                    <dd>{c.reason}</dd>
+                  </div>
+                  <div className="sm:col-span-2">
+                    <dt className="text-[rgb(240_231_212/0.5)]">Thesis / size / calibration</dt>
+                    <dd>
+                      Open desktop to seal the private book. Web does not invent a thesis. NOT ENOUGH DATA until 30
+                      resolved forecasts.
+                    </dd>
+                  </div>
+                </dl>
+              </div>
             </li>
           ))}
         </ul>
       ) : (
-        <p className="mt-6 max-w-[42ch] text-[0.9375rem] text-[rgb(240_231_212/0.65)]">
-          Live books only. PIT will not invent a card to fill the home.
-        </p>
+        <Bezel className="mt-6">
+          <DiagramEmptyWatch className="aspect-[21/9] w-full border border-[rgb(240_231_212/0.2)]" />
+          <p className="mt-6 max-w-[42ch] text-[0.9375rem] text-[rgb(240_231_212/0.65)]">
+            Live books only. PIT will not invent a card to fill the home.
+          </p>
+        </Bezel>
       )}
     </div>
   );

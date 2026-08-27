@@ -27,11 +27,10 @@ export function WalletGate() {
     <div className="guide-shell guide-app grid min-h-[100dvh] lg:grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)]">
       <div className="flex flex-col justify-center px-5 py-16 sm:px-10 lg:px-16">
         <div className="w-full max-w-[28rem]">
-          <Link to="/" aria-label="PIT home">
+          <Link to="/" className="inline-flex" aria-label="PIT home">
             <PitMark />
           </Link>
-          <p className="mt-10 text-[0.8125rem] font-bold tracking-[0.18em] text-[#d82f2f] uppercase">YOUR DESK</p>
-          <h1 className="guide-display mt-3 !text-[clamp(2.25rem,5vw,3.5rem)]">
+          <h1 className="guide-display mt-10 !text-[clamp(2.25rem,5vw,3.5rem)]">
             {authenticated ? "Wallet connected" : "Sign in with your wallet"}
           </h1>
           <AnimatePresence mode="wait" initial={false}>
@@ -63,7 +62,7 @@ export function WalletGate() {
               ) : (
                 <div className="mt-8 flex flex-col gap-3">
                   <button
-                    className="inline-flex h-12 w-full items-center justify-center rounded-full bg-[#d82f2f] px-6 text-base font-medium text-black"
+                    className="inline-flex h-12 w-full items-center justify-center rounded-full bg-[#d82f2f] px-6 text-base font-medium text-[#f0e7d4]"
                     type="button"
                     onClick={() => void run()}
                   >

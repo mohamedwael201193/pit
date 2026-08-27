@@ -92,7 +92,7 @@ export function Hero() {
               </button>
             )}
             <a href="#story" className="pill pill-ghost">
-              How it works
+              Read the story
             </a>
           </div>
         </div>

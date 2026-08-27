@@ -1,13 +1,29 @@
 import { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { usePrivy } from "@privy-io/react-auth";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { ArrowLeft } from "@phosphor-icons/react";
+import type { ComponentType } from "react";
 import { PageHead } from "../ui/PageHead";
 import { Button, ButtonLink } from "../ui/Button";
+import { ChoiceCard } from "../ui/ChoiceCard";
+import { Bezel } from "../ui/Surface";
 import { NetworkBanner } from "../NetworkBanner";
 import { PolicyPanel } from "../PolicyPanel";
 import { namedState } from "../namedStates";
 import { cn } from "../lib/cn";
+import {
+  DiagramAuthorize,
+  DiagramHeroPostcard,
+  DiagramHyperliquid,
+  DiagramLearn,
+  DiagramMainnet,
+  DiagramPolicy,
+  DiagramPrivate,
+  DiagramSealed,
+  DiagramSession,
+  DiagramTestnet,
+} from "../diagrams/pitGuide";
 
 type Net = "mainnet" | "testnet";
 
@@ -16,15 +32,17 @@ const STEPS = [
     id: 1,
     title: "Connect wallet",
     why: "Your address is the desk identity. PIT never asks for a seed phrase.",
-    action: "Connect with Privy. You already did if you can see this screen.",
+    action: "You already did this if you can see this screen.",
     fail: namedState("SIGNATURE_DECLINED"),
+    Diagram: DiagramHeroPostcard,
   },
   {
     id: 2,
-    title: "Select network",
-    why: "One workspace is MAINNET production or TESTNET lab. Never both.",
-    action: "Pick MAINNET or TESTNET and stay there.",
+    title: "Get started",
+    why: "Pick MAINNET production or TESTNET lab. You'll set policy next.",
+    action: "Tap a card. One workspace. Never both.",
     fail: namedState("WRONG_NETWORK"),
+    Diagram: DiagramMainnet,
   },
   {
     id: 3,
@@ -32,6 +50,7 @@ const STEPS = [
     why: "Policy, memory, and ledger bind to this workspace, not to a global master address.",
     action: "Confirm the workspace created on connect.",
     fail: namedState("WRONG_NETWORK"),
+    Diagram: DiagramSealed,
   },
   {
     id: 4,
@@ -39,6 +58,7 @@ const STEPS = [
     why: "PIT needs YOUR trading account. Spot USDC counts as funded.",
     action: "Open Hyperliquid in your wallet. PIT reads public state only from the web.",
     fail: namedState("BACKEND_UNREACHABLE"),
+    Diagram: DiagramHyperliquid,
   },
   {
     id: 5,
@@ -46,13 +66,15 @@ const STEPS = [
     why: "You decide what this desk may touch. PIT does not size from a model.",
     action: "Keep clip at 10 USD until you raise it on purpose.",
     fail: namedState("WRONG_NETWORK"),
+    Diagram: DiagramPolicy,
   },
   {
     id: 6,
     title: "Set first policy",
     why: "The law is readable. The model cannot raise clip, leverage, or permissions.",
-    action: "Review the cards. Change them on desktop or CLI if needed.",
+    action: "Read the cards. Change them on desktop or CLI if needed.",
     fail: namedState("WRONG_NETWORK"),
+    Diagram: DiagramPolicy,
   },
   {
     id: 7,
@@ -60,6 +82,7 @@ const STEPS = [
     why: "The one-hour agent lives in the OS keychain. Not here.",
     action: "Run pit session on desktop or CLI.",
     fail: namedState("SESSION_EXPIRED"),
+    Diagram: DiagramSession,
   },
   {
     id: 8,
@@ -67,6 +90,7 @@ const STEPS = [
     why: "Your wallet must approveAgent the printed address. Withdraw stays denied.",
     action: "Approve on Hyperliquid. extraAgents must list PIT and the workspace.",
     fail: namedState("SESSION_EXPIRED"),
+    Diagram: DiagramAuthorize,
   },
   {
     id: 9,
@@ -74,6 +98,7 @@ const STEPS = [
     why: "Order yes. Cancel yes. Withdraw no. Leverage no.",
     action: "Read the card. Walk away if it is wrong.",
     fail: namedState("AUTHORIZE_WEB_DENIED"),
+    Diagram: DiagramAuthorize,
   },
   {
     id: 10,
@@ -81,6 +106,7 @@ const STEPS = [
     why: "Watch and ask can run without sending an order.",
     action: "Open Home. Empty Watch is honest if nothing matches.",
     fail: namedState("BACKEND_UNREACHABLE"),
+    Diagram: DiagramPrivate,
   },
   {
     id: 11,
@@ -88,6 +114,7 @@ const STEPS = [
     why: "A dust fill is YOUR AUTHORIZE on desktop. This browser cannot sign it.",
     action: "Open PIT desktop. Type AUTHORIZE on the exact preview.",
     fail: namedState("AUTHORIZE_WEB_DENIED"),
+    Diagram: DiagramAuthorize,
   },
   {
     id: 12,
@@ -95,120 +122,140 @@ const STEPS = [
     why: "The desk hunts. You authorize. Receipts verify.",
     action: "Go to Home.",
     fail: namedState("BACKEND_UNREACHABLE"),
+    Diagram: DiagramLearn,
   },
 ] as const;
 
 export function StartFlow() {
   const { authenticated } = usePrivy();
   const navigate = useNavigate();
+  const reduce = useReducedMotion();
   const [step, setStep] = useState(authenticated ? 2 : 1);
   const [net, setNet] = useState<Net>("mainnet");
   const current = useMemo(() => STEPS.find((s) => s.id === step) ?? STEPS[0], [step]);
+  const Diagram = current.Diagram as ComponentType<{ className?: string }>;
+
+  const back = () => (step <= 1 ? navigate("/app") : setStep((s) => Math.max(1, s - 1)));
+  const next = () => setStep((s) => Math.min(12, s + 1));
 
   return (
     <div className="mx-auto max-w-[80rem]">
       <button
         type="button"
-        onClick={() => (step <= 1 ? navigate("/app") : setStep((s) => Math.max(1, s - 1)))}
+        onClick={back}
         className="mb-6 inline-flex items-center gap-2 text-[0.875rem] text-[rgb(240_231_212/0.6)] hover:text-[var(--guide-cream)]"
       >
         <ArrowLeft size={16} aria-hidden="true" />
         Back
       </button>
-      <PageHead title={current.title} lede={current.why} />
 
-      {current.id === 2 ? (
-        <div className="mt-10 grid gap-4 sm:grid-cols-2">
-          <ChoiceCard
-            title="MAINNET"
-            body="Production. Aristotle and Hyperliquid mainnet. Transfer of Agentic ID is not live."
-            onClick={() => setNet("mainnet")}
-            active={net === "mainnet"}
+      <ol className="mb-8 flex flex-wrap gap-1.5" aria-label="Onboarding progress">
+        {STEPS.map((s) => (
+          <li
+            key={s.id}
+            className={cn(
+              "h-1.5 w-6",
+              s.id < step ? "bg-[#d82f2f]" : s.id === step ? "bg-[var(--guide-cream)]" : "bg-[rgb(240_231_212/0.2)]",
+            )}
           />
-          <ChoiceCard
-            title="TESTNET"
-            body="Protocol laboratory. Galileo and Hyperliquid testnet. Sealed ask stays off until proven."
-            onClick={() => setNet("testnet")}
-            active={net === "testnet"}
-          />
-        </div>
-      ) : null}
+        ))}
+      </ol>
 
-      {current.id === 2 ? <NetworkBanner net={net} /> : null}
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={current.id}
+          initial={reduce ? false : { opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={reduce ? undefined : { opacity: 0, y: -12 }}
+          transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+        >
+          <PageHead title={current.title} lede={current.why} />
 
-      {current.id === 5 ? (
-        <div className="mt-10 grid gap-4 sm:grid-cols-2">
-          <ChoiceCard title="10 USD clip" body="Default until you raise it on purpose." onClick={() => undefined} active />
-          <ChoiceCard
-            title="Raise later"
-            body="Change clip on desktop or CLI. The model cannot raise it."
-            onClick={() => undefined}
-          />
-        </div>
-      ) : null}
+          {current.id === 2 ? (
+            <>
+              <div className="mt-10 grid gap-4 sm:grid-cols-2">
+                <ChoiceCard
+                  title="MAINNET"
+                  body="Production. Aristotle and Hyperliquid mainnet. Transfer of Agentic ID is not live."
+                  Diagram={DiagramMainnet}
+                  active={net === "mainnet"}
+                  onClick={() => {
+                    setNet("mainnet");
+                    next();
+                  }}
+                />
+                <ChoiceCard
+                  title="TESTNET"
+                  body="Protocol laboratory. Galileo and Hyperliquid testnet. Sealed ask stays off until proven."
+                  Diagram={DiagramTestnet}
+                  active={net === "testnet"}
+                  onClick={() => {
+                    setNet("testnet");
+                    next();
+                  }}
+                />
+              </div>
+              <NetworkBanner net={net} />
+            </>
+          ) : null}
 
-      {current.id === 6 ? <PolicyPanel /> : null}
+          {current.id === 5 ? (
+            <div className="mt-10 grid gap-4 sm:grid-cols-2">
+              <ChoiceCard
+                title="10 USD clip"
+                body="Default until you raise it on purpose."
+                Diagram={DiagramPolicy}
+                active
+                onClick={next}
+              />
+              <ChoiceCard
+                title="Raise later"
+                body="Change clip on desktop or CLI. The model cannot raise it."
+                onClick={next}
+              />
+            </div>
+          ) : null}
 
-      {current.id !== 2 && current.id !== 5 && current.id !== 6 ? (
-        <div className="mt-10 max-w-[40rem] rounded-2xl border border-[rgb(240_231_212/0.25)] bg-[#141414] p-6">
-          <p className="text-[0.8125rem] text-[rgb(240_231_212/0.55)]">
-            {current.id} of 12
-          </p>
-          <p className="mt-4 text-[1.0625rem] leading-7 text-[rgb(240_231_212/0.8)]">
-            <strong className="text-[var(--guide-cream)]">Do this. </strong>
-            {current.action}
-          </p>
-          <p className="mt-4 text-[0.875rem] text-[rgb(240_231_212/0.6)]">
-            If it fails: {current.fail.title}. {current.fail.next}
-          </p>
-        </div>
-      ) : (
-        <p className="mt-8 max-w-[48ch] text-[0.9375rem] text-[rgb(240_231_212/0.65)]">
-          Do this: {current.action} If it fails: {current.fail.title}. {current.fail.next}
-        </p>
-      )}
+          {current.id === 6 ? (
+            <div className="mt-10">
+              <PolicyPanel />
+            </div>
+          ) : null}
 
-      <div className="mt-10 flex flex-wrap gap-3">
-        <Button variant="secondary" type="button" disabled={step <= 1} onClick={() => setStep((s) => Math.max(1, s - 1))}>
-          Retry previous
-        </Button>
-        {step < 12 ? (
-          <Button type="button" trailingArrow onClick={() => setStep((s) => Math.min(12, s + 1))}>
-            Continue
-          </Button>
-        ) : (
-          <ButtonLink as={Link} to="/app" trailingArrow>
-            Open Home
-          </ButtonLink>
-        )}
-      </div>
+          {current.id !== 2 && current.id !== 5 ? (
+            <figure className="mt-10 max-w-[36rem] overflow-hidden border border-[rgb(240_231_212/0.28)]">
+              <Diagram className="aspect-[16/10] w-full" />
+            </figure>
+          ) : null}
+
+          {current.id !== 2 && current.id !== 5 ? (
+            <Bezel className="mt-8 max-w-[36rem]">
+              <p className="text-[0.8125rem] text-[rgb(240_231_212/0.55)]">{current.id} of 12</p>
+              <p className="mt-4 text-[1.0625rem] leading-7 text-[rgb(240_231_212/0.8)]">
+                <strong className="text-[var(--guide-cream)]">Do this. </strong>
+                {current.action}
+              </p>
+              <p className="mt-4 text-[0.875rem] text-[rgb(240_231_212/0.6)]">
+                If it fails: {current.fail.title}. {current.fail.next}
+              </p>
+            </Bezel>
+          ) : null}
+
+          {current.id !== 2 && current.id !== 5 ? (
+            <div className="mt-10">
+              {step < 12 ? (
+                <Button type="button" trailingArrow size="lg" onClick={next}>
+                  Continue
+                </Button>
+              ) : (
+                <ButtonLink as={Link} to="/app" trailingArrow size="lg">
+                  Open Home
+                </ButtonLink>
+              )}
+            </div>
+          ) : null}
+        </motion.div>
+      </AnimatePresence>
     </div>
-  );
-}
-
-function ChoiceCard({
-  title,
-  body,
-  onClick,
-  active,
-}: {
-  title: string;
-  body: string;
-  onClick: () => void;
-  active?: boolean;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={cn(
-        "rounded-2xl border bg-[#141414] p-6 text-left transition-colors",
-        "hover:border-[#d82f2f]/50 active:scale-[0.99]",
-        active ? "border-[#d82f2f]" : "border-[rgb(240_231_212/0.25)]",
-      )}
-    >
-      <h3 className="text-[1.25rem] font-semibold tracking-[-0.03em] text-[var(--guide-cream)]">{title}</h3>
-      <p className="mt-2 text-[0.9375rem] leading-6 text-[rgb(240_231_212/0.65)]">{body}</p>
-    </button>
   );
 }

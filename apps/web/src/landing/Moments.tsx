@@ -1,4 +1,5 @@
 import type { ComponentType } from "react";
+import { motion, useReducedMotion } from "motion/react";
 import {
   DiagramAuthorize,
   DiagramLearn,
@@ -41,6 +42,7 @@ const CARDS: {
 ];
 
 export function Moments() {
+  const reduce = useReducedMotion();
   return (
     <section className="border-t border-[rgb(240_231_212/0.25)] py-20 md:py-28">
       <div className="container-pit">
@@ -57,7 +59,12 @@ export function Moments() {
       </div>
       <div className="guide-track mt-12 pl-[max(1.25rem,calc((100vw-72rem)/2+1.5rem))] pr-6">
         {CARDS.map(({ Diagram, title, body }) => (
-          <article key={title} className="flex flex-col border border-[rgb(240_231_212/0.3)] bg-[#141414]">
+          <motion.article
+            key={title}
+            className="flex flex-col border border-[rgb(240_231_212/0.3)] bg-[#141414]"
+            whileHover={reduce ? undefined : { y: -6 }}
+            transition={{ type: "spring", stiffness: 260, damping: 22 }}
+          >
             <div className="overflow-hidden border-b border-[rgb(240_231_212/0.25)]">
               <Diagram className="aspect-[4/3] w-full" />
             </div>
@@ -65,7 +72,7 @@ export function Moments() {
               <h3 className="text-[1.65rem] font-bold tracking-[-0.035em] text-[var(--guide-cream)]">{title}</h3>
               <p className="text-[1rem] leading-7 text-[rgb(240_231_212/0.7)]">{body}</p>
             </div>
-          </article>
+          </motion.article>
         ))}
       </div>
     </section>
