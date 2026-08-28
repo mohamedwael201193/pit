@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/mohamedwael201193/pit/internal/config"
@@ -61,11 +62,11 @@ const (
 )
 
 type AccountView struct {
-	Address        string
-	PerpValue      float64
-	SpotUSDC       float64
-	State          FundingState
-	WithdrawnNote  string
+	Address       string
+	PerpValue     float64
+	SpotUSDC      float64
+	State         FundingState
+	WithdrawnNote string
 }
 
 func ParseAccount(perpValue, spotUSDC float64) AccountView {
@@ -160,37 +161,65 @@ func metaCoinDecimals(universe []map[string]any, coin string) int {
 	return 4
 }
 
-func (c *Client) PublicBook(coin string) (BookSnapshot, error) {
+type metaCacheEntry struct {
+	at       time.Time
+	universe []map[string]any
+	ctxs     []map[string]any
+}
+
+var (
+	metaMu    sync.Mutex
+	metaCache = map[string]metaCacheEntry{}
+)
+
+const metaTTL = 8 * time.Second
+
+func (c *Client) metaAndCtxs() ([]map[string]any, []map[string]any, error) {
+	key := c.InfoURL
+	metaMu.Lock()
+	if e, ok := metaCache[key]; ok && time.Since(e.at) < metaTTL {
+		u, x := e.universe, e.ctxs
+		metaMu.Unlock()
+		return u, x, nil
+	}
+	metaMu.Unlock()
 	raw, err := c.postInfo(map[string]any{"type": "metaAndAssetCtxs"})
 	if err != nil {
-		return BookSnapshot{}, err
+		return nil, nil, err
 	}
 	var pack []json.RawMessage
 	if err := json.Unmarshal(raw, &pack); err != nil || len(pack) < 2 {
-		return BookSnapshot{}, fmt.Errorf("meta shape")
+		return nil, nil, fmt.Errorf("meta shape")
 	}
 	var meta struct {
 		Universe []map[string]any `json:"universe"`
 	}
 	if err := json.Unmarshal(pack[0], &meta); err != nil {
-		return BookSnapshot{}, err
+		return nil, nil, err
 	}
 	var ctxs []map[string]any
 	if err := json.Unmarshal(pack[1], &ctxs); err != nil {
-		return BookSnapshot{}, err
+		return nil, nil, err
 	}
+	metaMu.Lock()
+	metaCache[key] = metaCacheEntry{at: time.Now(), universe: meta.Universe, ctxs: ctxs}
+	metaMu.Unlock()
+	return meta.Universe, ctxs, nil
+}
+
+func snapshotFromMeta(universe []map[string]any, ctxs []map[string]any, coin string) (BookSnapshot, bool) {
 	idx := -1
-	for i, u := range meta.Universe {
+	for i, u := range universe {
 		if name, _ := u["name"].(string); name == coin {
 			idx = i
 			break
 		}
 	}
 	if idx < 0 || idx >= len(ctxs) {
-		return BookSnapshot{}, fmt.Errorf("unknown coin")
+		return BookSnapshot{}, false
 	}
-	if _, err := IndexInUniverse(meta.Universe, coin); err != nil {
-		return BookSnapshot{}, err
+	if _, err := IndexInUniverse(universe, coin); err != nil {
+		return BookSnapshot{}, false
 	}
 	ctx := ctxs[idx]
 	return BookSnapshot{
@@ -200,6 +229,33 @@ func (c *Client) PublicBook(coin string) (BookSnapshot, error) {
 		OraclePx:     asFloat(ctx["oraclePx"]),
 		Funding:      asFloat(ctx["funding"]),
 		OpenInterest: asFloat(ctx["openInterest"]),
-		SzDecimals:   metaCoinDecimals(meta.Universe, coin),
-	}, nil
+		SzDecimals:   metaCoinDecimals(universe, coin),
+	}, true
+}
+
+func (c *Client) PublicBook(coin string) (BookSnapshot, error) {
+	universe, ctxs, err := c.metaAndCtxs()
+	if err != nil {
+		return BookSnapshot{}, err
+	}
+	b, ok := snapshotFromMeta(universe, ctxs, coin)
+	if !ok {
+		return BookSnapshot{}, fmt.Errorf("unknown coin")
+	}
+	return b, nil
+}
+
+// PublicBooks fetches the venue universe once and slices the requested coins.
+func (c *Client) PublicBooks(coins []string) ([]BookSnapshot, error) {
+	universe, ctxs, err := c.metaAndCtxs()
+	if err != nil {
+		return nil, err
+	}
+	out := make([]BookSnapshot, 0, len(coins))
+	for _, coin := range coins {
+		if b, ok := snapshotFromMeta(universe, ctxs, coin); ok && b.MarkPx > 0 {
+			out = append(out, b)
+		}
+	}
+	return out, nil
 }

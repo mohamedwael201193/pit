@@ -15,90 +15,108 @@ fn export_session() -> Result<String, String> {
     Err("session_export_denied".into())
 }
 
-#[tauri::command]
-fn local_status() -> Result<serde_json::Value, String> {
-    loopback_json("/local/status")
+async fn json_get(path: String, secs: u64) -> Result<serde_json::Value, String> {
+    tauri::async_runtime::spawn_blocking(move || {
+        let raw = loopback_exchange_timeout("GET", &path, None, secs)?;
+        serde_json::from_str(&raw).map_err(|e| e.to_string())
+    })
+    .await
+    .map_err(|_| "companion_down".to_string())?
+}
+
+async fn json_post(path: String, body: serde_json::Value, secs: u64) -> Result<serde_json::Value, String> {
+    tauri::async_runtime::spawn_blocking(move || loopback_json_post_timeout(&path, &body, secs))
+        .await
+        .map_err(|_| "companion_down".to_string())?
 }
 
 #[tauri::command]
-fn local_code() -> Result<serde_json::Value, String> {
-    loopback_json("/local/code")
+async fn local_status() -> Result<serde_json::Value, String> {
+    json_get("/local/status".into(), 2).await
 }
 
 #[tauri::command]
-fn local_doctor() -> Result<serde_json::Value, String> {
-    loopback_json("/local/doctor")
+async fn local_code() -> Result<serde_json::Value, String> {
+    json_get("/local/code".into(), 2).await
 }
 
 #[tauri::command]
-fn local_init(wallet: String, network: String) -> Result<serde_json::Value, String> {
+async fn local_doctor() -> Result<serde_json::Value, String> {
+    json_get("/local/doctor".into(), 12).await
+}
+
+#[tauri::command]
+async fn local_init(wallet: String, network: String) -> Result<serde_json::Value, String> {
     let body = serde_json::json!({ "wallet": wallet, "network": network });
-    loopback_json_post("/local/init", &body)
+    json_post("/local/init".into(), body, 8).await
 }
 
 #[tauri::command]
-fn local_session() -> Result<serde_json::Value, String> {
-    loopback_json_post("/local/session", &serde_json::json!({}))
+async fn local_session() -> Result<serde_json::Value, String> {
+    json_post("/local/session".into(), serde_json::json!({}), 8).await
 }
 
 #[tauri::command]
-fn local_policy() -> Result<serde_json::Value, String> {
-    loopback_json_post("/local/policy", &serde_json::json!({}))
+async fn local_policy() -> Result<serde_json::Value, String> {
+    json_post("/local/policy".into(), serde_json::json!({}), 8).await
 }
 
 #[tauri::command]
-fn local_revoke_session() -> Result<serde_json::Value, String> {
-    loopback_json_post("/local/revoke-session", &serde_json::json!({}))
+async fn local_revoke_session() -> Result<serde_json::Value, String> {
+    json_post("/local/revoke-session".into(), serde_json::json!({}), 8).await
 }
 
 #[tauri::command]
-fn local_direct_intent() -> Result<serde_json::Value, String> {
-    let raw = loopback_exchange_timeout("GET", "/local/direct-intent", None, 20)?;
-    serde_json::from_str(&raw).map_err(|e| e.to_string())
+async fn local_direct_intent() -> Result<serde_json::Value, String> {
+    json_get("/local/direct-intent".into(), 20).await
 }
 
 #[tauri::command]
-fn local_direct_status() -> Result<serde_json::Value, String> {
-    loopback_json("/local/direct-status")
+async fn local_direct_status() -> Result<serde_json::Value, String> {
+    json_get("/local/direct-status".into(), 2).await
 }
 
 #[tauri::command]
-fn local_research_start(coin: String) -> Result<serde_json::Value, String> {
+async fn local_research_start(coin: String) -> Result<serde_json::Value, String> {
     let body = serde_json::json!({ "coin": coin });
-    loopback_json_post_timeout("/local/research/start", &body, 8)
+    json_post("/local/research/start".into(), body, 8).await
 }
 
 #[tauri::command]
-fn local_research_status() -> Result<serde_json::Value, String> {
-    loopback_json("/local/research/status")
+async fn local_research_status() -> Result<serde_json::Value, String> {
+    json_get("/local/research/status".into(), 2).await
 }
 
 #[tauri::command]
-fn local_research_cancel() -> Result<serde_json::Value, String> {
-    loopback_json_post("/local/research/cancel", &serde_json::json!({}))
+async fn local_research_cancel() -> Result<serde_json::Value, String> {
+    json_post("/local/research/cancel".into(), serde_json::json!({}), 8).await
 }
 
 #[tauri::command]
-fn local_watch(network: String) -> Result<serde_json::Value, String> {
+async fn local_watch(network: String) -> Result<serde_json::Value, String> {
     let net = if network == "testnet" { "testnet" } else { "mainnet" };
-    loopback_json(&format!("/watch?network={net}"))
+    json_get(format!("/watch?network={net}"), 8).await
 }
 
 #[tauri::command]
-fn local_kill(on: bool) -> Result<serde_json::Value, String> {
+async fn local_kill(on: bool) -> Result<serde_json::Value, String> {
     let body = serde_json::json!({ "on": on });
-    loopback_json_post("/local/kill", &body)
+    json_post("/local/kill".into(), body, 8).await
 }
 
 #[tauri::command]
-fn local_research(coin: String) -> Result<serde_json::Value, String> {
-    local_research_start(coin)
+async fn local_research(coin: String) -> Result<serde_json::Value, String> {
+    local_research_start(coin).await
 }
 
 #[tauri::command]
-fn ensure_companion() -> Result<bool, String> {
-    start_companion();
-    Ok(companion_listening())
+async fn ensure_companion() -> Result<bool, String> {
+    tauri::async_runtime::spawn_blocking(|| {
+        start_companion();
+        companion_listening()
+    })
+    .await
+    .map_err(|_| "companion_down".to_string())
 }
 
 fn companion_addr() -> SocketAddr {
@@ -107,15 +125,6 @@ fn companion_addr() -> SocketAddr {
 
 fn companion_listening() -> bool {
     TcpStream::connect_timeout(&companion_addr(), Duration::from_millis(250)).is_ok()
-}
-
-fn loopback_json(path: &str) -> Result<serde_json::Value, String> {
-    let raw = loopback_get(path)?;
-    serde_json::from_str(&raw).map_err(|e| e.to_string())
-}
-
-fn loopback_json_post(path: &str, body: &serde_json::Value) -> Result<serde_json::Value, String> {
-    loopback_json_post_timeout(path, body, 8)
 }
 
 fn loopback_json_post_timeout(path: &str, body: &serde_json::Value, read_secs: u64) -> Result<serde_json::Value, String> {
@@ -244,7 +253,7 @@ fn same_install(path: &Path) -> bool {
     path.parent().map(|p| p == dir).unwrap_or(false)
 }
 
-const SIDECAR_VERSION: &str = "0.1.7";
+const SIDECAR_VERSION: &str = "0.1.8";
 
 fn companion_version() -> Option<String> {
     let raw = loopback_get("/health").ok()?;

@@ -39,6 +39,9 @@ func LookCLI() string {
 	if wd, err := os.Getwd(); err == nil {
 		roots = append(roots, wd)
 	}
+	if la := strings.TrimSpace(os.Getenv("LOCALAPPDATA")); la != "" {
+		roots = append(roots, filepath.Join(la, "PIT"))
+	}
 	if found := discoverClient(roots...); found != "" {
 		return found
 	}

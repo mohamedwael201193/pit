@@ -8,6 +8,7 @@ import (
 	"math/big"
 	"net/http"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -44,7 +45,40 @@ func (p AccountProbe) BalanceOG() string {
 	return strings.TrimRight(strings.TrimRight(r.FloatString(4), "0"), ".")
 }
 
+var (
+	probeMu  sync.Mutex
+	probeAt  time.Time
+	probeKey string
+	probeVal AccountProbe
+)
+
+func cloneProbe(p AccountProbe) AccountProbe {
+	out := p
+	if p.BalanceWei != nil {
+		out.BalanceWei = new(big.Int).Set(p.BalanceWei)
+	}
+	return out
+}
+
 func ProbeDirectAccount(ch config.Chain, user, provider string) AccountProbe {
+	key := strings.ToLower(ch.RPC + "|" + user + "|" + provider)
+	probeMu.Lock()
+	if probeKey == key && time.Since(probeAt) < 12*time.Second {
+		v := cloneProbe(probeVal)
+		probeMu.Unlock()
+		return v
+	}
+	probeMu.Unlock()
+	out := probeDirectAccountUncached(ch, user, provider)
+	probeMu.Lock()
+	probeKey = key
+	probeAt = time.Now()
+	probeVal = cloneProbe(out)
+	probeMu.Unlock()
+	return out
+}
+
+func probeDirectAccountUncached(ch config.Chain, user, provider string) AccountProbe {
 	out := AccountProbe{}
 	parsed, err := abi.JSON(strings.NewReader(getAccountABI))
 	if err != nil {

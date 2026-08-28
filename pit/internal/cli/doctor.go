@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/mohamedwael201193/pit/internal/compute"
@@ -25,25 +26,36 @@ type Check struct {
 }
 
 func Doctor(dir string) []Check {
+	var hlC, rpcC, authC, creditC, agentC Check
+	var wg sync.WaitGroup
+	wg.Add(5)
+	go func() { defer wg.Done(); hlC = checkHyperliquid(dir) }()
+	go func() { defer wg.Done(); rpcC = checkRPC(dir) }()
+	go func() { defer wg.Done(); authC = checkDirectAuth(dir) }()
+	go func() { defer wg.Done(); creditC = checkDirectCredit(dir) }()
+	go func() { defer wg.Done(); agentC = checkHLAgent(dir) }()
 	out := []Check{
 		checkVersion(),
 		checkWallet(dir),
 		checkNetwork(dir),
 		checkKeychain(dir),
 		checkMemoryEnv(),
-		checkHyperliquid(dir),
-		checkRPC(dir),
+	}
+	wg.Wait()
+	out = append(out,
+		hlC,
+		rpcC,
 		checkCompanion(),
 		checkSealer(),
-		checkDirectAuth(dir),
-		checkDirectCredit(dir),
+		authC,
+		creditC,
 		checkTee(dir),
 		checkStorage(),
 		checkRegistry(dir),
 		checkSession(dir),
-		checkHLAgent(dir),
+		agentC,
 		checkPolicy(dir),
-	}
+	)
 	return out
 }
 
@@ -96,7 +108,9 @@ func checkHyperliquid(dir string) Check {
 			net = n
 		}
 	}
-	if _, err := hl.New(config.For(net)).PublicBook("ETH"); err != nil {
+	cl := hl.New(config.For(net))
+	cl.HTTP = &http.Client{Timeout: 5 * time.Second}
+	if _, err := cl.PublicBook("ETH"); err != nil {
 		return Check{Name: "hyperliquid", Detail: err.Error()}
 	}
 	return Check{Name: "hyperliquid", OK: true, Detail: string(net) + " public book"}
@@ -113,7 +127,7 @@ func checkRPC(dir string) Check {
 	if err := config.RefuseMixedRPC(ch.ChainID, ch.RPC); err != nil {
 		return Check{Name: "0g_rpc", Detail: err.Error()}
 	}
-	client := &http.Client{Timeout: 8 * time.Second}
+	client := &http.Client{Timeout: 5 * time.Second}
 	resp, err := client.Post(ch.RPC, "application/json", strings.NewReader(`{"jsonrpc":"2.0","id":1,"method":"eth_chainId","params":[]}`))
 	if err != nil {
 		return Check{Name: "0g_rpc", Detail: err.Error()}

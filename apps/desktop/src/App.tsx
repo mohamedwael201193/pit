@@ -414,32 +414,54 @@ export function App() {
   useEffect(() => {
     let gone = false;
     let timer = 0;
+    let statusBusy = false;
+    let codeBusy = false;
+    let doctorBusy = false;
+    let watchBusy = false;
+    let lastDoctor = 0;
+    let lastWatch = 0;
     const tick = () => {
+      if (gone) return;
       setTicks((n) => n + 1);
-      localStatus()
-        .then((s) => {
-          if (gone) return;
-          setCompanionUp(Boolean(s));
-          setStatus(s);
-          setSessionAlive(Boolean(s?.sessionAlive));
-          setAgent(s?.agent || "");
-          if (s?.network === "testnet" || s?.network === "mainnet") setNet(s.network);
-          if (s?.wallet) setWalletDraft((cur) => cur || s.wallet || "");
-        })
-        .catch(() => {
-          if (!gone && !researchBusyRef.current) {
-            setCompanionUp(false);
-            setStatus(null);
-          }
-        });
-      if (!researchBusyRef.current) {
+      const now = Date.now();
+      if (!statusBusy) {
+        statusBusy = true;
+        localStatus()
+          .then((s) => {
+            if (gone) return;
+            setCompanionUp(Boolean(s));
+            setStatus(s);
+            setSessionAlive(Boolean(s?.sessionAlive));
+            setAgent(s?.agent || "");
+            if (s?.network === "testnet" || s?.network === "mainnet") setNet(s.network);
+            if (s?.wallet) setWalletDraft((cur) => cur || s.wallet || "");
+          })
+          .catch(() => {
+            if (!gone && !researchBusyRef.current) {
+              setCompanionUp(false);
+              setStatus(null);
+            }
+          })
+          .finally(() => {
+            statusBusy = false;
+          });
+      }
+      if (!researchBusyRef.current && !codeBusy) {
+        codeBusy = true;
         pairCode()
           .then((p) => {
             if (gone) return;
             setCode(p?.code || "");
             setExpires(p?.expires || "");
           })
-          .catch(() => undefined);
+          .catch(() => undefined)
+          .finally(() => {
+            codeBusy = false;
+          });
+      }
+      if (!researchBusyRef.current && !doctorBusy && now - lastDoctor >= 15000) {
+        doctorBusy = true;
+        lastDoctor = now;
         doctor()
           .then((c) => {
             if (!gone) {
@@ -447,27 +469,37 @@ export function App() {
               setPinned(Boolean(c.find((x) => x.name === "policy" && x.ok)));
             }
           })
-          .catch(() => undefined);
+          .catch(() => undefined)
+          .finally(() => {
+            doctorBusy = false;
+          });
       }
-      fetchWatch(net)
-        .then((body) => {
-          if (gone || body.sign || body.trade) return;
-          setCoins(Array.isArray(body.coins) ? body.coins : []);
-        })
-        .catch(() => {
-          if (!gone) setCoins([]);
-        });
+      if (!watchBusy && now - lastWatch >= 8000) {
+        watchBusy = true;
+        lastWatch = now;
+        fetchWatch(net)
+          .then((body) => {
+            if (gone || body.sign || body.trade) return;
+            setCoins(Array.isArray(body.coins) ? body.coins : []);
+          })
+          .catch(() => {
+            if (!gone) setCoins([]);
+          })
+          .finally(() => {
+            watchBusy = false;
+          });
+      }
     };
     const loop = () => {
       tick();
-      timer = window.setTimeout(loop, companionUp ? 4000 : 800);
+      if (!gone) timer = window.setTimeout(loop, 2000);
     };
     loop();
     return () => {
       gone = true;
       window.clearTimeout(timer);
     };
-  }, [net, companionUp]);
+  }, [net]);
 
   useEffect(() => {
     if (!sessionAlive) return;
@@ -674,7 +706,7 @@ export function App() {
       <aside className="rail">
         <div className="rail-brand">
           <div className="word">PIT.</div>
-          <p className="kicker">{status?.version || "0.1.7"} · local execution</p>
+          <p className="kicker">{status?.version || "0.1.8"} · local execution</p>
         </div>
         <nav className="rail-nav" aria-label="Desk">
           {RAIL.map((item) => (
@@ -694,7 +726,7 @@ export function App() {
         <div className="rail-foot">
           <p>{net === "mainnet" ? "MAINNET" : "TESTNET"}</p>
           <p>{companionUp ? "companion live" : "starting companion"}</p>
-          <p>{status?.version || "PIT 0.1.7"}</p>
+          <p>{status?.version || "PIT 0.1.8"}</p>
           <button type="button" className="ghost" onClick={() => setView("settings")}>
             Help / Diagnostics
           </button>
