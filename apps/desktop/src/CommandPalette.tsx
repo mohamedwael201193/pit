@@ -41,7 +41,7 @@ export function CommandPalette({
         <input
           autoFocus
           aria-label="Filter commands"
-          placeholder="Open Desk, Watch, Research…"
+          placeholder="Open Desk, Markets, Research…"
           value={q}
           onChange={(e) => setQ(e.target.value)}
           onKeyDown={(e) => {

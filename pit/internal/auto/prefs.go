@@ -50,8 +50,8 @@ func Load(dir string) Prefs {
 	}
 	_ = json.Unmarshal(raw, &p)
 	p.Execute = false
-	if p.CadenceMinutes < 5 {
-		p.CadenceMinutes = 5
+	if p.CadenceMinutes < 1 {
+		p.CadenceMinutes = 1
 	}
 	if p.CadenceMinutes > 240 {
 		p.CadenceMinutes = 240
@@ -67,8 +67,8 @@ func Save(dir string, p Prefs) error {
 		return fmt.Errorf("unbound")
 	}
 	p.Execute = false
-	if p.CadenceMinutes < 5 {
-		p.CadenceMinutes = 5
+	if p.CadenceMinutes < 1 {
+		p.CadenceMinutes = 1
 	}
 	raw, err := json.Marshal(p)
 	if err != nil {

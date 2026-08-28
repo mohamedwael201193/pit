@@ -36,6 +36,9 @@ export function DeskHome({
   awaitingAuth,
   coins,
   lastEvent,
+  mode,
+  missionStop,
+  exposure,
   onResearch,
   onGo,
 }: {
@@ -54,11 +57,15 @@ export function DeskHome({
   awaitingAuth?: boolean;
   coins: Coin[];
   lastEvent?: string;
+  mode?: string;
+  missionStop?: string;
+  exposure?: string;
   onResearch: (coin: string) => void;
-  onGo: (view: "watch" | "research" | "security" | "settings" | "chat" | "policy") => void;
+  onGo: (view: "markets" | "research" | "security" | "chat" | "automation" | "portfolio") => void;
 }) {
   const showPair = items.find((p) => p.id === "wallet")?.state !== "ok";
-  const top = coins.filter((c) => c.eligible).slice(0, 2);
+  const best = coins.find((c) => c.eligible);
+  const modeLabel = mode === "guarded" ? "Guarded Autonomy" : mode === "research_only" ? "Research Only" : "Manual";
   return (
     <main className="page dense desk-home">
       <div className="page-head">
@@ -67,13 +74,7 @@ export function DeskHome({
           <h1>{researchBusy ? doing : awaitingAuth ? "Waiting for you" : ready ? "Ready to discover" : attention.title}</h1>
         </div>
       </div>
-      <p className="lead">
-        {researchBusy
-          ? "Private research is running. Chat cannot AUTHORIZE."
-          : awaitingAuth
-            ? "An exact preview is waiting on Research. Type AUTHORIZE there."
-            : "Discover a market, research it privately, then approve the exact order on this computer."}
-      </p>
+      <p className="lead">{doing}</p>
       <div className="chip-row" aria-label="Readiness">
         <Chip ok={protectedOk} label="Research" value={protectedOk ? "protected" : "needs protect"} />
         <Chip ok={computeReady} label="Compute" value={computeReady ? "funded" : "needs funds"} />
@@ -81,6 +82,24 @@ export function DeskHome({
         <Chip ok={hlApproved} label="Hyperliquid" value={hlApproved ? "approved" : "needs approval"} />
         <Chip ok={policyPinned} label="Policy" value={policyPinned ? "pinned" : "unpinned"} />
       </div>
+      <dl className="metrics">
+        <div>
+          <dt>What PIT is doing</dt>
+          <dd>{researchBusy ? doing : awaitingAuth ? "Preview waiting" : runningCopy(mode, missionStop)}</dd>
+        </div>
+        <div>
+          <dt>Best opportunity</dt>
+          <dd>{best ? `${best.coin} ${best.mark}` : "none"}</dd>
+        </div>
+        <div>
+          <dt>Current exposure</dt>
+          <dd>{exposure || "—"}</dd>
+        </div>
+        <div>
+          <dt>Autonomy</dt>
+          <dd>{modeLabel}</dd>
+        </div>
+      </dl>
       <section className="next-row">
         <div>
           <p className="label">Needs you</p>
@@ -91,8 +110,8 @@ export function DeskHome({
         </div>
         <div className="cta-row">
           {ready && !researchBusy && !awaitingAuth ? (
-            <button type="button" className="primary" onClick={() => onGo("watch")}>
-              Open Watch
+            <button type="button" className="primary" onClick={() => onGo("markets")}>
+              Open Markets
             </button>
           ) : null}
           {awaitingAuth ? (
@@ -108,41 +127,38 @@ export function DeskHome({
           <button type="button" className="linkish" onClick={() => onGo("chat")}>
             Ask PIT
           </button>
+          <button type="button" className="linkish" onClick={() => onGo("automation")}>
+            Automation
+          </button>
           {attention.href ? (
             <a className="linkish" href={attention.href} target="_blank" rel="noreferrer">
               {attention.hrefLabel || "Open official page"}
             </a>
           ) : null}
-          {attention.go && attention.go !== "watch" ? (
-            <button type="button" className="linkish" onClick={() => onGo(attention.go!)}>
-              {attention.goLabel || "Open"}
-            </button>
-          ) : null}
         </div>
       </section>
-      {top.length ? (
+      {best ? (
         <section>
-          <p className="label">Interesting now</p>
+          <p className="label">Best opportunity</p>
           <ul className="desk-ops">
-            {top.map((c) => (
-              <li key={c.coin}>
-                <BrandMark symbol={c.coin} />
-                <strong>{c.coin}</strong>
-                <span className="mark-num">{c.mark}</span>
-                <span className="fine" style={{ margin: 0 }}>
-                  {c.why || c.trend || "In policy universe."}
-                </span>
-                <button type="button" className="primary" disabled={researchBusy || !computeReady} onClick={() => onResearch(c.coin)}>
-                  Research privately
-                </button>
-              </li>
-            ))}
+            <li>
+              <BrandMark symbol={best.coin} />
+              <strong>{best.coin}</strong>
+              <span className="mark-num">{best.mark}</span>
+              <span className="fine" style={{ margin: 0 }}>
+                {best.why || best.trend || "In policy universe."}
+              </span>
+              <button type="button" className="primary" disabled={researchBusy || !computeReady} onClick={() => onResearch(best.coin)}>
+                Research privately
+              </button>
+            </li>
           </ul>
         </section>
       ) : (
         <p className="empty">No opportunities match your policy yet. Empty is honest.</p>
       )}
       {lastEvent ? <p className="fine">Recently: {lastEvent}</p> : null}
+      {missionStop ? <p className="fine">Last stop: {missionStop}</p> : null}
       {showPair ? (
         <section className="next-row">
           <div>
@@ -161,4 +177,11 @@ export function DeskHome({
       ) : null}
     </main>
   );
+}
+
+function runningCopy(mode?: string, stop?: string) {
+  if (mode === "guarded") return "Guarded Autonomy is live inside your policy.";
+  if (mode === "research_only") return "Research Only — scan and prepare, never execute.";
+  if (stop) return `Idle after ${stop}`;
+  return "Manual. Waiting for you.";
 }

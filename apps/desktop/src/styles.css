@@ -352,7 +352,44 @@ a { color: var(--cream); }
 }
 .why-list .label { margin: 0 0 2px; }
 .why-list p { margin: 0; }
-.empty { color: var(--mute); padding: 28px 0; }
+.best-strip {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 0 16px;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 12px;
+}
+.best-strip h2 { margin: 4px 0 6px; font-size: 18px; display: flex; align-items: center; gap: 8px; }
+.market-tools {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 10px 0 12px;
+}
+.market-tools input[type="text"], .market-tools input:not([type="checkbox"]) {
+  background: var(--lift);
+  border: 1px solid var(--hair);
+  padding: 6px 10px;
+  min-width: 180px;
+}
+.mode-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+  margin: 12px 0 18px;
+}
+.mode-grid button, .mode-grid article {
+  text-align: left;
+  background: var(--panel);
+  border: 1px solid var(--hair);
+  padding: 12px 12px 14px;
+}
+.mode-grid button.on, .mode-grid article.on {
+  border-color: var(--coral);
+  box-shadow: inset 0 0 0 1px var(--coral);
+}
 .watch-head, .market-rows li {
   grid-template-columns: 88px 72px 118px 72px 72px 56px minmax(120px, 1.4fr) auto;
 }

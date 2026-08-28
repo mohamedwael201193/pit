@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/mohamedwael201193/pit/internal/auto"
 	"github.com/mohamedwael201193/pit/internal/calib"
 	"github.com/mohamedwael201193/pit/internal/cli"
 	"github.com/mohamedwael201193/pit/internal/compute"
@@ -124,7 +125,15 @@ func (h *Hub) localChat(w http.ResponseWriter, r *http.Request) {
 		forgetMemoryFiles(h.Dir)
 		appendActivity(h.Dir, activityEvent{WorkspaceID: workspaceID(h.Dir), Kind: "memory.forgot", Action: "forget", Status: "ok"})
 	}
+	if parsed.Tool == "mission.stop" {
+		auto.Stop(h.Dir, "chat_stop")
+		appendActivity(h.Dir, activityEvent{WorkspaceID: workspaceID(h.Dir), Kind: "mission.stopped", Action: "stop", Status: "chat_stop", Reason: "chat_stop"})
+		parsed.Reply = h.replyMissionStop()
+	}
 	if parsed.StartResearch {
+		if parsed.Coin == "" {
+			parsed.Coin = h.pickBestCoin()
+		}
 		parsed.Reply = parsed.Reply + " Chat cannot AUTHORIZE. The desk will start the sealed job on this computer."
 	}
 	appendChatThread(h.Dir, "user", body.Text, "", thread)

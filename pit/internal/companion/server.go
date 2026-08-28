@@ -13,6 +13,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/mohamedwael201193/pit/internal/auto"
 	"github.com/mohamedwael201193/pit/internal/cli"
 	"github.com/mohamedwael201193/pit/internal/config"
 	"github.com/mohamedwael201193/pit/internal/hl"
@@ -135,6 +136,7 @@ func (h *Hub) Handler() http.Handler {
 	mux.HandleFunc("/local/explain", h.localExplain)
 	mux.HandleFunc("/local/models", h.localModels)
 	mux.HandleFunc("/local/automation", h.localAutomation)
+	mux.HandleFunc("/local/mission", h.localMission)
 	mux.HandleFunc("/local/kill", h.localKill)
 	mux.HandleFunc("/direct/intent", h.deviceDirectIntent)
 	mux.HandleFunc("/direct/complete", h.deviceDirectComplete)
@@ -285,6 +287,10 @@ func (h *Hub) localStatus(w http.ResponseWriter, r *http.Request) {
 			body["lastOrder"] = last
 		}
 	}
+	ms := auto.LoadMission(h.Dir)
+	body["mode"] = ms.Mode
+	body["missionRunning"] = ms.Running && ms.Mode != auto.ModeManual
+	body["missionStop"] = ms.LastStop
 	writeLocal(w, http.StatusOK, body)
 }
 
@@ -534,7 +540,7 @@ func (h *Hub) watch(w http.ResponseWriter, r *http.Request) {
 		net = n
 	}
 	view := watch.EmptyPublic(string(net))
-	cands, err := watch.Live(hl.New(config.For(net)), watch.PolicyForWatch())
+	cands, err := watch.LiveUniverse(hl.New(config.For(net)), watch.PolicyForWatch())
 	if err == nil {
 		view = watch.Public(cands, string(net))
 	}

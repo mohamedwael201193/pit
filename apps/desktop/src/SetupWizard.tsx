@@ -238,7 +238,7 @@ export function SetupWizard({
       {step === 8 ? (
         <>
           <h1>Ready to discover.</h1>
-          <p className="lead">Watch is live public marks. Private research stays sealed. Authorize stays on this computer.</p>
+          <p className="lead">Markets is live public marks. Private research stays sealed. Authorize stays on this computer.</p>
           <p>
             {boundWallet ? "Wallet connected. " : "Wallet still unbound. "}
             {sessionAlive ? "Session live. " : "Session still needed. "}

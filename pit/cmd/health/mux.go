@@ -33,7 +33,7 @@ func newMux() http.Handler {
 			net = n
 		}
 		view := watch.EmptyPublic(string(net))
-		cands, err := watch.Live(hl.New(config.For(net)), watch.PolicyForWatch())
+		cands, err := watch.LiveUniverse(hl.New(config.For(net)), watch.PolicyForWatch())
 		if err == nil {
 			view = watch.Public(cands, string(net))
 		}

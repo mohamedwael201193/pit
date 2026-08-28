@@ -13,6 +13,9 @@ export type LocalStatus = {
   sign?: boolean;
   trade?: boolean;
   version?: string;
+  mode?: string;
+  missionRunning?: boolean;
+  missionStop?: string;
   lastOrder?: { oid?: string; cloid?: string; hash?: string; market?: string; side?: string; sz?: number; status?: string; posted?: boolean; cancelled?: boolean; venue?: string };
 };
 
@@ -215,7 +218,7 @@ export async function pinLocalPolicy(): Promise<BindResult> {
   }
 }
 
-export async function fetchWatch(network: string): Promise<{ coins?: Array<{ coin: string; reason: string; why?: string; trend?: string; rank?: number; freshness?: string; mark: number; eligible?: boolean; oracle?: number; funding?: number; openInterest?: number; timestamp?: string }>; sign?: boolean; trade?: boolean }> {
+export async function fetchWatch(network: string): Promise<{ coins?: Array<{ coin: string; reason: string; why?: string; trend?: string; rank?: number; freshness?: string; mark: number; eligible?: boolean; oracle?: number; funding?: number; openInterest?: number; volume?: number; timestamp?: string; venue?: string; policyFit?: string; riskFlags?: string[]; provenance?: string; block?: string }>; best?: { coin: string; mark: number; why?: string; policyFit?: string }; bestWhy?: string; scanned?: number; count?: number; sign?: boolean; trade?: boolean }> {
   const native = rejectSecrets(await nativeJson<{ coins?: Array<{ coin: string; reason: string; why?: string; trend?: string; rank?: number; freshness?: string; mark: number; eligible?: boolean; oracle?: number; funding?: number; openInterest?: number; timestamp?: string }>; sign?: boolean; trade?: boolean }>("local_watch", { network }));
   if (native) return native;
   const fetched = await fetchJson<{ coins?: Array<{ coin: string; reason: string; mark: number; eligible?: boolean; oracle?: number; funding?: number; openInterest?: number }>; sign?: boolean; trade?: boolean }>(`/watch?network=${network}`);
@@ -493,6 +496,38 @@ export type AutoPrefs = {
   execute?: boolean;
 };
 
+export type MissionState = {
+  mode?: string;
+  running?: boolean;
+  hours?: number;
+  deadline_unix?: number;
+  best_coin?: string;
+  best_why?: string;
+  last_action?: string;
+  last_stop?: string;
+  last_oid?: string;
+  last_preview_hash?: string;
+  trades_today?: number;
+  consecutive_losses?: number;
+  next_scan_unix?: number;
+  current_position?: string;
+  max_trades?: number;
+  stop_loss_usd?: number;
+  min_liquidity_usd?: number;
+  pause_uncertain?: boolean;
+  assets?: string[];
+};
+
+export type MissionPublic = {
+  mission?: MissionState;
+  prefs?: AutoPrefs;
+  mode?: string;
+  running?: boolean;
+  limits?: Record<string, unknown>;
+  error?: string;
+  execute?: boolean;
+};
+
 export async function fetchAutomation(): Promise<AutoPrefs> {
   const body = await localGet<{ prefs?: AutoPrefs; sign?: boolean }>("local_automation", "/local/automation");
   return body?.prefs || { watch: true, notify: true, auto_research: false, cadence_minutes: 15, trigger: "policy_pass" };
@@ -506,6 +541,20 @@ export async function saveAutomation(prefs: AutoPrefs): Promise<AutoPrefs> {
   });
   if (body?.execute) return prefs;
   return body?.prefs || prefs;
+}
+
+export async function fetchMission(): Promise<MissionPublic> {
+  const body = await localGet<MissionPublic>("local_automation", "/local/mission");
+  return body || { mode: "manual", mission: { mode: "manual" }, execute: false };
+}
+
+export async function postMission(body: Record<string, unknown>): Promise<MissionPublic> {
+  const got = await fetchJson<MissionPublic>("/local/mission", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ...body, execute: false }),
+  });
+  return got || { error: "companion_http", execute: false };
 }
 
 export async function fetchActivity(): Promise<ActivityEvent[]> {

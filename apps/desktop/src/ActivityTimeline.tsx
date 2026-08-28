@@ -40,6 +40,7 @@ function humanKind(kind?: string) {
   if (k.includes("session")) return "Session";
   if (k.includes("receipt") || k.includes("proof")) return "Proof";
   if (k.includes("position")) return "Position";
+  if (k.includes("mission")) return "Mission";
   if (k.includes("automation")) return "Prepared";
   return k.replaceAll(".", " ");
 }

@@ -271,7 +271,7 @@ export function ResearchBoard({
           </div>
         </div>
       ) : null}
-      <p className="fine">{snap && "why" in snap && snap.why ? snap.why : "Selected from Watch because it is in your policy universe with a live venue book."}</p>
+      <p className="fine">{snap && "why" in snap && snap.why ? snap.why : "Selected from Markets because it is in your policy universe with a live venue book."}</p>
       <p className="label" style={{ marginTop: 12 }}>
         Thesis
       </p>

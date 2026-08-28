@@ -9,6 +9,12 @@ import (
 
 // WhyHuman explains a host-detected public-book fact. It is not a model score.
 func WhyHuman(c Candidate) string {
+	if !c.Eligible {
+		if c.Block != "" {
+			return fmt.Sprintf("%s is live on Hyperliquid but policy blocked it (%s). Side is not decided here.", c.Coin, c.Block)
+		}
+		return fmt.Sprintf("%s is live on Hyperliquid but outside your policy.", c.Coin)
+	}
 	switch c.Reason {
 	case "mark_below_oracle":
 		return fmt.Sprintf("%s mark is below the oracle on Hyperliquid. Policy still allows it. Side is not decided here.", c.Coin)
@@ -17,6 +23,23 @@ func WhyHuman(c Candidate) string {
 	default:
 		return fmt.Sprintf("%s is in your policy universe with a live Hyperliquid mark.", c.Coin)
 	}
+}
+
+func RiskFlags(b hl.BookSnapshot) []string {
+	var out []string
+	if b.OpenInterest > 0 && b.OpenInterest < 1000 {
+		out = append(out, "thin_open_interest")
+	}
+	if math.Abs(b.Funding) >= 0.0001 {
+		out = append(out, "elevated_funding")
+	}
+	if b.OraclePx > 0 {
+		gap := math.Abs(b.MarkPx-b.OraclePx) / b.OraclePx
+		if gap >= 0.01 {
+			out = append(out, "mark_oracle_gap")
+		}
+	}
+	return out
 }
 
 func Trend(b hl.BookSnapshot) string {

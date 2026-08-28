@@ -54,3 +54,33 @@ func TestLiveUsesPublicBooksWhenAvailable(t *testing.T) {
 		t.Fatalf("%+v", cands)
 	}
 }
+
+type uniStub struct{}
+
+func (uniStub) PublicBook(string) (hl.BookSnapshot, error) {
+	return hl.BookSnapshot{}, fmt.Errorf("should_not_per_coin")
+}
+
+func (uniStub) PublicUniverse() ([]hl.BookSnapshot, error) {
+	return []hl.BookSnapshot{
+		{Coin: "ETH", MarkPx: 2500, OraclePx: 2510, OpenInterest: 1e9},
+		{Coin: "XYZ", MarkPx: 9, OraclePx: 9, OpenInterest: 1},
+	}, nil
+}
+
+func TestLiveUniverseIncludesBlocked(t *testing.T) {
+	all, err := LiveUniverse(uniStub{}, policy.Default())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(all) != 2 {
+		t.Fatalf("%+v", all)
+	}
+	elig, err := Live(uniStub{}, policy.Default())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(elig) != 1 || elig[0].Coin != "ETH" {
+		t.Fatalf("%+v", elig)
+	}
+}

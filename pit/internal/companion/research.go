@@ -505,6 +505,12 @@ func (h *Hub) execResearch(coin string) {
 		WorkspaceID: workspaceID(h.Dir), Kind: evKind, Market: h.job.coin,
 		Action: "research", Status: kind, JobID: h.job.ID, PreviewHash: h.job.previewHash, Reason: h.job.deny,
 	})
+	if h.job.eligible && h.job.previewHash != "" {
+		hash := h.job.previewHash
+		coin := h.job.coin
+		started := h.job.started
+		go h.maybeGuardedExecute(hash, coin, started)
+	}
 }
 
 func (h *Hub) localResearchStart(w http.ResponseWriter, r *http.Request) {

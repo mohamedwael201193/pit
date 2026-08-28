@@ -9,7 +9,7 @@ export type NextFix = {
   fix: string;
   href?: string;
   hrefLabel?: string;
-  go?: "security" | "research" | "watch" | "settings" | "policy";
+  go?: "security" | "research" | "markets" | "automation";
   goLabel?: string;
 };
 
@@ -87,9 +87,9 @@ export function nextFix(
     return {
       title: "Pin a trading policy",
       why: "The model cannot raise clip, leverage, or permissions. Pin writes a hash on this computer.",
-      fix: "Open Policy and pin the default until you change it on purpose.",
-      go: "policy",
-      goLabel: "Open Policy",
+      fix: "Open Security and pin the default until you change it on purpose.",
+      go: "security",
+      goLabel: "Open Security",
     };
   }
   const credit = checkNamed(checks, "direct_credit");
@@ -114,9 +114,9 @@ export function nextFix(
   }
   return {
     title: "Desk is ready",
-    why: "Watch is public marks. Research stays sealed. Authorize stays on this computer.",
-    fix: "Pick a market, run research, then type AUTHORIZE on the exact preview.",
-    go: "watch",
-    goLabel: "Open Watch",
+    why: "Markets is public marks. Research stays sealed. Authorize stays on this computer.",
+    fix: "Pick a market, run research, then type AUTHORIZE on the exact preview — or enable Guarded Autonomy on Automation.",
+    go: "markets",
+    goLabel: "Open Markets",
   };
 }

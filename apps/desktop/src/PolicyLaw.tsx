@@ -23,7 +23,7 @@ export function PolicyLaw({
     {
       k: "Allowed assets",
       v: "ETH BTC SOL HYPE DOGE AVAX",
-      why: "Watch and research stay inside this universe.",
+      why: "Markets and research stay inside this universe unless you pin a change.",
       hit: "A coin outside the list is blocked before a sealed request starts.",
     },
     {
@@ -31,6 +31,24 @@ export function PolicyLaw({
       v: "Off until you flip it",
       why: "You halt new orders. The model cannot turn this off.",
       hit: "New AUTHORIZE posts are refused while it is on.",
+    },
+    {
+      k: "Max open positions",
+      v: "1",
+      why: "Guarded Autonomy cannot add a market while this ceiling is full.",
+      hit: "A new order is refused. Existing positions are not flattened.",
+    },
+    {
+      k: "Consecutive losses",
+      v: "3",
+      why: "A losing streak stops the mission. The model cannot raise this.",
+      hit: "Guarded Autonomy stands down until you enable it again.",
+    },
+    {
+      k: "Withdraw / transfer",
+      v: "Impossible",
+      why: "The session can order and cancel only.",
+      hit: "Those actions are denied at the host.",
     },
     {
       k: "Max slippage",

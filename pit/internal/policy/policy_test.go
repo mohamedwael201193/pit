@@ -31,6 +31,8 @@ func TestPolicyDenies(t *testing.T) {
 		{"liq", func(p *Policy, c *Context) { p.MinLiquidityUSD = 100; c.ImpactUSD = 1 }},
 		{"cd", func(p *Policy, c *Context) { p.CooldownSeconds = 60; c.LastFillUnix = c.NowUnix - 1 }},
 		{"cal", func(p *Policy, c *Context) { p.MinSkillCalibration = 0.8; c.SkillCalib = 0.1 }},
+		{"open", func(p *Policy, c *Context) { p.MaxOpenPositions = 1; c.OpenPositions = 1 }},
+		{"streak", func(p *Policy, c *Context) { p.MaxConsecutiveLosses = 2; c.ConsecutiveLosses = 2 }},
 	}
 	for _, tc := range cases {
 		pp := Default()

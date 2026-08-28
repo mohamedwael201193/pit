@@ -20,6 +20,7 @@ import {
   fetchCalibration,
   fetchChatThreads,
   fetchIdentity,
+  fetchMission,
   fetchPositions,
   fetchSecurity,
   fetchUpdate,
@@ -29,6 +30,7 @@ import {
   mutateChatThread,
   pairCode,
   pinLocalPolicy,
+  postMission,
   prettyCode,
   researchEvidence,
   researchStatus,
@@ -43,6 +45,8 @@ import {
   type ChatThread,
   type DoctorCheck,
   type LocalStatus,
+  type MissionPublic,
+  type AutoPrefs,
   type SecurityDomain,
   type VenuePosition,
 } from "./companion";
@@ -50,7 +54,7 @@ import { LINKS, explorerAddress, hyperliquidAPI, hyperliquidApp } from "./links"
 import { nextFix } from "./nextFix";
 import { probes } from "./readiness";
 import { committeeVerified } from "./honesty";
-import { AutomationPane, type AutoPrefs } from "./AutomationPane";
+import { AutomationCenter } from "./AutomationCenter";
 import { CommandChat } from "./CommandChat";
 import { ActivityTimeline } from "./ActivityTimeline";
 import { PositionsPanel } from "./PositionsPanel";
@@ -66,9 +70,19 @@ import { ResearchBoard } from "./ResearchBoard";
 import { askNotify, deskNotify } from "./notify";
 
 type Net = "mainnet" | "testnet";
-type View = "home" | "chat" | "watch" | "research" | "positions" | "activity" | "policy" | "security" | "account" | "settings";
+type View = "home" | "chat" | "markets" | "research" | "portfolio" | "activity" | "automation" | "security";
 
-type Coin = { coin: string; reason: string; why?: string; trend?: string; rank?: number; freshness?: string; mark: number; eligible?: boolean; oracle?: number; funding?: number; openInterest?: number; timestamp?: string };
+type Coin = { coin: string; reason: string; why?: string; trend?: string; rank?: number; freshness?: string; mark: number; eligible?: boolean; oracle?: number; funding?: number; openInterest?: number; volume?: number; timestamp?: string; venue?: string; policyFit?: string; riskFlags?: string[]; provenance?: string; block?: string };
+
+function mapView(v: string): View {
+  if (v === "watch" || v === "markets") return "markets";
+  if (v === "positions" || v === "portfolio") return "portfolio";
+  if (v === "policy" || v === "account" || v === "settings") return "security";
+  if (v === "automation") return "automation";
+  if (v === "preview") return "research";
+  if (v === "home" || v === "chat" || v === "research" || v === "activity" || v === "security") return v;
+  return "home";
+}
 
 type ResearchRole = {
   role?: string;
@@ -103,14 +117,12 @@ const SETUP_KEY = "pit.desk.setup";
 const RAIL: { id: View; label: string }[] = [
   { id: "home", label: "Desk" },
   { id: "chat", label: "Chat" },
-  { id: "watch", label: "Watch" },
+  { id: "markets", label: "Markets" },
   { id: "research", label: "Research" },
-  { id: "positions", label: "Positions" },
+  { id: "portfolio", label: "Portfolio" },
   { id: "activity", label: "Activity" },
-  { id: "policy", label: "Policy" },
+  { id: "automation", label: "Automation" },
   { id: "security", label: "Security" },
-  { id: "account", label: "Account" },
-  { id: "settings", label: "Settings" },
 ];
 
 export function App() {
@@ -176,6 +188,9 @@ export function App() {
   const [memoryEpoch, setMemoryEpoch] = useState(0);
   const [summary, setSummary] = useState<AccountSummary>({});
   const [autoPrefs, setAutoPrefs] = useState<AutoPrefs>({ watch: true, notify: true, auto_research: false, cadence_minutes: 15, trigger: "policy_pass" });
+  const [mission, setMission] = useState<MissionPublic>({ mode: "manual", mission: { mode: "manual" } });
+  const [bestWhy, setBestWhy] = useState("");
+  const [scanned, setScanned] = useState(0);
   const fillKey = useRef("");
   const lastNotify = useRef(0);
 
@@ -355,6 +370,8 @@ export function App() {
           .then((body) => {
             if (gone || body.sign || body.trade) return;
             setCoins(Array.isArray(body.coins) ? body.coins : []);
+            if (body.bestWhy) setBestWhy(body.bestWhy);
+            if (typeof body.scanned === "number") setScanned(body.scanned);
           })
           .catch(() => {
             if (!gone) setCoins([]);
@@ -479,6 +496,9 @@ export function App() {
     void fetchAutomation().then((p) => {
       if (!gone) setAutoPrefs(p);
     });
+    void fetchMission().then((m) => {
+      if (!gone) setMission(m);
+    });
     return () => {
       gone = true;
     };
@@ -513,12 +533,9 @@ export function App() {
     ? `Researching ${researchCoin}`
     : preview?.eligible
       ? "Awaiting AUTHORIZE"
-      : "Idle";
-  const cost = researchBusy
-    ? "Private compute (0G Direct)"
-    : preview?.eligible
-      ? "Trading capital only after you type AUTHORIZE"
-      : "None";
+      : status?.missionRunning || mission.running
+        ? `Mission ${status?.mode || mission.mode}`
+        : "Idle";
 
   function finishSetup() {
     try {
@@ -611,7 +628,7 @@ export function App() {
 
   async function researchThis(coin?: string) {
     const gen = ++researchGen.current;
-    const want = (coin || "ETH").toUpperCase();
+    const want = (coin || coins.find((c) => c.eligible)?.coin || "ETH").toUpperCase();
     setResearchNote(null);
     setResearchEvidence("");
     setAuthErr(null);
@@ -835,14 +852,12 @@ export function App() {
         actions={[
           { id: "desk", label: "Open Desk", run: () => setView("home") },
           { id: "chat", label: "Open Chat", run: () => setView("chat") },
-          { id: "watch", label: "Open Watch", run: () => setView("watch") },
+          { id: "markets", label: "Open Markets", run: () => setView("markets") },
           { id: "research", label: "Open Research", run: () => setView("research") },
-          { id: "positions", label: "Open Positions", run: () => setView("positions") },
+          { id: "portfolio", label: "Open Portfolio", run: () => setView("portfolio") },
           { id: "activity", label: "Open Activity", run: () => setView("activity") },
-          { id: "policy", label: "Open Policy", run: () => setView("policy") },
+          { id: "automation", label: "Open Automation", run: () => setView("automation") },
           { id: "security", label: "Open Security", run: () => setView("security") },
-          { id: "account", label: "Open Account", run: () => setView("account") },
-          { id: "settings", label: "Open Settings", run: () => setView("settings") },
           { id: "start", label: "Start research", run: () => void researchThis("ETH") },
           { id: "hl", label: "Open Hyperliquid", run: () => window.open(hyperliquidApp(net), "_blank", "noopener,noreferrer") },
           { id: "hlapi", label: "Open Hyperliquid API", run: () => window.open(hyperliquidAPI(net), "_blank", "noopener,noreferrer") },
@@ -857,7 +872,7 @@ export function App() {
       <aside className="rail">
         <div className="rail-brand">
           <div className="word">PIT.</div>
-          <p className="kicker">{status?.version || "0.2.4"} · local execution</p>
+          <p className="kicker">{status?.version || "0.3.0"} · local execution</p>
         </div>
         <nav className="rail-nav" aria-label="Desk">
           {RAIL.map((item) => (
@@ -880,7 +895,7 @@ export function App() {
           <p>{sessionAlive ? "session live" : "no session"}</p>
           <p>{checks.find((c) => c.name === "direct_credit")?.ok ? "compute ready" : "compute action"}</p>
           <p>{companionUp ? "companion live" : "starting companion"}</p>
-          <button type="button" className="ghost" onClick={() => setView("settings")}>
+          <button type="button" className="ghost" onClick={() => setView("security")}>
             Help / Diagnostics
           </button>
         </div>
@@ -899,7 +914,6 @@ export function App() {
           </div>
           <p className="fine" style={{ margin: 0 }}>
             {attention.title}
-            {cost !== "None" ? ` · ${cost}` : ""}
           </p>
           <div className="bar-meta">
             <NetworkToggle net={net} onChange={setNet} />
@@ -912,7 +926,7 @@ export function App() {
           <article className="card stop" role="status">
             <p className="label">COMPANION VERSION</p>
             <p>
-              This window expects PIT 0.2.4. The local companion is {status.version}. Close PIT, install the matching
+              This window expects PIT 0.3.0. The local companion is {status.version}. Close PIT, install the matching
               desktop, then launch again. A running sealed job is not cancelled by this warning.
             </p>
           </article>
@@ -984,7 +998,7 @@ export function App() {
                   return;
                 }
                 if (v === "preview") setView("research");
-                else setView(v as View);
+                else setView(mapView(v));
               }}
               onResearch={(c) => void researchThis(c)}
               onOpenPreview={() => setView("research")}
@@ -1021,23 +1035,28 @@ export function App() {
               awaitingAuth={Boolean(preview?.eligible)}
               coins={eligible}
               lastEvent={activity.length ? eventLine(activity[activity.length - 1]) : undefined}
+              mode={status?.mode || mission.mode}
+              missionStop={status?.missionStop || mission.mission?.last_stop}
+              exposure={summary.totalNtlPos || summary.accountValue}
               onResearch={(c) => void researchThis(c)}
               onGo={(v) => setView(v)}
             />
         ) : null}
 
-        {setupDone && view === "watch" ? (
+        {setupDone && view === "markets" ? (
           <WatchBook
             coins={coins}
+            bestWhy={bestWhy}
+            scanned={scanned}
             computeReady={Boolean(checks.find((c) => c.name === "direct_credit")?.ok)}
             researchBusy={researchBusy}
             onResearch={(c) => void researchThis(c)}
           />
         ) : null}
 
-        {setupDone && view === "positions" ? (
+        {setupDone && view === "portfolio" ? (
           <main className="page dense">
-            <p className="eyebrow">Positions</p>
+            <p className="eyebrow">Portfolio</p>
             <h1>Live exposure</h1>
             <p className="lead">Venue truth for the connected trading account. PIT cannot withdraw.</p>
             <PositionsPanel
@@ -1093,26 +1112,40 @@ export function App() {
         {setupDone && view === "activity" ? (
           <main className="page dense">
             <p className="eyebrow">Activity</p>
-            <h1>Timeline</h1>
-            <p className="lead">Opportunity, research, committee, preview, approval, order, fill, policy, session, receipt. Historical fills never appear inside a new preview.</p>
+            <h1>Evidence trail</h1>
+            <p className="lead">Market scan, research, committee, policy, preview hash, execution, OID, fill, receipt. Historical fills never appear inside a new preview.</p>
             <ActivityTimeline events={activity} lastOid={lastOid} lastOrder={status?.lastOrder} />
           </main>
         ) : null}
 
-        {setupDone && view === "policy" ? (
-          <main className="page dense">
-            <p className="eyebrow">CONSTRAINTS</p>
-            <h1>Policy</h1>
-            <p className="lead">Host engine enforces this. The model cannot raise clip, leverage, or permissions.</p>
-            <PolicyLaw pinned={pinned} onPin={() => void onPolicy()} busy={bindBusy} />
-          </main>
+        {setupDone && view === "automation" ? (
+          <AutomationCenter
+            mission={mission}
+            prefs={autoPrefs}
+            busy={bindBusy}
+            kill={Boolean(status?.kill)}
+            onMode={(mode) => {
+              void postMission({ mode }).then(setMission);
+            }}
+            onEnable={(typed, hours) => {
+              void postMission({ typed, hours, mode: "guarded" }).then(setMission);
+            }}
+            onStop={() => {
+              void postMission({ stop: true }).then(setMission);
+            }}
+            onSavePrefs={(p) => {
+              setAutoPrefs(p);
+              void saveAutomation(p).then(setAutoPrefs);
+            }}
+          />
         ) : null}
 
         {setupDone && view === "security" ? (
           <main className="page dense">
             <p className="eyebrow">PERMISSIONS</p>
             <h1>Security</h1>
-            <p className="lead">Order and cancel only. Withdraw is impossible through PIT.</p>
+            <p className="lead">Order and cancel only. Withdraw is impossible through PIT. Policy is host law.</p>
+            <PolicyLaw pinned={pinned} onPin={() => void onPolicy()} busy={bindBusy} />
             <SecurityCenter
               domains={securityDomains}
               net={net}
@@ -1136,6 +1169,22 @@ export function App() {
               onRevoke={() => void onRevoke()}
             />
             <article className="card">
+              <p className="label">THIS WORKSPACE</p>
+              <p>Wallet {walletCheck?.ok ? walletCheck.detail : "unbound"}</p>
+              <p>Network {net === "mainnet" ? "MAINNET" : "TESTNET"}</p>
+              <p>PIT Agent {status?.agentName || "none"}</p>
+              <p>Agent address {agent || "none"}</p>
+              <p>Session {sessionAlive ? "Active" : "none"}{status?.sessionExpires ? ` until ${new Date(status.sessionExpires).toISOString().replace(".000Z", "Z")}` : ""}</p>
+              {status?.workspace ? <p>Desk ID {status.workspace}</p> : null}
+              {status?.wallet ? (
+                <a className="linkish" href={explorerAddress(status.wallet)} target="_blank" rel="noreferrer">
+                  View on explorer
+                </a>
+              ) : null}
+              <p className="fine">{identityNote}</p>
+              <p className="fine">{calibCopy}</p>
+            </article>
+            <article className="card">
               <p className="label">KILL SWITCH</p>
               <p>You flip this. The model cannot. New orders stop on this workspace until you turn it off.</p>
               <button type="button" className="linkish" onClick={() => void onKill(true)} disabled={bindBusy || Boolean(status?.kill)}>
@@ -1157,92 +1206,9 @@ export function App() {
                 Open Hyperliquid
               </a>
             </article>
-          </main>
-        ) : null}
-
-        {setupDone && view === "account" ? (
-          <main className="page dense">
-            <p className="eyebrow">IDENTITY</p>
-            <h1>Account</h1>
-            <p className="lead">{NAMED.TWO_WALLETS}</p>
-            <article className="card">
-              <p className="label">THIS WORKSPACE</p>
-              <p>Wallet {walletCheck?.ok ? walletCheck.detail : "unbound"}</p>
-              <p>Network {net === "mainnet" ? "MAINNET" : "TESTNET"}</p>
-              <p>PIT Agent {status?.agentName || "none"}</p>
-              <p>Agent address {agent || "none"}</p>
-              <p>Session {sessionAlive ? "Active" : "none"}{status?.sessionExpires ? ` until ${new Date(status.sessionExpires).toISOString().replace(".000Z", "Z")}` : ""}</p>
-              <p>Hyperliquid {checks.find((c) => c.name === "hl_agent")?.ok ? "Connected" : "Needs approval"}</p>
-              <p>Private compute {checks.find((c) => c.name === "direct_credit")?.ok ? "Ready" : "Needs action"}</p>
-              {status?.workspace ? <p>Desk ID {status.workspace}</p> : null}
-              {status?.wallet ? (
-                <a className="linkish" href={explorerAddress(status.wallet)} target="_blank" rel="noreferrer">
-                  View on explorer
-                </a>
-              ) : null}
-            </article>
-            <article className="card">
-              <p className="label">DESK IDENTITY</p>
-              <p>{identityNote}</p>
-              <p className="fine">Identity is optional. Trading does not wait on mint. Transfer of Agentic ID is unavailable on mainnet.</p>
-            </article>
-            <article className="card">
-              <p className="label">CALIBRATION</p>
-              <p>{calibCopy}</p>
-            </article>
-            {!sessionAlive ? (
-              <article className="card">
-                <p className="label">CONNECT TRADING</p>
-                <p>Create an order/cancel session on this computer, then approve that agent on Hyperliquid.</p>
-                <button type="button" className="linkish" onClick={() => void onSession()} disabled={bindBusy || !companionUp}>
-                  Create local session
-                </button>
-                {agent ? <p className="fine">Agent {agent}</p> : null}
-                <a className="linkish" href={hyperliquidAPI(net)} target="_blank" rel="noreferrer">
-                  Open Hyperliquid API
-                </a>
-              </article>
-            ) : null}
-            <p className="fine">{NAMED.TRANSFER_NOT_LIVE}</p>
-          </main>
-        ) : null}
-
-        {setupDone && view === "settings" ? (
-          <main className="page dense">
-            <p className="eyebrow">DIAGNOSTICS</p>
-            <h1>Settings</h1>
             <NetworkToggle net={net} onChange={setNet} />
             <NetworkBanner net={net} />
-            <AutomationPane
-              prefs={autoPrefs}
-              busy={bindBusy}
-              onSave={(p) => {
-                setAutoPrefs(p);
-                void saveAutomation(p).then(setAutoPrefs);
-              }}
-            />
             <CapabilityMatrix net={net} />
-            <article className="card">
-              <p className="label">UPDATES</p>
-              <p>{updateNote}</p>
-              <p>Restart {restartAllowed ? "allowed" : "refused — research is running. PIT will not replace pit.exe under a live job."}</p>
-              <a className="linkish" href={LINKS.releases} target="_blank" rel="noreferrer">
-                Open release
-              </a>
-            </article>
-            <article className="card">
-              <p className="label">MEMORY</p>
-              <p>Forget wipes working memory and chat on this workspace. Receipts and venue positions stay.</p>
-              <button
-                type="button"
-                className="linkish"
-                onClick={() => {
-                  void forgetMemory().then(() => setMemoryEpoch((n) => n + 1));
-                }}
-              >
-                Forget this workspace memory
-              </button>
-            </article>
             <article className="card">
               <p className="label">DOCTOR</p>
               {checks.length === 0 ? (
@@ -1258,22 +1224,24 @@ export function App() {
               )}
             </article>
             <article className="card">
-              <p className="label">OFFICIAL LINKS</p>
-              <a className="linkish" href={LINKS.pcAdvanced} target="_blank" rel="noreferrer">
-                Open 0G Private Compute
-              </a>
-              <a className="linkish" href={hyperliquidAPI(net)} target="_blank" rel="noreferrer">
-                Open Hyperliquid API
-              </a>
-              <a className="linkish" href={LINKS.releases} target="_blank" rel="noreferrer">
-                Open release
-              </a>
-              <a className="linkish" href={LINKS.pair} target="_blank" rel="noreferrer">
-                Open pairing
-              </a>
+              <p className="label">UPDATES</p>
+              <p>{updateNote}</p>
+              <p>Restart {restartAllowed ? "allowed" : "refused — research is running. PIT will not replace pit.exe under a live job."}</p>
+            </article>
+            <article className="card">
+              <p className="label">MEMORY</p>
+              <p>Forget wipes working memory and chat on this workspace. Receipts and venue positions stay.</p>
+              <button
+                type="button"
+                className="linkish"
+                onClick={() => {
+                  void forgetMemory().then(() => setMemoryEpoch((n) => n + 1));
+                }}
+              >
+                Forget this workspace memory
+              </button>
             </article>
             <p className="fine">{NAMED.TWO_WALLETS}</p>
-            <p className="fine">{NAMED.TRANSFER_NOT_LIVE}</p>
           </main>
         ) : null}
             </div>

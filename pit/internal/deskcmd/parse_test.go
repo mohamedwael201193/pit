@@ -60,7 +60,7 @@ func TestOperatorIntents(t *testing.T) {
 		t.Fatalf("%+v", r)
 	}
 	r = Parse("Explain my policy.")
-	if r.Tool != "policy.get" || r.Navigate != "policy" || r.Execute {
+	if r.Tool != "policy.get" || r.Navigate != "security" || r.Execute {
 		t.Fatalf("%+v", r)
 	}
 	r = Parse("Open Hyperliquid API")
@@ -75,7 +75,7 @@ func TestHappeningAndPositions(t *testing.T) {
 		t.Fatalf("%+v", r)
 	}
 	r = Parse("Show me my current positions")
-	if r.Navigate != "positions" || r.Execute {
+	if r.Navigate != "portfolio" || r.Execute {
 		t.Fatalf("%+v", r)
 	}
 }
@@ -121,7 +121,46 @@ func TestTypoResearchStartsSealedPass(t *testing.T) {
 
 func TestStrongestOpportunityIsWatch(t *testing.T) {
 	r := Parse("Find the strongest opportunity.")
-	if r.Execute || r.StartResearch || r.Tool != "watch.get" {
+	if r.Execute || r.StartResearch || r.Tool != "watch.best" {
+		t.Fatalf("%+v", r)
+	}
+}
+
+func TestAutonomyIntents(t *testing.T) {
+	r := Parse("Find me the best opportunity right now.")
+	if r.Execute || r.StartResearch || r.Tool != "watch.best" {
+		t.Fatalf("%+v", r)
+	}
+	r = Parse("Scan everything allowed by my policy.")
+	if r.Execute || r.Tool != "watch.scan" || r.Navigate != "markets" {
+		t.Fatalf("%+v", r)
+	}
+	r = Parse("Research the best setup.")
+	if r.Execute || !r.StartResearch || r.Tool != "research.best" {
+		t.Fatalf("%+v", r)
+	}
+	r = Parse("Trade the strongest setup.")
+	if r.Execute || !r.StartResearch || r.Tool != "research.best" {
+		t.Fatalf("%+v", r)
+	}
+	r = Parse("Run autonomously for 24 hours.")
+	if r.Execute || r.StartResearch || r.Tool != "mission.enable_required" || r.Navigate != "automation" {
+		t.Fatalf("%+v", r)
+	}
+	r = Parse("Stop autonomous trading.")
+	if r.Execute || r.Tool != "mission.stop" {
+		t.Fatalf("%+v", r)
+	}
+	r = Parse("Show every trade PIT made today.")
+	if r.Execute || r.Tool != "activity.today" {
+		t.Fatalf("%+v", r)
+	}
+	r = Parse("Show me the on-chain proof.")
+	if r.Execute || r.Tool != "activity.proof" {
+		t.Fatalf("%+v", r)
+	}
+	r = Parse("Why is this opportunity better than the others?")
+	if r.Execute || r.Tool != "watch.compare" {
 		t.Fatalf("%+v", r)
 	}
 }

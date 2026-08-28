@@ -15,31 +15,38 @@ type MultiBookSource interface {
 	PublicBooks(coins []string) ([]hl.BookSnapshot, error)
 }
 
-// Live pulls venue books for allowlisted coins only. It never places orders.
-func Live(src BookSource, p policy.Policy) ([]Candidate, error) {
+type UniverseSource interface {
+	PublicUniverse() ([]hl.BookSnapshot, error)
+}
+
+func loadBooks(src BookSource, p policy.Policy) []hl.BookSnapshot {
 	if src == nil {
-		return Scan(nil, p)
+		return nil
 	}
-	var books []hl.BookSnapshot
-	batched := false
+	if u, ok := src.(UniverseSource); ok {
+		if got, err := u.PublicUniverse(); err == nil {
+			return got
+		}
+	}
 	if m, ok := src.(MultiBookSource); ok {
-		got, err := m.PublicBooks(p.AllowedAssets)
-		if err == nil {
-			books = got
-			batched = true
+		if got, err := m.PublicBooks(p.AllowedAssets); err == nil {
+			return got
 		}
 	}
-	if !batched {
-		books = make([]hl.BookSnapshot, 0, len(p.AllowedAssets))
-		for _, coin := range p.AllowedAssets {
-			b, err := src.PublicBook(coin)
-			if err != nil || b.MarkPx <= 0 {
-				continue
-			}
-			books = append(books, b)
+	books := make([]hl.BookSnapshot, 0, len(p.AllowedAssets))
+	for _, coin := range p.AllowedAssets {
+		b, err := src.PublicBook(coin)
+		if err != nil || b.MarkPx <= 0 {
+			continue
 		}
+		books = append(books, b)
 	}
-	cands, err := Scan(books, p)
+	return books
+}
+
+// Live pulls venue books and returns policy-eligible opportunities only. It never places orders.
+func Live(src BookSource, p policy.Policy) ([]Candidate, error) {
+	cands, err := Scan(loadBooks(src, p), p)
 	if err != nil {
 		return nil, err
 	}
@@ -47,4 +54,13 @@ func Live(src BookSource, p policy.Policy) ([]Candidate, error) {
 		return nil, fmt.Errorf("watch_must_not_trade")
 	}
 	return cands, nil
+}
+
+// LiveUniverse returns every live book PIT can read, with an honest policy-fit flag.
+func LiveUniverse(src BookSource, p policy.Policy) ([]Candidate, error) {
+	all := Universe(loadBooks(src, p), p)
+	if err := MayPlaceOrder(true); err == nil {
+		return nil, fmt.Errorf("watch_must_not_trade")
+	}
+	return all, nil
 }

@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/mohamedwael201193/pit/internal/auto"
 	"github.com/mohamedwael201193/pit/internal/cli"
 	"github.com/mohamedwael201193/pit/internal/config"
 	"github.com/mohamedwael201193/pit/internal/deskcmd"
@@ -25,20 +26,26 @@ func (h *Hub) decorateChat(parsed deskcmd.Result) deskcmd.Result {
 		parsed.Reply = h.replyResearch(parsed.Reply)
 	case "refuse_execute":
 		parsed.Reply = h.replyCannotExecute(parsed.Reply)
-	case "activity.list":
+	case "activity.list", "activity.today", "activity.proof":
 		parsed.Reply = h.replyActivity(parsed.Reply)
 	case "session.status":
 		parsed.Reply = h.replySession()
-	case "watch.get":
+	case "watch.get", "watch.best", "watch.scan", "watch.compare":
 		parsed.Reply = h.replyWatch(parsed)
-	case "research.start":
+	case "research.start", "research.best":
 		if live := h.replyWatch(parsed); live != "" {
 			parsed.Reply = live + " " + parsed.Reply
 		}
 	case "policy.get":
-		parsed.Reply = "Policy is pinned host law on this computer. Chat cannot raise clip, leverage, or permissions. Open Policy to read the exact constraints."
+		parsed.Reply = "Policy is pinned host law on this computer. Chat cannot raise clip, leverage, or permissions. Open Security to read the exact constraints."
 	case "setup.guide":
 		parsed.Reply = h.replyDeskStatus() + " First-run setup walks wallet, network, Hyperliquid, session, Protect, private compute, then policy. Chat cannot AUTHORIZE."
+	case "mission.enable_required":
+		parsed.Reply = h.replyMissionEnable()
+	case "mission.stop":
+		parsed.Reply = h.replyMissionStop()
+	case "mission.status":
+		parsed.Reply = h.replyMissionStatus()
 	}
 	return parsed
 }
@@ -68,14 +75,21 @@ func (h *Hub) replyDeskStatus() string {
 	if running {
 		return fmt.Sprintf("Researching %s — %s still running. Compute money, not trading capital. Chat cannot AUTHORIZE. Open Research for the live board.", strings.ToUpper(coin), strings.ReplaceAll(stage, "_", " "))
 	}
+	m := auto.LoadMission(h.Dir)
+	mode := "Manual"
+	if m.Mode == auto.ModeGuarded && m.Running {
+		mode = "Guarded Autonomy"
+	} else if m.Mode == auto.ModeResearch {
+		mode = "Research Only"
+	}
 	if eligible && hash != "" {
-		return fmt.Sprintf("Idle. Wallet %s. %s. Exact preview is waiting for AUTHORIZE on Research. Chat cannot AUTHORIZE.", wallet, sess)
+		return fmt.Sprintf("Idle. Wallet %s. %s. Mode %s. Exact preview is waiting for AUTHORIZE on Research. Chat cannot AUTHORIZE.", wallet, sess, mode)
 	}
 	top := h.replyWatch(deskcmd.Result{})
 	if strings.Contains(top, "mark") {
-		return fmt.Sprintf("Idle. Wallet %s. %s. Interesting now: %s Chat cannot AUTHORIZE.", wallet, sess, top)
+		return fmt.Sprintf("Idle. Wallet %s. %s. Mode %s. Best opportunity: %s Chat cannot AUTHORIZE.", wallet, sess, mode, top)
 	}
-	return fmt.Sprintf("Idle. Wallet %s. %s. Open Watch to discover, Research to investigate. Chat cannot AUTHORIZE.", wallet, sess)
+	return fmt.Sprintf("Idle. Wallet %s. %s. Mode %s. Open Markets to discover, Research to investigate. Chat cannot AUTHORIZE.", wallet, sess, mode)
 }
 
 func (h *Hub) replyWatch(parsed deskcmd.Result) string {
@@ -84,7 +98,7 @@ func (h *Hub) replyWatch(parsed deskcmd.Result) string {
 		if parsed.Coin != "" {
 			return parsed.Coin + " is in the policy universe. Bind this computer to load the live Hyperliquid mark. Side is not decided here."
 		}
-		return "Watch lists policy-eligible public markets after this computer is bound. Empty is honest until then."
+		return "Markets lists live Hyperliquid books after this computer is bound. Empty is honest until then."
 	}
 	netName := "mainnet"
 	if strings.TrimSpace(st.Network) != "" {
@@ -92,17 +106,23 @@ func (h *Hub) replyWatch(parsed deskcmd.Result) string {
 	}
 	net, nerr := config.ParseNetwork(netName)
 	if nerr != nil {
-		return "Wrong network. Watch stays unread."
+		return "Wrong network. Markets stay unread."
 	}
-	cands, lerr := watch.Live(hl.New(config.For(net)), watch.PolicyForWatch())
+	cands, lerr := watch.LiveUniverse(hl.New(config.For(net)), watch.PolicyForWatch())
 	if lerr != nil {
-		return "Hyperliquid did not return a live book. Empty Watch is the honest state. No invented scores."
+		return "Hyperliquid did not return a live book. Empty Markets is the honest state. No invented scores."
 	}
 	view := watch.Public(cands, string(net))
+	if parsed.Tool == "watch.scan" {
+		return fmt.Sprintf("Scanned %d live Hyperliquid perps. %d match your policy. %s Side is not decided here.", view.Scanned, view.Count, view.Copy)
+	}
 	if len(view.Coins) == 0 {
-		return "No opportunities match your policy. Empty is honest. Side is not decided on Watch."
+		return "No live Hyperliquid books matched this scan. Empty is honest. Side is not decided on Markets."
 	}
 	row := view.Coins[0]
+	if view.Best != nil && (parsed.Tool == "watch.best" || parsed.Tool == "watch.compare" || parsed.Coin == "") {
+		row = *view.Best
+	}
 	if parsed.Coin != "" {
 		for _, c := range view.Coins {
 			if c.Coin == parsed.Coin {
@@ -111,12 +131,58 @@ func (h *Hub) replyWatch(parsed deskcmd.Result) string {
 			}
 		}
 	}
-	fit := "PASS"
-	if !row.Eligible {
-		fit = "BLOCKED"
+	fit := row.PolicyFit
+	if fit == "" {
+		if row.Eligible {
+			fit = "PASS"
+		} else {
+			fit = "BLOCKED"
+		}
 	}
-	return fmt.Sprintf("%s mark %g (oracle %g, funding %g, open interest %.0f). %s Trend: %s. Host rank %d, not a model score. Policy %s. Freshness %s. Side is not decided here.",
-		row.Coin, row.Mark, row.Oracle, row.Funding, row.OpenInterest, row.Why, row.Trend, row.Rank, fit, row.Freshness)
+	whyBetter := ""
+	if parsed.Tool == "watch.compare" && view.Best != nil {
+		whyBetter = " " + view.BestWhy
+	}
+	return fmt.Sprintf("%s mark %g (oracle %g, funding %g, open interest %.0f, day notional %g). %s Trend: %s. Host rank %d, not a model score. Policy %s. Freshness %s. Venue hyperliquid. Provenance %s.%s Side is not decided here.",
+		row.Coin, row.Mark, row.Oracle, row.Funding, row.OpenInterest, row.Volume, row.Why, row.Trend, row.Rank, fit, row.Freshness, row.Provenance, whyBetter)
+}
+
+func (h *Hub) pickBestCoin() string {
+	st, err := cli.Load(h.Dir)
+	netName := "mainnet"
+	if err == nil && strings.TrimSpace(st.Network) != "" {
+		netName = st.Network
+	}
+	net, nerr := config.ParseNetwork(netName)
+	if nerr != nil {
+		return "ETH"
+	}
+	cands, lerr := watch.Live(hl.New(config.For(net)), watch.PolicyForWatch())
+	if lerr != nil {
+		return "ETH"
+	}
+	if best, ok := watch.Best(cands); ok {
+		return best.Coin
+	}
+	return "ETH"
+}
+
+func (h *Hub) replyMissionEnable() string {
+	return "Chat cannot enable Guarded Autonomy. Open Automation, review the host limits, then type ENABLE GUARDED AUTONOMY. The model cannot change those limits."
+}
+
+func (h *Hub) replyMissionStop() string {
+	m := auto.LoadMission(h.Dir)
+	why := m.LastStop
+	if why == "" {
+		why = "stopped"
+	}
+	return "Guarded Autonomy is stopped (" + why + "). PIT will not place further orders until you enable it again on Automation. Chat cannot AUTHORIZE."
+}
+
+func (h *Hub) replyMissionStatus() string {
+	m := auto.LoadMission(h.Dir)
+	return fmt.Sprintf("Mode %s. Running %v. Best %s. Last action %s. Stop reason %s. Trades today %d. Chat cannot enable Guarded Autonomy.", m.Mode, m.Running, m.BestCoin, m.LastAction, m.LastStop, m.TradesToday)
 }
 
 func (h *Hub) replyPositions() string {

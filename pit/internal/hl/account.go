@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -146,6 +147,7 @@ type BookSnapshot struct {
 	OraclePx     float64 `json:"oraclePx"`
 	Funding      float64 `json:"funding"`
 	OpenInterest float64 `json:"openInterest"`
+	DayNtlVlm    float64  `json:"dayNtlVlm,omitempty"`
 	SzDecimals   int     `json:"szDecimals"`
 }
 
@@ -229,6 +231,7 @@ func snapshotFromMeta(universe []map[string]any, ctxs []map[string]any, coin str
 		OraclePx:     asFloat(ctx["oraclePx"]),
 		Funding:      asFloat(ctx["funding"]),
 		OpenInterest: asFloat(ctx["openInterest"]),
+		DayNtlVlm:    asFloat(ctx["dayNtlVlm"]),
 		SzDecimals:   metaCoinDecimals(universe, coin),
 	}, true
 }
@@ -254,6 +257,25 @@ func (c *Client) PublicBooks(coins []string) ([]BookSnapshot, error) {
 	out := make([]BookSnapshot, 0, len(coins))
 	for _, coin := range coins {
 		if b, ok := snapshotFromMeta(universe, ctxs, coin); ok && b.MarkPx > 0 {
+			out = append(out, b)
+		}
+	}
+	return out, nil
+}
+
+// PublicUniverse returns every live perp book the venue currently publishes.
+func (c *Client) PublicUniverse() ([]BookSnapshot, error) {
+	universe, ctxs, err := c.metaAndCtxs()
+	if err != nil {
+		return nil, err
+	}
+	out := make([]BookSnapshot, 0, len(universe))
+	for _, u := range universe {
+		name, _ := u["name"].(string)
+		if strings.TrimSpace(name) == "" {
+			continue
+		}
+		if b, ok := snapshotFromMeta(universe, ctxs, name); ok && b.MarkPx > 0 {
 			out = append(out, b)
 		}
 	}

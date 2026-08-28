@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/mohamedwael201193/pit/internal/auto"
 	"github.com/mohamedwael201193/pit/internal/calib"
 	"github.com/mohamedwael201193/pit/internal/cli"
 	"github.com/mohamedwael201193/pit/internal/companion"
@@ -55,6 +56,8 @@ Session
 
 Research
   pit watch
+  pit scan
+  pit mission
   pit opportunities
   pit chat "what is happening?"
   pit positions
@@ -140,6 +143,10 @@ func main() {
 		cmdNetwork()
 	case "watch", "opportunities":
 		cmdOpportunities()
+	case "scan":
+		cmdScan()
+	case "mission", "mode":
+		cmdMission()
 	case "chat":
 		cmdChat(rest[1:])
 	case "positions":
@@ -408,16 +415,50 @@ func cmdOpportunities() {
 			net = n
 		}
 	}
-	cands, err := watch.Live(hl.New(config.For(net)), p)
+	all, err := watch.LiveUniverse(hl.New(config.For(net)), p)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
-	fmt.Println(watch.Attention(len(cands)))
-	fmt.Println("Watch does not place orders.")
-	for _, c := range cands {
-		fmt.Printf("%s  %s  mark=%g\n", c.Coin, c.Reason, c.Book.MarkPx)
+	view := watch.Public(all, string(net))
+	fmt.Println(view.Copy)
+	fmt.Printf("scanned %d live Hyperliquid perps\n", view.Scanned)
+	if view.Best != nil {
+		fmt.Printf("best %s mark=%g policy=%s\n", view.Best.Coin, view.Best.Mark, view.Best.PolicyFit)
+		fmt.Println(view.BestWhy)
 	}
+	fmt.Println("Markets does not place orders.")
+	shown := 0
+	for _, c := range all {
+		if !c.Eligible {
+			continue
+		}
+		fmt.Printf("%s  %s  mark=%g  fit=PASS\n", c.Coin, c.Reason, c.Book.MarkPx)
+		shown++
+		if shown >= 12 {
+			break
+		}
+	}
+}
+
+func cmdScan() {
+	cmdOpportunities()
+}
+
+func cmdMission() {
+	dir := stateDir()
+	m := auto.LoadMission(dir)
+	if asJSON {
+		_ = json.NewEncoder(os.Stdout).Encode(auto.Public(dir))
+		return
+	}
+	fmt.Println("mode", m.Mode)
+	fmt.Println("running", m.Running)
+	fmt.Println("best", m.BestCoin)
+	fmt.Println("last_action", m.LastAction)
+	fmt.Println("last_stop", m.LastStop)
+	fmt.Println("trades_today", m.TradesToday)
+	fmt.Println("Chat cannot enable Guarded Autonomy.")
 }
 
 func cmdChat(args []string) {

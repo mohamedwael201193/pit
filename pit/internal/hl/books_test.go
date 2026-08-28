@@ -31,4 +31,8 @@ func TestPublicBooksOneRoundTrip(t *testing.T) {
 	if hits != 1 {
 		t.Fatalf("hits %d want 1", hits)
 	}
+	uni, err := c.PublicUniverse()
+	if err != nil || len(uni) != 2 {
+		t.Fatalf("universe %+v %v", uni, err)
+	}
 }
