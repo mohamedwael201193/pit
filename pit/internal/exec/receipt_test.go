@@ -21,4 +21,14 @@ func TestReceiptOIDFilled(t *testing.T) {
 	if ReceiptOID(body) != "7" {
 		t.Fatal(ReceiptOID(body))
 	}
+	if ReceiptStatus(body) != "filled" {
+		t.Fatal(ReceiptStatus(body))
+	}
+}
+
+func TestReceiptStatusResting(t *testing.T) {
+	body := []byte(`{"status":"ok","response":{"type":"order","data":{"statuses":[{"resting":{"oid":42}}]}}}`)
+	if ReceiptStatus(body) != "resting" {
+		t.Fatal(ReceiptStatus(body))
+	}
 }

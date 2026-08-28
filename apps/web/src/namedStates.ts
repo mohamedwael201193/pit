@@ -24,7 +24,7 @@ const STATES: Record<NamedId, NamedState> = {
   SESSION_EXPIRED: {
     id: "SESSION_EXPIRED",
     title: "Session expired",
-    body: "The one-hour agent expired. This browser never held the key.",
+    body: "The local session expired. If extraAgents still lists this agent, create a new local session and PIT reuses the address. This browser never held the key.",
     next: "Create a new session on desktop or CLI.",
   },
   BACKEND_UNREACHABLE: {

@@ -13,7 +13,7 @@ export function PolicyLaw({
     ["Max leverage", pinned ? "1x (pinned)" : "example 1x until your file is pinned"],
     ["Max slippage", pinned ? "80 bps (pinned)" : "example 80 bps until your file is pinned"],
     ["Cooldown", "0 s"],
-    ["Session TTL", "3600 s"],
+    ["Session TTL", "24h local mint; extraAgents until venue date"],
     ["Min calibration", "NOT ENOUGH DATA until N is large enough"],
     ["Allowed", "ETH, BTC, SOL, HYPE, DOGE, AVAX on Hyperliquid"],
     ["Kill", "off until you flip it"],

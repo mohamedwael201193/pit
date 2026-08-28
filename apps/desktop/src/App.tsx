@@ -893,7 +893,7 @@ export function App() {
       <aside className="rail">
         <div className="rail-brand">
           <div className="word">PIT.</div>
-          <p className="kicker">{status?.version || "0.1.12"} · local execution</p>
+          <p className="kicker">{status?.version || "0.1.13"} · local execution</p>
         </div>
         <nav className="rail-nav" aria-label="Desk">
           {RAIL.map((item) => (
@@ -913,7 +913,7 @@ export function App() {
         <div className="rail-foot">
           <p>{net === "mainnet" ? "MAINNET" : "TESTNET"}</p>
           <p>{companionUp ? "companion live" : "starting companion"}</p>
-          <p>{status?.version || "PIT 0.1.12"}</p>
+          <p>{status?.version || "PIT 0.1.13"}</p>
           <button type="button" className="ghost" onClick={() => setView("settings")}>
             Help / Diagnostics
           </button>
@@ -1140,13 +1140,18 @@ export function App() {
                     ) : (
                       <p>Create a local session, then type AUTHORIZE here.</p>
                     )}
-                    {lastOid ? (
+                    {lastOid && status?.lastOrder?.status !== "filled" && !status?.lastOrder?.cancelled ? (
                       <form onSubmit={(e) => void onCancelBound(e)}>
-                        <p className="fine">OID {lastOid}. Type AUTHORIZE again to cancel this order. PIT cannot withdraw.</p>
+                        <p className="fine">OID {lastOid} is resting. Type AUTHORIZE again to cancel this order. PIT cannot withdraw.</p>
                         <button type="submit" disabled={authBusy}>
                           Cancel this order
                         </button>
                       </form>
+                    ) : null}
+                    {lastOid && status?.lastOrder?.status === "filled" ? (
+                      <p className="fine">
+                        OID {lastOid} FILLED. This size is a position. Cancel does not apply. Flatten only with a reduce-only close that YOU authorize. PIT cannot withdraw.
+                      </p>
                     ) : null}
                     {authErr ? (
                       <p className="err" role="alert">
@@ -1231,8 +1236,28 @@ export function App() {
             <p className="lead">Exact-once orders, cancels, receipts, and stops. Empty is honest until this machine records one.</p>
             <article className="card">
               <p className="label">THIS MACHINE</p>
-              <p>No order id is shown until Hyperliquid accepts one after you type AUTHORIZE.</p>
-              {lastOid ? <p>Last OID {lastOid}</p> : null}
+              {lastOid ? (
+                <>
+                  <p>
+                    {status?.lastOrder?.status === "filled"
+                      ? "ORDER FILLED"
+                      : status?.lastOrder?.cancelled
+                        ? "ORDER CANCELED"
+                        : "ORDER SUBMITTED"}
+                  </p>
+                  <p>OID {lastOid}</p>
+                  {status?.lastOrder?.market ? (
+                    <p>
+                      {status.lastOrder.market} {status.lastOrder.side} {status.lastOrder.sz}
+                    </p>
+                  ) : null}
+                  {status?.lastOrder?.status === "filled" ? (
+                    <p className="fine">This size is a position. Cancel does not apply to a filled order.</p>
+                  ) : null}
+                </>
+              ) : (
+                <p>No order id is shown until Hyperliquid accepts one after you type AUTHORIZE.</p>
+              )}
               {status?.lastOrder?.cloid ? <p>Last cloid {status.lastOrder.cloid}</p> : null}
             </article>
           </main>

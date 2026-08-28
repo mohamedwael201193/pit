@@ -68,6 +68,8 @@ export function PairPage() {
           <li>3. If Chrome asks to access other apps on this device, choose Allow. That is loopback only.</li>
           <li>4. After pairing, this browser can view. It cannot sign orders or hold a session key.</li>
         </ol>
+        <p className="mt-6 font-semibold text-[#f0e7d4]">Open PIT Desktop</p>
+        <p className="mt-1 text-[0.975rem] leading-6 text-[rgb(240_231_212/0.75)]">Enter the code shown there.</p>
         <label className="mt-10 block">
           <span className="text-[0.75rem] tracking-[0.12em] text-[rgb(240_231_212/0.5)]">ONE-TIME CODE</span>
           <input
@@ -101,7 +103,7 @@ export function PairPage() {
           Protect private research
         </Link>
         <p className="mt-4 text-[0.875rem] text-[rgb(240_231_212/0.5)]">
-          If PIT Desktop is not open, launch it on this computer first.
+          Next: Protect my strategy, then Connect Hyperliquid. If PIT Desktop is not open, launch it on this computer first.
         </p>
       </div>
     </div>

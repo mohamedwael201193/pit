@@ -37,11 +37,31 @@ func LoadLastOrder(dir string) map[string]any {
 	if err != nil || strings.Contains(strings.ToLower(string(b)), "app-sk-") {
 		return nil
 	}
+	dec := json.NewDecoder(strings.NewReader(string(b)))
+	dec.UseNumber()
 	var m map[string]any
-	if json.Unmarshal(b, &m) != nil {
+	if dec.Decode(&m) != nil {
 		return nil
 	}
+	if v, ok := m["oid"]; ok {
+		m["oid"] = oidString(v)
+	}
 	return m
+}
+
+func oidString(v any) string {
+	switch t := v.(type) {
+	case string:
+		return strings.Trim(t, `"`)
+	case json.Number:
+		return t.String()
+	default:
+		b, err := json.Marshal(v)
+		if err != nil {
+			return ""
+		}
+		return strings.Trim(strings.TrimSpace(string(b)), `"`)
+	}
 }
 
 func saveLastOrder(dir string, body map[string]any) {
@@ -143,6 +163,10 @@ func ExecuteDeskOrder(dir, typed, presentedHash string) OrderResult {
 		return out
 	}
 	oid := pitexec.ReceiptOID(body)
+	stt := pitexec.ReceiptStatus(body)
+	if stt == "" {
+		stt = "posted"
+	}
 	_ = RememberPosted(dir, st.Network, live.Workspace, card.Cloid, oid)
 	out.OK = true
 	out.Posted = true
@@ -154,7 +178,8 @@ func ExecuteDeskOrder(dir, typed, presentedHash string) OrderResult {
 	out.Sz = card.Sz
 	saveLastOrder(dir, map[string]any{
 		"ok": true, "posted": true, "oid": oid, "cloid": card.Cloid, "hash": hash,
-		"market": card.Market, "side": card.Side, "sz": card.Sz, "sign": false, "trade": false,
+		"market": card.Market, "side": card.Side, "sz": card.Sz, "status": stt,
+		"venue": "hyperliquid", "sign": false, "trade": false,
 	})
 	return out
 }
@@ -237,7 +262,7 @@ func ExecuteDeskCancel(dir, typed string) OrderResult {
 	out.Market = card.Market
 	saveLastOrder(dir, map[string]any{
 		"ok": true, "posted": true, "cancelled": true, "cloid": cloid, "hash": hash,
-		"market": card.Market, "sign": false, "trade": false,
+		"market": card.Market, "status": "canceled", "sign": false, "trade": false,
 	})
 	return out
 }

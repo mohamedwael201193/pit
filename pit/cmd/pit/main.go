@@ -23,6 +23,7 @@ import (
 	"github.com/mohamedwael201193/pit/internal/verify"
 	"github.com/mohamedwael201193/pit/internal/version"
 	"github.com/mohamedwael201193/pit/internal/watch"
+	"github.com/mohamedwael201193/pit/mcp"
 )
 
 var asJSON bool
@@ -81,6 +82,7 @@ System
   pit security
   pit activity
   pit receipt
+  pit mcp
   pit update
   pit version
 
@@ -166,6 +168,8 @@ func main() {
 		cmdProof(rest[1:])
 	case "doctor", "security":
 		cmdDoctor()
+	case "mcp":
+		cmdMCP()
 	case "activity":
 		cmdStatus()
 	case "receipt":
@@ -272,12 +276,37 @@ func cmdSession() {
 	fmt.Println("your wallet must approveAgent this address. PIT never prints the session key.")
 }
 
+func cmdMCP() {
+	if asJSON {
+		_ = json.NewEncoder(os.Stdout).Encode(map[string]any{
+			"allowed": mcp.AllowedTools, "forbidden": mcp.ForbiddenTools,
+			"sign": false, "trade": false, "authorize": false, "withdraw": false,
+		})
+		return
+	}
+	fmt.Println("MCP is read-only. Trade tools are denied.")
+	fmt.Println(mcp.Schema())
+	fmt.Println("Use the pit-mcp binary. PIT Desktop remains the signer.")
+}
+
 func cmdStatus() {
 	st, err := cli.Load(stateDir())
 	if err != nil {
+		if asJSON {
+			_ = json.NewEncoder(os.Stdout).Encode(map[string]any{"ok": false, "error": "unbound", "sign": false, "trade": false})
+			return
+		}
 		fmt.Println("network: unset until init")
 		fmt.Println("session: none")
 		fmt.Println("desk: isAuthorized must be true before sealed inference")
+		return
+	}
+	if asJSON {
+		body := map[string]any{"workspace": st.WorkspaceID, "network": st.Network, "wallet": st.Wallet, "kill": st.Kill, "sign": false, "trade": false}
+		if last := cli.LoadLastOrder(stateDir()); last != nil {
+			body["lastOrder"] = last
+		}
+		_ = json.NewEncoder(os.Stdout).Encode(body)
 		return
 	}
 	fmt.Printf("workspace %s\n", st.WorkspaceID)
@@ -296,6 +325,28 @@ func cmdStatus() {
 	fmt.Println("sign      never in the browser")
 	fmt.Println("expired  ", cli.ExpiredCopy)
 	fmt.Println("revoked  ", cli.RevokedCopy)
+	if last := cli.LoadLastOrder(stateDir()); last != nil {
+		fmt.Printf("last oid  %v\n", last["oid"])
+		fmt.Printf("status    %v\n", last["status"])
+		if last["cancelled"] == true {
+			fmt.Println("cancel    recorded")
+		}
+		if last["status"] == "filled" {
+			fmt.Println("filled orders are positions. cancel does not apply. flatten only with a reduce-only close that YOU authorize.")
+		}
+	} else {
+		fmt.Println("last oid  none until Hyperliquid accepts an order after AUTHORIZE")
+	}
+	if net, nerr := config.ParseNetwork(st.Network); nerr == nil {
+		if pos, perr := hl.New(config.For(net)).Positions(st.Wallet); perr == nil {
+			if len(pos) == 0 {
+				fmt.Println("positions none")
+			}
+			for _, p := range pos {
+				fmt.Printf("position  %s sz %s entry %s\n", p.Coin, p.Sz, p.EntryPx)
+			}
+		}
+	}
 	if p, h, err := cli.LoadPreview(stateDir()); err == nil {
 		fmt.Printf("preview   %s\n", h)
 		if rec, err := cli.LookupAction(stateDir(), st.Network, st.WorkspaceID, p.Cloid); err == nil {

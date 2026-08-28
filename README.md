@@ -295,7 +295,7 @@ Full command set:
 
 `init` `login` `wallet` `pair` `network` `policy` `session` `companion` `approve` `hyperliquid` `agent` `compute` `direct` `ask` `research` `watch` `opportunities` `forecast` `calibration` `preview` `authorize` `execute` `orders` `cancel` `status` `resolve` `card` `verify` `proof` `kill` `revoke` `doctor` `logout` `version`
 
-Every command accepts `--json`. `pit version` prints `PIT 0.1.12`. `pit doctor` probes version, wallet, network, OS keychain, memory-key hazard, Hyperliquid, 0G RPC, companion, sealer, Direct token (keychain, operator file, or sponsored compute), Direct credit, TEE evidence, storage client, registry, session, Hyperliquid agent, and policy. It never prints secrets. A global `PIT_MEMORY_KEY` is a doctor failure. The desktop can bind a public wallet, pin policy, and mint a session without a terminal. `pit research [ETH] --hypothesis none|long|short` seals a user hypothesis into the private book. `pit pair`, `pit approve`, `pit execute`, and `pit calibration` are first-class commands. `pit direct` issues the official wallet-signed Direct challenge and stores the token in the keychain.
+Every command accepts `--json`. `pit version` prints `PIT 0.1.13`. `pit doctor` probes version, wallet, network, OS keychain, memory-key hazard, Hyperliquid, 0G RPC, companion, sealer, Direct token (keychain, operator file, or sponsored compute), Direct credit, TEE evidence, storage client, registry, session, Hyperliquid agent, and policy. It never prints secrets. A global `PIT_MEMORY_KEY` is a doctor failure. The desktop can bind a public wallet, pin policy, and mint a session without a terminal. `pit research [ETH] --hypothesis none|long|short` seals a user hypothesis into the private book. `pit pair`, `pit approve`, `pit execute`, `pit mcp`, and `pit calibration` are first-class commands. `pit direct` issues the official wallet-signed Direct challenge and stores the token in the keychain.
 
 Official storage client (not the TypeScript SDK): `upload --url --file --key --encryption-key` and `download --proof --root --file --encryption-key`. `pit proof` requires `--key-file` per workspace and refuses a global memory key.
 
@@ -459,7 +459,7 @@ Use the **official Go client** only for proofs.
 - Open interest must be finite. Slippage above policy fails closed.
 - Mark price must be finite. Thin liquidity and cooldown fail closed. Script sealers (`.ts` / `.js` / `.mjs` / `.cjs`) are refused.
 - Leverage above policy, a foreign venue, `sendAsset`, and `approveAgent` fail closed. A timeout never blindly reposts.
-- Session TTL is one hour. A stale preview cannot authorize.
+- Session mint is 24 hours. If extraAgents still lists the agent, PIT reuses it. A stale preview cannot authorize.
 - Calibration below the floor fails. SOL is outside the default universe. Galileo sealed ask stays disabled until VerifyE2EE is proven.
 - Impact prices must be finite. MCP forecasts never carry `sizeUsd`. Health JSON cannot include a session.
 - Strategy health needs 30 resolved samples. A TypeScript storage client is refused. MCP cannot export a session. Transfer of Agentic ID is not live on Aristotle.

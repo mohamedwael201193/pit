@@ -35,6 +35,25 @@ func TestOpportunitiesDoNotTrade(t *testing.T) {
 	if Handle(Request{Tool: "key"}).OK {
 		t.Fatal("key")
 	}
+	watch := Handle(Request{Tool: "watch"})
+	if !watch.OK {
+		t.Fatal(watch)
+	}
+	wb, _ := watch.Body.(map[string]any)
+	if wb["trade"] != false {
+		t.Fatal(wb)
+	}
+	res := Handle(Request{Tool: "research"})
+	if !res.OK {
+		t.Fatal(res)
+	}
+	rb, _ := res.Body.(map[string]any)
+	if rb["start"] != false || rb["trade"] != false {
+		t.Fatal(rb)
+	}
+	if Handle(Request{Tool: "authorize"}).OK {
+		t.Fatal("research must not unlock authorize")
+	}
 	cal := Handle(Request{Tool: "calibration"})
 	if !cal.OK {
 		t.Fatal(cal)

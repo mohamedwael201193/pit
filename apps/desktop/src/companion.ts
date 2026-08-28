@@ -13,7 +13,7 @@ export type LocalStatus = {
   sign?: boolean;
   trade?: boolean;
   version?: string;
-  lastOrder?: { oid?: string; cloid?: string; market?: string; side?: string; posted?: boolean; cancelled?: boolean };
+  lastOrder?: { oid?: string; cloid?: string; market?: string; side?: string; sz?: number; status?: string; posted?: boolean; cancelled?: boolean; venue?: string };
 };
 
 export type PairCode = {

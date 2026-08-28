@@ -14,7 +14,7 @@ const BEATS = [
   },
   {
     title: "Authorized.",
-    body: "You type AUTHORIZE on the exact preview. A one-hour agent can order or cancel. It cannot withdraw.",
+    body: "You type AUTHORIZE on the exact preview. A 24-hour agent can order or cancel. If extraAgents still lists it, PIT reuses the address. It cannot withdraw.",
   },
 ] as const;
 

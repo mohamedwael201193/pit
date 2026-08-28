@@ -5,13 +5,13 @@ import (
 	"strings"
 )
 
-func ReceiptOID(body []byte) string {
+func receiptStatuses(body []byte) []map[string]json.RawMessage {
 	var top struct {
 		Status   string          `json:"status"`
 		Response json.RawMessage `json:"response"`
 	}
 	if json.Unmarshal(body, &top) != nil || top.Status != "ok" {
-		return ""
+		return nil
 	}
 	var resp struct {
 		Data struct {
@@ -19,10 +19,14 @@ func ReceiptOID(body []byte) string {
 		} `json:"data"`
 	}
 	if json.Unmarshal(top.Response, &resp) != nil {
-		return ""
+		return nil
 	}
-	for _, st := range resp.Data.Statuses {
-		for _, key := range []string{"resting", "filled"} {
+	return resp.Data.Statuses
+}
+
+func ReceiptOID(body []byte) string {
+	for _, st := range receiptStatuses(body) {
+		for _, key := range []string{"filled", "resting"} {
 			raw, ok := st[key]
 			if !ok {
 				continue
@@ -38,6 +42,18 @@ func ReceiptOID(body []byte) string {
 			if s != "" && s != "null" {
 				return s
 			}
+		}
+	}
+	return ""
+}
+
+func ReceiptStatus(body []byte) string {
+	for _, st := range receiptStatuses(body) {
+		if _, ok := st["filled"]; ok {
+			return "filled"
+		}
+		if _, ok := st["resting"]; ok {
+			return "resting"
 		}
 	}
 	return ""

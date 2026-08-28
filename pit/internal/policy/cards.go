@@ -22,7 +22,7 @@ func Cards(p Policy) []Card {
 		{Title: "Minimum calibration", Value: fmt.Sprintf("%.2f", p.MinSkillCalibration), Law: "Empty health is not a pass."},
 		{Title: "Max slippage", Value: fmt.Sprintf("%d bps", p.MaxSlippageBps), Law: "Impact above this fails closed."},
 		{Title: "Cooldown", Value: fmt.Sprintf("%d s", p.CooldownSeconds), Law: "Replay waits."},
-		{Title: "Session TTL", Value: fmt.Sprintf("%d s", p.SessionTTLSeconds), Law: "Expired sessions cannot sign."},
+		{Title: "Session TTL", Value: "24h local mint; extraAgents until venue date", Law: "Policy still records sessionTtlSeconds 3600. Venue approval can last longer. Expired local sessions cannot sign unless extraAgents still lists the agent."},
 		{Title: "Kill switch", Value: kill, Law: "YOU flip this. The model cannot."},
 		{Title: "Liquidity minimum", Value: fmt.Sprintf("%.2f USD", p.MinLiquidityUSD), Law: "Thin books are skipped."},
 		{Title: "Uncertainty maximum", Value: fmt.Sprintf("%.2f", p.MaxUncertainty), Law: "Vague theses do not trade."},

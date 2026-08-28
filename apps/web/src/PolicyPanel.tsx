@@ -8,7 +8,7 @@ const CARDS = [
   { title: "Cooldown", value: "0 s" },
   { title: "Max uncertainty", value: "1.0" },
   { title: "Min liquidity", value: "0 USD" },
-  { title: "Session TTL", value: "3600 s" },
+  { title: "Session TTL", value: "24h local mint" },
   { title: "Min calibration", value: "0.00" },
   { title: "Kill switch", value: "off" },
 ];

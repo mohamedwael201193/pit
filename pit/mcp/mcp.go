@@ -6,7 +6,8 @@ import (
 )
 
 var AllowedTools = []string{
-	"market", "opportunities", "forecast", "status", "card", "verify", "preview", "receipts", "calibration",
+	"market", "opportunities", "watch", "forecast", "status", "card", "verify", "preview",
+	"receipts", "calibration", "policy", "security", "research",
 }
 
 var ForbiddenTools = []string{
@@ -42,7 +43,25 @@ func Handle(req Request) Response {
 	}
 	switch req.Tool {
 	case "status":
-		return Response{OK: true, Body: map[string]any{"surface": "mcp", "authorize": false, "sign": false}}
+		return Response{OK: true, Body: map[string]any{"surface": "mcp", "authorize": false, "sign": false, "trade": false}}
+	case "watch":
+		req.Tool = "opportunities"
+		return Handle(req)
+	case "policy":
+		return Response{OK: true, Body: map[string]any{
+			"copy": "Policy is pinned on the desktop. MCP cannot raise clip, leverage, or permissions.",
+			"sign": false, "trade": false, "withdraw": false,
+		}}
+	case "security":
+		return Response{OK: true, Body: map[string]any{
+			"order": true, "cancel": true, "withdraw": false, "transfer": false, "leverage": false,
+			"sign": false, "trade": false, "authorize": false,
+		}}
+	case "research":
+		return Response{OK: true, Body: map[string]any{
+			"copy":  "Research runs on PIT Desktop. MCP cannot start sealed inference or hold a Direct token.",
+			"start": false, "sign": false, "trade": false,
+		}}
 	case "opportunities":
 		body := map[string]any{
 			"count": 0,
