@@ -68,8 +68,14 @@ export function explainStop(code: string | null): { title: string; body: string 
   }
   if (code === "COMPANION_NOT_RUNNING") {
     return {
-      title: "Local PIT is not running",
-      body: "The desktop companion on this computer stopped answering. No order was placed. Launch PIT again. Do not use a terminal.",
+      title: "Local PIT dropped status polls",
+      body: "A sealed job may still finish on this computer. Open Research again. PIT did not place an order. Do not launch a second PIT window.",
+    };
+  }
+  if (code === "FAILED") {
+    return {
+      title: "Research failed closed",
+      body: "The sealed path stopped before a verified committee. PIT did not fall back to Router. No order was placed.",
     };
   }
   if (code === "WORKSPACE_NOT_BOUND") {

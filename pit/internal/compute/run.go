@@ -113,7 +113,6 @@ func RunSealedAskCtl(j DirectJob, stage StageFn, stop func() bool) error {
 	if stopped(stop) {
 		return fmt.Errorf("research_cancelled")
 	}
-	notify(stage, "CONTACTING_PRIVATE_PROVIDER")
 	cmd := exec.Command(j.Bin, args...)
 	var buf bytes.Buffer
 	cmd.Stdout = &buf
@@ -148,8 +147,6 @@ func RunSealedAskCtl(j DirectJob, stage StageFn, stop func() bool) error {
 	if waitErr != nil {
 		return sealerExitError(waitErr, out)
 	}
-	notify(stage, "RECEIVING_SEALED_RESPONSE")
-	notify(stage, "VERIFYING_TEE_SIGNATURE")
 	return AcceptSealedEvidence(j.OutPath, j.OnchainSigner)
 }
 

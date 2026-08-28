@@ -45,10 +45,10 @@ func RunCommitteeStages(bin string, jobs []DirectJob, stage StageFn, stop func()
 		if stopped(stop) {
 			return fmt.Errorf("research_cancelled")
 		}
+		notify(stage, labels[jobs[i].Role])
 		if err := RunSealedAskCtl(jobs[i], stage, stop); err != nil {
 			return err
 		}
-		notify(stage, labels[jobs[i].Role])
 	}
 	return nil
 }

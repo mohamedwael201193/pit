@@ -3,6 +3,7 @@ use std::io::{Read, Write};
 use std::net::{SocketAddr, TcpStream};
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
+use std::sync::Mutex;
 use std::time::Duration;
 
 #[tauri::command]
@@ -84,7 +85,7 @@ async fn local_research_start(coin: String) -> Result<serde_json::Value, String>
 
 #[tauri::command]
 async fn local_research_status() -> Result<serde_json::Value, String> {
-    json_get("/local/research/status".into(), 2).await
+    json_get("/local/research/status".into(), 3).await
 }
 
 #[tauri::command]
@@ -124,7 +125,7 @@ fn companion_addr() -> SocketAddr {
 }
 
 fn companion_listening() -> bool {
-    TcpStream::connect_timeout(&companion_addr(), Duration::from_millis(250)).is_ok()
+    TcpStream::connect_timeout(&companion_addr(), Duration::from_millis(400)).is_ok()
 }
 
 fn loopback_json_post_timeout(path: &str, body: &serde_json::Value, read_secs: u64) -> Result<serde_json::Value, String> {
@@ -141,33 +142,124 @@ fn loopback_exchange(method: &str, path: &str, json: Option<&str>) -> Result<Str
     loopback_exchange_timeout(method, path, json, 8)
 }
 
-fn loopback_exchange_timeout(method: &str, path: &str, json: Option<&str>, read_secs: u64) -> Result<String, String> {
-    let mut stream = TcpStream::connect_timeout(&companion_addr(), Duration::from_secs(2))
+static LOOPBACK: Mutex<Option<TcpStream>> = Mutex::new(None);
+static STARTING: Mutex<()> = Mutex::new(());
+
+fn take_loopback() -> Result<TcpStream, String> {
+    if let Ok(mut slot) = LOOPBACK.lock() {
+        if let Some(stream) = slot.take() {
+            return Ok(stream);
+        }
+    }
+    let stream = TcpStream::connect_timeout(&companion_addr(), Duration::from_millis(400))
         .map_err(|_| "companion_down".to_string())?;
+    let _ = stream.set_nodelay(true);
+    Ok(stream)
+}
+
+fn store_loopback(stream: TcpStream) {
+    if let Ok(mut slot) = LOOPBACK.lock() {
+        *slot = Some(stream);
+    }
+}
+
+fn drop_loopback() {
+    if let Ok(mut slot) = LOOPBACK.lock() {
+        *slot = None;
+    }
+}
+
+fn header_end(buf: &[u8]) -> Option<usize> {
+    buf.windows(4).position(|w| w == b"\r\n\r\n").map(|i| i + 4)
+}
+
+fn http_status(header: &str) -> u16 {
+    header
+        .split_whitespace()
+        .nth(1)
+        .and_then(|s| s.parse().ok())
+        .unwrap_or(0)
+}
+
+fn content_length(header: &str) -> Option<usize> {
+    for line in header.lines() {
+        let (k, v) = line.split_once(':')?;
+        if k.eq_ignore_ascii_case("content-length") {
+            return v.trim().parse().ok();
+        }
+    }
+    None
+}
+
+fn read_http(stream: &mut TcpStream) -> Result<(u16, String), String> {
+    let mut buf = Vec::new();
+    let mut tmp = [0u8; 2048];
+    loop {
+        let n = stream.read(&mut tmp).map_err(|_| "companion_down".to_string())?;
+        if n == 0 {
+            return Err("companion_down".into());
+        }
+        buf.extend_from_slice(&tmp[..n]);
+        if let Some(end) = header_end(&buf) {
+            let header = String::from_utf8_lossy(&buf[..end]).into_owned();
+            let status = http_status(&header);
+            let want = content_length(&header).unwrap_or(0);
+            let mut body = buf[end..].to_vec();
+            while body.len() < want {
+                let n = stream.read(&mut tmp).map_err(|_| "companion_down".to_string())?;
+                if n == 0 {
+                    break;
+                }
+                body.extend_from_slice(&tmp[..n]);
+            }
+            if want > 0 {
+                body.truncate(want);
+            }
+            return Ok((status, String::from_utf8_lossy(&body).trim().to_string()));
+        }
+        if buf.len() > 2_000_000 {
+            return Err("companion_down".into());
+        }
+    }
+}
+
+fn loopback_exchange_timeout(method: &str, path: &str, json: Option<&str>, read_secs: u64) -> Result<String, String> {
+    let mut stream = take_loopback()?;
     let _ = stream.set_read_timeout(Some(Duration::from_secs(read_secs)));
-    let mut req = format!("{method} {path} HTTP/1.1\r\nHost: 127.0.0.1:17373\r\nConnection: close\r\n");
+    let mut req = format!("{method} {path} HTTP/1.1\r\nHost: 127.0.0.1:17373\r\nConnection: keep-alive\r\n");
     if let Some(body) = json {
         req.push_str("Content-Type: application/json\r\n");
         req.push_str(&format!("Content-Length: {}\r\n\r\n{}", body.len(), body));
     } else {
-        req.push_str("\r\n");
+        req.push_str("Content-Length: 0\r\n\r\n");
     }
-    stream
-        .write_all(req.as_bytes())
-        .map_err(|_| "companion_down".to_string())?;
-    let mut buf = Vec::new();
-    stream
-        .read_to_end(&mut buf)
-        .map_err(|_| "companion_down".to_string())?;
-    let text = String::from_utf8_lossy(&buf);
-    let status_line = text.lines().next().unwrap_or("");
-    let ok = status_line.contains(" 200 ") || status_line.ends_with(" 200");
-    let body = text
-        .split_once("\r\n\r\n")
-        .or_else(|| text.split_once("\n\n"))
-        .map(|(_, b)| b.trim().to_string())
-        .unwrap_or_default();
-    if !ok {
+    if stream.write_all(req.as_bytes()).is_err() {
+        drop_loopback();
+        let mut stream = TcpStream::connect_timeout(&companion_addr(), Duration::from_millis(400))
+            .map_err(|_| "companion_down".to_string())?;
+        let _ = stream.set_nodelay(true);
+        let _ = stream.set_read_timeout(Some(Duration::from_secs(read_secs)));
+        stream
+            .write_all(req.as_bytes())
+            .map_err(|_| "companion_down".to_string())?;
+        let (status, body) = read_http(&mut stream)?;
+        store_loopback(stream);
+        return finish_http(status, body);
+    }
+    match read_http(&mut stream) {
+        Ok((status, body)) => {
+            store_loopback(stream);
+            finish_http(status, body)
+        }
+        Err(e) => {
+            drop_loopback();
+            Err(e)
+        }
+    }
+}
+
+fn finish_http(status: u16, body: String) -> Result<String, String> {
+    if status != 200 {
         if let Ok(v) = serde_json::from_str::<serde_json::Value>(&body) {
             if let Some(err) = v.get("error").and_then(|x| x.as_str()) {
                 return Err(err.to_string());
@@ -253,7 +345,7 @@ fn same_install(path: &Path) -> bool {
     path.parent().map(|p| p == dir).unwrap_or(false)
 }
 
-const SIDECAR_VERSION: &str = "0.1.8";
+const SIDECAR_VERSION: &str = "0.1.9";
 
 fn companion_version() -> Option<String> {
     let raw = loopback_get("/health").ok()?;
@@ -332,7 +424,19 @@ fn spawn_sidecar(bin: &Path) {
     let _ = cmd.spawn();
 }
 
+fn sealed_job_active() -> bool {
+    let Ok(base) = std::env::var("APPDATA") else {
+        return false;
+    };
+    let raw = fs::read_to_string(PathBuf::from(base).join("pit").join("research-job.json")).unwrap_or_default();
+    raw.contains("\"running\":true")
+}
+
 fn start_companion() {
+    let _gate = STARTING.lock().unwrap_or_else(|e| e.into_inner());
+    if companion_listening() && sealed_job_active() {
+        return;
+    }
     let bin = first_sidecar();
     if companion_listening() {
         let ours = listening_pid()

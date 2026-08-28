@@ -15,6 +15,7 @@ import (
 
 type researchJob struct {
 	ID        string           `json:"id"`
+	PID       int              `json:"pid"`
 	running   bool             `json:"-"`
 	done      bool             `json:"-"`
 	cancel    bool             `json:"-"`
@@ -58,6 +59,47 @@ func classifyResearch(code string) string {
 	}
 }
 
+func verifiedRolesFromDisk(dir string) []map[string]any {
+	raw, err := os.ReadFile(filepath.Join(dir, "last-research.json"))
+	if err != nil || strings.Contains(strings.ToLower(string(raw)), "app-sk-") {
+		return nil
+	}
+	var body struct {
+		Roles []map[string]any `json:"roles"`
+	}
+	if json.Unmarshal(raw, &body) != nil {
+		return nil
+	}
+	out := make([]map[string]any, 0, len(body.Roles))
+	ok := 0
+	for _, rm := range body.Roles {
+		role := strings.TrimSpace(fmtString(rm["role"]))
+		verify := strings.TrimSpace(fmtString(rm["verify_e2ee"]))
+		if role == "" {
+			continue
+		}
+		item := map[string]any{
+			"role":          rm["role"],
+			"verify_e2ee":   rm["verify_e2ee"],
+			"pubkey_signer": rm["pubkey_signer"],
+			"teeSigner":     rm["teeSigner"],
+		}
+		out = append(out, item)
+		if strings.EqualFold(verify, "OK") {
+			ok++
+		}
+	}
+	if ok < 3 {
+		return nil
+	}
+	return out
+}
+
+func fmtString(v any) string {
+	s, _ := v.(string)
+	return s
+}
+
 func (h *Hub) loadJobLocked() {
 	raw, err := os.ReadFile(jobFile(h.Dir))
 	if err != nil || strings.Contains(strings.ToLower(string(raw)), "app-sk-") {
@@ -65,6 +107,7 @@ func (h *Hub) loadJobLocked() {
 	}
 	var p struct {
 		ID        string           `json:"id"`
+		PID       int              `json:"pid"`
 		Running   bool             `json:"running"`
 		Done      bool             `json:"done"`
 		Stage     string           `json:"stage"`
@@ -79,6 +122,7 @@ func (h *Hub) loadJobLocked() {
 		return
 	}
 	h.job.ID = p.ID
+	h.job.PID = p.PID
 	h.job.running = p.Running
 	h.job.done = p.Done
 	h.job.stage = p.Stage
@@ -90,20 +134,43 @@ func (h *Hub) loadJobLocked() {
 	if p.Started > 0 {
 		h.job.started = time.UnixMilli(p.Started)
 	}
+	if h.job.PID == os.Getpid() && h.job.running {
+		return
+	}
 	if h.job.running {
+		if roles := verifiedRolesFromDisk(h.Dir); len(roles) > 0 {
+			h.job.running = false
+			h.job.done = true
+			h.job.err = ""
+			h.job.stage = "READY"
+			h.job.roles = roles
+			h.persistJobLocked()
+			return
+		}
 		h.job.running = false
 		h.job.done = true
 		if h.job.err == "" {
 			h.job.err = "COMPANION_NOT_RUNNING"
-			h.job.stage = "STOPPED"
+			h.job.stage = "FAILED"
 		}
 		h.persistJobLocked()
+	}
+	if !h.job.running && h.job.done && h.job.err == "" {
+		if roles := verifiedRolesFromDisk(h.Dir); len(roles) >= 3 {
+			if len(h.job.roles) == 0 {
+				h.job.roles = roles
+			}
+			if h.job.stage == "" || h.job.stage == "POLICY" || h.job.stage == "STOPPED" {
+				h.job.stage = "READY"
+			}
+		}
 	}
 }
 
 func (h *Hub) persistJobLocked() {
 	body := map[string]any{
 		"id":              h.job.ID,
+		"pid":             h.job.PID,
 		"running":         h.job.running,
 		"done":            h.job.done,
 		"stage":           h.job.stage,
@@ -226,6 +293,7 @@ func (h *Hub) beginResearch(coin string) {
 	}
 	h.job = researchJob{
 		ID:      uuid.NewString(),
+		PID:     os.Getpid(),
 		running: true,
 		started: time.Now(),
 		stage:   "READING_MARKET",
@@ -247,7 +315,7 @@ func (h *Hub) execResearch(coin string) {
 	}
 	if h.job.cancel && (err == nil || err.Error() == "research_cancelled") {
 		h.job.err = "research_cancelled"
-		h.job.stage = "STOPPED"
+		h.job.stage = "CANCELED"
 		h.persistJobLocked()
 		return
 	}
@@ -255,11 +323,12 @@ func (h *Hub) execResearch(coin string) {
 	h.job.roles = rep.Roles
 	if err != nil {
 		h.job.err = classifyResearch(err.Error())
-		h.job.stage = "STOPPED"
+		h.job.stage = "FAILED"
 		h.persistJobLocked()
 		return
 	}
 	h.job.err = ""
+	h.job.stage = "READY"
 	h.persistJobLocked()
 }
 

@@ -48,8 +48,9 @@ const RESEARCH_STAGES = [
   "CHALLENGER",
   "RISK",
   "DETERMINISTIC_ENGINE",
-  "POLICY",
+	"POLICY",
   "PREVIEW",
+  "READY",
 ] as const;
 
 function sleep(ms: number) {
@@ -474,7 +475,7 @@ export function App() {
             doctorBusy = false;
           });
       }
-      if (!watchBusy && now - lastWatch >= 8000) {
+      if (!researchBusyRef.current && !watchBusy && now - lastWatch >= 8000) {
         watchBusy = true;
         lastWatch = now;
         fetchWatch(net)
@@ -500,6 +501,30 @@ export function App() {
       window.clearTimeout(timer);
     };
   }, [net]);
+
+  useEffect(() => {
+    let gone = false;
+    researchStatus()
+      .then((st) => {
+        if (gone || st.sign || st.trade) return;
+        const roles = Array.isArray(st.roles) ? st.roles : [];
+        const verified = roles.length > 0 && roles.every((x) => String(x.verify_e2ee).toUpperCase() === "OK");
+        if (st.stage) setResearchStage(st.stage);
+        if (typeof st.elapsed_ms === "number") setResearchElapsed(st.elapsed_ms);
+        if (roles.length) setResearchRoles(roles);
+        if (st.coin) setResearchCoin(st.coin);
+        if (verified && !st.running) {
+          setResearchStop(null);
+          setResearchNote(st.note || "Sealed committee verified on this computer.");
+          return;
+        }
+        if (st.error && !st.running) setResearchStop(st.error);
+      })
+      .catch(() => undefined);
+    return () => {
+      gone = true;
+    };
+  }, []);
 
   useEffect(() => {
     if (!sessionAlive) return;
@@ -656,25 +681,29 @@ export function App() {
         const st = await researchStatus();
         if (st.transient) {
           misses += 1;
-          if (misses >= 45) {
+          if (misses >= 600) {
             setResearchStop("COMPANION_NOT_RUNNING");
             return;
           }
-          await wakeCompanion();
           continue;
         }
         misses = 0;
         if (st.stage) setResearchStage(st.stage);
         if (typeof st.elapsed_ms === "number") setResearchElapsed(st.elapsed_ms);
         if (st.evidence) setResearchEvidence(JSON.stringify(st.evidence, null, 2));
-        if (st.running) continue;
         const roles = Array.isArray(st.roles) ? st.roles : [];
         if (roles.length) setResearchRoles(roles);
+        const verified = roles.length > 0 && roles.every((x) => String(x.verify_e2ee).toUpperCase() === "OK");
+        if (verified && !st.running) {
+          setResearchStop(null);
+          setResearchNote(st.note || "Sealed committee verified on this computer.");
+          return;
+        }
+        if (st.running) continue;
         if (st.error) {
           setResearchStop(st.error);
           return;
         }
-        const verified = roles.length > 0 && roles.every((x) => String(x.verify_e2ee).toUpperCase() === "OK");
         if (!verified) {
           setResearchStop("TEE_SIGNATURE_INVALID");
           return;
@@ -706,7 +735,7 @@ export function App() {
       <aside className="rail">
         <div className="rail-brand">
           <div className="word">PIT.</div>
-          <p className="kicker">{status?.version || "0.1.8"} · local execution</p>
+          <p className="kicker">{status?.version || "0.1.9"} · local execution</p>
         </div>
         <nav className="rail-nav" aria-label="Desk">
           {RAIL.map((item) => (
@@ -726,7 +755,7 @@ export function App() {
         <div className="rail-foot">
           <p>{net === "mainnet" ? "MAINNET" : "TESTNET"}</p>
           <p>{companionUp ? "companion live" : "starting companion"}</p>
-          <p>{status?.version || "PIT 0.1.8"}</p>
+          <p>{status?.version || "PIT 0.1.9"}</p>
           <button type="button" className="ghost" onClick={() => setView("settings")}>
             Help / Diagnostics
           </button>

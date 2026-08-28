@@ -49,6 +49,7 @@ export type BindResult = {
   running?: boolean;
   done?: boolean;
   job_id?: string;
+  coin?: string;
   transient?: boolean;
   evidence?: unknown;
 };
