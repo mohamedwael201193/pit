@@ -1,0 +1,85 @@
+export type CapRow = {
+  id: string;
+  label: string;
+  mainnet: "live" | "partial" | "off";
+  testnet: "live" | "partial" | "off";
+  note: string;
+};
+
+export const CAPABILITY: CapRow[] = [
+  {
+    id: "direct",
+    label: "0G Direct TeeML",
+    mainnet: "live",
+    testnet: "off",
+    note: "Aristotle glm-5.2. Galileo sealed ask stays off until VerifyE2EE is proven.",
+  },
+  {
+    id: "tee",
+    label: "TEE verification",
+    mainnet: "live",
+    testnet: "off",
+    note: "Recovered signer must equal on-chain teeSigner. A 200 is not success.",
+  },
+  {
+    id: "storage",
+    label: "Storage proof",
+    mainnet: "partial",
+    testnet: "partial",
+    note: "Official Go client upload/download --proof. Workspace key stays on this machine.",
+  },
+  {
+    id: "hl",
+    label: "Hyperliquid",
+    mainnet: "partial",
+    testnet: "partial",
+    note: "Order and cancel after extraAgents lists the local session. Withdraw is impossible.",
+  },
+  {
+    id: "agentic",
+    label: "Agentic ID",
+    mainnet: "off",
+    testnet: "partial",
+    note: "Transfer of Agentic ID is not live on Aristotle. Do not claim iTransfer.",
+  },
+  {
+    id: "erc8004",
+    label: "ERC-8004",
+    mainnet: "partial",
+    testnet: "partial",
+    note: "Registries exist. Self-feedback is rejected. Calibration needs resolved forecasts.",
+  },
+];
+
+function mark(v: CapRow["mainnet"]) {
+  if (v === "live") return "LIVE";
+  if (v === "partial") return "PARTIAL";
+  return "OFF";
+}
+
+export function CapabilityMatrix({ net }: { net: "mainnet" | "testnet" }) {
+  return (
+    <article className="card">
+      <p className="label">CAPABILITY</p>
+      <p className="fine">Honest per network. Green is never invented.</p>
+      <table className="watch-table">
+        <thead>
+          <tr>
+            <th>Feature</th>
+            <th>{net === "testnet" ? "Testnet" : "Mainnet"}</th>
+            <th>Why</th>
+          </tr>
+        </thead>
+        <tbody>
+          {CAPABILITY.map((row) => (
+            <tr key={row.id}>
+              <td>{row.label}</td>
+              <td>{mark(net === "testnet" ? row.testnet : row.mainnet)}</td>
+              <td>{row.note}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </article>
+  );
+}

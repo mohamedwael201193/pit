@@ -230,7 +230,8 @@ func RunWorkspaceResearchStage(dir, coin string, stage compute.StageFn, stop fun
 	if err != nil {
 		return compute.AskReport{}, err
 	}
-	book, err := compute.BuildPrivateBook(st.Wallet, st.WorkspaceID, st.Network, hash)
+	hyp := LoadHypothesis(dir)
+	book, err := compute.BuildPrivateBookHypothesis(st.Wallet, st.WorkspaceID, st.Network, hash, hyp)
 	if err != nil {
 		return compute.AskReport{}, err
 	}

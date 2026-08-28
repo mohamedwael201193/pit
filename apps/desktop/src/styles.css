@@ -226,6 +226,14 @@ h1 { font-size: 48px; line-height: 0.95; letter-spacing: -0.04em; margin: 12px 0
 }
 .next-fix h2 { font-size: 22px; margin: 8px 0 10px; letter-spacing: -0.03em; }
 .cta-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.setup-path { list-style: none; padding: 0; margin: 12px 0 0; }
+.setup-path li { display: grid; grid-template-columns: 92px 1fr; gap: 12px; padding: 12px 0; border-top: 1px solid #1c1e22; }
+.setup-path .tone { font-size: 11px; letter-spacing: 0.14em; padding-top: 4px; }
+.setup-path .tone.ready { color: #8f8; }
+.setup-path .tone.action { color: var(--coral); }
+.setup-path .tone.blocked { opacity: 0.45; }
+.cta-row .on { background: var(--coral); border-color: var(--coral); color: #fff; }
+.cta-row .off { background: transparent; color: var(--cream); border: 1px solid #333; }
 .rail-brand .kicker { font-size: 10px; letter-spacing: 0.16em; opacity: 0.65; margin-top: 4px; }
 .desk-table .mark-num { font-size: 15px; margin: 0; }
 @media (prefers-reduced-motion: reduce) {

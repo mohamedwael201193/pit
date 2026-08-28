@@ -32,6 +32,15 @@ func TestSizerBelowMin(t *testing.T) {
 	}
 }
 
+func TestEvaluateNoSide(t *testing.T) {
+	rs, _ := json.Marshal(RoleJSON{ProposedSide: "none"})
+	ch, _ := json.Marshal(map[string]any{"survives": true, "kill": false})
+	got := EvaluateCommittee(2500, 4, 15, 15, "", "ETH", []string{"ETH"}, 1, 1, false, rs, ch, ch)
+	if got.Eligible || got.Deny != "no_side" {
+		t.Fatalf("%+v", got)
+	}
+}
+
 func TestEvaluateChallengerStructured(t *testing.T) {
 	falseV := false
 	ch, _ := json.Marshal(RoleJSON{Survives: &falseV})

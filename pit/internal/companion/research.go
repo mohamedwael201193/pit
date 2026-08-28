@@ -88,6 +88,15 @@ func verifiedRolesFromDisk(dir string) []map[string]any {
 			"pubkey_signer": rm["pubkey_signer"],
 			"teeSigner":     rm["teeSigner"],
 		}
+		if v, ok := rm["proposed_side"]; ok {
+			item["proposed_side"] = v
+		}
+		if v, ok := rm["survives"]; ok {
+			item["survives"] = v
+		}
+		if v, ok := rm["kill"]; ok {
+			item["kill"] = v
+		}
 		out = append(out, item)
 		if strings.EqualFold(verify, "OK") {
 			ok++
@@ -274,22 +283,31 @@ func (h *Hub) snapshotResearch() map[string]any {
 				var ev any
 				if json.Unmarshal(raw, &ev) == nil {
 					body["evidence"] = ev
-					if len(roles) == 0 {
-						if m, ok := ev.(map[string]any); ok {
-							if rr, ok := m["roles"].([]any); ok {
-								for _, item := range rr {
-									rm, ok := item.(map[string]any)
-									if !ok {
-										continue
-									}
-									roles = append(roles, map[string]any{
-										"role":          rm["role"],
-										"verify_e2ee":   rm["verify_e2ee"],
-										"pubkey_signer": rm["pubkey_signer"],
-										"teeSigner":     rm["teeSigner"],
-									})
+					if m, ok := ev.(map[string]any); ok {
+						if rr, ok := m["roles"].([]any); ok && len(rr) >= 3 {
+							roles = roles[:0]
+							for _, item := range rr {
+								rm, ok := item.(map[string]any)
+								if !ok {
+									continue
 								}
-								body["roles"] = roles
+								roles = append(roles, map[string]any{
+									"role":          rm["role"],
+									"verify_e2ee":   rm["verify_e2ee"],
+									"pubkey_signer": rm["pubkey_signer"],
+									"teeSigner":     rm["teeSigner"],
+									"proposed_side": rm["proposed_side"],
+									"survives":      rm["survives"],
+									"kill":          rm["kill"],
+								})
+							}
+							body["roles"] = roles
+							body["verify"] = true
+							if rep, rerr := cli.ReportFromLastResearch(h.Dir, h.job.coin); rerr == nil {
+								body["preview"] = rep.Preview
+								body["preview_hash"] = rep.PreviewHash
+								body["deny"] = rep.Deny
+								body["eligible"] = rep.Eligible
 							}
 						}
 					}
@@ -379,9 +397,16 @@ func (h *Hub) localResearchStart(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var body struct {
-		Coin string `json:"coin"`
+		Coin       string `json:"coin"`
+		Hypothesis string `json:"hypothesis"`
 	}
 	_ = json.NewDecoder(r.Body).Decode(&body)
+	if strings.TrimSpace(body.Hypothesis) != "" {
+		if err := cli.SaveHypothesis(h.Dir, body.Hypothesis); err != nil {
+			writeLocal(w, http.StatusBadRequest, map[string]any{"ok": false, "error": err.Error(), "sign": false, "trade": false})
+			return
+		}
+	}
 	h.beginResearch(body.Coin)
 	writeLocal(w, http.StatusOK, h.snapshotResearch())
 }

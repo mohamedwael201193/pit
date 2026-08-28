@@ -293,13 +293,13 @@ go run ./cmd/pit revoke
 
 Full command set:
 
-`init` `login` `wallet` `network` `policy` `session` `companion` `direct` `ask` `watch` `opportunities` `forecast` `preview` `authorize` `orders` `cancel` `status` `resolve` `card` `verify` `proof` `kill` `revoke` `doctor` `logout` `version`
+`init` `login` `wallet` `pair` `network` `policy` `session` `companion` `approve` `direct` `ask` `research` `watch` `opportunities` `forecast` `calibration` `preview` `authorize` `execute` `orders` `cancel` `status` `resolve` `card` `verify` `proof` `kill` `revoke` `doctor` `logout` `version`
 
-Every command accepts `--json`. `pit version` prints `PIT 0.1.10`. `pit doctor` probes version, wallet, network, OS keychain, memory-key hazard, Hyperliquid, 0G RPC, companion, sealer, Direct token (keychain, operator file, or sponsored compute), Direct credit, TEE evidence, storage client, registry, session, Hyperliquid agent, and policy. It never prints secrets. A global `PIT_MEMORY_KEY` is a doctor failure. The desktop can bind a public wallet, pin policy, and mint a session without a terminal. `pit research` is an alias of `pit ask`. `pit direct` issues the official wallet-signed Direct challenge and stores the token in the keychain.
+Every command accepts `--json`. `pit version` prints `PIT 0.1.11`. `pit doctor` probes version, wallet, network, OS keychain, memory-key hazard, Hyperliquid, 0G RPC, companion, sealer, Direct token (keychain, operator file, or sponsored compute), Direct credit, TEE evidence, storage client, registry, session, Hyperliquid agent, and policy. It never prints secrets. A global `PIT_MEMORY_KEY` is a doctor failure. The desktop can bind a public wallet, pin policy, and mint a session without a terminal. `pit research [ETH] --hypothesis none|long|short` seals a user hypothesis into the private book. `pit pair`, `pit approve`, `pit execute`, and `pit calibration` are first-class commands. `pit direct` issues the official wallet-signed Direct challenge and stores the token in the keychain.
 
 Official storage client (not the TypeScript SDK): `upload --url --file --key --encryption-key` and `download --proof --root --file --encryption-key`. `pit proof` requires `--key-file` per workspace and refuses a global memory key.
 
-`session` creates a one-hour order/cancel agent in the OS keychain (or `PIT_KEYRING=file` for tests). It prints the agent address. It never prints the key. Your wallet must `approveAgent` that address.
+`session` creates a 24-hour order/cancel agent in the OS keychain (or `PIT_KEYRING=file` for tests). It prints the agent address. It never prints the key. Hyperliquid API wallet names must be under 17 characters (`PIT-` plus eight hex). Your wallet must `approveAgent` that address.
 
 `companion` listens on `127.0.0.1:17373` only. Pairing is a one-time code. The browser receives a device token, never the session key. Foreign origins and non-loopback clients are refused.
 

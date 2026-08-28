@@ -34,6 +34,7 @@ Workspace
   pit init --network mainnet|testnet --wallet 0x...
   pit login
   pit wallet
+  pit pair
   pit network
   pit logout [--forget]
   pit revoke
@@ -45,6 +46,7 @@ Policy
 Session
   pit session
   pit companion
+  pit approve
 
 Research
   pit watch
@@ -52,11 +54,13 @@ Research
   pit direct
   pit direct --sig 0x...
   pit ask --market market.json --book book.json
-  pit research [ETH|BTC]
+  pit research [ETH|BTC] [--hypothesis none|long|short]
   pit research --market market.json --book book.json
   pit forecast
+  pit calibration
   pit preview --market ETH --side buy --forecast <id>
   pit authorize --i-understand
+  pit execute --i-understand
 
 Orders
   pit orders
@@ -82,7 +86,7 @@ Every command accepts --json. Exit 0 on success, 2 on usage, 1 on failed doctor.
 PIT never asks for a seed phrase or a trading secret.
 Session keys stay on this machine (OS keychain unless PIT_KEYRING=file).
 authorize requires a TTY, the exact word AUTHORIZE, and a live session on this machine.
-pit session creates a one-hour order/cancel agent. It never prints the key.
+pit session creates a 24-hour order/cancel agent. It never prints the key.
 pit companion listens on 127.0.0.1 only. Pairing does not send the session key to the browser.
 The desktop can bind, pin policy, and mint a session without a terminal.
 `)
@@ -129,6 +133,14 @@ func main() {
 		cmdAsk(rest[1:])
 	case "research":
 		cmdResearch(rest[1:])
+	case "pair":
+		cmdPair()
+	case "approve":
+		cmdApprove()
+	case "execute":
+		cmdAuthorize(rest[1:])
+	case "calibration":
+		cmdForecast()
 	case "direct":
 		cmdDirect(rest[1:])
 	case "forecast":
@@ -340,11 +352,18 @@ func cmdOpportunities() {
 
 func cmdResearch(args []string) {
 	coin := "ETH"
+	hyp := ""
 	hasFiles := false
-	for _, a := range args {
+	for i := 0; i < len(args); i++ {
+		a := args[i]
 		if a == "--market" || a == "--book" {
 			hasFiles = true
 			break
+		}
+		if a == "--hypothesis" && i+1 < len(args) {
+			hyp = args[i+1]
+			i++
+			continue
 		}
 		if !strings.HasPrefix(a, "-") && a != "" {
 			coin = a
@@ -353,6 +372,12 @@ func cmdResearch(args []string) {
 	if hasFiles {
 		cmdAsk(args)
 		return
+	}
+	if hyp != "" {
+		if err := cli.SaveHypothesis(stateDir(), hyp); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(2)
+		}
 	}
 	rep, err := cli.RunWorkspaceResearchStage(stateDir(), coin, func(s string) {
 		if !asJSON {
@@ -365,19 +390,56 @@ func cmdResearch(args []string) {
 	}
 	if asJSON {
 		_ = json.NewEncoder(os.Stdout).Encode(map[string]any{
-			"ok":     true,
-			"roles":  rep.Roles,
-			"note":   rep.Note,
-			"sign":   false,
-			"trade":  false,
-			"verify": true,
+			"ok":           true,
+			"roles":        rep.Roles,
+			"note":         rep.Note,
+			"sign":         false,
+			"trade":        false,
+			"verify":       true,
+			"eligible":     rep.Eligible,
+			"deny":         rep.Deny,
+			"preview":      rep.Preview,
+			"preview_hash": rep.PreviewHash,
+			"hypothesis":   cli.LoadHypothesis(stateDir()),
 		})
 		return
 	}
 	fmt.Println(rep.Note)
 	for _, role := range rep.Roles {
-		fmt.Printf("%v  %v  %v\n", role["role"], role["verify_e2ee"], role["pubkey_signer"])
+		fmt.Printf("%v  %v  %v  %v\n", role["role"], role["verify_e2ee"], role["proposed_side"], role["pubkey_signer"])
 	}
+	if rep.Eligible {
+		fmt.Println("preview ready. type AUTHORIZE on the desktop or pit authorize --i-understand")
+		return
+	}
+	if rep.Deny == "no_side" {
+		fmt.Println("stand down. committee proposed no side. this is a verified result, not a crash.")
+	}
+}
+
+func cmdPair() {
+	fmt.Println("Launch PIT Desktop on this computer.")
+	fmt.Println("Type the one-time pairing code at https://pit0g.vercel.app/pair")
+	fmt.Println("The website never receives a session key.")
+}
+
+func cmdApprove() {
+	st, err := cli.Load(stateDir())
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "approve requires pit init first")
+		os.Exit(2)
+	}
+	sf, err := cli.LoadSession(stateDir())
+	name, _ := session.AgentName(st.WorkspaceID)
+	fmt.Println("Open https://app.hyperliquid.xyz/API")
+	fmt.Println("API wallet name must be less than 17 characters.")
+	if name != "" {
+		fmt.Println("name", name)
+	}
+	if err == nil {
+		fmt.Println("address", sf.AgentAddr)
+	}
+	fmt.Println("Click Authorize API Wallet. PIT still cannot withdraw.")
 }
 
 func cmdAsk(args []string) {

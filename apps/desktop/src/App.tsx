@@ -1,5 +1,6 @@
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { AuthorizeGate } from "./AuthorizeGate";
+import { CapabilityMatrix } from "./CapabilityMatrix";
 import { EmptyHome } from "./EmptyHome";
 import { KillNote } from "./KillNote";
 import { NAMED } from "./namedStates";
@@ -35,6 +36,8 @@ import { explainStop } from "./explain";
 import { LINKS, hyperliquidAPI } from "./links";
 import { nextFix } from "./nextFix";
 import { probes, type Probe } from "./readiness";
+import { setupPath } from "./setupPath";
+import { WelcomePath } from "./WelcomePath";
 
 type Net = "mainnet" | "testnet";
 type View = "home" | "watch" | "research" | "activity" | "policy" | "security" | "account" | "settings";
@@ -314,7 +317,7 @@ function Setup({
           <button type="button" className="linkish" onClick={onSession} disabled={bindBusy || !companionUp || !boundWallet}>
             {sessionAlive ? "Local session is live" : "Create local session"}
           </button>
-          {agent ? <p className="fine">Agent {agent}. Approve this agent on Hyperliquid. PIT cannot withdraw.</p> : null}
+          {agent ? <p className="fine">Agent {agent}. Approve this agent on Hyperliquid. Name must be under 17 characters. PIT cannot withdraw.</p> : null}
           {hlAgent ? <p className="fine">{hlAgent.ok ? "extraAgents lists this session." : hlAgent.detail}</p> : null}
           <a className="linkish" href={hyperliquidAPI(net)} target="_blank" rel="noreferrer">
             Open Hyperliquid
@@ -387,7 +390,9 @@ export function App() {
   const [coins, setCoins] = useState<Coin[]>([]);
   const [researchStop, setResearchStop] = useState<string | null>(null);
   const [researchNote, setResearchNote] = useState<string | null>(null);
-  const [researchRoles, setResearchRoles] = useState<Array<{ role?: string; verify_e2ee?: string; pubkey_signer?: string }>>([]);
+  const [researchRoles, setResearchRoles] = useState<
+    Array<{ role?: string; verify_e2ee?: string; pubkey_signer?: string; proposed_side?: string; survives?: boolean; kill?: boolean }>
+  >([]);
   const [researchBusy, setResearchBusy] = useState(false);
   const [researchStage, setResearchStage] = useState("READING_MARKET");
   const [researchElapsed, setResearchElapsed] = useState(0);
@@ -399,6 +404,7 @@ export function App() {
   const [authBusy, setAuthBusy] = useState(false);
   const [authErr, setAuthErr] = useState<string | null>(null);
   const [lastOid, setLastOid] = useState("");
+  const [hypothesis, setHypothesis] = useState<"none" | "long" | "short">("none");
   const researchGen = useRef(0);
   const researchBusyRef = useRef(false);
   researchBusyRef.current = researchBusy;
@@ -443,6 +449,9 @@ export function App() {
             setStatus(s);
             setSessionAlive(Boolean(s?.sessionAlive));
             setAgent(s?.agent || "");
+            if (s?.hypothesis === "long" || s?.hypothesis === "short" || s?.hypothesis === "none") {
+              setHypothesis(s.hypothesis);
+            }
             if (s?.lastOrder?.oid) setLastOid(String(s.lastOrder.oid));
             if (s?.network === "testnet" || s?.network === "mainnet") setNet(s.network);
             if (s?.wallet) setWalletDraft((cur) => cur || s.wallet || "");
@@ -566,6 +575,7 @@ export function App() {
   const eligible = coins.filter((c) => c.eligible);
   const walletCheck = checks.find((c) => c.name === "wallet");
   const attention = nextFix(companionUp, status, checks, items, sessionAlive, net);
+  const path = setupPath(companionUp, status, checks, sessionAlive, net);
 
   function finishSetup() {
     try {
@@ -684,7 +694,7 @@ export function App() {
       if (gen === researchGen.current) setResearchElapsed(Date.now() - wall);
     }, 250);
     try {
-      const started = await startResearch(want);
+      const started = await startResearch(want, hypothesis);
       if (gen !== researchGen.current) return;
       if (started.error && !started.running) {
         setResearchStop(started.error);
@@ -784,7 +794,7 @@ export function App() {
       <aside className="rail">
         <div className="rail-brand">
           <div className="word">PIT.</div>
-          <p className="kicker">{status?.version || "0.1.10"} · local execution</p>
+          <p className="kicker">{status?.version || "0.1.11"} · local execution</p>
         </div>
         <nav className="rail-nav" aria-label="Desk">
           {RAIL.map((item) => (
@@ -804,7 +814,7 @@ export function App() {
         <div className="rail-foot">
           <p>{net === "mainnet" ? "MAINNET" : "TESTNET"}</p>
           <p>{companionUp ? "companion live" : "starting companion"}</p>
-          <p>{status?.version || "PIT 0.1.10"}</p>
+          <p>{status?.version || "PIT 0.1.11"}</p>
           <button type="button" className="ghost" onClick={() => setView("settings")}>
             Help / Diagnostics
           </button>
@@ -872,6 +882,7 @@ export function App() {
               </article>
             </div>
             <EmptyHome count={eligible.length} next={attention} onGo={(v) => setView(v)} />
+            <WelcomePath steps={path} onGo={(v) => setView(v)} />
             {companionStuck && !explained ? (
               <article className="card stop" role="status">
                 <p className="label">LOCAL COMPANION</p>
@@ -936,8 +947,25 @@ export function App() {
             <h1>Research</h1>
             <p className="lead">
               Private book → Direct TeeML → researcher / challenger / risk → host size → policy → exact preview. Watch
-              never places the order.
+              never places the order. Same provider is labeled as role separation, not three independent models.
             </p>
+            <article className="card">
+              <p className="label">SEALED HYPOTHESIS</p>
+              <p>This is your intent, sealed into the private book. The committee may still stand down. Host sizes.</p>
+              <div className="cta-row">
+                {(["none", "long", "short"] as const).map((h) => (
+                  <button
+                    key={h}
+                    type="button"
+                    className={hypothesis === h ? "linkish on" : "linkish off"}
+                    onClick={() => setHypothesis(h)}
+                    disabled={researchBusy}
+                  >
+                    {h === "none" ? "No bias" : h === "long" ? "Consider long" : "Consider short"}
+                  </button>
+                ))}
+              </div>
+            </article>
             {researchBusy ? (
               <ResearchProgress
                 stage={researchStage}
@@ -953,7 +981,9 @@ export function App() {
                 <ul className="doctor">
                   {researchRoles.map((role) => (
                     <li key={role.role}>
-                      <strong>{role.verify_e2ee}</strong> {role.role} {role.pubkey_signer}
+                      <strong>{role.verify_e2ee}</strong> {role.role}
+                      {role.proposed_side ? ` side ${role.proposed_side}` : ""}
+                      {role.pubkey_signer ? ` ${role.pubkey_signer}` : ""}
                     </li>
                   ))}
                 </ul>
@@ -1007,8 +1037,9 @@ export function App() {
                   </>
                 ) : (
                   <p>
-                    Host did not size a trade ({preview.deny || "no_side"}). Committee envelopes stay independent. The
-                    model cannot raise clip. No order was placed.
+                    {preview.deny === "no_side"
+                      ? "Stand down. The committee did not propose a side. This is a verified result, not a crash. No order was placed."
+                      : `Host did not size a trade (${preview.deny || "no_side"}). Committee envelopes stay independent. The model cannot raise clip. No order was placed.`}
                   </p>
                 )}
               </article>
@@ -1022,7 +1053,8 @@ export function App() {
                   <ul className="doctor">
                     {researchRoles.map((role) => (
                       <li key={role.role}>
-                        <strong>{role.verify_e2ee || "STOP"}</strong> {role.role} {role.pubkey_signer}
+                        <strong>{role.verify_e2ee || "STOP"}</strong> {role.role}
+                      {role.proposed_side ? ` side ${role.proposed_side}` : ""} {role.pubkey_signer}
                       </li>
                     ))}
                   </ul>
@@ -1097,6 +1129,7 @@ export function App() {
             <AuthorizeGate
               sessionAlive={sessionAlive}
               agent={agent}
+              agentName={status?.agentName}
               net={net}
               busy={bindBusy}
               onCreateSession={() => void onSession()}
@@ -1139,6 +1172,7 @@ export function App() {
               <p>Wallet {walletCheck?.ok ? walletCheck.detail : "unbound"}</p>
               <p>Network {net}</p>
               <p>Agent {agent || "none"}</p>
+              {status?.agentName ? <p>Agent name {status.agentName} (under 17 characters on Hyperliquid)</p> : null}
               <p>Session {sessionAlive ? "order/cancel live" : "none"}</p>
               <p>Kill {status?.kill ? "on" : "off"}</p>
             </article>
@@ -1165,6 +1199,7 @@ export function App() {
             <h1>Settings</h1>
             <NetworkToggle net={net} onChange={setNet} />
             <NetworkBanner net={net} />
+            <CapabilityMatrix net={net} />
             <article className="card">
               <p className="label">DOCTOR</p>
               {checks.length === 0 ? (

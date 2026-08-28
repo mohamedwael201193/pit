@@ -13,4 +13,7 @@ func TestAgentName(t *testing.T) {
 	if _, err := AgentName("short"); err == nil {
 		t.Fatal("short")
 	}
+	if len(n) >= 17 {
+		t.Fatal("hyperliquid name limit")
+	}
 }

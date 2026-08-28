@@ -15,3 +15,10 @@ func TestParseRoleTextIgnoresProse(t *testing.T) {
 		t.Fatalf("%+v", got)
 	}
 }
+
+func TestParseRoleTextNone(t *testing.T) {
+	got := ParseRoleText(`{"proposed_side":"none"}`)
+	if got.ProposedSide != "none" {
+		t.Fatalf("%+v", got)
+	}
+}

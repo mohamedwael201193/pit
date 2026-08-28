@@ -1,14 +1,20 @@
 package compute
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func TestEnvelopeAndProgress(t *testing.T) {
 	if _, err := Envelope("nope", []byte("{}"), []byte("{}")); err == nil {
 		t.Fatal("role")
 	}
-	b, err := Envelope(Researcher, []byte(`{"mark":1}`), []byte(`{"clip":10}`))
+	b, err := Envelope(Researcher, []byte(`{"mark":1}`), []byte(`{"clip":10,"hypothesis":"long"}`))
 	if err != nil || len(b) == 0 {
 		t.Fatal(err)
+	}
+	if !strings.Contains(string(b), "hypothesis") {
+		t.Fatal("book")
 	}
 	n, err := Next(ProgBook)
 	if err != nil || n != ProgSeal {

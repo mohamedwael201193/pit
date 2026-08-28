@@ -3,6 +3,8 @@ export const COMPANION = "http://127.0.0.1:17373";
 export type LocalStatus = {
   sessionAlive?: boolean;
   agent?: string;
+  agentName?: string;
+  hypothesis?: string;
   network?: string;
   wallet?: string;
   workspace?: string;
@@ -43,7 +45,15 @@ export type BindResult = {
   message?: string;
   explain?: string;
   note?: string;
-  roles?: Array<{ role?: string; verify_e2ee?: string; pubkey_signer?: string; teeSigner?: string }>;
+  roles?: Array<{
+    role?: string;
+    verify_e2ee?: string;
+    pubkey_signer?: string;
+    teeSigner?: string;
+    proposed_side?: string;
+    survives?: boolean;
+    kill?: boolean;
+  }>;
   verify?: boolean;
   stage?: string;
   elapsed_ms?: number;
@@ -244,9 +254,9 @@ export async function directStatus(): Promise<BindResult> {
   }
 }
 
-export async function startResearch(coin: string): Promise<BindResult> {
+export async function startResearch(coin: string, hypothesis?: string): Promise<BindResult> {
   try {
-    const native = await nativeJsonOrError<BindResult>("local_research_start", { coin });
+    const native = await nativeJsonOrError<BindResult>("local_research_start", { coin, hypothesis: hypothesis || "none" });
     if (native.sign || native.trade) return { error: "companion_denied" };
     return native;
   } catch (e) {

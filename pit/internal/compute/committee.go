@@ -43,7 +43,7 @@ func Next(cur Progress) (Progress, error) {
 func RoleInstruction(role Role) string {
 	switch role {
 	case Researcher:
-		return `ROLE=researcher. Reply with JSON only: {"proposed_side":"buy"|"sell"|"none"}. Never output size, leverage, withdraw, transfer, or permissions. The host sizes.`
+		return `ROLE=researcher. Read the sealed hypothesis (none|long|short). Reply with JSON only: {"proposed_side":"buy"|"sell"|"none"}. none is valid. Confirm long as buy or short as sell only if the sealed book supports it. You may reject the hypothesis with none. Never output size, leverage, withdraw, transfer, or permissions. The host sizes.`
 	case Challenger:
 		return `ROLE=challenger. Reply with JSON only: {"survives":true|false,"kill":false}. Challenge the thesis. Never size.`
 	case Risk:

@@ -4,12 +4,14 @@ import { NAMED } from "./namedStates";
 export function AuthorizeGate({
   sessionAlive,
   agent,
+  agentName,
   net,
   busy,
   onCreateSession,
 }: {
   sessionAlive: boolean;
   agent: string;
+  agentName?: string;
   net: string;
   busy?: boolean;
   onCreateSession: () => void;
@@ -24,6 +26,7 @@ export function AuthorizeGate({
             Create local session
           </button>
           {agent ? <p className="fine">Agent {agent}</p> : null}
+          {agentName ? <p className="fine">API wallet name {agentName}. Must be under 17 characters on Hyperliquid.</p> : null}
           <a className="linkish" href={hyperliquidAPI(net)} target="_blank" rel="noreferrer">
             Open Hyperliquid
           </a>
@@ -34,6 +37,7 @@ export function AuthorizeGate({
           <p className="label">YOUR SESSION</p>
           <p>Order and cancel only. Type AUTHORIZE on the exact preview on Research. This page does not place an order.</p>
           {agent ? <p className="fine">Agent {agent}</p> : null}
+          {agentName ? <p className="fine">API wallet name {agentName}. Must be under 17 characters.</p> : null}
           <a className="linkish" href={hyperliquidAPI(net)} target="_blank" rel="noreferrer">
             Open Hyperliquid
           </a>

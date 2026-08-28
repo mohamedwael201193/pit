@@ -15,6 +15,7 @@ import (
 	"github.com/mohamedwael201193/pit/internal/config"
 	"github.com/mohamedwael201193/pit/internal/hl"
 	"github.com/mohamedwael201193/pit/internal/keyring"
+	"github.com/mohamedwael201193/pit/internal/session"
 	"github.com/mohamedwael201193/pit/internal/storage"
 	"github.com/mohamedwael201193/pit/internal/version"
 )
@@ -213,12 +214,12 @@ func checkDirectCredit(dir string) Check {
 		return Check{Name: "direct_credit", Detail: detail}
 	}
 	if probe.EnoughForCommittee() {
-		return Check{Name: "direct_credit", OK: true, Detail: "provider credit " + probe.BalanceOG() + " 0G"}
+		return Check{Name: "direct_credit", OK: true, Detail: "Private research balance " + probe.BalanceOG() + " 0G. Ready."}
 	}
 	if _, err := compute.LoadSponsorAuthFile(); err == nil {
-		return Check{Name: "direct_credit", OK: true, Detail: "your provider credit is " + probe.BalanceOG() + " 0G. PIT can sponsor sealed research within a daily workspace cap. Open pc.0g.ai Advanced to fund your own sub-account."}
+		return Check{Name: "direct_credit", OK: true, Detail: "Private research balance " + probe.BalanceOG() + " 0G. PIT can sponsor sealed research within a daily workspace cap."}
 	}
-	return Check{Name: "direct_credit", Detail: "provider credit " + probe.BalanceOG() + " 0G. Three sealed roles need about 3 0G locked. Open pc.0g.ai Advanced with this wallet. PIT does not ask for a private key."}
+	return Check{Name: "direct_credit", Detail: "Add private compute credit. Balance " + probe.BalanceOG() + " 0G. Three sealed roles need about 3 0G locked. Open pc.0g.ai Advanced with this wallet."}
 }
 
 func checkTee(dir string) Check {
@@ -293,7 +294,9 @@ func checkHLAgent(dir string) Check {
 		return Check{Name: "hl_agent", Detail: "extraAgents query failed. AUTHORIZE stays off until Hyperliquid lists this agent."}
 	}
 	if !linked {
-		return Check{Name: "hl_agent", Detail: "Approve this agent on Hyperliquid. extraAgents must list it. PIT never signs withdraw, transfer, leverage, or account admin."}
+		name, _ := session.AgentName(st.WorkspaceID)
+		detail := "Approve this agent on Hyperliquid. extraAgents must list the address. Name " + name + " (under 17 characters). PIT never signs withdraw, transfer, leverage, or account admin."
+		return Check{Name: "hl_agent", Detail: detail}
 	}
 	return Check{Name: "hl_agent", OK: true, Detail: "extraAgents lists this session. PIT still refuses withdraw, transfer, leverage, and account admin."}
 }

@@ -122,6 +122,18 @@ func ProductAskReportStage(net config.Network, deskAuthorized bool, bin string, 
 	for _, j := range jobs {
 		ev := PublicRoleEvidence(j)
 		raw := roleJSONFromOut(j.OutPath)
+		var parsed map[string]any
+		if json.Unmarshal(raw, &parsed) == nil {
+			if side, ok := parsed["proposed_side"].(string); ok && side != "" {
+				ev["proposed_side"] = side
+			}
+			if v, ok := parsed["survives"]; ok {
+				ev["survives"] = v
+			}
+			if v, ok := parsed["kill"]; ok {
+				ev["kill"] = v
+			}
+		}
 		switch j.Role {
 		case Researcher:
 			rep.Researcher = raw

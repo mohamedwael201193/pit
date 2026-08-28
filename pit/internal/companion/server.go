@@ -250,9 +250,13 @@ func (h *Hub) localStatus(w http.ResponseWriter, r *http.Request) {
 		body["wallet"] = st.Wallet
 		body["workspace"] = st.WorkspaceID
 		body["kill"] = st.Kill
+		body["hypothesis"] = cli.LoadHypothesis(h.Dir)
 		if s, err := cli.LiveFromDisk(h.Dir, st.Kill, time.Now().UnixMilli()); err == nil {
 			body["sessionAlive"] = session.Alive(s, time.Now().UnixMilli())
 			body["agent"] = s.AgentAddr
+			if name, nerr := session.AgentName(st.WorkspaceID); nerr == nil {
+				body["agentName"] = name
+			}
 		}
 		if last := cli.LoadLastOrder(h.Dir); last != nil {
 			body["lastOrder"] = last

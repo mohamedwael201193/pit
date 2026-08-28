@@ -42,10 +42,10 @@ func EnsureLocalSession(dir string) (SessionFile, bool, error) {
 }
 
 func CreateLocalSession(dir, workspace, network, policyVer string) (SessionFile, error) {
-	if err := session.CapTTLHours(1); err != nil {
+	if err := session.CapTTLHours(session.DefaultTTLHours); err != nil {
 		return SessionFile{}, err
 	}
-	key, exp, err := session.GenerateAgent(1)
+	key, exp, err := session.GenerateAgent(session.DefaultTTLHours)
 	if err != nil {
 		return SessionFile{}, err
 	}
