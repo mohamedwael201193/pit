@@ -27,7 +27,7 @@ func TestSizerRejectsNaNInfMissing(t *testing.T) {
 		t.Fatal("neg")
 	}
 	bad = base
-	bad.Coin = "SOL"
+	bad.Coin = "XYZ"
 	if _, err := SizeOrder(bad); err == nil {
 		t.Fatal("sol")
 	}

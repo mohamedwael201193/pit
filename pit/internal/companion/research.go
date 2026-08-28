@@ -39,6 +39,8 @@ func classifyResearch(code string) string {
 		return "DIRECT_NOT_AUTHORIZED"
 	case "empty_envelope":
 		return "HL_MARKET_UNAVAILABLE"
+	case "SPONSOR_QUOTA":
+		return "SPONSOR_QUOTA"
 	case "sealer_not_wired", "direct_ledger", "direct_provider_http":
 		return "DIRECT_PROVIDER_UNAVAILABLE"
 	case "TEE_VERIFY_FAIL":

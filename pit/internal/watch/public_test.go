@@ -1,6 +1,10 @@
 package watch
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/mohamedwael201193/pit/internal/hl"
+)
 
 func TestPublicNeverTrades(t *testing.T) {
 	v := Public(nil, "mainnet")
@@ -19,5 +23,19 @@ func TestEmptyPublic(t *testing.T) {
 	v := EmptyPublic("testnet")
 	if v.Network != "testnet" || v.Count != 0 || v.Trade {
 		t.Fatalf("%+v", v)
+	}
+}
+
+func TestPublicCarriesVenueFields(t *testing.T) {
+	v := Public([]Candidate{{
+		Coin:   "ETH",
+		Reason: "funding",
+		Book:   hl.BookSnapshot{Coin: "ETH", MarkPx: 2500, OraclePx: 2510, Funding: 0.0001, OpenInterest: 1e9},
+	}}, "mainnet")
+	if v.Trade || len(v.Coins) != 1 {
+		t.Fatalf("%+v", v)
+	}
+	if v.Coins[0].Oracle != 2510 || v.Coins[0].Funding == 0 || v.Coins[0].OpenInterest == 0 {
+		t.Fatalf("%+v", v.Coins[0])
 	}
 }

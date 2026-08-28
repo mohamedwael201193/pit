@@ -27,7 +27,9 @@ func TestDoctorRefusesGlobalMemoryKey(t *testing.T) {
 }
 
 func TestDoctorDirectAuthUnset(t *testing.T) {
+	t.Setenv("PIT_KEYRING", "file")
 	t.Setenv("PIT_DIRECT_AUTH_FILE", "")
+	t.Setenv("PIT_DIRECT_SPONSOR_FILE", "")
 	c := checkDirectAuth(t.TempDir())
 	if c.OK {
 		t.Fatal("unset auth must not pass")
@@ -80,6 +82,23 @@ func TestDoctorWalletBound(t *testing.T) {
 	c := checkWallet(dir)
 	if !c.OK {
 		t.Fatal(c)
+	}
+}
+
+func TestDoctorTeeMissingIsHonest(t *testing.T) {
+	c := checkTee(t.TempDir())
+	if c.OK {
+		t.Fatal("empty last-research must wait")
+	}
+	if c.Name != "tee" {
+		t.Fatal(c.Name)
+	}
+}
+
+func TestDoctorCreditUnbound(t *testing.T) {
+	c := checkDirectCredit(t.TempDir())
+	if c.OK {
+		t.Fatal("unbound credit")
 	}
 }
 

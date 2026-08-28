@@ -225,6 +225,12 @@
           "markdownDescription": "Bind a public wallet on this machine. Never a secret."
         },
         {
+          "description": "Flip the local kill switch. Never exports a session key.",
+          "type": "string",
+          "const": "allow-local-kill",
+          "markdownDescription": "Flip the local kill switch. Never exports a session key."
+        },
+        {
           "description": "Pin the default policy file for this workspace.",
           "type": "string",
           "const": "allow-local-policy",
@@ -271,6 +277,12 @@
           "type": "string",
           "const": "allow-local-status",
           "markdownDescription": "Read companion status over a native loopback GET with no Origin."
+        },
+        {
+          "description": "Read public Hyperliquid marks from the local companion. Never a secret.",
+          "type": "string",
+          "const": "allow-local-watch",
+          "markdownDescription": "Read public Hyperliquid marks from the local companion. Never a secret."
         },
         {
           "description": "Default core plugins set.\n#### This default permission set includes:\n\n- `core:path:default`\n- `core:event:default`\n- `core:window:default`\n- `core:webview:default`\n- `core:app:default`\n- `core:image:default`\n- `core:resources:default`\n- `core:menu:default`\n- `core:tray:default`",

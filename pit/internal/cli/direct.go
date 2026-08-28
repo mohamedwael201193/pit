@@ -122,38 +122,43 @@ func ResolveWorkspaceAuth(dir string) (compute.AuthFile, compute.DirectMeta, err
 	if err != nil {
 		return compute.AuthFile{}, compute.DirectMeta{}, err
 	}
-	store, err := keyring.OpenProduct(KeyringDir(dir))
-	if err != nil {
-		file, err := compute.LoadEnvAuthFile()
-		if err != nil {
-			return compute.AuthFile{}, compute.DirectMeta{}, fmt.Errorf("direct_token_required")
+	sku := compute.ForNetwork(net)
+	probe := compute.ProbeDirectAccount(config.For(net), st.Wallet, sku.Provider)
+	store, storeErr := keyring.OpenProduct(KeyringDir(dir))
+	var userFile compute.AuthFile
+	var userMeta compute.DirectMeta
+	var userErr error
+	if storeErr == nil {
+		var recovery keyring.Store
+		if keyring.BackendName() != "file" {
+			recovery, _ = keyring.Open(KeyringDir(dir))
 		}
-		tok, _, perr := compute.ParseBearer(file.Authorization)
-		meta := compute.DirectMeta{Provider: file.Provider, Model: file.Model, Source: "operator_file"}
+		userFile, userMeta, userErr = compute.AuthFromStores(store, recovery, net, st.WorkspaceID, time.Now())
+	} else {
+		userErr = fmt.Errorf("direct_token_required")
+	}
+	if userErr == nil && probe.EnoughForCommittee() {
+		return userFile, userMeta, nil
+	}
+	if sponsor, err := compute.LoadSponsorAuthFile(); err == nil {
+		tok, _, perr := compute.ParseBearer(sponsor.Authorization)
+		meta := compute.DirectMeta{Provider: sponsor.Provider, Model: sponsor.Model, Source: "sponsor"}
 		if perr == nil {
-			meta = compute.PublicMeta(compute.ForNetwork(net), tok, "operator_file")
+			meta = compute.PublicMeta(sku, tok, "sponsor")
 		}
-		return file, meta, nil
+		return sponsor, meta, nil
 	}
-	var recovery keyring.Store
-	if keyring.BackendName() != "file" {
-		recovery, _ = keyring.Open(KeyringDir(dir))
-	}
-	file, meta, err := compute.AuthFromStores(store, recovery, net, st.WorkspaceID, time.Now())
-	if err == nil {
-		return file, meta, nil
-	}
-	if err.Error() == "direct_token_expired" {
-		return compute.AuthFile{}, compute.DirectMeta{}, err
+	if userErr == nil {
+		return userFile, userMeta, nil
 	}
 	op, err := compute.LoadEnvAuthFile()
 	if err != nil {
 		return compute.AuthFile{}, compute.DirectMeta{}, fmt.Errorf("direct_token_required")
 	}
 	tok, _, perr := compute.ParseBearer(op.Authorization)
-	meta = compute.DirectMeta{Provider: op.Provider, Model: op.Model, Source: "operator_file"}
+	meta := compute.DirectMeta{Provider: op.Provider, Model: op.Model, Source: "operator_file"}
 	if perr == nil {
-		meta = compute.PublicMeta(compute.ForNetwork(net), tok, "operator_file")
+		meta = compute.PublicMeta(sku, tok, "operator_file")
 	}
 	return op, meta, nil
 }
@@ -207,9 +212,14 @@ func RunWorkspaceResearchStage(dir, coin string, stage compute.StageFn, stop fun
 	if err != nil {
 		return compute.AskReport{}, err
 	}
-	auth, _, err := ResolveWorkspaceAuth(dir)
+	auth, meta, err := ResolveWorkspaceAuth(dir)
 	if err != nil {
 		return compute.AskReport{}, err
+	}
+	if meta.Source == "sponsor" {
+		if err := compute.ConsumeSponsorQuota(dir, st.WorkspaceID); err != nil {
+			return compute.AskReport{}, err
+		}
 	}
 	p := policy.Default()
 	_ = CheckPinned(dir, st.WorkspaceID, p)

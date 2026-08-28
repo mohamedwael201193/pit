@@ -34,14 +34,30 @@ export function probes(checks: DoctorCheck[], status: LocalStatus | null, compan
   } else if (auth && !auth.ok) {
     direct = { id: "direct", label: "0G Direct", state: "waiting", detail: auth.detail };
   }
-  const tee: Probe = teeVerified
-    ? { id: "tee", label: "TEE verification", state: "ok", detail: "VerifyE2EE matched the on-chain teeSigner for this session." }
-    : {
-        id: "tee",
-        label: "TEE verification",
-        state: "waiting",
-        detail: "No sealed research has been verified on this machine in this session.",
-      };
+  const credit = checkNamed(checks, "direct_credit");
+  if (credit && !credit.ok) {
+    direct = {
+      id: "direct",
+      label: "0G Direct",
+      state: "waiting",
+      detail: credit.detail,
+    };
+  }
+  const teeCheck = checkNamed(checks, "tee");
+  const tee: Probe =
+    teeVerified || teeCheck?.ok
+      ? {
+          id: "tee",
+          label: "TEE verification",
+          state: "ok",
+          detail: teeCheck?.detail || "VerifyE2EE matched the on-chain teeSigner on this machine.",
+        }
+      : {
+          id: "tee",
+          label: "TEE verification",
+          state: "waiting",
+          detail: teeCheck?.detail || "No sealed research has been verified on this machine yet.",
+        };
   const storage = fromCheck("storage", "Storage", checkNamed(checks, "storage"), "Official Go storage client not found.");
   if (storage.state === "ok") {
     storage.detail = "Official client present. A proof is verified only after an upload/download.";

@@ -36,6 +36,8 @@ func Doctor(dir string) []Check {
 		checkCompanion(),
 		checkSealer(),
 		checkDirectAuth(dir),
+		checkDirectCredit(dir),
+		checkTee(dir),
 		checkStorage(),
 		checkRegistry(dir),
 		checkSession(dir),
@@ -157,6 +159,9 @@ func checkDirectAuth(dir string) Check {
 		if src == "" {
 			src = "keychain"
 		}
+		if src == "sponsor" {
+			return Check{Name: "direct_auth", OK: true, Detail: "sponsored Direct on this computer. Trading credentials stay separate."}
+		}
 		return Check{Name: "direct_auth", OK: true, Detail: "wallet-signed Direct token in " + src}
 	}
 	switch err.Error() {
@@ -169,6 +174,52 @@ func checkDirectAuth(dir string) Check {
 	default:
 		return Check{Name: "direct_auth", Detail: "Direct token missing. Pair the browser and sign the sealed-path message."}
 	}
+}
+
+func checkDirectCredit(dir string) Check {
+	st, err := Load(dir)
+	if err != nil {
+		return Check{Name: "direct_credit", Detail: "unbound"}
+	}
+	net, err := config.ParseNetwork(st.Network)
+	if err != nil {
+		return Check{Name: "direct_credit", Detail: err.Error()}
+	}
+	sku := compute.ForNetwork(net)
+	probe := compute.ProbeDirectAccount(config.For(net), st.Wallet, sku.Provider)
+	if probe.EnoughForCommittee() {
+		return Check{Name: "direct_credit", OK: true, Detail: "provider credit " + probe.BalanceOG() + " 0G"}
+	}
+	if _, err := compute.LoadSponsorAuthFile(); err == nil {
+		return Check{Name: "direct_credit", OK: true, Detail: "your provider credit is " + probe.BalanceOG() + " 0G. PIT can sponsor sealed research within a daily workspace cap. Open pc.0g.ai Advanced to fund your own sub-account."}
+	}
+	return Check{Name: "direct_credit", Detail: "provider credit " + probe.BalanceOG() + " 0G. Three sealed roles need about 3 0G locked. Open pc.0g.ai Advanced with this wallet. PIT does not ask for a private key."}
+}
+
+func checkTee(dir string) Check {
+	raw, err := os.ReadFile(filepath.Join(dir, "last-research.json"))
+	if err != nil || strings.Contains(strings.ToLower(string(raw)), "app-sk-") {
+		return Check{Name: "tee", Detail: "No sealed research has been verified on this machine yet."}
+	}
+	var body struct {
+		Roles []struct {
+			Verify string `json:"verify_e2ee"`
+			Role   string `json:"role"`
+		} `json:"roles"`
+	}
+	if json.Unmarshal(raw, &body) != nil {
+		return Check{Name: "tee", Detail: "No sealed research has been verified on this machine yet."}
+	}
+	ok := 0
+	for _, r := range body.Roles {
+		if strings.EqualFold(strings.TrimSpace(r.Verify), "OK") {
+			ok++
+		}
+	}
+	if ok == 0 {
+		return Check{Name: "tee", Detail: "Last sealed run did not verify a TeeML signature."}
+	}
+	return Check{Name: "tee", OK: true, Detail: fmt.Sprintf("%d role(s) VerifyE2EE OK on this machine", ok)}
 }
 
 func checkStorage() Check {

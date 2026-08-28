@@ -21,7 +21,7 @@ func TestPolicyDenies(t *testing.T) {
 		{"kill", func(p *Policy, c *Context) { p.KillSwitch = true }},
 		{"clip", func(_ *Policy, c *Context) { c.RequestedUSD = 11 }},
 		{"lev", func(_ *Policy, c *Context) { c.RequestedLev = 50 }},
-		{"coin", func(_ *Policy, c *Context) { c.Coin = "DOGE" }},
+		{"coin", func(_ *Policy, c *Context) { c.Coin = "XYZ" }},
 		{"venue", func(_ *Policy, c *Context) { c.Venue = "other" }},
 		{"type", func(_ *Policy, c *Context) { c.MarketType = "spot" }},
 		{"session", func(_ *Policy, c *Context) { c.SessionAlive = false }},

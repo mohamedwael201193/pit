@@ -224,6 +224,10 @@ h1 { font-size: 48px; line-height: 0.95; letter-spacing: -0.04em; margin: 12px 0
   .start { grid-template-columns: 1fr; }
   .top { flex-wrap: wrap; gap: 12px; }
 }
+.next-fix h2 { font-size: 22px; margin: 8px 0 10px; letter-spacing: -0.03em; }
+.cta-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.rail-brand .kicker { font-size: 10px; letter-spacing: 0.16em; opacity: 0.65; margin-top: 4px; }
+.desk-table .mark-num { font-size: 15px; margin: 0; }
 @media (prefers-reduced-motion: reduce) {
   * { animation: none !important; transition: none !important; }
 }

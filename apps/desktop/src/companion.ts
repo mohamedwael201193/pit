@@ -166,6 +166,31 @@ export async function pinLocalPolicy(): Promise<BindResult> {
   }
 }
 
+export async function fetchWatch(network: string): Promise<{ coins?: Array<{ coin: string; reason: string; mark: number; eligible?: boolean; oracle?: number; funding?: number; openInterest?: number }>; sign?: boolean; trade?: boolean }> {
+  const native = rejectSecrets(await nativeJson<{ coins?: Array<{ coin: string; reason: string; mark: number; eligible?: boolean; oracle?: number; funding?: number; openInterest?: number }>; sign?: boolean; trade?: boolean }>("local_watch", { network }));
+  if (native) return native;
+  const fetched = await fetchJson<{ coins?: Array<{ coin: string; reason: string; mark: number; eligible?: boolean; oracle?: number; funding?: number; openInterest?: number }>; sign?: boolean; trade?: boolean }>(`/watch?network=${network}`);
+  if (fetched) return fetched;
+  try {
+    const r = await fetch(`https://pit-health.onrender.com/watch?network=${network}`);
+    if (!r.ok) return {};
+    return (await r.json()) as { coins?: Array<{ coin: string; reason: string; mark: number; eligible?: boolean; oracle?: number; funding?: number; openInterest?: number }>; sign?: boolean; trade?: boolean };
+  } catch {
+    return {};
+  }
+}
+
+export async function setKillSwitch(on: boolean): Promise<BindResult> {
+  try {
+    const native = await nativeJsonOrError<BindResult>("local_kill", { on });
+    if (native.sign || native.trade) return { error: "companion_denied" };
+    return native;
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : "companion_http";
+    return { error: msg || "companion_http" };
+  }
+}
+
 export async function revokeLocalSession(): Promise<BindResult> {
   try {
     const native = await nativeJsonOrError<BindResult>("local_revoke_session");

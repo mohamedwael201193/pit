@@ -79,6 +79,18 @@ fn local_research_cancel() -> Result<serde_json::Value, String> {
 }
 
 #[tauri::command]
+fn local_watch(network: String) -> Result<serde_json::Value, String> {
+    let net = if network == "testnet" { "testnet" } else { "mainnet" };
+    loopback_json(&format!("/watch?network={net}"))
+}
+
+#[tauri::command]
+fn local_kill(on: bool) -> Result<serde_json::Value, String> {
+    let body = serde_json::json!({ "on": on });
+    loopback_json_post("/local/kill", &body)
+}
+
+#[tauri::command]
 fn local_research(coin: String) -> Result<serde_json::Value, String> {
     local_research_start(coin)
 }
@@ -232,7 +244,7 @@ fn same_install(path: &Path) -> bool {
     path.parent().map(|p| p == dir).unwrap_or(false)
 }
 
-const SIDECAR_VERSION: &str = "0.1.6";
+const SIDECAR_VERSION: &str = "0.1.7";
 
 fn companion_version() -> Option<String> {
     let raw = loopback_get("/health").ok()?;
@@ -263,6 +275,25 @@ fn stop_our_listener() {
     }
 }
 
+fn apply_sponsor_env(cmd: &mut Command, bin: &Path) {
+    if std::env::var_os("PIT_DIRECT_SPONSOR_FILE").is_some() {
+        return;
+    }
+    if let Some(dir) = bin.parent() {
+        let p = dir.join("direct-sponsor.json");
+        if p.is_file() {
+            cmd.env("PIT_DIRECT_SPONSOR_FILE", p);
+            return;
+        }
+    }
+    if let Some(base) = std::env::var_os("LOCALAPPDATA") {
+        let p = PathBuf::from(base).join("PIT").join("direct-sponsor.json");
+        if p.is_file() {
+            cmd.env("PIT_DIRECT_SPONSOR_FILE", p);
+        }
+    }
+}
+
 fn spawn_sidecar(bin: &Path) {
     let mut cmd = Command::new(bin);
     cmd.arg("companion");
@@ -271,6 +302,7 @@ fn spawn_sidecar(bin: &Path) {
     }
     cmd.env("PIT_ALLOW_FALLBACKS", "false");
     cmd.env("PIT_COMPANION", "1");
+    apply_sponsor_env(&mut cmd, bin);
 	cmd.env_remove("PIT_SESSION_KEY");
     cmd.env_remove("HL_SECRET");
     cmd.env_remove("PIT_KEYRING");
@@ -340,6 +372,8 @@ pub fn run() {
             local_research_start,
             local_research_status,
             local_research_cancel,
+            local_watch,
+            local_kill,
             ensure_companion
         ])
         .run(tauri::generate_context!())

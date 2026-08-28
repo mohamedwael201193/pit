@@ -35,4 +35,12 @@ func TestOpportunitiesDoNotTrade(t *testing.T) {
 	if Handle(Request{Tool: "key"}).OK {
 		t.Fatal("key")
 	}
+	cal := Handle(Request{Tool: "calibration"})
+	if !cal.OK {
+		t.Fatal(cal)
+	}
+	cb, _ := cal.Body.(map[string]any)
+	if cb["copy"] != "NOT ENOUGH DATA" || cb["trade"] != false {
+		t.Fatal(cb)
+	}
 }

@@ -84,6 +84,12 @@ export function explainStop(code: string | null): { title: string; body: string 
       body: "Pair the browser and sign Protect my strategy. No order was placed.",
     };
   }
+  if (code === "SPONSOR_QUOTA") {
+    return {
+      title: "Sponsored research is paused for today",
+      body: "This workspace used its daily sponsored sealed-research cap. Fund your own Direct sub-account at pc.0g.ai Advanced, or wait until tomorrow. No order was placed.",
+    };
+  }
   if (code === "DIRECT_PROVIDER_UNAVAILABLE") {
     return {
       title: "0G Direct credit ran out",

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"math/big"
 	"net/http"
 	"strings"
 	"time"
@@ -17,9 +18,30 @@ import (
 // AccountProbe is a public eth_call against InferenceServing.getAccount.
 // A missing account is generation 0 / not acknowledged — the official SDK catch path.
 type AccountProbe struct {
-	Generation   uint64 `json:"generation"`
-	Acknowledged bool   `json:"acknowledged"`
-	Present      bool   `json:"present"`
+	Generation   uint64   `json:"generation"`
+	Acknowledged bool     `json:"acknowledged"`
+	Present      bool     `json:"present"`
+	BalanceWei   *big.Int `json:"-"`
+}
+
+// CommitteeFloorWei is 3 0G. Official Direct rejects a call when locked balance
+// is below the provider minimum; a three-role committee needs headroom after the first role.
+var CommitteeFloorWei = new(big.Int).Mul(big.NewInt(3), new(big.Int).Exp(big.NewInt(10), big.NewInt(18), nil))
+
+func (p AccountProbe) EnoughForCommittee() bool {
+	if p.BalanceWei == nil {
+		return false
+	}
+	return p.Acknowledged && p.BalanceWei.Cmp(CommitteeFloorWei) >= 0
+}
+
+func (p AccountProbe) BalanceOG() string {
+	if p.BalanceWei == nil {
+		return "0"
+	}
+	r := new(big.Rat).SetInt(p.BalanceWei)
+	r.Quo(r, new(big.Rat).SetInt(new(big.Int).Exp(big.NewInt(10), big.NewInt(18), nil)))
+	return strings.TrimRight(strings.TrimRight(r.FloatString(4), "0"), ".")
 }
 
 func ProbeDirectAccount(ch config.Chain, user, provider string) AccountProbe {
@@ -76,6 +98,7 @@ func ProbeDirectAccount(ch config.Chain, user, provider string) AccountProbe {
 	}
 	if len(vals) >= 11 {
 		out.Present = true
+		out.BalanceWei = asBigInt(vals[3])
 		if ack, ok := vals[7].(bool); ok {
 			out.Acknowledged = ack
 		}
@@ -87,6 +110,19 @@ func ProbeDirectAccount(ch config.Chain, user, provider string) AccountProbe {
 func unpackAccountMap(v any, out *AccountProbe) AccountProbe {
 	_ = fmt.Sprintf("%v", v)
 	return *out
+}
+
+func asBigInt(v any) *big.Int {
+	switch n := v.(type) {
+	case *big.Int:
+		if n == nil {
+			return big.NewInt(0)
+		}
+		return new(big.Int).Set(n)
+	case big.Int:
+		return new(big.Int).Set(&n)
+	}
+	return big.NewInt(0)
 }
 
 func asUint64(v any) uint64 {

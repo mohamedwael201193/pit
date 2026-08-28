@@ -118,7 +118,8 @@ export function DirectSign() {
     <div className="mt-6 max-w-[46ch]">
       <p className="text-[1.0625rem] leading-7 text-[rgb(240_231_212/0.78)]">
         PIT sends your private strategy only through 0G’s verified sealed path. This signature lasts 24 hours. It cannot
-        withdraw. It cannot place a Hyperliquid order.
+        withdraw. It cannot place a Hyperliquid order. Direct credit lives at pc.0g.ai — switch to Advanced. That is
+        provider credit, not a Hyperliquid balance.
       </p>
       <button
         type="button"

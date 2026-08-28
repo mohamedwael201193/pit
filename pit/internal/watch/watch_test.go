@@ -10,7 +10,7 @@ import (
 func TestScanRespectsAllowlistAndEmpty(t *testing.T) {
 	p := policy.Default()
 	cands, err := Scan([]hl.BookSnapshot{
-		{Coin: "DOGE", MarkPx: 1, OraclePx: 1, OpenInterest: 1e9},
+		{Coin: "XYZ", MarkPx: 1, OraclePx: 1, OpenInterest: 1e9},
 		{Coin: "ETH", MarkPx: 2500, OraclePx: 2510, OpenInterest: 1e9},
 	}, p)
 	if err != nil {

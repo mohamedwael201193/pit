@@ -7,14 +7,17 @@ import (
 )
 
 type PublicCoin struct {
-	Coin       string  `json:"coin"`
-	Reason     string  `json:"reason"`
-	Mark       float64 `json:"mark"`
-	Timestamp  string  `json:"timestamp"`
-	Provenance string  `json:"provenance"`
-	Source     string  `json:"source"`
-	Network    string  `json:"network"`
-	Eligible   bool    `json:"eligible"`
+	Coin         string  `json:"coin"`
+	Reason       string  `json:"reason"`
+	Mark         float64 `json:"mark"`
+	Oracle       float64 `json:"oracle,omitempty"`
+	Funding      float64 `json:"funding,omitempty"`
+	OpenInterest float64 `json:"openInterest,omitempty"`
+	Timestamp    string  `json:"timestamp"`
+	Provenance   string  `json:"provenance"`
+	Source       string  `json:"source"`
+	Network      string  `json:"network"`
+	Eligible     bool    `json:"eligible"`
 }
 
 type PublicView struct {
@@ -36,14 +39,17 @@ func Public(cands []Candidate, net string) PublicView {
 	now := time.Now().UTC().Format(time.RFC3339)
 	for _, c := range cands {
 		coins = append(coins, PublicCoin{
-			Coin:       c.Coin,
-			Reason:     c.Reason,
-			Mark:       c.Book.MarkPx,
-			Timestamp:  now,
-			Provenance: "hyperliquid.info",
-			Source:     "hyperliquid",
-			Network:    net,
-			Eligible:   true,
+			Coin:         c.Coin,
+			Reason:       c.Reason,
+			Mark:         c.Book.MarkPx,
+			Oracle:       c.Book.OraclePx,
+			Funding:      c.Book.Funding,
+			OpenInterest: c.Book.OpenInterest,
+			Timestamp:    now,
+			Provenance:   "hyperliquid.info",
+			Source:       "hyperliquid",
+			Network:      net,
+			Eligible:     true,
 		})
 	}
 	return PublicView{

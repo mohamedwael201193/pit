@@ -117,6 +117,7 @@ func (h *Hub) Handler() http.Handler {
 	mux.HandleFunc("/local/research/status", h.localResearchStatus)
 	mux.HandleFunc("/local/research/result", h.localResearchResult)
 	mux.HandleFunc("/local/research/cancel", h.localResearchCancel)
+	mux.HandleFunc("/local/kill", h.localKill)
 	mux.HandleFunc("/direct/intent", h.deviceDirectIntent)
 	mux.HandleFunc("/direct/complete", h.deviceDirectComplete)
 	mux.HandleFunc("/bind", h.bind)
@@ -412,6 +413,28 @@ func (h *Hub) localRevokeSession(w http.ResponseWriter, r *http.Request) {
 	writeLocal(w, http.StatusOK, map[string]any{
 		"ok":     true,
 		"local":  "session_deleted",
+		"sign":   false,
+		"trade":  false,
+		"order":  false,
+		"cancel": false,
+	})
+}
+
+func (h *Hub) localKill(w http.ResponseWriter, r *http.Request) {
+	if !desktopOnly(w, r) {
+		return
+	}
+	var body struct {
+		On bool `json:"on"`
+	}
+	_ = json.NewDecoder(r.Body).Decode(&body)
+	if err := cli.SetKill(h.Dir, body.On); err != nil {
+		writeBindErr(w, err)
+		return
+	}
+	writeLocal(w, http.StatusOK, map[string]any{
+		"ok":     true,
+		"kill":   body.On,
 		"sign":   false,
 		"trade":  false,
 		"order":  false,

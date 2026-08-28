@@ -142,22 +142,26 @@ func SavePublicEvidence(path string, jobs []DirectJob, runErr error) error {
 	}
 	roles := make([]any, 0, len(jobs))
 	for _, j := range jobs {
+		m := PublicRoleEvidence(j)
 		b, err := os.ReadFile(j.OutPath)
-		if err != nil {
-			continue
-		}
-		var m map[string]any
-		if json.Unmarshal(b, &m) != nil {
-			continue
-		}
-		delete(m, "authorization")
-		delete(m, "prompt")
-		delete(m, "sanitized_output")
-		if clip, ok := m["post_err_clip"].(string); ok {
-			m["post_err_clip"] = redactSecret(clip)
-		}
-		if verr, ok := m["verify_err"].(string); ok {
-			m["verify_err"] = redactSecret(verr)
+		if err == nil {
+			var extra map[string]any
+			if json.Unmarshal(b, &extra) == nil {
+				delete(extra, "authorization")
+				delete(extra, "prompt")
+				delete(extra, "sanitized_output")
+				if clip, ok := extra["post_err_clip"].(string); ok {
+					extra["post_err_clip"] = redactSecret(clip)
+				}
+				if verr, ok := extra["verify_err"].(string); ok {
+					extra["verify_err"] = redactSecret(verr)
+				}
+				for k, v := range extra {
+					if _, exists := m[k]; !exists {
+						m[k] = v
+					}
+				}
+			}
 		}
 		roles = append(roles, m)
 	}

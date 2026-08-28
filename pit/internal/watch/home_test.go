@@ -14,7 +14,7 @@ func TestHomeEmptyIsReal(t *testing.T) {
 	if len(cards) != 0 {
 		t.Fatal("ghost")
 	}
-	b := BlockedCard("SOL", "asset_not_allowed")
+	b := BlockedCard("XYZ", "asset_not_allowed")
 	if b.Eligible {
 		t.Fatal("blocked")
 	}

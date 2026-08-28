@@ -6,7 +6,7 @@ import (
 )
 
 var AllowedTools = []string{
-	"market", "opportunities", "forecast", "status", "card", "verify", "preview",
+	"market", "opportunities", "forecast", "status", "card", "verify", "preview", "receipts", "calibration",
 }
 
 var ForbiddenTools = []string{
@@ -71,6 +71,10 @@ func Handle(req Request) Response {
 		return Response{OK: true, Body: VerifyHint()}
 	case "preview":
 		return PreparePreview()
+	case "receipts":
+		return Response{OK: true, Body: map[string]any{"count": 0, "copy": "No receipt until Hyperliquid accepts an order after AUTHORIZE.", "sign": false, "trade": false}}
+	case "calibration":
+		return Response{OK: true, Body: map[string]any{"copy": "NOT ENOUGH DATA", "n": 0, "sign": false, "trade": false}}
 	default:
 		return Response{OK: true, Body: map[string]any{"tool": req.Tool, "note": "bind a workspace first"}}
 	}

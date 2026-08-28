@@ -8,8 +8,8 @@ import (
 
 func TestCoinAllowed(t *testing.T) {
 	p := policy.Default()
-	if CoinAllowed(p, "SOL") {
-		t.Fatal("sol")
+	if CoinAllowed(p, "XYZ") {
+		t.Fatal("xyz")
 	}
 	if !CoinAllowed(p, "ETH") {
 		t.Fatal("eth")

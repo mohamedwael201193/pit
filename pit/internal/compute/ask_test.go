@@ -56,4 +56,7 @@ func TestSavePublicEvidenceRedactsDirectToken(t *testing.T) {
 	if !strings.Contains(string(raw), "TEE_VERIFY_FAIL") {
 		t.Fatal(string(raw))
 	}
+	if !strings.Contains(string(raw), `"verify_e2ee"`) {
+		t.Fatal("verify field")
+	}
 }

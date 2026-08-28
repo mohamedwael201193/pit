@@ -188,7 +188,7 @@ func TestLocalStatusVersionNoSecret(t *testing.T) {
 	if got["sign"] == true || got["trade"] == true {
 		t.Fatal(got)
 	}
-	if got["version"] != "0.1.6" {
+	if got["version"] != "0.1.7" {
 		t.Fatalf("version %v", got["version"])
 	}
 }
@@ -418,6 +418,19 @@ func TestResearchStartReturnsImmediately(t *testing.T) {
 	if !strings.Contains(rec.Body.String(), `"job_id"`) {
 		t.Fatal("job_id")
 	}
+	req = local(httptest.NewRequest(http.MethodPost, "/local/research/cancel", strings.NewReader(`{}`)))
+	req.Header.Set("Content-Type", "application/json")
+	rec = httptest.NewRecorder()
+	h.Handler().ServeHTTP(rec, req)
+	for i := 0; i < 50; i++ {
+		h.researchMu.Lock()
+		done := !h.job.running
+		h.researchMu.Unlock()
+		if done {
+			break
+		}
+		time.Sleep(20 * time.Millisecond)
+	}
 }
 
 func TestResearchStatusOmitsEvidenceWhileRunning(t *testing.T) {
@@ -455,6 +468,9 @@ func TestClassifyResearch(t *testing.T) {
 	if classifyResearch("empty_envelope") != "HL_MARKET_UNAVAILABLE" {
 		t.Fatal("book")
 	}
+	if classifyResearch("SPONSOR_QUOTA") != "SPONSOR_QUOTA" {
+		t.Fatal("quota")
+	}
 }
 
 func TestResearchStatusHydratesRolesFromEvidence(t *testing.T) {
@@ -481,5 +497,34 @@ func TestResearchStatusHydratesRolesFromEvidence(t *testing.T) {
 	}
 	if strings.Contains(strings.ToLower(rec.Body.String()), "app-sk-") {
 		t.Fatal("leak")
+	}
+}
+
+func TestLocalKillDeniedToWebsite(t *testing.T) {
+	h := New(t.TempDir())
+	req := local(httptest.NewRequest(http.MethodPost, "/local/init", strings.NewReader(`{"wallet":"0x1111111111111111111111111111111111111111","network":"mainnet"}`)))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+	h.Handler().ServeHTTP(rec, req)
+	if rec.Code != 200 {
+		t.Fatal(rec.Body.String())
+	}
+	req = local(httptest.NewRequest(http.MethodPost, "/local/kill", strings.NewReader(`{"on":true}`)))
+	req.Header.Set("Origin", "https://pit0g.vercel.app")
+	req.Header.Set("Content-Type", "application/json")
+	rec = httptest.NewRecorder()
+	h.Handler().ServeHTTP(rec, req)
+	if rec.Code != http.StatusForbidden {
+		t.Fatal("web kill")
+	}
+	req = local(httptest.NewRequest(http.MethodPost, "/local/kill", strings.NewReader(`{"on":true}`)))
+	req.Header.Set("Content-Type", "application/json")
+	rec = httptest.NewRecorder()
+	h.Handler().ServeHTTP(rec, req)
+	if rec.Code != 200 {
+		t.Fatal(rec.Body.String())
+	}
+	if !strings.Contains(rec.Body.String(), `"kill":true`) {
+		t.Fatal(rec.Body.String())
 	}
 }

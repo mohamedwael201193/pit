@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AuthorizeGate } from "./AuthorizeGate";
 import { EmptyHome } from "./EmptyHome";
+import { KillNote } from "./KillNote";
 import { NAMED } from "./namedStates";
 import { NetworkBanner } from "./NetworkBanner";
 import { NetworkToggle } from "./NetworkToggle";
@@ -14,24 +15,28 @@ import {
   cancelResearch,
   describeBindError,
   doctor,
+  fetchWatch,
   localStatus,
   pairCode,
   pinLocalPolicy,
   prettyCode,
   researchStatus,
   revokeLocalSession,
+  setKillSwitch,
   startResearch,
   wakeCompanion,
   type DoctorCheck,
   type LocalStatus,
 } from "./companion";
 import { explainStop } from "./explain";
+import { LINKS, hyperliquidAPI } from "./links";
+import { nextFix } from "./nextFix";
 import { probes, type Probe } from "./readiness";
 
 type Net = "mainnet" | "testnet";
 type View = "home" | "watch" | "research" | "activity" | "policy" | "security" | "account" | "settings";
 
-type Coin = { coin: string; reason: string; mark: number; eligible?: boolean };
+type Coin = { coin: string; reason: string; mark: number; eligible?: boolean; oracle?: number; funding?: number; openInterest?: number };
 
 const RESEARCH_STAGES = [
   "READING_MARKET",
@@ -84,9 +89,7 @@ function ResearchProgress({
   );
 }
 
-const HEALTH = "https://pit-health.onrender.com";
 const SETUP_KEY = "pit.desk.setup";
-const PAIR_URL = "https://pit0g.vercel.app/pair";
 
 const RAIL: { id: View; label: string }[] = [
   { id: "home", label: "Home" },
@@ -133,7 +136,7 @@ function PairingBlock({
         {display}
       </p>
       <p className="fine">
-        Type this code at {PAIR_URL}. It expires in two minutes and works once. The website never receives a session
+        Type this code at {LINKS.pair}. It expires in two minutes and works once. The website never receives a session
         key.
       </p>
       {expires ? <p className="fine">Expires {expires}</p> : null}
@@ -293,7 +296,7 @@ function Setup({
           </p>
           <p className="fine">This is not a withdraw. It cannot place a Hyperliquid order. It lasts 24 hours.</p>
           <p className="fine">{directOk ? "Sealed-path signature is on this computer." : directDetail || "Waiting for the paired-browser signature."}</p>
-          <a className="linkish" href={PAIR_URL.replace("/pair", "/app")} target="_blank" rel="noreferrer">
+          <a className="linkish" href={LINKS.app} target="_blank" rel="noreferrer">
             Open paired site
           </a>
         </>
@@ -309,6 +312,9 @@ function Setup({
           </button>
           {agent ? <p className="fine">Agent {agent}. Approve this agent on Hyperliquid. PIT cannot withdraw.</p> : null}
           {hlAgent ? <p className="fine">{hlAgent.ok ? "extraAgents lists this session." : hlAgent.detail}</p> : null}
+          <a className="linkish" href={hyperliquidAPI(net)} target="_blank" rel="noreferrer">
+            Open Hyperliquid
+          </a>
           {bindError ? (
             <p className="err" role="alert">
               {bindError}
@@ -443,8 +449,7 @@ export function App() {
           })
           .catch(() => undefined);
       }
-      fetch(`${HEALTH}/watch?network=${net}`)
-        .then((r) => r.json() as Promise<{ coins?: Coin[]; sign?: boolean; trade?: boolean }>)
+      fetchWatch(net)
         .then((body) => {
           if (gone || body.sign || body.trade) return;
           setCoins(Array.isArray(body.coins) ? body.coins : []);
@@ -477,11 +482,19 @@ export function App() {
   const explained = explainStop(researchStop);
   const companionStuck = !companionUp && ticks >= 5;
   const items = useMemo(
-    () => probes(checks, status, companionUp, researchRoles.some((r) => String(r.verify_e2ee).toUpperCase() === "OK")),
+    () =>
+      probes(
+        checks,
+        status,
+        companionUp,
+        researchRoles.some((r) => String(r.verify_e2ee).toUpperCase() === "OK") ||
+          Boolean(checks.find((c) => c.name === "tee" && c.ok)),
+      ),
     [checks, status, companionUp, researchRoles],
   );
   const eligible = coins.filter((c) => c.eligible);
   const walletCheck = checks.find((c) => c.name === "wallet");
+  const attention = nextFix(companionUp, status, checks, items, sessionAlive, net);
 
   function finishSetup() {
     try {
@@ -547,6 +560,19 @@ export function App() {
     }
     setSessionAlive(false);
     setAgent("");
+    setChecks(await doctor());
+  }
+
+  async function onKill(on: boolean) {
+    setBindBusy(true);
+    setBindError(null);
+    const r = await setKillSwitch(on);
+    setBindBusy(false);
+    if (r.error) {
+      setBindError(describeBindError(r.error));
+      return;
+    }
+    setStatus((s) => (s ? { ...s, kill: on } : s));
     setChecks(await doctor());
   }
 
@@ -648,7 +674,7 @@ export function App() {
       <aside className="rail">
         <div className="rail-brand">
           <div className="word">PIT.</div>
-          <p className="kicker">0.1.6 · local execution</p>
+          <p className="kicker">{status?.version || "0.1.7"} · local execution</p>
         </div>
         <nav className="rail-nav" aria-label="Desk">
           {RAIL.map((item) => (
@@ -668,7 +694,7 @@ export function App() {
         <div className="rail-foot">
           <p>{net === "mainnet" ? "MAINNET" : "TESTNET"}</p>
           <p>{companionUp ? "companion live" : "starting companion"}</p>
-          <p>PIT 0.1.6</p>
+          <p>{status?.version || "PIT 0.1.7"}</p>
           <button type="button" className="ghost" onClick={() => setView("settings")}>
             Help / Diagnostics
           </button>
@@ -735,7 +761,7 @@ export function App() {
                 <ProbeList items={items} />
               </article>
             </div>
-            <EmptyHome />
+            <EmptyHome count={eligible.length} next={attention} onGo={(v) => setView(v)} />
             {companionStuck && !explained ? (
               <article className="card stop" role="status">
                 <p className="label">LOCAL COMPANION</p>
@@ -762,6 +788,9 @@ export function App() {
                   <tr>
                     <th>Market</th>
                     <th>Mark</th>
+                    <th>Oracle</th>
+                    <th>Funding</th>
+                    <th>Open interest</th>
                     <th>Policy</th>
                     <th>Why</th>
                     <th></th>
@@ -772,6 +801,9 @@ export function App() {
                     <tr key={c.coin}>
                       <td>{c.coin}</td>
                       <td className="mark-num">{c.mark}</td>
+                      <td>{c.oracle || "—"}</td>
+                      <td>{c.funding ?? "—"}</td>
+                      <td>{c.openInterest ? Math.round(c.openInterest) : "—"}</td>
                       <td>{c.eligible ? "PASS" : "BLOCKED"}</td>
                       <td>{c.reason}</td>
                       <td>
@@ -896,15 +928,37 @@ export function App() {
             <p className="eyebrow">PERMISSIONS</p>
             <h1>Security</h1>
             <p className="lead">Order and cancel only. Withdraw is impossible through PIT.</p>
-            <AuthorizeGate sessionAlive={sessionAlive} />
+            <AuthorizeGate
+              sessionAlive={sessionAlive}
+              agent={agent}
+              net={net}
+              busy={bindBusy}
+              onCreateSession={() => void onSession()}
+            />
             <PermissionsCard />
             <SessionNote />
+            <KillNote />
+            <article className="card">
+              <p className="label">KILL SWITCH</p>
+              <p>You flip this. The model cannot. New orders stop on this workspace until you turn it off.</p>
+              <button type="button" className="linkish" onClick={() => void onKill(true)} disabled={bindBusy || Boolean(status?.kill)}>
+                {status?.kill ? "Kill switch is on" : "Halt new orders"}
+              </button>
+              {status?.kill ? (
+                <button type="button" className="linkish" onClick={() => void onKill(false)} disabled={bindBusy}>
+                  Resume this workspace
+                </button>
+              ) : null}
+            </article>
             <article className="card">
               <p className="label">REVOKE</p>
-              <p>Kill the local session, then remove the PIT agent from your Hyperliquid account.</p>
+              <p>Delete the local session, then remove the PIT agent from your Hyperliquid account.</p>
               <button type="button" className="linkish" onClick={() => void onRevoke()} disabled={bindBusy || !sessionAlive}>
                 Revoke local session
               </button>
+              <a className="linkish" href={hyperliquidAPI(net)} target="_blank" rel="noreferrer">
+                Open Hyperliquid
+              </a>
             </article>
           </main>
         ) : null}
@@ -919,8 +973,22 @@ export function App() {
               <p>Wallet {walletCheck?.ok ? walletCheck.detail : "unbound"}</p>
               <p>Network {net}</p>
               <p>Agent {agent || "none"}</p>
-              <p>Session {sessionAlive ? "alive" : "none"}</p>
+              <p>Session {sessionAlive ? "order/cancel live" : "none"}</p>
+              <p>Kill {status?.kill ? "on" : "off"}</p>
             </article>
+            {!sessionAlive ? (
+              <article className="card">
+                <p className="label">CONNECT TRADING</p>
+                <p>Create an order/cancel session on this computer, then approve that agent on Hyperliquid.</p>
+                <button type="button" className="linkish" onClick={() => void onSession()} disabled={bindBusy || !companionUp}>
+                  Create local session
+                </button>
+                {agent ? <p className="fine">Agent {agent}</p> : null}
+                <a className="linkish" href={hyperliquidAPI(net)} target="_blank" rel="noreferrer">
+                  Open Hyperliquid
+                </a>
+              </article>
+            ) : null}
             <p className="fine">{NAMED.TRANSFER_NOT_LIVE}</p>
           </main>
         ) : null}
@@ -944,6 +1012,21 @@ export function App() {
                   ))}
                 </ul>
               )}
+            </article>
+            <article className="card">
+              <p className="label">OFFICIAL LINKS</p>
+              <a className="linkish" href={LINKS.pcAdvanced} target="_blank" rel="noreferrer">
+                Open 0G compute
+              </a>
+              <a className="linkish" href={hyperliquidAPI(net)} target="_blank" rel="noreferrer">
+                Open Hyperliquid
+              </a>
+              <a className="linkish" href={LINKS.releases} target="_blank" rel="noreferrer">
+                Open release
+              </a>
+              <a className="linkish" href={LINKS.pair} target="_blank" rel="noreferrer">
+                Open pairing
+              </a>
             </article>
             <p className="fine">{NAMED.TWO_WALLETS}</p>
             <p className="fine">{NAMED.TRANSFER_NOT_LIVE}</p>

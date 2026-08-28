@@ -10,20 +10,20 @@ import (
 )
 
 type Policy struct {
-	Version              string   `json:"version"`
-	MaxClipUSD           float64  `json:"maxClipUsd"`
-	DailyLossUSD         float64  `json:"dailyLossUsd"`
-	MaxLeverage          int      `json:"maxLeverage"`
-	AllowedAssets        []string `json:"allowedAssets"`
-	AllowedMarketTypes   []string `json:"allowedMarketTypes"`
-	AllowedVenues        []string `json:"allowedVenues"`
-	MinSkillCalibration  float64  `json:"minSkillCalibration"`
-	CooldownSeconds      int64    `json:"cooldownSeconds"`
-	SessionTTLSeconds    int64    `json:"sessionTtlSeconds"`
-	KillSwitch           bool     `json:"killSwitch"`
-	MaxUncertainty       float64  `json:"maxUncertainty"`
-	MaxSlippageBps       int      `json:"maxSlippageBps"`
-	MinLiquidityUSD      float64  `json:"minLiquidityUsd"`
+	Version             string   `json:"version"`
+	MaxClipUSD          float64  `json:"maxClipUsd"`
+	DailyLossUSD        float64  `json:"dailyLossUsd"`
+	MaxLeverage         int      `json:"maxLeverage"`
+	AllowedAssets       []string `json:"allowedAssets"`
+	AllowedMarketTypes  []string `json:"allowedMarketTypes"`
+	AllowedVenues       []string `json:"allowedVenues"`
+	MinSkillCalibration float64  `json:"minSkillCalibration"`
+	CooldownSeconds     int64    `json:"cooldownSeconds"`
+	SessionTTLSeconds   int64    `json:"sessionTtlSeconds"`
+	KillSwitch          bool     `json:"killSwitch"`
+	MaxUncertainty      float64  `json:"maxUncertainty"`
+	MaxSlippageBps      int      `json:"maxSlippageBps"`
+	MinLiquidityUSD     float64  `json:"minLiquidityUsd"`
 }
 
 type Context struct {
@@ -48,7 +48,7 @@ func Default() Policy {
 		MaxClipUSD:          10,
 		DailyLossUSD:        50,
 		MaxLeverage:         1,
-		AllowedAssets:       []string{"ETH", "BTC"},
+		AllowedAssets:       []string{"ETH", "BTC", "SOL", "HYPE", "DOGE", "AVAX"},
 		AllowedMarketTypes:  []string{"perp"},
 		AllowedVenues:       []string{"hyperliquid"},
 		MinSkillCalibration: 0,

@@ -8,9 +8,9 @@ import (
 
 func TestBlockedAsset(t *testing.T) {
 	p := policy.Default()
-	c := Blocked("SOL", p)
+	c := Blocked("XYZ", p)
 	if c.Eligible {
-		t.Fatal("sol")
+		t.Fatal("xyz")
 	}
 	eth := Blocked("ETH", p)
 	if !eth.Eligible {

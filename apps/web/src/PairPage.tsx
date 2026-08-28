@@ -63,7 +63,7 @@ export function PairPage() {
           session key.
         </p>
         <ol className="mt-8 grid gap-3 text-[0.975rem] leading-6 text-[rgb(240_231_212/0.75)]">
-          <li>1. Download PIT for Windows from GitHub Releases and install it.</li>
+          <li>1. Download PIT for Windows from <a className="text-[#d82f2f]" href="https://github.com/mohamedwael201193/pit/releases/latest">GitHub Releases</a> and install it.</li>
           <li>2. Launch PIT. A pairing code appears on that window. A terminal is not required.</li>
           <li>3. Type the code here. Expire is two minutes. One use.</li>
           <li>4. If the browser asks to access other apps on this device, choose Allow. That is loopback only.</li>

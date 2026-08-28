@@ -20,6 +20,8 @@
     "allow-local-research",
     "allow-local-research-start",
     "allow-local-research-status",
-    "allow-local-research-cancel"
+    "allow-local-research-cancel",
+    "allow-local-watch",
+    "allow-local-kill"
   ]
 }

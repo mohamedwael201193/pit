@@ -13,6 +13,7 @@ import (
 func TestDirectChallengeRoundTripKeychain(t *testing.T) {
 	t.Setenv("PIT_KEYRING", "file")
 	t.Setenv("PIT_DIRECT_AUTH_FILE", "")
+	t.Setenv("PIT_DIRECT_SPONSOR_FILE", "")
 	dir := t.TempDir()
 	key, err := crypto.GenerateKey()
 	if err != nil {

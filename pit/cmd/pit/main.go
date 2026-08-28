@@ -71,6 +71,10 @@ Proof
 
 System
   pit doctor
+  pit security
+  pit activity
+  pit receipt
+  pit update
   pit version
 
 Every command accepts --json. Exit 0 on success, 2 on usage, 1 on failed doctor.
@@ -141,8 +145,14 @@ func main() {
 		cmdVerify(rest[1:])
 	case "proof":
 		cmdProof(rest[1:])
-	case "doctor":
+	case "doctor", "security":
 		cmdDoctor()
+	case "activity":
+		cmdStatus()
+	case "receipt":
+		cmdStatus()
+	case "update":
+		cmdUpdate()
 	case "logout":
 		cmdLogout(rest[1:])
 	case "revoke":
@@ -898,6 +908,23 @@ func cmdDoctor() {
 	if cli.DoctorFailed(checks) {
 		os.Exit(1)
 	}
+}
+
+func cmdUpdate() {
+	body := map[string]any{
+		"ok":       true,
+		"sign":     false,
+		"trade":    false,
+		"url":      "https://github.com/mohamedwael201193/pit/releases/latest",
+		"unsigned": true,
+		"note":     "Windows installers are unsigned until Authenticode is obtained. PIT does not claim a signature it does not have.",
+	}
+	if asJSON {
+		_ = json.NewEncoder(os.Stdout).Encode(body)
+		return
+	}
+	fmt.Println(body["url"])
+	fmt.Println(body["note"])
 }
 
 func cmdVersion() {

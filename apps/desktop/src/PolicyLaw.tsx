@@ -15,7 +15,7 @@ export function PolicyLaw({
     ["Cooldown", "0 s"],
     ["Session TTL", "3600 s"],
     ["Min calibration", "NOT ENOUGH DATA until N is large enough"],
-    ["Allowed", "ETH, BTC on Hyperliquid"],
+    ["Allowed", "ETH, BTC, SOL, HYPE, DOGE, AVAX on Hyperliquid"],
     ["Kill", "off until you flip it"],
   ];
   return (

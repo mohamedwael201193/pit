@@ -77,3 +77,13 @@ commands.allow = ["local_research_status"]
 identifier = "allow-local-research-cancel"
 description = "Cancel sealed research between roles when safe. Never places an order."
 commands.allow = ["local_research_cancel"]
+
+[[permission]]
+identifier = "allow-local-watch"
+description = "Read public Hyperliquid marks from the local companion. Never a secret."
+commands.allow = ["local_watch"]
+
+[[permission]]
+identifier = "allow-local-kill"
+description = "Flip the local kill switch. Never exports a session key."
+commands.allow = ["local_kill"]
