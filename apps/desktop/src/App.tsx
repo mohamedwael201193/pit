@@ -26,6 +26,7 @@ import {
   pairCode,
   pinLocalPolicy,
   prettyCode,
+  researchEvidence,
   researchStatus,
   revokeLocalSession,
   setKillSwitch,
@@ -83,6 +84,9 @@ function roleVerified(roles: ResearchRole[], name: string) {
 
 function canonicalResearchStage(stage: string, roles: ResearchRole[]) {
   const s = (stage || "").toUpperCase();
+  if (s === "RISK_START" || s === "RISK_HTTP_REQUEST" || s === "RISK_HTTP_RESPONSE" || s === "RISK_E2EE_VERIFY") {
+    return "RISK";
+  }
   if (s.endsWith("_VERIFIED")) {
     const base = s.slice(0, -"_VERIFIED".length);
     if (base === "RESEARCHER") return "CHALLENGER";
@@ -133,15 +137,18 @@ function ResearchProgress({
   elapsedMs,
   coin,
   roles,
+  pollMiss,
   onCancel,
 }: {
   stage: string;
   elapsedMs: number;
   coin: string;
   roles: ResearchRole[];
+  pollMiss?: boolean;
   onCancel: () => void;
 }) {
   const shown = canonicalResearchStage(stage, roles);
+  const riskLive = shown === "RISK" && !roleVerified(roles, "risk");
   return (
     <article className="card" role="status">
       <p className="label">LIVE SEALED REQUEST</p>
@@ -149,6 +156,15 @@ function ResearchProgress({
       <p>
         {coin || "ETH"} · {(elapsedMs / 1000).toFixed(1)}s elapsed. This is a live Direct round-trip, not a timer.
       </p>
+      {riskLive ? (
+        <p>
+          Risk is running · {(elapsedMs / 1000).toFixed(1)}s. The provider is still working. PIT is not spinning a fake
+          timer.
+        </p>
+      ) : null}
+      {pollMiss ? (
+        <p role="status">Connection check missed — research is still running.</p>
+      ) : null}
       <ol className="pipe stages">
         {RESEARCH_STAGES.map((name) => {
           const mark = stageMark(name, stage, roles);
@@ -473,7 +489,7 @@ function Setup({
             {researchBusy ? "Research running…" : "Run a real research test"}
           </button>
           {researchBusy ? (
-            <ResearchProgress stage={researchStage} elapsedMs={researchElapsed} coin="ETH" roles={researchRoles} onCancel={onCancelResearch} />
+            <ResearchProgress stage={researchStage} elapsedMs={researchElapsed} coin="ETH" roles={researchRoles} pollMiss={false} onCancel={onCancelResearch} />
           ) : null}
           {researchVerified ? <p className="fine">RESEARCH VERIFIED. VerifyE2EE matched the on-chain teeSigner.</p> : null}
         </>
@@ -523,7 +539,9 @@ export function App() {
   const [researchStage, setResearchStage] = useState("READING_MARKET");
   const [researchElapsed, setResearchElapsed] = useState(0);
   const [researchCoin, setResearchCoin] = useState("ETH");
-  const [researchEvidence, setResearchEvidence] = useState<string>("");
+  const [researchEvidenceText, setResearchEvidence] = useState<string>("");
+  const [pollMiss, setPollMiss] = useState(false);
+  const [researchJobId, setResearchJobId] = useState("");
   const [preview, setPreview] = useState<NonNullable<BindResult["preview"]> | null>(null);
   const [previewHash, setPreviewHash] = useState("");
   const [authTyped, setAuthTyped] = useState("");
@@ -550,8 +568,101 @@ export function App() {
   });
 
   useEffect(() => {
-    void wakeCompanion();
+    let gone = false;
+    void (async () => {
+      await wakeCompanion();
+      if (gone) return;
+      const st = await researchStatus();
+      if (gone || st.transient) return;
+      if (st.job_id) setResearchJobId(st.job_id);
+      if (st.stage) setResearchStage(st.stage);
+      if (typeof st.elapsed_ms === "number") setResearchElapsed(st.elapsed_ms);
+      if (st.coin) setResearchCoin(String(st.coin).toUpperCase());
+      const roles = Array.isArray(st.roles) ? st.roles : [];
+      if (roles.length) setResearchRoles(roles);
+      if (st.preview) {
+        setPreview(st.preview);
+        setPreviewHash(st.preview_hash || st.preview.hash || "");
+      }
+      const verified = roles.length > 0 && roles.every((x) => String(x.verify_e2ee).toUpperCase() === "OK");
+      const deny = String(st.deny || st.preview?.deny || "");
+      if ((verified || st.verify || committeeDeny(deny)) && !st.running) {
+        setResearchStop(null);
+        setResearchNote(st.note || "Sealed committee verified on this computer.");
+        return;
+      }
+      if (!st.running && st.error && !verified && !committeeDeny(deny)) {
+        setResearchStop(st.error);
+        return;
+      }
+      if (!st.running || !st.job_id) return;
+      const gen = ++researchGen.current;
+      setResearchBusy(true);
+      setResearchStop(null);
+      setView("research");
+      const wall = Date.now() - (Number(st.elapsed_ms) || 0);
+      const tick = window.setInterval(() => {
+        if (gen === researchGen.current) setResearchElapsed(Date.now() - wall);
+      }, 250);
+      try {
+        for (;;) {
+          await sleep(1000);
+          if (gone || gen !== researchGen.current) return;
+          const next = await researchStatus();
+          if (next.transient) {
+            setPollMiss(true);
+            continue;
+          }
+          setPollMiss(false);
+          if (next.job_id) setResearchJobId(next.job_id);
+          if (next.stage) setResearchStage(next.stage);
+          if (typeof next.elapsed_ms === "number") setResearchElapsed(next.elapsed_ms);
+          const nextRoles = Array.isArray(next.roles) ? next.roles : [];
+          if (nextRoles.length) setResearchRoles(nextRoles);
+          if (next.preview) {
+            setPreview(next.preview);
+            setPreviewHash(next.preview_hash || next.preview.hash || "");
+          }
+          const ok = nextRoles.length > 0 && nextRoles.every((x) => String(x.verify_e2ee).toUpperCase() === "OK");
+          const nextDeny = String(next.deny || next.preview?.deny || "");
+          if ((ok || next.verify || committeeDeny(nextDeny)) && !next.running) {
+            setResearchStop(null);
+            setResearchNote(next.note || "Sealed committee verified on this computer.");
+            return;
+          }
+          if (next.running) continue;
+          if (next.error && !ok && !committeeDeny(nextDeny)) {
+            setResearchStop(next.error);
+            return;
+          }
+          setResearchStop(ok ? null : next.error || "COMMITTEE_INCOMPLETE");
+          if (ok) setResearchNote(next.note || "Sealed committee verified on this computer.");
+          return;
+        }
+      } finally {
+        window.clearInterval(tick);
+        if (gen === researchGen.current) {
+          setResearchBusy(false);
+          setPollMiss(false);
+        }
+      }
+    })();
+    return () => {
+      gone = true;
+    };
   }, []);
+
+  useEffect(() => {
+    if (!techOpen) return;
+    let gone = false;
+    void researchEvidence().then((st) => {
+      if (gone || !st.evidence) return;
+      setResearchEvidence(JSON.stringify(st.evidence, null, 2));
+    });
+    return () => {
+      gone = true;
+    };
+  }, [techOpen]);
 
   useEffect(() => {
     let gone = false;
@@ -566,7 +677,7 @@ export function App() {
       if (gone) return;
       setTicks((n) => n + 1);
       const now = Date.now();
-      if (!statusBusy) {
+      if (!statusBusy && !researchBusyRef.current) {
         statusBusy = true;
         localStatus()
           .then((s) => {
@@ -806,6 +917,7 @@ export function App() {
     setResearchNote(null);
     setResearchEvidence("");
     setAuthErr(null);
+    setPollMiss(false);
     setResearchCoin(want);
     if (!companionUp) {
       setResearchStop("COMPANION_NOT_RUNNING");
@@ -846,30 +958,45 @@ export function App() {
         setResearchStop(started.error);
         return;
       }
-      if (started.stage) setResearchStage(started.stage);
-      let misses = 0;
+      applyStatus(started);
+      await followJob(gen, wall);
+    } catch (e) {
+      if (gen !== researchGen.current) return;
+      setPollMiss(true);
+      await followJob(gen, wall);
+    } finally {
+      window.clearInterval(tick);
+      if (gen === researchGen.current) {
+        setResearchBusy(false);
+        setPollMiss(false);
+      }
+    }
+
+    function applyStatus(st: BindResult) {
+      if (st.job_id) setResearchJobId(st.job_id);
+      if (st.stage) setResearchStage(st.stage);
+      if (typeof st.elapsed_ms === "number") setResearchElapsed(st.elapsed_ms);
+      if (st.coin) setResearchCoin(String(st.coin).toUpperCase());
+      const roles = Array.isArray(st.roles) ? st.roles : [];
+      if (roles.length) setResearchRoles(roles);
+      if (st.preview) {
+        setPreview(st.preview);
+        setPreviewHash(st.preview_hash || st.preview.hash || "");
+      }
+      return roles;
+    }
+
+    async function followJob(genNow: number, startedAt: number) {
       for (;;) {
         await sleep(1000);
-        if (gen !== researchGen.current) return;
+        if (genNow !== researchGen.current) return;
         const st = await researchStatus();
         if (st.transient) {
-          misses += 1;
-          if (misses >= 600) {
-            setResearchStop("COMPANION_NOT_RUNNING");
-            return;
-          }
+          setPollMiss(true);
           continue;
         }
-        misses = 0;
-        if (st.stage) setResearchStage(st.stage);
-        if (typeof st.elapsed_ms === "number") setResearchElapsed(st.elapsed_ms);
-        if (st.evidence) setResearchEvidence(JSON.stringify(st.evidence, null, 2));
-        const roles = Array.isArray(st.roles) ? st.roles : [];
-        if (roles.length) setResearchRoles(roles);
-        if (st.preview) {
-          setPreview(st.preview);
-          setPreviewHash(st.preview_hash || st.preview.hash || "");
-        }
+        setPollMiss(false);
+        const roles = applyStatus(st);
         const verified = roles.length > 0 && roles.every((x) => String(x.verify_e2ee).toUpperCase() === "OK");
         const deny = String(st.deny || st.preview?.deny || "");
         if ((verified || st.verify || committeeDeny(deny)) && !st.running) {
@@ -882,23 +1009,17 @@ export function App() {
           setResearchStop(st.error);
           return;
         }
-        if (roles.length === 0 && Date.now() - wall < 180000) {
+        if (roles.length === 0 && Date.now() - startedAt < 180000) {
           continue;
         }
         if (!verified) {
           setResearchStop("COMMITTEE_INCOMPLETE");
           return;
         }
+        setResearchStop(null);
         setResearchNote(st.note || "Sealed committee verified on this computer.");
         return;
       }
-    } catch (e) {
-      if (gen !== researchGen.current) return;
-      const msg = e instanceof Error ? e.message : "companion_http";
-      setResearchStop(msg || "companion_http");
-    } finally {
-      window.clearInterval(tick);
-      if (gen === researchGen.current) setResearchBusy(false);
     }
   }
 
@@ -971,7 +1092,7 @@ export function App() {
       <aside className="rail">
         <div className="rail-brand">
           <div className="word">PIT.</div>
-          <p className="kicker">{status?.version || "0.1.14"} · local execution</p>
+          <p className="kicker">{status?.version || "0.1.15"} · local execution</p>
         </div>
         <nav className="rail-nav" aria-label="Desk">
           {RAIL.map((item) => (
@@ -991,7 +1112,7 @@ export function App() {
         <div className="rail-foot">
           <p>{net === "mainnet" ? "MAINNET" : "TESTNET"}</p>
           <p>{companionUp ? "companion live" : "starting companion"}</p>
-          <p>{status?.version || "PIT 0.1.14"}</p>
+          <p>{status?.version || "PIT 0.1.15"}</p>
           <button type="button" className="ghost" onClick={() => setView("settings")}>
             Help / Diagnostics
           </button>
@@ -1171,6 +1292,14 @@ export function App() {
               <a className="linkish" href={LINKS.pcAdvanced} target="_blank" rel="noreferrer">
                 Open 0G Private Compute
               </a>
+              <button
+                type="button"
+                className="on"
+                onClick={() => void researchThis(researchCoin)}
+                disabled={researchBusy || !checks.find((c) => c.name === "direct_credit")?.ok}
+              >
+                Start Research
+              </button>
             </article>
             {researchBusy ? (
               <ResearchProgress
@@ -1178,6 +1307,7 @@ export function App() {
                 elapsedMs={researchElapsed}
                 coin={researchCoin}
                 roles={researchRoles}
+                pollMiss={pollMiss}
                 onCancel={() => void onCancelResearch()}
               />
             ) : null}
@@ -1185,6 +1315,7 @@ export function App() {
               <article className="card">
                 <p className="label">RESEARCH VERIFIED</p>
                 <p>{researchNote}</p>
+                {researchJobId ? <p className="fine">Job {researchJobId}</p> : null}
                 <ul className="doctor">
                   {researchRoles.map((role) => (
                     <li key={role.role}>
@@ -1298,7 +1429,7 @@ export function App() {
                   <pre className="pipe evidence">
                     Code {researchStop}
                     {"\n"}
-                    {researchEvidence || "Verification is fail-closed. Router fallback is impossible."}
+                    {researchEvidenceText || "Verification is fail-closed. Router fallback is impossible."}
                   </pre>
                 ) : null}
                 <button type="button" onClick={() => void researchThis(researchCoin)} disabled={researchBusy}>

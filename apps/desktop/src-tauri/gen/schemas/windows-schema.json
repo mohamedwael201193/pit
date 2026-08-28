@@ -267,6 +267,12 @@
           "markdownDescription": "Cancel sealed research between roles when safe. Never places an order."
         },
         {
+          "description": "Read sealed research public evidence on demand. Never returns a Direct token.",
+          "type": "string",
+          "const": "allow-local-research-result",
+          "markdownDescription": "Read sealed research public evidence on demand. Never returns a Direct token."
+        },
+        {
           "description": "Start sealed Direct research without blocking the window. Never returns the private book.",
           "type": "string",
           "const": "allow-local-research-start",

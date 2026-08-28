@@ -44,7 +44,7 @@ export function PairPage() {
       if (body.device) {
         sessionStorage.setItem("pit_device", body.device);
       }
-      setMsg("BROWSER PAIRED. This browser can view. It cannot sign and cannot hold a session key. Next: Protect private research, then Connect Hyperliquid.");
+      setMsg("PAIRING COMPLETE. This browser can view. It cannot sign and cannot hold a session key. Next: Protect your private research.");
     } catch {
       setErr(
         "PIT is not reachable on this computer. Launch the Windows app first. If Chrome asks to access other apps on this device, choose Allow. PIT only uses 127.0.0.1.",
@@ -70,6 +70,20 @@ export function PairPage() {
         </ol>
         <p className="mt-6 font-semibold text-[#f0e7d4]">Open PIT Desktop</p>
         <p className="mt-1 text-[0.975rem] leading-6 text-[rgb(240_231_212/0.75)]">Enter the code shown there.</p>
+        <div className="mt-6 flex flex-wrap gap-3">
+          <a
+            className="rounded-full bg-[#d82f2f] px-6 py-3 font-semibold text-[#f0e7d4]"
+            href="https://github.com/mohamedwael201193/pit/releases/latest"
+          >
+            Download PIT
+          </a>
+          <a
+            className="rounded-full border border-[rgb(240_231_212/0.35)] px-6 py-3 font-semibold text-[#f0e7d4]"
+            href="http://127.0.0.1:17373/health"
+          >
+            Open PIT Desktop
+          </a>
+        </div>
         <label className="mt-10 block">
           <span className="text-[0.75rem] tracking-[0.12em] text-[rgb(240_231_212/0.5)]">ONE-TIME CODE</span>
           <input
@@ -89,7 +103,17 @@ export function PairPage() {
         >
           Pair this browser
         </button>
-        {msg ? <p className="mt-4 text-[0.975rem] text-[#f0e7d4]">{msg}</p> : null}
+        {msg ? (
+          <div className="mt-6">
+            <p className="text-[0.975rem] text-[#f0e7d4]">{msg}</p>
+            <p className="mt-2 text-[0.975rem] leading-6 text-[rgb(240_231_212/0.75)]">
+              Your browser is read-only. The private authorization stays on this computer.
+            </p>
+            <Link className="mt-4 inline-block rounded-full bg-[#d82f2f] px-6 py-3 font-semibold text-[#f0e7d4]" to="/app">
+              Protect my strategy
+            </Link>
+          </div>
+        ) : null}
         {err ? (
           <p className="mt-4 text-[0.975rem] text-[#ff7a7a]" role="alert">
             {err}

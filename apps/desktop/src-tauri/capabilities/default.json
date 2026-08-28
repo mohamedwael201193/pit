@@ -21,6 +21,7 @@
     "allow-local-research",
     "allow-local-research-start",
     "allow-local-research-status",
+    "allow-local-research-result",
     "allow-local-research-cancel",
     "allow-local-authorize",
     "allow-local-cancel-order",

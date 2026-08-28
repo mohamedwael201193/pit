@@ -58,7 +58,10 @@ func TestLoadJobMarksFailedWhenNoEvidence(t *testing.T) {
 	req := local(httptest.NewRequest(http.MethodGet, "/local/research/status", nil))
 	rec := httptest.NewRecorder()
 	h.Handler().ServeHTTP(rec, req)
-	if !strings.Contains(rec.Body.String(), "COMPANION_NOT_RUNNING") {
+	if !strings.Contains(rec.Body.String(), "JOB_CRASHED") {
+		t.Fatal(rec.Body.String())
+	}
+	if strings.Contains(rec.Body.String(), "COMPANION_NOT_RUNNING") {
 		t.Fatal(rec.Body.String())
 	}
 	if !strings.Contains(rec.Body.String(), `"FAILED"`) {

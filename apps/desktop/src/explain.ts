@@ -87,8 +87,20 @@ export function explainStop(code: string | null): { title: string; body: string 
   }
   if (code === "COMPANION_NOT_RUNNING") {
     return {
-      title: "Local PIT dropped status polls",
-      body: "A sealed job may still finish on this computer. Open Research again. PIT did not place an order. Do not launch a second PIT window.",
+      title: "Local PIT is not reachable",
+      body: "Launch PIT Desktop on this computer. A missed status check does not cancel a sealed job. Open Research to reload the last verified result. No order was placed.",
+    };
+  }
+  if (code === "POLL_FAILED") {
+    return {
+      title: "Connection check missed",
+      body: "Research is still running on this computer. PIT did not place an order.",
+    };
+  }
+  if (code === "JOB_CRASHED") {
+    return {
+      title: "Research process stopped",
+      body: "The sealed job on this computer did not finish. PIT did not place an order. You can start a new research when private compute is ready.",
     };
   }
   if (code === "FAILED") {

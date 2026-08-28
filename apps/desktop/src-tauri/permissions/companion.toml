@@ -79,6 +79,11 @@ description = "Read sealed research stage and public evidence. Never returns a D
 commands.allow = ["local_research_status"]
 
 [[permission]]
+identifier = "allow-local-research-result"
+description = "Read sealed research public evidence on demand. Never returns a Direct token."
+commands.allow = ["local_research_result"]
+
+[[permission]]
 identifier = "allow-local-research-cancel"
 description = "Cancel sealed research between roles when safe. Never places an order."
 commands.allow = ["local_research_cancel"]

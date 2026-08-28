@@ -96,7 +96,12 @@ async fn local_research_start(coin: String, hypothesis: Option<String>) -> Resul
 
 #[tauri::command]
 async fn local_research_status() -> Result<serde_json::Value, String> {
-    json_get("/local/research/status".into(), 3).await
+    json_get("/local/research/status".into(), 15).await
+}
+
+#[tauri::command]
+async fn local_research_result() -> Result<serde_json::Value, String> {
+    json_get("/local/research/result".into(), 8).await
 }
 
 #[tauri::command]
@@ -180,12 +185,6 @@ fn take_loopback() -> Result<TcpStream, String> {
     Ok(stream)
 }
 
-fn store_loopback(stream: TcpStream) {
-    if let Ok(mut slot) = LOOPBACK.lock() {
-        *slot = Some(stream);
-    }
-}
-
 fn drop_loopback() {
     if let Ok(mut slot) = LOOPBACK.lock() {
         *slot = None;
@@ -249,7 +248,7 @@ fn read_http(stream: &mut TcpStream) -> Result<(u16, String), String> {
 fn loopback_exchange_timeout(method: &str, path: &str, json: Option<&str>, read_secs: u64) -> Result<String, String> {
     let mut stream = take_loopback()?;
     let _ = stream.set_read_timeout(Some(Duration::from_secs(read_secs)));
-    let mut req = format!("{method} {path} HTTP/1.1\r\nHost: 127.0.0.1:17373\r\nConnection: keep-alive\r\n");
+    let mut req = format!("{method} {path} HTTP/1.1\r\nHost: 127.0.0.1:17373\r\nConnection: close\r\n");
     if let Some(body) = json {
         req.push_str("Content-Type: application/json\r\n");
         req.push_str(&format!("Content-Length: {}\r\n\r\n{}", body.len(), body));
@@ -266,12 +265,12 @@ fn loopback_exchange_timeout(method: &str, path: &str, json: Option<&str>, read_
             .write_all(req.as_bytes())
             .map_err(|_| "companion_down".to_string())?;
         let (status, body) = read_http(&mut stream)?;
-        store_loopback(stream);
+        drop_loopback();
         return finish_http(status, body);
     }
     match read_http(&mut stream) {
         Ok((status, body)) => {
-            store_loopback(stream);
+            drop_loopback();
             finish_http(status, body)
         }
         Err(e) => {
@@ -368,7 +367,7 @@ fn same_install(path: &Path) -> bool {
     path.parent().map(|p| p == dir).unwrap_or(false)
 }
 
-const SIDECAR_VERSION: &str = "0.1.14";
+const SIDECAR_VERSION: &str = "0.1.15";
 
 fn companion_version() -> Option<String> {
     let raw = loopback_get("/health").ok()?;
@@ -508,6 +507,7 @@ pub fn run() {
             local_research,
             local_research_start,
             local_research_status,
+            local_research_result,
             local_research_cancel,
             local_authorize,
             local_cancel_order,

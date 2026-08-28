@@ -188,7 +188,7 @@ func TestLocalStatusVersionNoSecret(t *testing.T) {
 	if got["sign"] == true || got["trade"] == true {
 		t.Fatal(got)
 	}
-	if got["version"] != "0.1.14" {
+	if got["version"] != "0.1.15" {
 		t.Fatalf("version %v", got["version"])
 	}
 }
@@ -593,14 +593,91 @@ func TestResearchStatusKeepsPersistedPreview(t *testing.T) {
 	if rec.Code != 200 {
 		t.Fatal(rec.Body.String())
 	}
+	if !strings.Contains(rec.Body.String(), `"verify_e2ee":"OK"`) {
+		t.Fatal(rec.Body.String())
+	}
 	if !strings.Contains(rec.Body.String(), `"0xabcpreview"`) {
 		t.Fatal(rec.Body.String())
 	}
 	if !strings.Contains(rec.Body.String(), `"2482.2"`) {
 		t.Fatal(rec.Body.String())
 	}
+	if strings.Contains(rec.Body.String(), `"evidence"`) {
+		t.Fatal("status must stay tiny when done")
+	}
+	if !strings.Contains(rec.Body.String(), `"seq"`) {
+		t.Fatal(rec.Body.String())
+	}
+	if !strings.Contains(rec.Body.String(), `"heartbeat_unix_ms"`) {
+		t.Fatal(rec.Body.String())
+	}
 	if strings.Contains(strings.ToLower(rec.Body.String()), "app-sk-") {
 		t.Fatal("leak")
+	}
+}
+
+func TestResearchResultIncludesEvidence(t *testing.T) {
+	dir := t.TempDir()
+	h := New(dir)
+	ev := `{"sign":false,"trade":false,"roles":[{"role":"researcher","verify_e2ee":"OK","elapsed_ms":8790},{"role":"challenger","verify_e2ee":"OK","survives":true},{"role":"risk","verify_e2ee":"OK","survives":true,"kill":false,"elapsed_ms":5381}]}`
+	if err := os.WriteFile(filepath.Join(dir, "last-research.json"), []byte(ev), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	h.researchMu.Lock()
+	h.job = researchJob{
+		ID: "job-result", done: true, stage: "READY", coin: "ETH",
+		previewHash: "0xabcpreview",
+		preview:     map[string]any{"eligible": true, "hash": "0xabcpreview", "limitPx": "2482.2"},
+	}
+	h.researchMu.Unlock()
+	req := local(httptest.NewRequest(http.MethodGet, "/local/research/result", nil))
+	rec := httptest.NewRecorder()
+	h.Handler().ServeHTTP(rec, req)
+	if rec.Code != 200 {
+		t.Fatal(rec.Body.String())
+	}
+	if !strings.Contains(rec.Body.String(), `"evidence"`) {
+		t.Fatal(rec.Body.String())
+	}
+	if !strings.Contains(rec.Body.String(), `"elapsed_ms":5381`) {
+		t.Fatal(rec.Body.String())
+	}
+	if strings.Contains(strings.ToLower(rec.Body.String()), "app-sk-") {
+		t.Fatal("leak")
+	}
+}
+
+func TestLoadJobHydratesVerifiedCommittee(t *testing.T) {
+	dir := t.TempDir()
+	h := New(dir)
+	ev := `{"sign":false,"trade":false,"roles":[{"role":"researcher","verify_e2ee":"OK"},{"role":"challenger","verify_e2ee":"OK"},{"role":"risk","verify_e2ee":"OK"}]}`
+	if err := os.WriteFile(filepath.Join(dir, "last-research.json"), []byte(ev), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	job := `{"id":"job-orphan","pid":1,"running":true,"done":false,"stage":"RISK","coin":"ETH","sign":false,"trade":false}`
+	if err := os.WriteFile(filepath.Join(dir, "research-job.json"), []byte(job), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	h.researchMu.Lock()
+	h.loadJobLocked()
+	if h.job.running || !h.job.done || h.job.stage != "READY" || h.job.err != "" {
+		t.Fatalf("job %#v", h.job)
+	}
+	h.researchMu.Unlock()
+	req := local(httptest.NewRequest(http.MethodGet, "/local/research/status", nil))
+	rec := httptest.NewRecorder()
+	h.Handler().ServeHTTP(rec, req)
+	if rec.Code != 200 {
+		t.Fatal(rec.Body.String())
+	}
+	if strings.Contains(rec.Body.String(), "COMPANION_NOT_RUNNING") {
+		t.Fatal(rec.Body.String())
+	}
+	if strings.Contains(rec.Body.String(), `"evidence"`) {
+		t.Fatal("status must stay tiny")
+	}
+	if !strings.Contains(rec.Body.String(), `"READY"`) {
+		t.Fatal(rec.Body.String())
 	}
 }
 

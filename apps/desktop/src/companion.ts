@@ -61,8 +61,15 @@ export type BindResult = {
   running?: boolean;
   done?: boolean;
   job_id?: string;
+  workspace_id?: string;
   coin?: string;
   transient?: boolean;
+  poll?: string;
+  seq?: number;
+  heartbeat_unix_ms?: number;
+  terminal?: boolean;
+  retryable?: boolean;
+  current_stage?: string;
   evidence?: unknown;
   preview?: {
     eligible?: boolean;
@@ -276,14 +283,19 @@ export async function startResearch(coin: string, hypothesis?: string): Promise<
 }
 
 export async function researchStatus(): Promise<BindResult> {
-  try {
-    const native = await nativeJsonOrError<BindResult>("local_research_status");
-    if (native.sign || native.trade) return { error: "companion_denied" };
-    return native;
-  } catch (e) {
-    const msg = e instanceof Error ? e.message : "companion_http";
-    return { error: msg || "companion_http", transient: true, running: true };
-  }
+  const native = rejectSecrets(await nativeJson<BindResult>("local_research_status"));
+  if (native) return native;
+  const fetched = rejectSecrets(await fetchJson<BindResult>("/local/research/status"));
+  if (fetched) return fetched;
+  return { error: "POLL_FAILED", poll: "POLL_FAILED", transient: true, running: true };
+}
+
+export async function researchEvidence(): Promise<BindResult> {
+  const native = rejectSecrets(await nativeJson<BindResult>("local_research_result"));
+  if (native) return native;
+  const fetched = rejectSecrets(await fetchJson<BindResult>("/local/research/result"));
+  if (fetched) return fetched;
+  return { error: "POLL_FAILED", transient: true };
 }
 
 export async function cancelResearch(): Promise<BindResult> {

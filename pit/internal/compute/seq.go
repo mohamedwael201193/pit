@@ -49,6 +49,9 @@ func RunCommitteeStagesPersist(bin string, jobs []DirectJob, stage StageFn, stop
 		if stopped(stop) {
 			return fmt.Errorf("research_cancelled")
 		}
+		if jobs[i].Role == Risk {
+			notify(stage, "RISK_START")
+		}
 		notify(stage, labels[jobs[i].Role])
 		if err := RunSealedAskCtl(jobs[i], stage, stop); err != nil {
 			if persist != nil {
