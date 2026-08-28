@@ -107,7 +107,8 @@ func ProductAskReportStage(net config.Network, deskAuthorized bool, bin string, 
 	}
 	notify(stage, "CONTACTING_PRIVATE_PROVIDER")
 	if err := RunCommitteeStages(bin, jobs, stage, stop); err != nil {
-		return AskReport{}, err
+		rep = AskReport{Note: "Committee stopped. PIT did not fall back to Router.", Roles: publicJobs(jobs)}
+		return rep, err
 	}
 	notify(stage, "DETERMINISTIC_ENGINE")
 	rep = AskReport{Note: HonestLabel(IndependenceNote()), Roles: make([]map[string]any, 0, len(jobs))}
@@ -121,6 +122,14 @@ func skuURLMatch(skuURL, authURL string) bool {
 	a := strings.TrimRight(strings.TrimSpace(skuURL), "/")
 	b := strings.TrimRight(strings.TrimSpace(authURL), "/")
 	return a != "" && b != "" && strings.EqualFold(a, b)
+}
+
+func publicJobs(jobs []DirectJob) []map[string]any {
+	out := make([]map[string]any, 0, len(jobs))
+	for _, j := range jobs {
+		out = append(out, PublicRoleEvidence(j))
+	}
+	return out
 }
 
 func SavePublicEvidence(path string, jobs []DirectJob, runErr error) error {

@@ -384,6 +384,8 @@ export function App() {
   const [researchCoin, setResearchCoin] = useState("ETH");
   const [researchEvidence, setResearchEvidence] = useState<string>("");
   const researchGen = useRef(0);
+  const researchBusyRef = useRef(false);
+  researchBusyRef.current = researchBusy;
   const [techOpen, setTechOpen] = useState(false);
   const [ticks, setTicks] = useState(0);
   const [setupStep, setSetupStep] = useState(0);
@@ -419,26 +421,28 @@ export function App() {
           if (s?.wallet) setWalletDraft((cur) => cur || s.wallet || "");
         })
         .catch(() => {
-          if (!gone) {
+          if (!gone && !researchBusyRef.current) {
             setCompanionUp(false);
             setStatus(null);
           }
         });
-      pairCode()
-        .then((p) => {
-          if (gone) return;
-          setCode(p?.code || "");
-          setExpires(p?.expires || "");
-        })
-        .catch(() => undefined);
-      doctor()
-        .then((c) => {
-          if (!gone) {
-            setChecks(c);
-            setPinned(Boolean(c.find((x) => x.name === "policy" && x.ok)));
-          }
-        })
-        .catch(() => undefined);
+      if (!researchBusyRef.current) {
+        pairCode()
+          .then((p) => {
+            if (gone) return;
+            setCode(p?.code || "");
+            setExpires(p?.expires || "");
+          })
+          .catch(() => undefined);
+        doctor()
+          .then((c) => {
+            if (!gone) {
+              setChecks(c);
+              setPinned(Boolean(c.find((x) => x.name === "policy" && x.ok)));
+            }
+          })
+          .catch(() => undefined);
+      }
       fetch(`${HEALTH}/watch?network=${net}`)
         .then((r) => r.json() as Promise<{ coins?: Coin[]; sign?: boolean; trade?: boolean }>)
         .then((body) => {
@@ -554,19 +558,19 @@ export function App() {
     setResearchEvidence("");
     setResearchCoin(want);
     if (!companionUp) {
-      setResearchStop("companion_down");
+      setResearchStop("COMPANION_NOT_RUNNING");
       setView("research");
       return;
     }
     const sealer = checks.find((c) => c.name === "direct_sealer");
     if (sealer && !sealer.ok) {
-      setResearchStop("sealer_not_wired");
+      setResearchStop("DIRECT_PROVIDER_UNAVAILABLE");
       setView("research");
       return;
     }
     const auth = checks.find((c) => c.name === "direct_auth");
     if (auth && !auth.ok) {
-      setResearchStop("direct_token_required");
+      setResearchStop("DIRECT_NOT_AUTHORIZED");
       setView("research");
       return;
     }
@@ -587,25 +591,36 @@ export function App() {
         return;
       }
       if (started.stage) setResearchStage(started.stage);
+      let misses = 0;
       for (;;) {
-        await sleep(400);
+        await sleep(1000);
         if (gen !== researchGen.current) return;
         const st = await researchStatus();
+        if (st.transient) {
+          misses += 1;
+          if (misses >= 45) {
+            setResearchStop("COMPANION_NOT_RUNNING");
+            return;
+          }
+          await wakeCompanion();
+          continue;
+        }
+        misses = 0;
         if (st.stage) setResearchStage(st.stage);
         if (typeof st.elapsed_ms === "number") setResearchElapsed(st.elapsed_ms);
         if (st.evidence) setResearchEvidence(JSON.stringify(st.evidence, null, 2));
         if (st.running) continue;
+        const roles = Array.isArray(st.roles) ? st.roles : [];
+        if (roles.length) setResearchRoles(roles);
         if (st.error) {
           setResearchStop(st.error);
           return;
         }
-        const roles = Array.isArray(st.roles) ? st.roles : [];
         const verified = roles.length > 0 && roles.every((x) => String(x.verify_e2ee).toUpperCase() === "OK");
         if (!verified) {
-          setResearchStop("TEE_VERIFY_FAIL");
+          setResearchStop("TEE_SIGNATURE_INVALID");
           return;
         }
-        setResearchRoles(roles);
         setResearchNote(st.note || "Sealed committee verified on this computer.");
         return;
       }
@@ -633,7 +648,7 @@ export function App() {
       <aside className="rail">
         <div className="rail-brand">
           <div className="word">PIT.</div>
-          <p className="kicker">0.1.5 · local execution</p>
+          <p className="kicker">0.1.6 · local execution</p>
         </div>
         <nav className="rail-nav" aria-label="Desk">
           {RAIL.map((item) => (
@@ -653,7 +668,7 @@ export function App() {
         <div className="rail-foot">
           <p>{net === "mainnet" ? "MAINNET" : "TESTNET"}</p>
           <p>{companionUp ? "companion live" : "starting companion"}</p>
-          <p>PIT 0.1.5</p>
+          <p>PIT 0.1.6</p>
           <button type="button" className="ghost" onClick={() => setView("settings")}>
             Help / Diagnostics
           </button>
@@ -807,6 +822,15 @@ export function App() {
                 <p className="label">RESEARCH STOPPED</p>
                 <h2>{explained.title}</h2>
                 <p>{explained.body}</p>
+                {researchRoles.length ? (
+                  <ul className="doctor">
+                    {researchRoles.map((role) => (
+                      <li key={role.role}>
+                        <strong>{role.verify_e2ee || "STOP"}</strong> {role.role} {role.pubkey_signer}
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
                 <button type="button" className="linkish" onClick={() => setTechOpen((v) => !v)}>
                   {techOpen ? "Hide technical evidence" : "View technical evidence"}
                 </button>

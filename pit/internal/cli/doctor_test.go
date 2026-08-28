@@ -82,3 +82,11 @@ func TestDoctorWalletBound(t *testing.T) {
 		t.Fatal(c)
 	}
 }
+
+func TestCompanionDoctorDoesNotSelfDial(t *testing.T) {
+	t.Setenv("PIT_COMPANION", "1")
+	c := checkCompanion()
+	if !c.OK || c.Detail != "this process" {
+		t.Fatal(c)
+	}
+}

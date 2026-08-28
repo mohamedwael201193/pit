@@ -950,6 +950,7 @@ func cmdRevoke() {
 }
 
 func cmdCompanion() {
+	_ = os.Setenv("PIT_COMPANION", "1")
 	addr, err := companion.ListenAddr()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)

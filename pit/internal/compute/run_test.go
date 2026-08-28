@@ -28,6 +28,10 @@ func TestSealerExitErrorLedger(t *testing.T) {
 	if err == nil || err.Error() != "direct_ledger" {
 		t.Fatalf("%v", err)
 	}
+	err = sealerExitError(fmt.Errorf("x"), []byte("POST_FAIL 400\n"))
+	if err == nil || err.Error() != "direct_ledger" {
+		t.Fatalf("400 %v", err)
+	}
 	err = sealerExitError(fmt.Errorf("x"), []byte("VERIFY_FAIL signer"))
 	if err == nil || err.Error() != "TEE_VERIFY_FAIL" {
 		t.Fatalf("%v", err)

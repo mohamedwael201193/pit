@@ -21,7 +21,7 @@ export function explainStop(code: string | null): { title: string; body: string 
   if (code === "companion_down") {
     return {
       title: "Local PIT is not running",
-      body: "The desktop companion on this computer did not start. No order was placed. Reinstall PIT or run pit companion from a terminal.",
+      body: "The desktop companion on this computer did not start. No order was placed. Launch PIT Desktop again.",
     };
   }
   if (code === "galileo_e2ee_unproven") {
@@ -62,8 +62,62 @@ export function explainStop(code: string | null): { title: string; body: string 
   }
   if (code === "companion_http") {
     return {
-      title: "Local PIT did not answer",
-      body: "The desktop companion rejected or dropped this request. No order was placed. Retry after the companion is live.",
+      title: "Local PIT dropped a status poll",
+      body: "The sealed job may still be running. Retry. PIT did not place an order.",
+    };
+  }
+  if (code === "COMPANION_NOT_RUNNING") {
+    return {
+      title: "Local PIT is not running",
+      body: "The desktop companion on this computer stopped answering. No order was placed. Launch PIT again. Do not use a terminal.",
+    };
+  }
+  if (code === "WORKSPACE_NOT_BOUND") {
+    return {
+      title: "This computer is not bound",
+      body: "Bind your public wallet on this computer first. No order was placed.",
+    };
+  }
+  if (code === "DIRECT_NOT_AUTHORIZED") {
+    return {
+      title: "Private research is not armed",
+      body: "Pair the browser and sign Protect my strategy. No order was placed.",
+    };
+  }
+  if (code === "DIRECT_PROVIDER_UNAVAILABLE") {
+    return {
+      title: "0G Direct credit ran out",
+      body: "Researcher may already be verified. Challenger and risk did not finish because the provider rejected the next sealed call (insufficient locked Direct balance). Top up the same wallet at pc.0g.ai Advanced. PIT did not fall back to Router. No order was placed.",
+    };
+  }
+  if (code === "HL_MARKET_UNAVAILABLE") {
+    return {
+      title: "Not enough market data",
+      body: "PIT will not invent a book. Watch still works. No order was placed.",
+    };
+  }
+  if (code === "TEE_SIGNATURE_INVALID" || code === "TEE_RESPONSE_INVALID") {
+    return {
+      title: "Research stopped",
+      body: "We could not verify that the AI result came from the provider PIT expected. No order was placed. No funds moved.",
+    };
+  }
+  if (code === "POLICY_REJECTED") {
+    return {
+      title: "Policy blocked this research",
+      body: "The pinned policy rejected this market or the kill switch is on. No order was placed.",
+    };
+  }
+  if (code === "TEE_SIGNER_MISMATCH") {
+    return {
+      title: "Research stopped",
+      body: "The recovered signer did not match the on-chain teeSigner PIT expected. No order was placed.",
+    };
+  }
+  if (code === "RESEARCHER_FAILED" || code === "CHALLENGER_FAILED" || code === "RISK_FAILED") {
+    return {
+      title: "Committee did not complete",
+      body: "Researcher, challenger, and risk must all finish over the same sealed book. No order was placed.",
     };
   }
   if (code === "asset_not_allowed") {

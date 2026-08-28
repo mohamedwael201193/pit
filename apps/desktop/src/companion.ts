@@ -48,6 +48,8 @@ export type BindResult = {
   elapsed_ms?: number;
   running?: boolean;
   done?: boolean;
+  job_id?: string;
+  transient?: boolean;
   evidence?: unknown;
 };
 
@@ -215,7 +217,7 @@ export async function researchStatus(): Promise<BindResult> {
     return native;
   } catch (e) {
     const msg = e instanceof Error ? e.message : "companion_http";
-    return { error: msg || "companion_http" };
+    return { error: msg || "companion_http", transient: true, running: true };
   }
 }
 

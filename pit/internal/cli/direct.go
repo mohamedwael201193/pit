@@ -249,7 +249,7 @@ func RunWorkspaceResearchStage(dir, coin string, stage compute.StageFn, stop fun
 	last := filepath.Join(dir, "last-research.json")
 	rep, err := compute.ProductAskReportStage(net, true, compute.LookBin(), market, book, auth, last, stage, stop)
 	if err != nil {
-		return compute.AskReport{}, err
+		return rep, err
 	}
 	if stage != nil {
 		stage("POLICY")

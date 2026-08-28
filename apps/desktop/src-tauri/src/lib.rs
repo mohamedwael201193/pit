@@ -232,7 +232,7 @@ fn same_install(path: &Path) -> bool {
     path.parent().map(|p| p == dir).unwrap_or(false)
 }
 
-const SIDECAR_VERSION: &str = "0.1.5";
+const SIDECAR_VERSION: &str = "0.1.6";
 
 fn companion_version() -> Option<String> {
     let raw = loopback_get("/health").ok()?;
@@ -270,6 +270,7 @@ fn spawn_sidecar(bin: &Path) {
         cmd.current_dir(dir);
     }
     cmd.env("PIT_ALLOW_FALLBACKS", "false");
+    cmd.env("PIT_COMPANION", "1");
 	cmd.env_remove("PIT_SESSION_KEY");
     cmd.env_remove("HL_SECRET");
     cmd.env_remove("PIT_KEYRING");

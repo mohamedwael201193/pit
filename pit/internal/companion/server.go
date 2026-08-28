@@ -62,6 +62,9 @@ func ListenAddr() (string, error) {
 func New(dir string) *Hub {
 	h := &Hub{Dir: dir}
 	h.rotateLocked(time.Now())
+	h.researchMu.Lock()
+	h.loadJobLocked()
+	h.researchMu.Unlock()
 	return h
 }
 
@@ -112,6 +115,7 @@ func (h *Hub) Handler() http.Handler {
 	mux.HandleFunc("/local/research", h.localResearch)
 	mux.HandleFunc("/local/research/start", h.localResearchStart)
 	mux.HandleFunc("/local/research/status", h.localResearchStatus)
+	mux.HandleFunc("/local/research/result", h.localResearchResult)
 	mux.HandleFunc("/local/research/cancel", h.localResearchCancel)
 	mux.HandleFunc("/direct/intent", h.deviceDirectIntent)
 	mux.HandleFunc("/direct/complete", h.deviceDirectComplete)

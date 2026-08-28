@@ -70,7 +70,7 @@ func sealerExitError(err error, out []byte) error {
 		case 1:
 			return fmt.Errorf("sealer_runtime")
 		case 3:
-			if strings.Contains(text, "POST_FAIL 401") || strings.Contains(text, "POST_FAIL 403") {
+			if strings.Contains(text, "POST_FAIL 401") || strings.Contains(text, "POST_FAIL 403") || strings.Contains(text, "POST_FAIL 400") || strings.Contains(strings.ToLower(text), "insufficient balance") {
 				return fmt.Errorf("direct_ledger")
 			}
 			return fmt.Errorf("direct_provider_http")
@@ -84,7 +84,7 @@ func sealerExitError(err error, out []byte) error {
 			return fmt.Errorf("TEE_OPEN_FAIL")
 		}
 	}
-	if strings.Contains(text, "POST_FAIL 401") || strings.Contains(text, "POST_FAIL 403") {
+	if strings.Contains(text, "POST_FAIL 401") || strings.Contains(text, "POST_FAIL 403") || strings.Contains(text, "POST_FAIL 400") || strings.Contains(strings.ToLower(text), "insufficient balance") {
 		return fmt.Errorf("direct_ledger")
 	}
 	return fmt.Errorf("TEE_VERIFY_FAIL")

@@ -125,6 +125,9 @@ func checkRPC(dir string) Check {
 }
 
 func checkCompanion() Check {
+	if os.Getenv("PIT_COMPANION") == "1" {
+		return Check{Name: "desktop", OK: true, Detail: "this process"}
+	}
 	client := &http.Client{Timeout: 2 * time.Second}
 	resp, err := client.Get("http://127.0.0.1:17373/health")
 	if err != nil {

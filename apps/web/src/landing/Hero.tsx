@@ -45,6 +45,14 @@ export function Hero() {
               >
                 PIT never asks for a seed phrase. Your wallet stays yours. Your trading session cannot withdraw.
               </motion.p>
+              <motion.p
+                className="mt-4 max-w-[36ch] text-[1.0625rem] leading-7 text-black/75"
+                initial={reduce ? false : { opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.7, delay: 0.18, ease: [0.16, 1, 0.3, 1] }}
+              >
+                Your browser watches. PIT Desktop acts. The trading session stays on your machine. Your private strategy never needs to enter the browser.
+              </motion.p>
             </div>
             <div className="flex justify-end self-start lg:pt-2">
               <WireTurn className="size-36 sm:size-44 lg:size-[11.5rem]" rotate={reduce ? 0 : rotate} />

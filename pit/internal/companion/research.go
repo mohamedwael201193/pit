@@ -8,36 +8,144 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/mohamedwael201193/pit/internal/cli"
 	"github.com/mohamedwael201193/pit/internal/httpx"
 )
 
 type researchJob struct {
-	running   bool
-	done      bool
-	cancel    bool
-	started   time.Time
-	stage     string
-	coin      string
-	err       string
-	note      string
-	roles     []map[string]any
-	elapsedMS int64
+	ID        string           `json:"id"`
+	running   bool             `json:"-"`
+	done      bool             `json:"-"`
+	cancel    bool             `json:"-"`
+	started   time.Time        `json:"-"`
+	stage     string           `json:"stage"`
+	coin      string           `json:"coin"`
+	err       string           `json:"error,omitempty"`
+	note      string           `json:"note,omitempty"`
+	roles     []map[string]any `json:"roles,omitempty"`
+	elapsedMS int64            `json:"elapsed_ms"`
+}
+
+func jobFile(dir string) string {
+	return filepath.Join(dir, "research-job.json")
+}
+
+func classifyResearch(code string) string {
+	switch code {
+	case "unbound":
+		return "WORKSPACE_NOT_BOUND"
+	case "direct_token_required", "direct_token_expired":
+		return "DIRECT_NOT_AUTHORIZED"
+	case "empty_envelope":
+		return "HL_MARKET_UNAVAILABLE"
+	case "sealer_not_wired", "direct_ledger", "direct_provider_http":
+		return "DIRECT_PROVIDER_UNAVAILABLE"
+	case "TEE_VERIFY_FAIL":
+		return "TEE_SIGNATURE_INVALID"
+	case "TEE_OPEN_FAIL", "ROUTER_DOWNGRADE_DENIED", "NOT_TEEML":
+		return "TEE_RESPONSE_INVALID"
+	case "missing_tee_signer":
+		return "TEE_SIGNER_MISMATCH"
+	case "committee_incomplete", "bad_role", "duplicate_role":
+		return "RESEARCHER_FAILED"
+	case "asset_not_allowed", "kill_switch":
+		return "POLICY_REJECTED"
+	default:
+		return code
+	}
+}
+
+func (h *Hub) loadJobLocked() {
+	raw, err := os.ReadFile(jobFile(h.Dir))
+	if err != nil || strings.Contains(strings.ToLower(string(raw)), "app-sk-") {
+		return
+	}
+	var p struct {
+		ID        string           `json:"id"`
+		Running   bool             `json:"running"`
+		Done      bool             `json:"done"`
+		Stage     string           `json:"stage"`
+		Coin      string           `json:"coin"`
+		Error     string           `json:"error"`
+		Note      string           `json:"note"`
+		Roles     []map[string]any `json:"roles"`
+		ElapsedMS int64            `json:"elapsed_ms"`
+		Started   int64            `json:"started_unix_ms"`
+	}
+	if json.Unmarshal(raw, &p) != nil {
+		return
+	}
+	h.job.ID = p.ID
+	h.job.running = p.Running
+	h.job.done = p.Done
+	h.job.stage = p.Stage
+	h.job.coin = p.Coin
+	h.job.err = p.Error
+	h.job.note = p.Note
+	h.job.roles = p.Roles
+	h.job.elapsedMS = p.ElapsedMS
+	if p.Started > 0 {
+		h.job.started = time.UnixMilli(p.Started)
+	}
+	if h.job.running {
+		h.job.running = false
+		h.job.done = true
+		if h.job.err == "" {
+			h.job.err = "COMPANION_NOT_RUNNING"
+			h.job.stage = "STOPPED"
+		}
+		h.persistJobLocked()
+	}
+}
+
+func (h *Hub) persistJobLocked() {
+	body := map[string]any{
+		"id":              h.job.ID,
+		"running":         h.job.running,
+		"done":            h.job.done,
+		"stage":           h.job.stage,
+		"coin":            h.job.coin,
+		"error":           h.job.err,
+		"note":            h.job.note,
+		"elapsed_ms":      h.job.elapsedMS,
+		"started_unix_ms": h.job.started.UnixMilli(),
+		"sign":            false,
+		"trade":           false,
+	}
+	if !h.job.running && len(h.job.roles) > 0 {
+		roles := make([]any, 0, len(h.job.roles))
+		for _, r := range h.job.roles {
+			roles = append(roles, r)
+		}
+		body["roles"] = roles
+	}
+	raw, err := json.Marshal(body)
+	if err != nil || strings.Contains(strings.ToLower(string(raw)), "app-sk-") {
+		return
+	}
+	_ = os.WriteFile(jobFile(h.Dir), raw, 0o600)
 }
 
 func (h *Hub) snapshotResearch() map[string]any {
 	h.researchMu.Lock()
 	defer h.researchMu.Unlock()
+	if h.job.ID == "" {
+		h.loadJobLocked()
+	}
 	elapsed := h.job.elapsedMS
 	if h.job.running && !h.job.started.IsZero() {
 		elapsed = time.Since(h.job.started).Milliseconds()
 	}
 	roles := make([]any, 0, len(h.job.roles))
-	for _, role := range h.job.roles {
-		roles = append(roles, role)
+	if !h.job.running {
+		for _, role := range h.job.roles {
+			roles = append(roles, role)
+		}
 	}
 	body := map[string]any{
 		"ok":         h.job.err == "",
+		"job_id":     h.job.ID,
 		"running":    h.job.running,
 		"done":       h.job.done,
 		"stage":      h.job.stage,
@@ -59,6 +167,25 @@ func (h *Hub) snapshotResearch() map[string]any {
 				var ev any
 				if json.Unmarshal(raw, &ev) == nil {
 					body["evidence"] = ev
+					if len(roles) == 0 {
+						if m, ok := ev.(map[string]any); ok {
+							if rr, ok := m["roles"].([]any); ok {
+								for _, item := range rr {
+									rm, ok := item.(map[string]any)
+									if !ok {
+										continue
+									}
+									roles = append(roles, map[string]any{
+										"role":          rm["role"],
+										"verify_e2ee":   rm["verify_e2ee"],
+										"pubkey_signer": rm["pubkey_signer"],
+										"teeSigner":     rm["teeSigner"],
+									})
+								}
+								body["roles"] = roles
+							}
+						}
+					}
 				}
 			}
 		}
@@ -76,6 +203,7 @@ func (h *Hub) setStage(stage string) {
 	if !h.job.started.IsZero() {
 		h.job.elapsedMS = time.Since(h.job.started).Milliseconds()
 	}
+	h.persistJobLocked()
 }
 
 func (h *Hub) cancelled() bool {
@@ -95,11 +223,13 @@ func (h *Hub) beginResearch(coin string) {
 		return
 	}
 	h.job = researchJob{
+		ID:      uuid.NewString(),
 		running: true,
 		started: time.Now(),
 		stage:   "READING_MARKET",
 		coin:    want,
 	}
+	h.persistJobLocked()
 	h.researchMu.Unlock()
 	go h.execResearch(want)
 }
@@ -116,16 +246,19 @@ func (h *Hub) execResearch(coin string) {
 	if h.job.cancel && (err == nil || err.Error() == "research_cancelled") {
 		h.job.err = "research_cancelled"
 		h.job.stage = "STOPPED"
-		return
-	}
-	if err != nil {
-		h.job.err = err.Error()
-		h.job.stage = "STOPPED"
+		h.persistJobLocked()
 		return
 	}
 	h.job.note = rep.Note
 	h.job.roles = rep.Roles
+	if err != nil {
+		h.job.err = classifyResearch(err.Error())
+		h.job.stage = "STOPPED"
+		h.persistJobLocked()
+		return
+	}
 	h.job.err = ""
+	h.persistJobLocked()
 }
 
 func (h *Hub) localResearchStart(w http.ResponseWriter, r *http.Request) {
@@ -150,6 +283,10 @@ func (h *Hub) localResearchStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeLocal(w, http.StatusOK, h.snapshotResearch())
+}
+
+func (h *Hub) localResearchResult(w http.ResponseWriter, r *http.Request) {
+	h.localResearchStatus(w, r)
 }
 
 func (h *Hub) localResearchCancel(w http.ResponseWriter, r *http.Request) {

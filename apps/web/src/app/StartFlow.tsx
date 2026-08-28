@@ -48,8 +48,8 @@ const STEPS = [
   {
     id: 3,
     title: "Protect my strategy",
-    why: "PIT sends your private strategy only through 0G’s verified sealed path. The website never receives the token.",
-    action: "Sign the Direct message from the bound wallet. Pair this browser first.",
+    why: "Pair this browser at /pair, then sign. PIT sends your private strategy only through 0G’s verified sealed path. The website never receives the token.",
+    action: "Open pairing, then sign the Direct message from the bound wallet.",
     fail: namedState("SIGNATURE_DECLINED"),
     Diagram: DiagramSealed,
   },
@@ -202,6 +202,9 @@ export function StartFlow() {
 
           {current.id === 3 ? (
             <div className="mt-10">
+              <ButtonLink as={Link} to="/pair" size="lg">
+                Pair PIT Desktop
+              </ButtonLink>
               <DirectSign />
               <div className="mt-8">
                 <Button type="button" trailingArrow size="lg" onClick={next}>
