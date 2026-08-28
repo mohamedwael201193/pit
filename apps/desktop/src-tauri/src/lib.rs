@@ -94,6 +94,18 @@ async fn local_research_cancel() -> Result<serde_json::Value, String> {
 }
 
 #[tauri::command]
+async fn local_authorize(typed: String, hash: String) -> Result<serde_json::Value, String> {
+    let body = serde_json::json!({ "typed": typed, "hash": hash });
+    json_post("/local/authorize".into(), body, 30).await
+}
+
+#[tauri::command]
+async fn local_cancel_order(typed: String) -> Result<serde_json::Value, String> {
+    let body = serde_json::json!({ "typed": typed });
+    json_post("/local/cancel".into(), body, 30).await
+}
+
+#[tauri::command]
 async fn local_watch(network: String) -> Result<serde_json::Value, String> {
     let net = if network == "testnet" { "testnet" } else { "mainnet" };
     json_get(format!("/watch?network={net}"), 8).await
@@ -345,7 +357,7 @@ fn same_install(path: &Path) -> bool {
     path.parent().map(|p| p == dir).unwrap_or(false)
 }
 
-const SIDECAR_VERSION: &str = "0.1.9";
+const SIDECAR_VERSION: &str = "0.1.10";
 
 fn companion_version() -> Option<String> {
     let raw = loopback_get("/health").ok()?;
@@ -485,6 +497,8 @@ pub fn run() {
             local_research_start,
             local_research_status,
             local_research_cancel,
+            local_authorize,
+            local_cancel_order,
             local_watch,
             local_kill,
             ensure_companion

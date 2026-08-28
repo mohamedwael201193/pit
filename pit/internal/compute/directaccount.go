@@ -3,10 +3,10 @@ package compute
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"io"
 	"math/big"
 	"net/http"
+	"reflect"
 	"strings"
 	"sync"
 	"time"
@@ -23,6 +23,7 @@ type AccountProbe struct {
 	Acknowledged bool     `json:"acknowledged"`
 	Present      bool     `json:"present"`
 	BalanceWei   *big.Int `json:"-"`
+	Err          string   `json:"error,omitempty"`
 }
 
 // CommitteeFloorWei is 3 0G. Official Direct rejects a call when locked balance
@@ -124,26 +125,61 @@ func probeDirectAccountUncached(ch config.Chain, user, provider string) AccountP
 	}
 	decoded, err := parsed.Unpack("getAccount", common.FromHex(rpc.Result))
 	if err != nil || len(decoded) == 0 {
+		out.Err = "ledger_decode"
 		return out
 	}
-	vals, ok := decoded[0].([]any)
-	if !ok {
-		return unpackAccountMap(decoded[0], &out)
-	}
-	if len(vals) >= 11 {
-		out.Present = true
-		out.BalanceWei = asBigInt(vals[3])
-		if ack, ok := vals[7].(bool); ok {
-			out.Acknowledged = ack
-		}
-		out.Generation = asUint64(vals[9])
+	applyDecodedAccount(decoded[0], &out)
+	if !out.Present {
+		out.Err = "ledger_shape"
 	}
 	return out
 }
 
-func unpackAccountMap(v any, out *AccountProbe) AccountProbe {
-	_ = fmt.Sprintf("%v", v)
-	return *out
+func applyDecodedAccount(v any, out *AccountProbe) {
+	vals := asAnySlice(v)
+	if len(vals) < 8 {
+		return
+	}
+	out.Present = true
+	out.BalanceWei = asBigInt(vals[3])
+	if ack, ok := vals[7].(bool); ok {
+		out.Acknowledged = ack
+	}
+	if len(vals) >= 10 {
+		out.Generation = asUint64(vals[9])
+	}
+}
+
+func asAnySlice(v any) []any {
+	if vals, ok := v.([]any); ok {
+		return vals
+	}
+	rv := reflect.ValueOf(v)
+	if !rv.IsValid() {
+		return nil
+	}
+	if rv.Kind() == reflect.Ptr {
+		if rv.IsNil() {
+			return nil
+		}
+		rv = rv.Elem()
+	}
+	switch rv.Kind() {
+	case reflect.Slice, reflect.Array:
+		out := make([]any, rv.Len())
+		for i := 0; i < rv.Len(); i++ {
+			out[i] = rv.Index(i).Interface()
+		}
+		return out
+	case reflect.Struct:
+		out := make([]any, rv.NumField())
+		for i := 0; i < rv.NumField(); i++ {
+			out[i] = rv.Field(i).Interface()
+		}
+		return out
+	default:
+		return nil
+	}
 }
 
 func asBigInt(v any) *big.Int {
@@ -155,6 +191,20 @@ func asBigInt(v any) *big.Int {
 		return new(big.Int).Set(n)
 	case big.Int:
 		return new(big.Int).Set(&n)
+	case uint64:
+		return new(big.Int).SetUint64(n)
+	case int64:
+		if n < 0 {
+			return big.NewInt(0)
+		}
+		return big.NewInt(n)
+	default:
+		if s, ok := n.(interface{ String() string }); ok {
+			txt := strings.TrimSpace(s.String())
+			if parsed, ok := new(big.Int).SetString(strings.TrimPrefix(txt, "0x"), 0); ok {
+				return parsed
+			}
+		}
 	}
 	return big.NewInt(0)
 }

@@ -40,6 +40,19 @@ func Next(cur Progress) (Progress, error) {
 	return "", fmt.Errorf("no_next")
 }
 
+func RoleInstruction(role Role) string {
+	switch role {
+	case Researcher:
+		return `ROLE=researcher. Reply with JSON only: {"proposed_side":"buy"|"sell"|"none"}. Never output size, leverage, withdraw, transfer, or permissions. The host sizes.`
+	case Challenger:
+		return `ROLE=challenger. Reply with JSON only: {"survives":true|false,"kill":false}. Challenge the thesis. Never size.`
+	case Risk:
+		return `ROLE=risk. Reply with JSON only: {"kill":false,"survives":true}. Kill if the book is unsafe. Never size.`
+	default:
+		return ""
+	}
+}
+
 func Envelope(role Role, publicMarket, privateBook []byte) ([]byte, error) {
 	switch role {
 	case Researcher, Challenger, Risk:
@@ -49,8 +62,9 @@ func Envelope(role Role, publicMarket, privateBook []byte) ([]byte, error) {
 	if len(publicMarket) == 0 || len(privateBook) == 0 {
 		return nil, fmt.Errorf("empty_envelope")
 	}
-	out := make([]byte, 0, 16+len(publicMarket)+len(privateBook))
-	out = append(out, []byte(string(role)+"|")...)
+	inst := RoleInstruction(role)
+	out := make([]byte, 0, len(inst)+16+len(publicMarket)+len(privateBook))
+	out = append(out, []byte(inst+"|"+string(role)+"|")...)
 	out = append(out, publicMarket...)
 	out = append(out, '|')
 	out = append(out, privateBook...)

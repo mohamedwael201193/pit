@@ -51,6 +51,31 @@ func TestEvaluateDoesNotTreatSubstring(t *testing.T) {
 	}
 }
 
+func TestSizerBTCMeetsVenueMin(t *testing.T) {
+	got, err := SizeOrder(SizerInput{
+		MarkPx: 80000, SzDecimals: 5, MaxClipUSD: 10, RequestedUSD: 10,
+		Side: "buy", Coin: "BTC", AllowedCoins: []string{"BTC"},
+		Venue: "hyperliquid", AllowedVenue: "hyperliquid",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.NotionalUSD+1e-9 < 10 {
+		t.Fatalf("%v", got)
+	}
+}
+
+func TestEvaluateRiskKill(t *testing.T) {
+	trueV := true
+	rs, _ := json.Marshal(RoleJSON{ProposedSide: "buy"})
+	ch, _ := json.Marshal(RoleJSON{Survives: &trueV})
+	rk, _ := json.Marshal(RoleJSON{Kill: &trueV})
+	got := EvaluateCommittee(2500, 4, 15, 15, "", "ETH", []string{"ETH"}, 1, 1, false, rs, ch, rk)
+	if got.Eligible || got.Deny != "risk_killed" {
+		t.Fatalf("%+v", got)
+	}
+}
+
 func TestPreviewBindIgnoresModel(t *testing.T) {
 	host := Preview{
 		Market: "hyperliquid:perp:ETH", Side: "buy", Sz: 0.004, OrderType: "limit",

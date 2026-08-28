@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/mohamedwael201193/pit/internal/compute"
 	"github.com/mohamedwael201193/pit/internal/engine"
 	"github.com/mohamedwael201193/pit/internal/hl"
 	"github.com/mohamedwael201193/pit/internal/identity"
@@ -55,5 +56,18 @@ func TestSaveLoadPreviewHash(t *testing.T) {
 	h2, _ := engine.CanonicalHash(p)
 	if "0x"+h2 == h {
 		t.Fatal("mutation must change hash")
+	}
+}
+
+func TestBindResearchPreviewNeedsSession(t *testing.T) {
+	dir := t.TempDir()
+	ws := identity.NewWorkspaceID()
+	st := DiskState{WorkspaceID: ws, Network: "mainnet", Wallet: "0x1111111111111111111111111111111111111111"}
+	if err := Save(dir, st); err != nil {
+		t.Fatal(err)
+	}
+	rep := BindResearchPreview(dir, "ETH", hl.BookSnapshot{Coin: "ETH", MarkPx: 2500, SzDecimals: 4}, policy.Default(), st, compute.AskReport{})
+	if rep.Eligible || rep.Deny != "session_expired" {
+		t.Fatalf("%+v", rep)
 	}
 }

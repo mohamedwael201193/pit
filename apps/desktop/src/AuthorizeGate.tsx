@@ -1,5 +1,3 @@
-import { FormEvent, useState } from "react";
-import { confirmAuthorize } from "./authorize";
 import { LINKS, hyperliquidAPI } from "./links";
 import { NAMED } from "./namedStates";
 
@@ -16,14 +14,6 @@ export function AuthorizeGate({
   busy?: boolean;
   onCreateSession: () => void;
 }) {
-  const [typed, setTyped] = useState("");
-  const [err, setErr] = useState<string | null>(null);
-
-  function onSubmit(e: FormEvent) {
-    e.preventDefault();
-    setErr(confirmAuthorize(typed, sessionAlive));
-  }
-
   return (
     <div className="card auth">
       {!sessionAlive ? (
@@ -40,30 +30,22 @@ export function AuthorizeGate({
           <p className="fine">{NAMED.SESSION_EXPIRED}</p>
         </>
       ) : (
-        <form onSubmit={onSubmit}>
-          <p className="label">YOUR PREVIEW</p>
-          <p>{NAMED.AUTHORIZE_EXACT}</p>
-          <input
-            aria-label="type AUTHORIZE"
-            autoComplete="off"
-            value={typed}
-            onChange={(ev) => setTyped(ev.target.value)}
-            placeholder="Type AUTHORIZE"
-          />
-          <button type="submit">Authorize</button>
-          {err ? (
-            <p className="err" role="alert">
-              {err === "session_expired" ? NAMED.SESSION_EXPIRED : NAMED.AUTHORIZE_REFUSED}
-            </p>
-          ) : null}
-        </form>
+        <>
+          <p className="label">YOUR SESSION</p>
+          <p>Order and cancel only. Type AUTHORIZE on the exact preview on Research. This page does not place an order.</p>
+          {agent ? <p className="fine">Agent {agent}</p> : null}
+          <a className="linkish" href={hyperliquidAPI(net)} target="_blank" rel="noreferrer">
+            Open Hyperliquid
+          </a>
+          <p className="fine">{NAMED.AUTHORIZE_EXACT}</p>
+        </>
       )}
       <p className="fine">
         Direct credit lives at{" "}
         <a href={LINKS.pcAdvanced} target="_blank" rel="noreferrer">
-          pc.0g.ai
+          pc.0g.ai Advanced funds
         </a>
-        . Switch to Advanced. That page is provider credit, not a Hyperliquid balance.
+        . That page is provider credit, not a Hyperliquid balance.
       </p>
     </div>
   );

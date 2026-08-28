@@ -188,7 +188,7 @@ func TestLocalStatusVersionNoSecret(t *testing.T) {
 	if got["sign"] == true || got["trade"] == true {
 		t.Fatal(got)
 	}
-	if got["version"] != "0.1.9" {
+	if got["version"] != "0.1.10" {
 		t.Fatalf("version %v", got["version"])
 	}
 }
@@ -383,6 +383,24 @@ func TestDirectIntentNeverLeaksToken(t *testing.T) {
 	h.Handler().ServeHTTP(rec, req)
 	if rec.Code != http.StatusForbidden {
 		t.Fatal("web research status")
+	}
+
+	req = local(httptest.NewRequest(http.MethodPost, "/local/authorize", strings.NewReader(`{"typed":"AUTHORIZE"}`)))
+	req.Header.Set("Origin", "https://pit0g.vercel.app")
+	req.Header.Set("Content-Type", "application/json")
+	rec = httptest.NewRecorder()
+	h.Handler().ServeHTTP(rec, req)
+	if rec.Code != http.StatusForbidden {
+		t.Fatal("web authorize")
+	}
+
+	req = local(httptest.NewRequest(http.MethodPost, "/local/cancel", strings.NewReader(`{"typed":"AUTHORIZE"}`)))
+	req.Header.Set("Origin", "https://pit0g.vercel.app")
+	req.Header.Set("Content-Type", "application/json")
+	rec = httptest.NewRecorder()
+	h.Handler().ServeHTTP(rec, req)
+	if rec.Code != http.StatusForbidden {
+		t.Fatal("web cancel")
 	}
 
 	req = local(httptest.NewRequest(http.MethodGet, "/local/research/status", nil))

@@ -70,9 +70,17 @@ func SizeOrder(in SizerInput) (SizedOrder, error) {
 	}
 	notional := sz * in.MarkPx
 	if notional+1e-9 < 10 {
-		return SizedOrder{}, fmt.Errorf("below_min_notional")
+		if in.MaxClipUSD+1e-9 < 10 {
+			return SizedOrder{}, fmt.Errorf("below_min_notional")
+		}
+		sz = math.Ceil((10.0/in.MarkPx)*pow) / pow
+		notional = sz * in.MarkPx
+		tick := in.MarkPx / pow
+		if notional+1e-9 < 10 || notional > in.MaxClipUSD+tick+1e-9 {
+			return SizedOrder{}, fmt.Errorf("below_min_notional")
+		}
 	}
-	if notional > in.MaxClipUSD+1e-9 {
+	if notional > in.MaxClipUSD+in.MarkPx/pow+1e-9 {
 		return SizedOrder{}, fmt.Errorf("notional_exceeds_clip")
 	}
 	return SizedOrder{Coin: coin, Side: side, Sz: sz, NotionalUSD: notional}, nil
@@ -99,8 +107,13 @@ func parseRole(raw json.RawMessage) RoleJSON {
 }
 
 func Evaluate(markPx float64, szDecimals int, maxClip, requested float64, side, coin string, allowed []string, lev, maxLev int, kill bool, researcher, challenger json.RawMessage) Result {
+	return EvaluateCommittee(markPx, szDecimals, maxClip, requested, side, coin, allowed, lev, maxLev, kill, researcher, challenger, nil)
+}
+
+func EvaluateCommittee(markPx float64, szDecimals int, maxClip, requested float64, side, coin string, allowed []string, lev, maxLev int, kill bool, researcher, challenger, risk json.RawMessage) Result {
 	reasons := []string{}
 	ch := parseRole(challenger)
+	rk := parseRole(risk)
 	survive := true
 	if ch.Survives != nil && !*ch.Survives {
 		survive = false
@@ -109,6 +122,10 @@ func Evaluate(markPx float64, szDecimals int, maxClip, requested float64, side, 
 	if ch.Kill != nil && *ch.Kill {
 		survive = false
 		reasons = append(reasons, "challenger_killed")
+	}
+	if rk.Kill != nil && *rk.Kill {
+		survive = false
+		reasons = append(reasons, "risk_killed")
 	}
 	if kill {
 		survive = false
@@ -131,7 +148,14 @@ func Evaluate(markPx float64, szDecimals int, maxClip, requested float64, side, 
 		return Result{Eligible: false, Deny: err.Error(), Reasons: append(reasons, err.Error())}
 	}
 	if !survive {
-		return Result{Eligible: false, Deny: "challenger_killed", Size: &sized, ChallengerSurvive: false, Reasons: reasons}
+		deny := "challenger_killed"
+		for _, r := range reasons {
+			if r == "risk_killed" {
+				deny = "risk_killed"
+				break
+			}
+		}
+		return Result{Eligible: false, Deny: deny, Size: &sized, ChallengerSurvive: false, Reasons: reasons}
 	}
 	return Result{Eligible: true, Size: &sized, ChallengerSurvive: true, Reasons: reasons}
 }

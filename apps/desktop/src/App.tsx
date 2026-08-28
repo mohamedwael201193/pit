@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { AuthorizeGate } from "./AuthorizeGate";
 import { EmptyHome } from "./EmptyHome";
 import { KillNote } from "./KillNote";
@@ -10,8 +10,10 @@ import { PolicyLaw } from "./PolicyLaw";
 import { PreviewNote } from "./PreviewNote";
 import { SessionNote } from "./SessionNote";
 import {
+  authorizePreview,
   bindWallet,
   createLocalSession,
+  cancelBoundOrder,
   cancelResearch,
   describeBindError,
   doctor,
@@ -25,6 +27,7 @@ import {
   setKillSwitch,
   startResearch,
   wakeCompanion,
+  type BindResult,
   type DoctorCheck,
   type LocalStatus,
 } from "./companion";
@@ -390,6 +393,12 @@ export function App() {
   const [researchElapsed, setResearchElapsed] = useState(0);
   const [researchCoin, setResearchCoin] = useState("ETH");
   const [researchEvidence, setResearchEvidence] = useState<string>("");
+  const [preview, setPreview] = useState<NonNullable<BindResult["preview"]> | null>(null);
+  const [previewHash, setPreviewHash] = useState("");
+  const [authTyped, setAuthTyped] = useState("");
+  const [authBusy, setAuthBusy] = useState(false);
+  const [authErr, setAuthErr] = useState<string | null>(null);
+  const [lastOid, setLastOid] = useState("");
   const researchGen = useRef(0);
   const researchBusyRef = useRef(false);
   researchBusyRef.current = researchBusy;
@@ -434,6 +443,7 @@ export function App() {
             setStatus(s);
             setSessionAlive(Boolean(s?.sessionAlive));
             setAgent(s?.agent || "");
+            if (s?.lastOrder?.oid) setLastOid(String(s.lastOrder.oid));
             if (s?.network === "testnet" || s?.network === "mainnet") setNet(s.network);
             if (s?.wallet) setWalletDraft((cur) => cur || s.wallet || "");
           })
@@ -513,6 +523,10 @@ export function App() {
         if (typeof st.elapsed_ms === "number") setResearchElapsed(st.elapsed_ms);
         if (roles.length) setResearchRoles(roles);
         if (st.coin) setResearchCoin(st.coin);
+        if (st.preview) {
+          setPreview(st.preview);
+          setPreviewHash(st.preview_hash || st.preview.hash || "");
+        }
         if (verified && !st.running) {
           setResearchStop(null);
           setResearchNote(st.note || "Sealed committee verified on this computer.");
@@ -639,6 +653,9 @@ export function App() {
     setResearchNote(null);
     setResearchRoles([]);
     setResearchEvidence("");
+    setPreview(null);
+    setPreviewHash("");
+    setAuthErr(null);
     setResearchCoin(want);
     if (!companionUp) {
       setResearchStop("COMPANION_NOT_RUNNING");
@@ -693,6 +710,10 @@ export function App() {
         if (st.evidence) setResearchEvidence(JSON.stringify(st.evidence, null, 2));
         const roles = Array.isArray(st.roles) ? st.roles : [];
         if (roles.length) setResearchRoles(roles);
+        if (st.preview) {
+          setPreview(st.preview);
+          setPreviewHash(st.preview_hash || st.preview.hash || "");
+        }
         const verified = roles.length > 0 && roles.every((x) => String(x.verify_e2ee).toUpperCase() === "OK");
         if (verified && !st.running) {
           setResearchStop(null);
@@ -730,12 +751,40 @@ export function App() {
     if (typeof r.elapsed_ms === "number") setResearchElapsed(r.elapsed_ms);
   }
 
+  async function onAuthorize(e: FormEvent) {
+    e.preventDefault();
+    setAuthBusy(true);
+    setAuthErr(null);
+    const r = await authorizePreview(authTyped, previewHash);
+    setAuthBusy(false);
+    if (r.error) {
+      setAuthErr(r.error);
+      return;
+    }
+    if (r.oid) setLastOid(String(r.oid));
+    setAuthTyped("");
+    setChecks(await doctor());
+  }
+
+  async function onCancelBound(e: FormEvent) {
+    e.preventDefault();
+    setAuthBusy(true);
+    setAuthErr(null);
+    const r = await cancelBoundOrder(authTyped);
+    setAuthBusy(false);
+    if (r.error) {
+      setAuthErr(r.error);
+      return;
+    }
+    setAuthTyped("");
+  }
+
   return (
     <div className="app">
       <aside className="rail">
         <div className="rail-brand">
           <div className="word">PIT.</div>
-          <p className="kicker">{status?.version || "0.1.9"} · local execution</p>
+          <p className="kicker">{status?.version || "0.1.10"} · local execution</p>
         </div>
         <nav className="rail-nav" aria-label="Desk">
           {RAIL.map((item) => (
@@ -755,7 +804,7 @@ export function App() {
         <div className="rail-foot">
           <p>{net === "mainnet" ? "MAINNET" : "TESTNET"}</p>
           <p>{companionUp ? "companion live" : "starting companion"}</p>
-          <p>{status?.version || "PIT 0.1.9"}</p>
+          <p>{status?.version || "PIT 0.1.10"}</p>
           <button type="button" className="ghost" onClick={() => setView("settings")}>
             Help / Diagnostics
           </button>
@@ -910,6 +959,60 @@ export function App() {
                 </ul>
               </article>
             ) : null}
+            {!researchBusy && preview ? (
+              <article className="card">
+                <p className="label">EXACT PREVIEW</p>
+                {preview.eligible ? (
+                  <>
+                    <p>
+                      {preview.market} {preview.side} {preview.sz} @ {preview.limitPx}
+                    </p>
+                    <p className="fine">Hash {preview.hash || previewHash}. Model size was ignored. Host sized this clip.</p>
+                    {sessionAlive ? (
+                      <form onSubmit={(e) => void onAuthorize(e)}>
+                        <input
+                          aria-label="type AUTHORIZE"
+                          autoComplete="off"
+                          value={authTyped}
+                          onChange={(ev) => setAuthTyped(ev.target.value)}
+                          placeholder="Type AUTHORIZE"
+                        />
+                        <button type="submit" disabled={authBusy || !previewHash}>
+                          Authorize
+                        </button>
+                      </form>
+                    ) : (
+                      <p>Create a local session, then type AUTHORIZE here.</p>
+                    )}
+                    {lastOid ? (
+                      <form onSubmit={(e) => void onCancelBound(e)}>
+                        <p className="fine">OID {lastOid}. Type AUTHORIZE again to cancel this order. PIT cannot withdraw.</p>
+                        <button type="submit" disabled={authBusy}>
+                          Cancel this order
+                        </button>
+                      </form>
+                    ) : null}
+                    {authErr ? (
+                      <p className="err" role="alert">
+                        {authErr === "approveAgent_required"
+                          ? "Approve this agent on Hyperliquid before PIT will send an order."
+                          : authErr}
+                      </p>
+                    ) : null}
+                    {authErr === "approveAgent_required" ? (
+                      <a className="linkish" href={hyperliquidAPI(net)} target="_blank" rel="noreferrer">
+                        Open Hyperliquid
+                      </a>
+                    ) : null}
+                  </>
+                ) : (
+                  <p>
+                    Host did not size a trade ({preview.deny || "no_side"}). Committee envelopes stay independent. The
+                    model cannot raise clip. No order was placed.
+                  </p>
+                )}
+              </article>
+            ) : null}
             {explained && !researchBusy ? (
               <article className="card stop" role="alert">
                 <p className="label">RESEARCH STOPPED</p>
@@ -971,6 +1074,8 @@ export function App() {
             <article className="card">
               <p className="label">THIS MACHINE</p>
               <p>No order id is shown until Hyperliquid accepts one after you type AUTHORIZE.</p>
+              {lastOid ? <p>Last OID {lastOid}</p> : null}
+              {status?.lastOrder?.cloid ? <p>Last cloid {status.lastOrder.cloid}</p> : null}
             </article>
           </main>
         ) : null}

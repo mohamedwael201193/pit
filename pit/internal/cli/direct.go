@@ -264,5 +264,9 @@ func RunWorkspaceResearchStage(dir, coin string, stage compute.StageFn, stop fun
 	if stage != nil {
 		stage("POLICY")
 	}
+	rep = BindResearchPreview(dir, want, snap, p, st, rep)
+	if stage != nil {
+		stage("PREVIEW")
+	}
 	return rep, nil
 }

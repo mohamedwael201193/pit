@@ -10,6 +10,7 @@ export type LocalStatus = {
   sign?: boolean;
   trade?: boolean;
   version?: string;
+  lastOrder?: { oid?: string; cloid?: string; market?: string; side?: string; posted?: boolean; cancelled?: boolean };
 };
 
 export type PairCode = {
@@ -52,6 +53,24 @@ export type BindResult = {
   coin?: string;
   transient?: boolean;
   evidence?: unknown;
+  preview?: {
+    eligible?: boolean;
+    deny?: string;
+    market?: string;
+    side?: string;
+    sz?: number;
+    limitPx?: string;
+    hash?: string;
+    cloid?: string;
+    expiryUnixMs?: number;
+    notionalUsd?: number;
+    reasons?: string[];
+  };
+  preview_hash?: string;
+  deny?: string;
+  eligible?: boolean;
+  oid?: string;
+  posted?: boolean;
 };
 
 type TauriWindow = Window & {
@@ -250,6 +269,28 @@ export async function researchStatus(): Promise<BindResult> {
 export async function cancelResearch(): Promise<BindResult> {
   try {
     const native = await nativeJsonOrError<BindResult>("local_research_cancel");
+    if (native.sign || native.trade) return { error: "companion_denied" };
+    return native;
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : "companion_http";
+    return { error: msg || "companion_http" };
+  }
+}
+
+export async function authorizePreview(typed: string, hash: string): Promise<BindResult> {
+  try {
+    const native = await nativeJsonOrError<BindResult>("local_authorize", { typed, hash });
+    if (native.sign || native.trade) return { error: "companion_denied" };
+    return native;
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : "companion_http";
+    return { error: msg || "companion_http" };
+  }
+}
+
+export async function cancelBoundOrder(typed: string): Promise<BindResult> {
+  try {
+    const native = await nativeJsonOrError<BindResult>("local_cancel_order", { typed });
     if (native.sign || native.trade) return { error: "companion_denied" };
     return native;
   } catch (e) {

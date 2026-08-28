@@ -14,18 +14,22 @@ import (
 )
 
 type researchJob struct {
-	ID        string           `json:"id"`
-	PID       int              `json:"pid"`
-	running   bool             `json:"-"`
-	done      bool             `json:"-"`
-	cancel    bool             `json:"-"`
-	started   time.Time        `json:"-"`
-	stage     string           `json:"stage"`
-	coin      string           `json:"coin"`
-	err       string           `json:"error,omitempty"`
-	note      string           `json:"note,omitempty"`
-	roles     []map[string]any `json:"roles,omitempty"`
-	elapsedMS int64            `json:"elapsed_ms"`
+	ID          string           `json:"id"`
+	PID         int              `json:"pid"`
+	running     bool             `json:"-"`
+	done        bool             `json:"-"`
+	cancel      bool             `json:"-"`
+	started     time.Time        `json:"-"`
+	stage       string           `json:"stage"`
+	coin        string           `json:"coin"`
+	err         string           `json:"error,omitempty"`
+	note        string           `json:"note,omitempty"`
+	roles       []map[string]any `json:"roles,omitempty"`
+	elapsedMS   int64            `json:"elapsed_ms"`
+	preview     map[string]any   `json:"-"`
+	previewHash string           `json:"-"`
+	deny        string           `json:"-"`
+	eligible    bool             `json:"-"`
 }
 
 func jobFile(dir string) string {
@@ -106,17 +110,21 @@ func (h *Hub) loadJobLocked() {
 		return
 	}
 	var p struct {
-		ID        string           `json:"id"`
-		PID       int              `json:"pid"`
-		Running   bool             `json:"running"`
-		Done      bool             `json:"done"`
-		Stage     string           `json:"stage"`
-		Coin      string           `json:"coin"`
-		Error     string           `json:"error"`
-		Note      string           `json:"note"`
-		Roles     []map[string]any `json:"roles"`
-		ElapsedMS int64            `json:"elapsed_ms"`
-		Started   int64            `json:"started_unix_ms"`
+		ID          string           `json:"id"`
+		PID         int              `json:"pid"`
+		Running     bool             `json:"running"`
+		Done        bool             `json:"done"`
+		Stage       string           `json:"stage"`
+		Coin        string           `json:"coin"`
+		Error       string           `json:"error"`
+		Note        string           `json:"note"`
+		Roles       []map[string]any `json:"roles"`
+		ElapsedMS   int64            `json:"elapsed_ms"`
+		Started     int64            `json:"started_unix_ms"`
+		Preview     map[string]any   `json:"preview"`
+		PreviewHash string           `json:"preview_hash"`
+		Deny        string           `json:"deny"`
+		Eligible    bool             `json:"eligible"`
 	}
 	if json.Unmarshal(raw, &p) != nil {
 		return
@@ -131,6 +139,10 @@ func (h *Hub) loadJobLocked() {
 	h.job.note = p.Note
 	h.job.roles = p.Roles
 	h.job.elapsedMS = p.ElapsedMS
+	h.job.preview = p.Preview
+	h.job.previewHash = p.PreviewHash
+	h.job.deny = p.Deny
+	h.job.eligible = p.Eligible
 	if p.Started > 0 {
 		h.job.started = time.UnixMilli(p.Started)
 	}
@@ -144,6 +156,7 @@ func (h *Hub) loadJobLocked() {
 			h.job.err = ""
 			h.job.stage = "READY"
 			h.job.roles = roles
+			attachPreviewLocked(h)
 			h.persistJobLocked()
 			return
 		}
@@ -163,7 +176,22 @@ func (h *Hub) loadJobLocked() {
 			if h.job.stage == "" || h.job.stage == "POLICY" || h.job.stage == "STOPPED" {
 				h.job.stage = "READY"
 			}
+			attachPreviewLocked(h)
 		}
+	}
+}
+
+func attachPreviewLocked(h *Hub) {
+	p, hash, err := cli.LoadPreview(h.Dir)
+	if err != nil {
+		return
+	}
+	h.job.previewHash = hash
+	h.job.eligible = true
+	h.job.preview = map[string]any{
+		"eligible": true, "market": p.Market, "side": p.Side, "sz": p.Sz,
+		"orderType": p.OrderType, "limitPx": p.LimitPx, "hash": hash, "cloid": p.Cloid,
+		"expiryUnixMs": p.ExpiryUnixMs,
 	}
 }
 
@@ -181,6 +209,12 @@ func (h *Hub) persistJobLocked() {
 		"started_unix_ms": h.job.started.UnixMilli(),
 		"sign":            false,
 		"trade":           false,
+		"eligible":        h.job.eligible,
+		"deny":            h.job.deny,
+		"preview_hash":    h.job.previewHash,
+	}
+	if h.job.preview != nil {
+		body["preview"] = h.job.preview
 	}
 	if !h.job.running && len(h.job.roles) > 0 {
 		roles := make([]any, 0, len(h.job.roles))
@@ -213,18 +247,22 @@ func (h *Hub) snapshotResearch() map[string]any {
 		}
 	}
 	body := map[string]any{
-		"ok":         h.job.err == "",
-		"job_id":     h.job.ID,
-		"running":    h.job.running,
-		"done":       h.job.done,
-		"stage":      h.job.stage,
-		"coin":       h.job.coin,
-		"elapsed_ms": elapsed,
-		"note":       h.job.note,
-		"roles":      roles,
-		"sign":       false,
-		"trade":      false,
-		"verify":     h.job.done && h.job.err == "" && len(h.job.roles) > 0,
+		"ok":           h.job.err == "",
+		"job_id":       h.job.ID,
+		"running":      h.job.running,
+		"done":         h.job.done,
+		"stage":        h.job.stage,
+		"coin":         h.job.coin,
+		"elapsed_ms":   elapsed,
+		"note":         h.job.note,
+		"roles":        roles,
+		"sign":         false,
+		"trade":        false,
+		"verify":       h.job.done && h.job.err == "" && len(h.job.roles) > 0,
+		"eligible":     h.job.eligible,
+		"deny":         h.job.deny,
+		"preview":      h.job.preview,
+		"preview_hash": h.job.previewHash,
 	}
 	if h.job.err != "" {
 		body["error"] = h.job.err
@@ -321,6 +359,10 @@ func (h *Hub) execResearch(coin string) {
 	}
 	h.job.note = rep.Note
 	h.job.roles = rep.Roles
+	h.job.preview = rep.Preview
+	h.job.previewHash = rep.PreviewHash
+	h.job.deny = rep.Deny
+	h.job.eligible = rep.Eligible
 	if err != nil {
 		h.job.err = classifyResearch(err.Error())
 		h.job.stage = "FAILED"
@@ -370,4 +412,46 @@ func (h *Hub) localResearchCancel(w http.ResponseWriter, r *http.Request) {
 	}
 	h.researchMu.Unlock()
 	writeLocal(w, http.StatusOK, h.snapshotResearch())
+}
+
+func (h *Hub) localAuthorize(w http.ResponseWriter, r *http.Request) {
+	if !desktopOnly(w, r) {
+		return
+	}
+	var body struct {
+		Typed string `json:"typed"`
+		Hash  string `json:"hash"`
+	}
+	_ = json.NewDecoder(r.Body).Decode(&body)
+	got := cli.ExecuteDeskOrder(h.Dir, body.Typed, body.Hash)
+	out := map[string]any{
+		"ok": got.OK, "posted": got.Posted, "oid": got.OID, "cloid": got.Cloid,
+		"hash": got.Hash, "market": got.Market, "side": got.Side, "sz": got.Sz,
+		"agent": got.Agent, "sign": false, "trade": false, "order": true, "cancel": true,
+	}
+	if got.Error != "" {
+		out["ok"] = false
+		out["error"] = got.Error
+	}
+	writeLocal(w, http.StatusOK, out)
+}
+
+func (h *Hub) localCancelOrder(w http.ResponseWriter, r *http.Request) {
+	if !desktopOnly(w, r) {
+		return
+	}
+	var body struct {
+		Typed string `json:"typed"`
+	}
+	_ = json.NewDecoder(r.Body).Decode(&body)
+	got := cli.ExecuteDeskCancel(h.Dir, body.Typed)
+	out := map[string]any{
+		"ok": got.OK, "posted": got.Posted, "cloid": got.Cloid, "hash": got.Hash,
+		"market": got.Market, "agent": got.Agent, "sign": false, "trade": false, "order": true, "cancel": true,
+	}
+	if got.Error != "" {
+		out["ok"] = false
+		out["error"] = got.Error
+	}
+	writeLocal(w, http.StatusOK, out)
 }

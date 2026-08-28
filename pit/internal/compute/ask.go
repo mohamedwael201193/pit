@@ -33,8 +33,15 @@ func ProductAskAuth(net config.Network, deskAuthorized bool, bin string, publicM
 }
 
 type AskReport struct {
-	Roles []map[string]any `json:"roles"`
-	Note  string           `json:"note"`
+	Roles       []map[string]any `json:"roles"`
+	Note        string           `json:"note"`
+	Researcher  []byte           `json:"-"`
+	Challenger  []byte           `json:"-"`
+	Risk        []byte           `json:"-"`
+	Deny        string           `json:"deny,omitempty"`
+	Eligible    bool             `json:"eligible"`
+	Preview     map[string]any   `json:"preview,omitempty"`
+	PreviewHash string           `json:"preview_hash,omitempty"`
 }
 
 func ProductAskReport(net config.Network, deskAuthorized bool, bin string, publicMarket, privateBook []byte, loaded AuthFile) (AskReport, error) {
@@ -113,7 +120,17 @@ func ProductAskReportStage(net config.Network, deskAuthorized bool, bin string, 
 	notify(stage, "DETERMINISTIC_ENGINE")
 	rep = AskReport{Note: HonestLabel(IndependenceNote()), Roles: make([]map[string]any, 0, len(jobs))}
 	for _, j := range jobs {
-		rep.Roles = append(rep.Roles, PublicRoleEvidence(j))
+		ev := PublicRoleEvidence(j)
+		raw := roleJSONFromOut(j.OutPath)
+		switch j.Role {
+		case Researcher:
+			rep.Researcher = raw
+		case Challenger:
+			rep.Challenger = raw
+		case Risk:
+			rep.Risk = raw
+		}
+		rep.Roles = append(rep.Roles, ev)
 	}
 	return rep, nil
 }
@@ -155,6 +172,19 @@ func SavePublicEvidence(path string, jobs []DirectJob, runErr error) error {
 				}
 				if verr, ok := extra["verify_err"].(string); ok {
 					extra["verify_err"] = redactSecret(verr)
+				}
+				parsed := roleJSONFromOut(j.OutPath)
+				var parsedObj map[string]any
+				if json.Unmarshal(parsed, &parsedObj) == nil {
+					if side, ok := parsedObj["proposed_side"].(string); ok && side != "" {
+						m["proposed_side"] = side
+					}
+					if v, ok := parsedObj["survives"]; ok {
+						m["survives"] = v
+					}
+					if v, ok := parsedObj["kill"]; ok {
+						m["kill"] = v
+					}
 				}
 				for k, v := range extra {
 					if _, exists := m[k]; !exists {

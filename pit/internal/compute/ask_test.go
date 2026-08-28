@@ -60,3 +60,26 @@ func TestSavePublicEvidenceRedactsDirectToken(t *testing.T) {
 		t.Fatal("verify field")
 	}
 }
+
+func TestSavePublicEvidenceKeepsProposedSide(t *testing.T) {
+	dir := t.TempDir()
+	out := filepath.Join(dir, "researcher.json")
+	body := `{"verify_e2ee":"OK","sanitized_output":"{\"proposed_side\":\"buy\"}"}`
+	if err := os.WriteFile(out, []byte(body), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	dest := filepath.Join(dir, "last-research.json")
+	if err := SavePublicEvidence(dest, []DirectJob{{OutPath: out, Role: Researcher}}, nil); err != nil {
+		t.Fatal(err)
+	}
+	raw, err := os.ReadFile(dest)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(string(raw), "sanitized_output") {
+		t.Fatal(string(raw))
+	}
+	if !strings.Contains(string(raw), `"proposed_side"`) || !strings.Contains(string(raw), `"buy"`) {
+		t.Fatal(string(raw))
+	}
+}

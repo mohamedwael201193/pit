@@ -117,6 +117,8 @@ func (h *Hub) Handler() http.Handler {
 	mux.HandleFunc("/local/research/status", h.localResearchStatus)
 	mux.HandleFunc("/local/research/result", h.localResearchResult)
 	mux.HandleFunc("/local/research/cancel", h.localResearchCancel)
+	mux.HandleFunc("/local/authorize", h.localAuthorize)
+	mux.HandleFunc("/local/cancel", h.localCancelOrder)
 	mux.HandleFunc("/local/kill", h.localKill)
 	mux.HandleFunc("/direct/intent", h.deviceDirectIntent)
 	mux.HandleFunc("/direct/complete", h.deviceDirectComplete)
@@ -251,6 +253,9 @@ func (h *Hub) localStatus(w http.ResponseWriter, r *http.Request) {
 		if s, err := cli.LiveFromDisk(h.Dir, st.Kill, time.Now().UnixMilli()); err == nil {
 			body["sessionAlive"] = session.Alive(s, time.Now().UnixMilli())
 			body["agent"] = s.AgentAddr
+		}
+		if last := cli.LoadLastOrder(h.Dir); last != nil {
+			body["lastOrder"] = last
 		}
 	}
 	writeLocal(w, http.StatusOK, body)

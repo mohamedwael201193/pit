@@ -48,16 +48,6 @@ export function nextFix(
       hrefLabel: "Open paired site",
     };
   }
-  const credit = checkNamed(checks, "direct_credit");
-  if (credit && !credit.ok) {
-    return {
-      title: "Fund private research",
-      why: "0G Direct bills the wallet inside the sealed-path token. That is provider credit, not a Hyperliquid balance. Three sealed roles need about 3 0G locked.",
-      fix: "Open pc.0g.ai, switch to Advanced, and top up the same wallet.",
-      href: LINKS.pcAdvanced,
-      hrefLabel: "Open 0G compute",
-    };
-  }
   if (status?.kill) {
     return {
       title: "Kill switch is on",
@@ -67,6 +57,8 @@ export function nextFix(
       goLabel: "Open Security",
     };
   }
+  const teeOk =
+    Boolean(checks.find((c) => c.name === "tee" && c.ok)) || items.find((p) => p.id === "tee")?.state === "ok";
   if (!sessionAlive) {
     return {
       title: "Create a local session",
@@ -98,6 +90,16 @@ export function nextFix(
       fix: "Open Policy and pin the default until you change it on purpose.",
       go: "watch",
       goLabel: "Open Watch after pin",
+    };
+  }
+  const credit = checkNamed(checks, "direct_credit");
+  if (credit && !credit.ok && !teeOk) {
+    return {
+      title: "Fund private research",
+      why: "0G Direct bills the wallet inside the sealed-path token. That is provider credit, not a Hyperliquid balance. Three sealed roles need about 3 0G locked.",
+      fix: "Open pc.0g.ai Advanced funds with the same wallet.",
+      href: LINKS.pcAdvanced,
+      hrefLabel: "Open 0G compute",
     };
   }
   const tee = items.find((p) => p.id === "tee");

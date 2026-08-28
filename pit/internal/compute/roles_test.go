@@ -1,6 +1,9 @@
 package compute
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func TestThreeEnvelopesSameProviderHonest(t *testing.T) {
 	got, err := Committee([]byte(`{"eth":1}`), []byte(`{"clip":10}`))
@@ -12,5 +15,8 @@ func TestThreeEnvelopesSameProviderHonest(t *testing.T) {
 	}
 	if string(got[Researcher]) == string(got[Challenger]) {
 		t.Fatal("envelopes must differ by role")
+	}
+	if !strings.Contains(string(got[Researcher]), `"proposed_side"`) {
+		t.Fatal("researcher must ask for JSON side")
 	}
 }

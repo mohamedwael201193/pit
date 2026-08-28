@@ -144,6 +144,18 @@ export function explainStop(code: string | null): { title: string; body: string 
       body: "Local execution is halted. No order was placed.",
     };
   }
+  if (code === "approveAgent_required") {
+    return {
+      title: "Approve PIT on Hyperliquid",
+      body: "This computer has an order/cancel session. extraAgents does not list it yet. Open Hyperliquid API and approve the agent shown on Security. PIT still cannot withdraw. No order was placed.",
+    };
+  }
+  if (code === "preview_required" || code === "need_exact_AUTHORIZE" || code === "preview_hash_mismatch") {
+    return {
+      title: "Exact preview required",
+      body: "Type AUTHORIZE on the card this computer generated. Piped yes is never enough. No order was placed.",
+    };
+  }
   return {
     title: "Research stopped",
     body: "PIT halted this step. No order was placed. No funds moved.",

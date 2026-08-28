@@ -195,6 +195,18 @@
           "markdownDescription": "Always denies session export from the webview."
         },
         {
+          "description": "Authorize the exact preview on this computer. Order and cancel only. Never returns a session key.",
+          "type": "string",
+          "const": "allow-local-authorize",
+          "markdownDescription": "Authorize the exact preview on this computer. Order and cancel only. Never returns a session key."
+        },
+        {
+          "description": "Cancel the authorized order on this computer. Never withdraws.",
+          "type": "string",
+          "const": "allow-local-cancel-order",
+          "markdownDescription": "Cancel the authorized order on this computer. Never withdraws."
+        },
+        {
           "description": "Read the one-time pairing code over a native loopback GET with no Origin.",
           "type": "string",
           "const": "allow-local-code",

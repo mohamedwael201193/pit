@@ -201,6 +201,17 @@ func checkDirectCredit(dir string) Check {
 	}
 	sku := compute.ForNetwork(net)
 	probe := compute.ProbeDirectAccount(config.For(net), st.Wallet, sku.Provider)
+	teeOK := checkTee(dir).OK
+	if !probe.Present {
+		if teeOK {
+			return Check{Name: "direct_credit", OK: true, Detail: "last committee verified. Provider ledger unread this pass — not treated as 0 0G."}
+		}
+		detail := "could not read the provider ledger. Open pc.0g.ai Advanced. This is unread, not zero."
+		if probe.Err != "" {
+			detail = "could not read the provider ledger (" + probe.Err + "). Open pc.0g.ai Advanced. This is unread, not zero."
+		}
+		return Check{Name: "direct_credit", Detail: detail}
+	}
 	if probe.EnoughForCommittee() {
 		return Check{Name: "direct_credit", OK: true, Detail: "provider credit " + probe.BalanceOG() + " 0G"}
 	}

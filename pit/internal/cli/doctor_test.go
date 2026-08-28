@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/mohamedwael201193/pit/internal/identity"
@@ -99,6 +100,18 @@ func TestDoctorCreditUnbound(t *testing.T) {
 	c := checkDirectCredit(t.TempDir())
 	if c.OK {
 		t.Fatal("unbound credit")
+	}
+}
+
+func TestDoctorCreditUnreadNotZero(t *testing.T) {
+	dir := t.TempDir()
+	id := identity.NewWorkspaceID()
+	if err := Save(dir, DiskState{WorkspaceID: id, Network: "mainnet", Wallet: "0x1111111111111111111111111111111111111111"}); err != nil {
+		t.Fatal(err)
+	}
+	c := checkDirectCredit(dir)
+	if strings.Contains(strings.ToLower(c.Detail), "unread") && strings.Contains(c.Detail, "0 0G") {
+		t.Fatal(c.Detail)
 	}
 }
 
