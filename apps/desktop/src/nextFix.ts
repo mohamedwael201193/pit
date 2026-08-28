@@ -9,7 +9,7 @@ export type NextFix = {
   fix: string;
   href?: string;
   hrefLabel?: string;
-  go?: "security" | "research" | "watch" | "settings";
+  go?: "security" | "research" | "watch" | "settings" | "policy";
   goLabel?: string;
 };
 
@@ -88,8 +88,8 @@ export function nextFix(
       title: "Pin a trading policy",
       why: "The model cannot raise clip, leverage, or permissions. Pin writes a hash on this computer.",
       fix: "Open Policy and pin the default until you change it on purpose.",
-      go: "watch",
-      goLabel: "Open Watch after pin",
+      go: "policy",
+      goLabel: "Open Policy",
     };
   }
   const credit = checkNamed(checks, "direct_credit");

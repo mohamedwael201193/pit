@@ -8,6 +8,17 @@ import {
   type DirectModel,
 } from "./companion";
 
+const PROMPTS = [
+  "What is happening?",
+  "What is interesting right now?",
+  "What is the ETH setup?",
+  "Research BTC privately.",
+  "Why did the committee reject this?",
+  "What is my current exposure?",
+  "Show me today's opportunities.",
+  "Why can't PIT execute this?",
+];
+
 export function CommandChat({
   thread,
   onNavigate,
@@ -63,7 +74,8 @@ export function CommandChat({
       setPrivate(c.private_verified);
       setOther(c.other_chat);
       setUnsupported(c.unsupported);
-      setPicked(c.private_verified[0] || c.models[0] || null);
+      const host = c.other_chat.find((m) => m.model === "host-parsed");
+      setPicked(host || c.private_verified[0] || c.models[0] || null);
     });
     return () => {
       gone = true;
@@ -72,7 +84,7 @@ export function CommandChat({
 
   useEffect(() => {
     end.current?.scrollIntoView({ block: "end" });
-  }, [lines, island?.stage, island?.elapsedMs]);
+  }, [lines, island?.stage, island?.elapsedMs, busy]);
 
   async function ask(text: string) {
     if (!text || busy) return;
@@ -114,16 +126,19 @@ export function CommandChat({
     if (r.start_research && r.coin) onResearch(r.coin);
   }
 
-  const modelLabel = picked
-    ? `${picked.private_book ? "Private + Verified" : picked.label || "Desk"} · ${picked.model}`
-    : "Host-parsed";
+  const researchSku = privateModels[0];
+  const modelLabel = picked?.model === "host-parsed"
+    ? `Chat · host-parsed${researchSku ? ` · Research ${researchSku.model}` : ""}`
+    : picked?.private_book
+      ? `Research · Private + Verified · ${picked.model}`
+      : `${picked?.label || "Desk"} · ${picked?.model || "host-parsed"}`;
 
   return (
     <section className="command" aria-label="Trading desk command">
       <div className="command-head">
         <div>
-          <p className="label">Command</p>
-          <p className="fine">Host-parsed. Private book never leaves this computer. Chat cannot AUTHORIZE.</p>
+          <p className="label">Chat</p>
+          <p className="fine">Host-parsed on this computer. Private book never leaves. Chat cannot AUTHORIZE.</p>
         </div>
         <div className="model-pick">
           <button type="button" aria-haspopup="listbox" aria-expanded={modelOpen} onClick={() => setModelOpen((v) => !v)}>
@@ -139,22 +154,33 @@ export function CommandChat({
                   <ModelRow key={m.model} m={m} picked={picked} onPick={() => { setPicked(m); setModelOpen(false); }} />
                 ))
               )}
-              <p className="label">Other supported chat</p>
+              <p className="label">General chat</p>
               {otherModels.map((m) => (
                 <ModelRow key={m.model} m={m} picked={picked} onPick={() => { setPicked(m); setModelOpen(false); }} />
               ))}
               <p className="label">Unsupported for private research</p>
               {unsupported.map((m) => (
-                <ModelRow key={m.model} m={m} picked={picked} onPick={() => { setPicked(m); setModelOpen(false); }} disabled={!m.private_book} />
+                <ModelRow key={m.model} m={m} picked={picked} onPick={() => { setPicked(m); setModelOpen(false); }} disabled />
               ))}
-              <p className="fine">Private book operations use a verified Direct path only. Catalog presence is not privacy.</p>
+              <p className="fine">
+                Desk chat is host-parsed. glm-5.2 is used only on the proven Direct path for the sealed book. Catalog presence is not privacy.
+              </p>
             </div>
           ) : null}
         </div>
       </div>
       <div className="transcript" role="log">
         {lines.length === 0 ? (
-          <p className="fine">Try: What is interesting right now? Research ETH privately. Why did the committee reject it? Show my positions.</p>
+          <div className="chat-empty">
+            <p>Ask the live desk. Answers come from this computer, not a canned script.</p>
+            <div className="prompt-chips">
+              {PROMPTS.map((p) => (
+                <button key={p} type="button" className="chip-btn" onClick={() => void ask(p)}>
+                  {p}
+                </button>
+              ))}
+            </div>
+          </div>
         ) : (
           lines.map((m, i) => (
             <div key={`${m.ts}-${i}`} className={m.role === "user" ? "turn user" : "turn pit"}>
@@ -172,6 +198,12 @@ export function CommandChat({
             </div>
           ))
         )}
+        {busy ? (
+          <article className="chat-card" role="status">
+            <p className="label">Working</p>
+            <p>Host is reading live desk state. This is not a sealed model stream.</p>
+          </article>
+        ) : null}
         {island?.busy ? (
           <article className="chat-card" role="status">
             <p className="label">Researching {island.coin}</p>
@@ -199,7 +231,7 @@ export function CommandChat({
       <form className="composer" onSubmit={(e) => void onSubmit(e)}>
         <textarea
           id="desk-cmd"
-          rows={2}
+          rows={3}
           value={draft}
           disabled={busy}
           aria-label="Ask PIT"
@@ -264,7 +296,6 @@ function ModelRow({
       <span className="fine" style={{ display: "block", marginTop: 2 }}>
         {m.path || "Direct"} · {m.private_book ? "Private" : "not private"} · {m.proven_e2ee ? "Verified" : "unproven"}
         {m.capability ? ` · ${m.capability}` : ""}
-        {m.provider ? ` · ${m.provider.length > 12 ? `${m.provider.slice(0, 6)}…${m.provider.slice(-4)}` : m.provider}` : ""}
       </span>
       {m.note ? (
         <span className="fine" style={{ display: "block" }}>
@@ -292,7 +323,27 @@ function ChatCard({
   onNavigate: (view: string) => void;
   onOpenPreview: () => void;
 }) {
-  if (!tool || tool === "help" || tool === "status" || tool === "greet") return null;
+  if (!tool || tool === "help") return null;
+  if (tool === "status" || tool === "greet") {
+    return (
+      <article className="chat-card">
+        <p className="label">Desk</p>
+        <button type="button" className="linkish" onClick={() => onNavigate("home")}>
+          Open Desk
+        </button>
+      </article>
+    );
+  }
+  if (tool === "setup.guide") {
+    return (
+      <article className="chat-card">
+        <p className="label">Setup</p>
+        <button type="button" className="linkish" onClick={() => onNavigate("setup")}>
+          Open setup
+        </button>
+      </article>
+    );
+  }
   if (tool === "research.start") {
     return (
       <article className="chat-card">

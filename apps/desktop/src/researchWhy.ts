@@ -8,6 +8,23 @@ type Role = {
   kill?: boolean;
 };
 
+function named(roles: Role[], name: string) {
+  return roles.find((r) => String(r.role || "").toLowerCase() === name);
+}
+
+function sideOf(roles: Role[], name: string) {
+  const row = named(roles, name);
+  if (!row) return "This role has not finished.";
+  const side = String(row.proposed_side || "").trim();
+  if (row.kill || row.survives === false) {
+    return side ? `Stood down after proposing ${side}.` : "Stood down. No side survived.";
+  }
+  if (String(row.verify_e2ee || "").toUpperCase() === "OK") {
+    return side ? `Verified. Proposed ${side}.` : "Verified. No side recorded.";
+  }
+  return "Not verified yet. Incomplete work is not a committee result.";
+}
+
 export function researchWhyCopy(input: {
   coin: string;
   kind?: string;
@@ -19,14 +36,6 @@ export function researchWhyCopy(input: {
   snap?: { mark?: number; reason?: string; why?: string };
 }): { q: string; a: string }[] {
   const verified = committeeVerified(input.roles);
-  const sides = input.roles
-    .map((r) => `${String(r.role || "")}: ${r.proposed_side || "none"}`)
-    .filter((s) => !s.startsWith(":"));
-  const disagree = input.roles.some((r) => r.kill || r.survives === false)
-    ? "Challenger or risk did not survive the thesis."
-    : sides.length
-      ? `Roles proposed ${sides.join("; ")}.`
-      : "The committee did not record a disagreement yet.";
   const stood = input.kind === "READY_STOOD_DOWN" || input.deny === "no_side" || input.stop === "READY_STOOD_DOWN";
   const blocked = input.kind === "POLICY_DENIED" || input.kind === "POLICY_REJECTED";
   const accepted = verified && input.eligible && !stood && !blocked;
@@ -37,32 +46,45 @@ export function researchWhyCopy(input: {
   if (input.stop === "DIRECT_CREDIT_INSUFFICIENT") change = "Fund Direct with the same wallet. That is compute money, not trading capital.";
   if (input.stop === "DIRECT_PROVIDER_TIMEOUT") change = "Retry when the private provider answers. A timeout is not a TEE failure.";
   if (input.stop === "TEE_VERIFY_FAIL" || input.stop === "TEE_SIGNATURE_INVALID") change = "Do not accept this result. Start a new sealed pass after the provider verifies.";
+  const riskRow = named(input.roles, "risk");
+  const riskLine =
+    riskRow?.kill || riskRow?.survives === false
+      ? "Risk killed the idea after verifying the sealed book."
+      : blocked
+        ? "Host policy blocked it. Risk is not a substitute for policy."
+        : stood
+          ? "No side survived. Engine did not size."
+          : accepted
+            ? "Risk allowed the thesis to reach the host engine. Host still sizes the clip."
+            : "No order was placed.";
+  const engine =
+    accepted
+      ? "Host sized an exact preview under policy. You still type AUTHORIZE on that card."
+      : stood
+        ? "Host did not size. A verified stand-down is the result, not a crash."
+        : blocked
+          ? "Policy blocked sizing. The model cannot raise clip."
+          : input.stop
+            ? `Stopped: ${input.stop.replaceAll("_", " ")}. Host did not size.`
+            : "Host did not size a trade.";
   return [
     { q: "What did PIT find?", a: found },
-    { q: "Why did it matter?", a: verified ? "Three sealed roles finished over the same private book. Host still sizes." : "The committee has not completed. Incomplete work is not verified." },
-    { q: "What did the committee disagree with?", a: disagree },
     {
-      q: "Why was the trade accepted or rejected?",
-      a: accepted
-        ? "Accepted for preview only. You still type AUTHORIZE on the exact card."
-        : stood
-          ? "Rejected by the committee. That is a verified stand-down, not a crash."
-          : blocked
-            ? "Policy blocked it. The model cannot override host law."
-            : input.stop
-              ? `Stopped: ${input.stop.replaceAll("_", " ")}.`
-              : "No trade was accepted. Chat cannot AUTHORIZE.",
+      q: "Why is it interesting?",
+      a: verified
+        ? "Three named roles finished over the same private book. Host still sizes. One verified role is never a committee result."
+        : "The committee has not completed. Incomplete work is not verified.",
     },
+    { q: "What did the researcher think?", a: sideOf(input.roles, "researcher") },
+    { q: "What did the challenger attack?", a: sideOf(input.roles, "challenger") },
+    { q: "What did risk reject or allow?", a: riskLine },
     {
-      q: "What risk stopped it?",
-      a: input.roles.some((r) => String(r.role).toLowerCase() === "risk" && (r.kill || r.survives === false))
-        ? "Risk killed the idea after verifying the sealed book."
-        : blocked
-          ? "Host policy."
-          : stood
-            ? "No side survived."
-            : "No order was placed.",
+      q: "What did policy enforce?",
+      a: blocked
+        ? "Host policy blocked this market, clip, or permission. Chat cannot raise it."
+        : "Host clip, universe, leverage, kill switch, and slippage stay on this computer.",
     },
+    { q: "Why did the engine size or reject it?", a: engine },
     { q: "What would need to change?", a: change },
   ];
 }

@@ -6,7 +6,7 @@ export function assertNamedResearchWhy() {
     throw new Error("poll is not a research failure");
   }
   const stood = explainStop("READY_STOOD_DOWN");
-  if (!stood || !/stood down/i.test(stood.title) || /crash/i.test(stood.body)) {
+  if (!stood || !/stood down/i.test(stood.title) || !/not a crash/i.test(stood.body)) {
     throw new Error("stand-down must not be a crash");
   }
   const credit = explainStop("DIRECT_CREDIT_INSUFFICIENT");

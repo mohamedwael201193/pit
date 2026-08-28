@@ -49,7 +49,7 @@ import {
 import { LINKS, explorerAddress, hyperliquidAPI, hyperliquidApp } from "./links";
 import { nextFix } from "./nextFix";
 import { probes } from "./readiness";
-import { committeeVerified, researchCardTitle } from "./honesty";
+import { committeeVerified } from "./honesty";
 import { AutomationPane, type AutoPrefs } from "./AutomationPane";
 import { CommandChat } from "./CommandChat";
 import { ActivityTimeline } from "./ActivityTimeline";
@@ -66,7 +66,7 @@ import { ResearchBoard } from "./ResearchBoard";
 import { askNotify, deskNotify } from "./notify";
 
 type Net = "mainnet" | "testnet";
-type View = "home" | "watch" | "research" | "positions" | "activity" | "policy" | "security" | "account" | "settings";
+type View = "home" | "chat" | "watch" | "research" | "positions" | "activity" | "policy" | "security" | "account" | "settings";
 
 type Coin = { coin: string; reason: string; why?: string; trend?: string; rank?: number; freshness?: string; mark: number; eligible?: boolean; oracle?: number; funding?: number; openInterest?: number; timestamp?: string };
 
@@ -102,6 +102,7 @@ const SETUP_KEY = "pit.desk.setup";
 
 const RAIL: { id: View; label: string }[] = [
   { id: "home", label: "Desk" },
+  { id: "chat", label: "Chat" },
   { id: "watch", label: "Watch" },
   { id: "research", label: "Research" },
   { id: "positions", label: "Positions" },
@@ -507,7 +508,7 @@ export function App() {
   const eligible = coins.filter((c) => c.eligible);
   const walletCheck = checks.find((c) => c.name === "wallet");
   const attention = nextFix(companionUp, status, checks, items, sessionAlive, net);
-  const showChat = view === "home";
+  const showChat = view === "chat";
   const doing = researchBusy
     ? `Researching ${researchCoin}`
     : preview?.eligible
@@ -833,6 +834,7 @@ export function App() {
         onClose={() => setPalette(false)}
         actions={[
           { id: "desk", label: "Open Desk", run: () => setView("home") },
+          { id: "chat", label: "Open Chat", run: () => setView("chat") },
           { id: "watch", label: "Open Watch", run: () => setView("watch") },
           { id: "research", label: "Open Research", run: () => setView("research") },
           { id: "positions", label: "Open Positions", run: () => setView("positions") },
@@ -855,7 +857,7 @@ export function App() {
       <aside className="rail">
         <div className="rail-brand">
           <div className="word">PIT.</div>
-          <p className="kicker">{status?.version || "0.2.3"} · local execution</p>
+          <p className="kicker">{status?.version || "0.2.4"} · local execution</p>
         </div>
         <nav className="rail-nav" aria-label="Desk">
           {RAIL.map((item) => (
@@ -888,40 +890,29 @@ export function App() {
         <header className="bar">
           <div>
             <p className="eyebrow">
-              WHERE · {net === "mainnet" ? "MAINNET" : "TESTNET"} · {view.toUpperCase()}
+              {net === "mainnet" ? "MAINNET" : "TESTNET"} · {view === "home" ? "DESK" : view.toUpperCase()}
             </p>
-            <p>{status?.workspace || status?.wallet || walletCheck?.detail || "unbound"}</p>
+            <p className="bar-doing">
+              {doing}
+              {researchBusy ? ` · ${Math.round(researchElapsed / 1000)}s` : ""}
+            </p>
           </div>
-          <div>
-            <p className="eyebrow">WHAT PIT IS DOING</p>
-            <p>{doing}</p>
-            <p className="fine">Needs: {attention.title}</p>
-            <p className="fine">Cost: {cost}</p>
-          </div>
+          <p className="fine" style={{ margin: 0 }}>
+            {attention.title}
+            {cost !== "None" ? ` · ${cost}` : ""}
+          </p>
           <div className="bar-meta">
             <NetworkToggle net={net} onChange={setNet} />
             {walletCheck?.ok ? null : (
               <p className="pair-chip">{code ? prettyCode(code) : companionUp ? "code rotating" : "starting companion"}</p>
             )}
-            <p>Session {sessionAlive ? "order/cancel live" : "none"} · Compute {checks.find((c) => c.name === "direct_credit")?.ok ? "ready" : "action"}</p>
-            {agent ? <p className="fine">PIT Agent {agent}</p> : null}
-            <p className="island" role="status">
-              {researchBusy
-                ? `Researching ${researchCoin} · ${Math.round(researchElapsed / 1000)}s`
-                : researchKind
-                  ? researchCardTitle(researchKind, committeeVerified(researchRoles))
-                  : activity.length
-                    ? eventLine(activity[activity.length - 1])
-                    : "No new desk events"}
-              {restartAllowed ? "" : " · Restart blocked while research runs"}
-            </p>
           </div>
         </header>
         {companionUp && status?.version && !String(status.version).startsWith("0.2.") ? (
           <article className="card stop" role="status">
             <p className="label">COMPANION VERSION</p>
             <p>
-              This window expects PIT 0.2.3. The local companion is {status.version}. Close PIT, install the matching
+              This window expects PIT 0.2.4. The local companion is {status.version}. Close PIT, install the matching
               desktop, then launch again. A running sealed job is not cancelled by this warning.
             </p>
           </article>
@@ -957,8 +948,8 @@ export function App() {
             researchVerified={committeeVerified(researchRoles)}
           />
         ) : (
-          <div className={view === "home" ? "desk-body with-threads" : showChat ? "desk-body" : "desk-body solo"}>
-            {view === "home" ? (
+          <div className={showChat ? "desk-body with-threads" : "desk-body solo"}>
+            {showChat ? (
               <ThreadRail
                 threads={threads}
                 active={thread}
@@ -986,7 +977,15 @@ export function App() {
             <CommandChat
               key={`${thread}-${memoryEpoch}`}
               thread={thread}
-              onNavigate={(v) => setView(v as View)}
+              onNavigate={(v) => {
+                if (v === "setup") {
+                  setSetupDone(false);
+                  setSetupStep(0);
+                  return;
+                }
+                if (v === "preview") setView("research");
+                else setView(v as View);
+              }}
               onResearch={(c) => void researchThis(c)}
               onOpenPreview={() => setView("research")}
               onStop={() => void onCancelResearch()}
@@ -1002,11 +1001,13 @@ export function App() {
               }}
             />
             ) : null}
+            {showChat ? null : (
             <div className="book">
 
         {setupDone && view === "home" ? (
             <DeskHome
               ready={attention.title === "Desk is ready"}
+              doing={doing}
               items={items}
               attention={attention}
               code={code}
@@ -1018,6 +1019,8 @@ export function App() {
               hlApproved={Boolean(checks.find((c) => c.name === "hl_agent" && c.ok))}
               researchBusy={researchBusy}
               awaitingAuth={Boolean(preview?.eligible)}
+              coins={eligible}
+              lastEvent={activity.length ? eventLine(activity[activity.length - 1]) : undefined}
               onResearch={(c) => void researchThis(c)}
               onGo={(v) => setView(v)}
             />
@@ -1035,28 +1038,14 @@ export function App() {
         {setupDone && view === "positions" ? (
           <main className="page dense">
             <p className="eyebrow">Positions</p>
-            <h1>Portfolio</h1>
-            <p className="lead">Live Hyperliquid exposure for the connected trading account. PIT cannot withdraw.</p>
-            <div className="equity">
-              <article className="card">
-                <p className="label">Total equity</p>
-                <p className="num">{summary.accountValue || "—"}</p>
-              </article>
-              <article className="card">
-                <p className="label">Available margin</p>
-                <p className="num">{summary.withdrawable || "—"}</p>
-                <p className="fine">Venue withdrawable. PIT cannot withdraw.</p>
-              </article>
-              <article className="card">
-                <p className="label">Exposure</p>
-                <p className="num">{summary.totalNtlPos || "—"}</p>
-              </article>
-            </div>
+            <h1>Live exposure</h1>
+            <p className="lead">Venue truth for the connected trading account. PIT cannot withdraw.</p>
             <PositionsPanel
               account={positionAccount || status?.wallet}
               positions={positions}
               error={positionErr}
               lastOrder={status?.lastOrder}
+              summary={summary}
               onReduceOnlyClose={(c) => void onReduceOnlyClose(c)}
               closeBusy={bindBusy}
             />
@@ -1106,32 +1095,7 @@ export function App() {
             <p className="eyebrow">Activity</p>
             <h1>Timeline</h1>
             <p className="lead">Opportunity, research, committee, preview, approval, order, fill, policy, session, receipt. Historical fills never appear inside a new preview.</p>
-            <ActivityTimeline events={activity} lastOid={lastOid} />
-            <article className="card">
-              <p className="label">LAST VENUE ORDER</p>
-              {lastOid ? (
-                <>
-                  <p>
-                    {status?.lastOrder?.status === "filled"
-                      ? "ORDER FILLED"
-                      : status?.lastOrder?.cancelled
-                        ? "ORDER CANCELED"
-                        : "ORDER SUBMITTED"}
-                  </p>
-                  <p>OID {lastOid}</p>
-                  {status?.lastOrder?.market ? (
-                    <p>
-                      {status.lastOrder.market} {status.lastOrder.side} {status.lastOrder.sz}
-                    </p>
-                  ) : null}
-                  {status?.lastOrder?.status === "filled" ? (
-                    <p className="fine">This size is a position. Cancel does not apply to a filled order.</p>
-                  ) : null}
-                </>
-              ) : (
-                <p>No order id is shown until Hyperliquid accepts one after you type AUTHORIZE.</p>
-              )}
-            </article>
+            <ActivityTimeline events={activity} lastOid={lastOid} lastOrder={status?.lastOrder} />
           </main>
         ) : null}
 
@@ -1313,6 +1277,7 @@ export function App() {
           </main>
         ) : null}
             </div>
+            )}
           </div>
         )}
       </div>

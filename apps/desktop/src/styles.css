@@ -133,10 +133,10 @@ a { color: var(--cream); }
 
 .stage { min-width: 0; display: flex; flex-direction: column; min-height: 0; }
 .bar {
-  display: grid;
-  grid-template-columns: minmax(160px, 1.1fr) minmax(180px, 1.2fr) minmax(200px, 1.3fr) auto;
-  gap: 16px;
+  display: flex;
   align-items: center;
+  justify-content: space-between;
+  gap: 16px;
   padding: 8px 16px;
   border-bottom: 1px solid var(--line);
   background: #090a0c;
@@ -144,18 +144,19 @@ a { color: var(--cream); }
 }
 .bar p { margin: 0; }
 .bar .eyebrow { letter-spacing: 0.16em; font-size: 10px; color: var(--mute); margin-bottom: 2px; }
-.bar-meta { text-align: right; font-size: 11px; color: var(--mute); }
+.bar-doing { font-size: 14px; letter-spacing: -0.02em; }
+.bar-meta { display: flex; align-items: center; gap: 10px; text-align: right; font-size: 11px; color: var(--mute); }
 .pair-chip { font-family: ui-monospace, monospace; letter-spacing: 0.12em; font-size: 12px; color: var(--cream); }
 .island { margin: 4px 0 0; font-size: 11px; opacity: 0.8; }
 
 .desk-body {
   display: grid;
-  grid-template-columns: minmax(300px, 38%) minmax(0, 1fr);
+  grid-template-columns: minmax(300px, 1fr);
   min-height: 0;
   flex: 1;
 }
 .desk-body.with-threads {
-  grid-template-columns: 176px minmax(300px, 38%) minmax(0, 1fr);
+  grid-template-columns: 188px minmax(0, 1fr);
 }
 .desk-body.solo {
   grid-template-columns: 1fr;
@@ -263,7 +264,7 @@ a { color: var(--cream); }
   padding: 10px 12px;
   border-radius: 4px;
   resize: none;
-  min-height: 52px;
+  min-height: 72px;
 }
 .composer-row { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; gap: 8px; }
 .turn-meta { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
@@ -276,6 +277,45 @@ a { color: var(--cream); }
   font-size: 11px;
 }
 .copy-turn:hover { color: var(--cream); }
+.chat-empty { padding: 28px 8px; color: var(--mute); }
+.prompt-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+.chip-btn {
+  border: 1px solid var(--hair);
+  background: transparent;
+  color: var(--cream);
+  border-radius: 999px;
+  padding: 5px 10px;
+  font-size: 12px;
+}
+.chip-btn:hover { border-color: var(--coral); }
+.chip-row { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 14px; }
+.desk-ops { list-style: none; margin: 0; padding: 0; }
+.desk-ops li {
+  display: grid;
+  grid-template-columns: 20px 48px 88px minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--line);
+}
+.asset { display: inline-flex; align-items: center; gap: 8px; }
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0;
+  margin: 0 0 10px;
+  border: 1px solid var(--line);
+}
+.metrics div { padding: 10px 12px; border-right: 1px solid var(--line); }
+.metrics div:last-child { border-right: 0; }
+.metrics dt { font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--mute); }
+.metrics dd { margin: 4px 0 0; font-size: 16px; font-variant-numeric: tabular-nums; letter-spacing: -0.03em; }
+.desk-table .state.success, .desk-table td.state.success { color: var(--ok); }
+.desk-table .state.running { color: var(--wait); }
+.desk-table .state.stand-down, .desk-table .state.failure { color: var(--coral); }
+.watch-head, .market-rows li {
+  grid-template-columns: 88px 72px 118px 72px 72px 56px minmax(120px, 1.4fr) auto;
+}
 
 .book { min-width: 0; overflow: auto; background: var(--ink); }
 .page { padding: 14px 18px 28px; max-width: none; }
@@ -314,7 +354,7 @@ a { color: var(--cream); }
 .why-list p { margin: 0; }
 .empty { color: var(--mute); padding: 28px 0; }
 .watch-head, .market-rows li {
-  grid-template-columns: 52px 72px 118px 72px 72px 56px minmax(120px, 1.4fr) auto;
+  grid-template-columns: 88px 72px 118px 72px 72px 56px minmax(120px, 1.4fr) auto;
 }
 .why-cell {
   font-size: 11px;
@@ -381,7 +421,7 @@ a { color: var(--cream); }
 .inspect h2 { font-size: 16px; margin: 4px 0 8px; }
 .market-head, .market-rows li {
   display: grid;
-  grid-template-columns: 52px 88px 72px 80px 80px 64px 88px auto;
+  grid-template-columns: 88px 88px 72px 80px 80px 64px 88px auto;
   gap: 8px;
   align-items: center;
 }

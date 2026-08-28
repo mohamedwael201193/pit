@@ -43,10 +43,28 @@ func Parse(text string) Result {
 		out.Reply = "Forget wipes workspace working memory and lessons. It never deletes venue positions or receipts."
 		return out
 	}
-	if strings.Contains(low, "happening") || strings.Contains(low, "what is pit doing") || strings.Contains(low, "waiting for") {
+	if wantsOnboard(low) && coin == "" {
+		out.Tool = "setup.guide"
+		out.Navigate = "setup"
+		out.Reply = "Opening first-run setup. Wallet, network, Hyperliquid, session, Protect, private compute, then policy. Chat cannot AUTHORIZE."
+		return out
+	}
+	if strings.Contains(low, "take me") && coin == "" {
 		out.Tool = "status"
 		out.Navigate = "home"
+		out.Reply = "Desk shows the next required step. Chat cannot AUTHORIZE."
+		return out
+	}
+	if strings.Contains(low, "happening") || strings.Contains(low, "what is pit doing") || strings.Contains(low, "waiting for") {
+		out.Tool = "status"
+		out.Navigate = "chat"
 		out.Reply = "Desk shows live status. Chat cannot see the sealed book."
+		return out
+	}
+	if cannotExecute(low) {
+		out.Tool = "refuse_execute"
+		out.Navigate = "preview"
+		out.Reply = "PIT will not buy, sell, or authorize from chat. Review the exact preview on this computer, then type AUTHORIZE there."
 		return out
 	}
 	if strings.Contains(low, "learn") || strings.Contains(low, "calibration") {
@@ -80,7 +98,7 @@ func Parse(text string) Result {
 		out.Reply = "Opening the official Hyperliquid app for this network."
 		return out
 	}
-	if strings.Contains(low, "private compute") || strings.Contains(low, "pc.0g") || strings.Contains(low, "0g private") {
+	if strings.Contains(low, "open 0g") || strings.Contains(low, "private compute") || strings.Contains(low, "pc.0g") || strings.Contains(low, "0g private") {
 		out.Tool = "links.open"
 		out.OpenURL = "https://pc.0g.ai/sdk/dashboard/funds"
 		out.Reply = "Opening 0G Private Compute (Advanced funds). That is compute money, not Hyperliquid trading capital."
@@ -97,7 +115,7 @@ func Parse(text string) Result {
 		out.Reply = "Opening research evidence on this computer. The sealed prompt stays private."
 		return out
 	}
-	if strings.Contains(low, "preview") || strings.Contains(low, "prepare this trade") || strings.Contains(low, "prepare the trade") {
+	if strings.Contains(low, "preview") || strings.Contains(low, "prepare this trade") || strings.Contains(low, "prepare the trade") || strings.Contains(low, "prepare the exact") {
 		if execAsk {
 			out.Tool = "refuse_execute"
 			out.Navigate = "preview"
@@ -121,13 +139,13 @@ func Parse(text string) Result {
 		out.Reply = "A committee stand-down or policy block is a verified result, not a crash. Open Research for the named reason."
 		return out
 	}
-	if strings.Contains(low, "position") || strings.Contains(low, "pnl") || strings.Contains(low, "exposure") || (strings.Contains(low, "risk") && !wantsResearch(low)) {
+	if strings.Contains(low, "position") || strings.Contains(low, "pnl") || strings.Contains(low, "exposure") || strings.Contains(low, "explain my risk") || (strings.Contains(low, "risk") && !wantsResearch(low) && !strings.Contains(low, "committee")) {
 		out.Tool = "positions.get"
 		out.Navigate = "positions"
 		out.Reply = "Positions are read from your Hyperliquid trading account, not the PIT agent address. Chat cannot flatten."
 		return out
 	}
-	if strings.Contains(low, "policy") {
+	if strings.Contains(low, "policy") && !wantsResearch(low) {
 		out.Tool = "policy.get"
 		out.Navigate = "policy"
 		out.Reply = "Policy is host law. Chat cannot raise clip, leverage, or permissions."
@@ -148,7 +166,7 @@ func Parse(text string) Result {
 		}
 		return out
 	}
-	if wantsWatch(low) || wantsPrice(low) {
+	if wantsWatch(low) || wantsPrice(low) || coinSetup(low, coin) {
 		out.Tool = "watch.get"
 		out.Navigate = "watch"
 		if coin != "" {
@@ -171,7 +189,7 @@ func Parse(text string) Result {
 	}
 	if greetingOnly(low) {
 		out.Tool = "greet"
-		out.Navigate = "home"
+		out.Navigate = "chat"
 		out.Reply = "Hello. Ask what is interesting, a live price, private research, or your positions. Chat cannot AUTHORIZE."
 		return out
 	}
@@ -207,6 +225,29 @@ func wantsExecute(low string) bool {
 	return false
 }
 
+func cannotExecute(low string) bool {
+	return strings.Contains(low, "can't execute") ||
+		strings.Contains(low, "cannot execute") ||
+		strings.Contains(low, "why can't pit") ||
+		strings.Contains(low, "why cant pit") ||
+		strings.Contains(low, "why can't this") ||
+		strings.Contains(low, "why won't pit execute")
+}
+
+func wantsOnboard(low string) bool {
+	return strings.Contains(low, "first run") ||
+		strings.Contains(low, "open setup") ||
+		strings.Contains(low, "onboard") ||
+		(strings.Contains(low, "setup") && strings.Contains(low, "wizard"))
+}
+
+func coinSetup(low string, coin string) bool {
+	if coin == "" {
+		return false
+	}
+	return strings.Contains(low, "setup") || strings.Contains(low, "the setup")
+}
+
 func wantsResearch(low string) bool {
 	if strings.Contains(low, "research") {
 		return true
@@ -225,7 +266,8 @@ func wantsWatch(low string) bool {
 		strings.Contains(low, "watch") ||
 		strings.Contains(low, "interesting") ||
 		strings.Contains(low, "strongest") ||
-		strings.Contains(low, "compare")
+		strings.Contains(low, "compare") ||
+		strings.Contains(low, "today")
 }
 
 func wantsPrice(low string) bool {

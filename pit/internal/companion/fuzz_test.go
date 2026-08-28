@@ -74,6 +74,23 @@ func TestChatGreetingIsNotCannedHelp(t *testing.T) {
 	}
 }
 
+func TestChatCannotExecuteDecorated(t *testing.T) {
+	h := New(t.TempDir())
+	req := local(httptest.NewRequest(http.MethodPost, "/local/chat", bytes.NewBufferString(`{"text":"Why can't PIT execute this?"}`)))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+	h.Handler().ServeHTTP(rec, req)
+	if rec.Code != 200 {
+		t.Fatal(rec.Body.String())
+	}
+	if strings.Contains(rec.Body.String(), `"execute":true`) || strings.Contains(rec.Body.String(), `"posted":true`) {
+		t.Fatal(rec.Body.String())
+	}
+	if !strings.Contains(rec.Body.String(), "AUTHORIZE") {
+		t.Fatal(rec.Body.String())
+	}
+}
+
 func TestChatTypoResearchDoesNotExecute(t *testing.T) {
 	h := New(t.TempDir())
 	req := local(httptest.NewRequest(http.MethodPost, "/local/chat", bytes.NewBufferString(`{"text":"HI WHAT PRICE OF ETH NOW AND GIVE ME REASEARCH AND DO TRADE"}`)))

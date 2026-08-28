@@ -23,6 +23,10 @@ func (h *Hub) decorateChat(parsed deskcmd.Result) deskcmd.Result {
 		parsed.Reply = h.replyPositions()
 	case "research.result", "preview.show":
 		parsed.Reply = h.replyResearch(parsed.Reply)
+	case "refuse_execute":
+		parsed.Reply = h.replyCannotExecute(parsed.Reply)
+	case "activity.list":
+		parsed.Reply = h.replyActivity(parsed.Reply)
 	case "session.status":
 		parsed.Reply = h.replySession()
 	case "watch.get":
@@ -33,6 +37,8 @@ func (h *Hub) decorateChat(parsed deskcmd.Result) deskcmd.Result {
 		}
 	case "policy.get":
 		parsed.Reply = "Policy is pinned host law on this computer. Chat cannot raise clip, leverage, or permissions. Open Policy to read the exact constraints."
+	case "setup.guide":
+		parsed.Reply = h.replyDeskStatus() + " First-run setup walks wallet, network, Hyperliquid, session, Protect, private compute, then policy. Chat cannot AUTHORIZE."
 	}
 	return parsed
 }
@@ -64,6 +70,10 @@ func (h *Hub) replyDeskStatus() string {
 	}
 	if eligible && hash != "" {
 		return fmt.Sprintf("Idle. Wallet %s. %s. Exact preview is waiting for AUTHORIZE on Research. Chat cannot AUTHORIZE.", wallet, sess)
+	}
+	top := h.replyWatch(deskcmd.Result{})
+	if strings.Contains(top, "mark") {
+		return fmt.Sprintf("Idle. Wallet %s. %s. Interesting now: %s Chat cannot AUTHORIZE.", wallet, sess, top)
 	}
 	return fmt.Sprintf("Idle. Wallet %s. %s. Open Watch to discover, Research to investigate. Chat cannot AUTHORIZE.", wallet, sess)
 }
@@ -143,16 +153,85 @@ func (h *Hub) replyResearch(fallback string) string {
 	if h.job.running {
 		return fmt.Sprintf("Research is still running on %s. Live view can lag. That is not a TEE failure. Open Research.", strings.ToUpper(h.job.coin))
 	}
+	roles := roleLine(h.job.roles)
 	if h.job.deny != "" {
-		return fmt.Sprintf("Committee stood down (%s). Three-role verification can still be OK. No order was placed. Open Research for the named reason.", h.job.deny)
+		return fmt.Sprintf("Committee stood down (%s). %s One verified role is never a committee result. No order was placed. Open Research for the named reason.", h.job.deny, roles)
 	}
 	if h.job.eligible && h.job.previewHash != "" {
-		return "Exact preview is on Research. Chat cannot AUTHORIZE it. Type AUTHORIZE only on that card."
+		return "Exact preview is on Research. " + roles + " Chat cannot AUTHORIZE it. Type AUTHORIZE only on that card."
 	}
 	if h.job.err != "" {
 		return "Last research ended: " + h.job.err + ". That is not a fake success. Open Research."
 	}
+	if roles != "" {
+		return fallback + " " + roles
+	}
 	return fallback
+}
+
+func (h *Hub) replyCannotExecute(fallback string) string {
+	h.researchMu.Lock()
+	eligible := h.job.eligible
+	hash := h.job.previewHash
+	running := h.job.running
+	h.researchMu.Unlock()
+	sf, serr := cli.LoadSession(h.Dir)
+	live := serr == nil && session.Alive(sf.Meta().Session(), time.Now().UnixMilli())
+	if running {
+		return "Research is still running. Chat cannot AUTHORIZE. Wait for the exact preview on Research."
+	}
+	if eligible && hash != "" {
+		if !live {
+			return "An exact preview is waiting, but there is no live order/cancel session. Create a session on Security, then type AUTHORIZE on Research. Chat cannot AUTHORIZE."
+		}
+		return "An exact preview is waiting on Research. Chat cannot AUTHORIZE. Type AUTHORIZE only on that card. Withdraw stays impossible."
+	}
+	return fallback
+}
+
+func (h *Hub) replyActivity(fallback string) string {
+	evs := readActivity(h.Dir, 8)
+	if len(evs) == 0 {
+		return fallback
+	}
+	last := evs[len(evs)-1]
+	return fmt.Sprintf("Last desk event: %s %s %s. Historical fills never appear inside a new preview. Open Activity.", last.Kind, last.Market, last.Status)
+}
+
+func roleLine(roles []map[string]any) string {
+	if len(roles) == 0 {
+		return ""
+	}
+	parts := make([]string, 0, len(roles))
+	ok := 0
+	for _, rm := range roles {
+		name := strings.TrimSpace(fmtString(rm["role"]))
+		if name == "" {
+			continue
+		}
+		side := strings.TrimSpace(fmtString(rm["proposed_side"]))
+		ver := strings.TrimSpace(fmtString(rm["verify_e2ee"]))
+		bit := name
+		if strings.EqualFold(ver, "OK") {
+			ok++
+			bit += " verified"
+		}
+		if side != "" {
+			bit += " " + side
+		}
+		if kill, _ := rm["kill"].(bool); kill {
+			bit += " stood down"
+		}
+		parts = append(parts, bit)
+	}
+	if len(parts) == 0 {
+		return ""
+	}
+	note := strings.Join(parts, "; ") + "."
+	if ok > 0 && ok < 3 {
+		note += " Incomplete roles are not a committee result."
+	}
+	return note
 }
 
 func (h *Hub) replySession() string {

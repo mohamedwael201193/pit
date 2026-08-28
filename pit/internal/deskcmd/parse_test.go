@@ -71,11 +71,30 @@ func TestOperatorIntents(t *testing.T) {
 
 func TestHappeningAndPositions(t *testing.T) {
 	r := Parse("What is happening?")
-	if r.Execute || r.Navigate != "home" {
+	if r.Execute || r.Tool != "status" {
 		t.Fatalf("%+v", r)
 	}
 	r = Parse("Show me my current positions")
 	if r.Navigate != "positions" || r.Execute {
+		t.Fatalf("%+v", r)
+	}
+}
+
+func TestETHSetupAndCannotExecute(t *testing.T) {
+	r := Parse("What is the ETH setup?")
+	if r.Execute || r.StartResearch || r.Tool != "watch.get" || r.Coin != "ETH" {
+		t.Fatalf("%+v", r)
+	}
+	r = Parse("Why can't PIT execute this?")
+	if r.Execute || r.StartResearch || r.Tool != "refuse_execute" {
+		t.Fatalf("%+v", r)
+	}
+	r = Parse("Open 0G")
+	if r.OpenURL != "https://pc.0g.ai/sdk/dashboard/funds" {
+		t.Fatal(r.OpenURL)
+	}
+	r = Parse("Show me today's opportunities")
+	if r.Execute || r.StartResearch || r.Tool != "watch.get" {
 		t.Fatalf("%+v", r)
 	}
 }

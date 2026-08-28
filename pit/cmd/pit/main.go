@@ -14,6 +14,7 @@ import (
 	"github.com/mohamedwael201193/pit/internal/companion"
 	"github.com/mohamedwael201193/pit/internal/compute"
 	"github.com/mohamedwael201193/pit/internal/config"
+	"github.com/mohamedwael201193/pit/internal/deskcmd"
 	pitexec "github.com/mohamedwael201193/pit/internal/exec"
 	"github.com/mohamedwael201193/pit/internal/hl"
 	"github.com/mohamedwael201193/pit/internal/ledger"
@@ -55,6 +56,11 @@ Session
 Research
   pit watch
   pit opportunities
+  pit chat "what is happening?"
+  pit positions
+  pit health
+  pit activity
+  pit receipt
   pit direct
   pit direct --sig 0x...
   pit ask --market market.json --book book.json
@@ -134,6 +140,12 @@ func main() {
 		cmdNetwork()
 	case "watch", "opportunities":
 		cmdOpportunities()
+	case "chat":
+		cmdChat(rest[1:])
+	case "positions":
+		cmdPositions()
+	case "health":
+		cmdHealth()
 	case "orders":
 		cmdOrders()
 	case "card":
@@ -406,6 +418,112 @@ func cmdOpportunities() {
 	for _, c := range cands {
 		fmt.Printf("%s  %s  mark=%g\n", c.Coin, c.Reason, c.Book.MarkPx)
 	}
+}
+
+func cmdChat(args []string) {
+	text := strings.TrimSpace(strings.Join(args, " "))
+	if text == "" {
+		fmt.Fprintln(os.Stderr, `pit chat "what is happening?"`)
+		os.Exit(2)
+	}
+	payload, _ := json.Marshal(map[string]string{"text": text})
+	req, err := http.NewRequest(http.MethodPost, "http://127.0.0.1:17373/local/chat", strings.NewReader(string(payload)))
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+	req.Header.Set("Content-Type", "application/json")
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		r := deskcmd.Parse(text)
+		if asJSON {
+			_ = json.NewEncoder(os.Stdout).Encode(map[string]any{
+				"ok": true, "reply": r.Reply, "tool": r.Tool, "coin": r.Coin,
+				"start_research": r.StartResearch, "execute": false, "sign": false, "trade": false,
+				"companion": false,
+			})
+			return
+		}
+		fmt.Println(r.Reply)
+		fmt.Println("Companion not running. This is host parse only, not live desk state.")
+		return
+	}
+	defer resp.Body.Close()
+	var body map[string]any
+	if err := json.NewDecoder(resp.Body).Decode(&body); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+	if asJSON {
+		_ = json.NewEncoder(os.Stdout).Encode(body)
+		return
+	}
+	if reply, _ := body["reply"].(string); reply != "" {
+		fmt.Println(reply)
+		return
+	}
+	fmt.Println(body["error"])
+}
+
+func cmdPositions() {
+	st, err := cli.Load(stateDir())
+	if err != nil {
+		if asJSON {
+			_ = json.NewEncoder(os.Stdout).Encode(map[string]any{"ok": false, "error": "unbound", "positions": []any{}, "sign": false, "trade": false})
+			return
+		}
+		fmt.Println("unbound")
+		return
+	}
+	net, nerr := config.ParseNetwork(st.Network)
+	if nerr != nil {
+		fmt.Fprintln(os.Stderr, nerr)
+		os.Exit(2)
+	}
+	rows, acct, perr := hl.New(config.For(net)).Clearinghouse(st.Wallet)
+	if perr != nil {
+		fmt.Fprintln(os.Stderr, "HYPERLIQUID_OUTAGE")
+		os.Exit(1)
+	}
+	if asJSON {
+		_ = json.NewEncoder(os.Stdout).Encode(map[string]any{
+			"ok": true, "account": st.Wallet, "equity": acct.AccountValue, "available": acct.Withdrawable,
+			"exposure": acct.TotalNtlPos, "positions": rows, "sign": false, "trade": false,
+		})
+		return
+	}
+	fmt.Println("account", st.Wallet, "(master, not PIT agent)")
+	fmt.Println("equity", acct.AccountValue)
+	fmt.Println("available", acct.Withdrawable)
+	fmt.Println("exposure", acct.TotalNtlPos)
+	if len(rows) == 0 {
+		fmt.Println("positions none")
+		return
+	}
+	for _, p := range rows {
+		fmt.Printf("position  %s sz %s entry %s uPnL %s\n", p.Coin, p.Sz, p.EntryPx, p.UnrealizedPnl)
+	}
+}
+
+func cmdHealth() {
+	resp, err := http.Get("http://127.0.0.1:17373/health")
+	if err != nil {
+		if asJSON {
+			_ = json.NewEncoder(os.Stdout).Encode(map[string]any{"ok": false, "error": "companion_down", "version": version.Number, "sign": false, "trade": false})
+			os.Exit(1)
+		}
+		fmt.Println("companion down")
+		fmt.Println("cli", version.String())
+		os.Exit(1)
+	}
+	defer resp.Body.Close()
+	var body map[string]any
+	_ = json.NewDecoder(resp.Body).Decode(&body)
+	if asJSON {
+		_ = json.NewEncoder(os.Stdout).Encode(body)
+		return
+	}
+	fmt.Println("companion", body["version"], "research_running", body["research_running"])
 }
 
 func cmdResearch(args []string) {

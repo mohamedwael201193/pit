@@ -7,18 +7,18 @@ export function PolicyLaw({
   onPin?: () => void;
   busy?: boolean;
 }) {
-  const cells = [
+  const rows = [
     {
       k: "Max trade",
-      v: pinned ? "$10" : "$10 example until pinned",
-      why: "Host sizes every clip to this ceiling. The model cannot raise it.",
-      hit: "A larger idea is refused. No order is sent.",
+      v: pinned ? "$10" : "$10 until pinned",
+      why: "Host sizes every clip to this ceiling.",
+      hit: "A larger idea is refused.",
     },
     {
       k: "Max leverage",
-      v: pinned ? "1x" : "1x example until pinned",
+      v: pinned ? "1x" : "1x until pinned",
       why: "Session cannot change leverage. PIT cannot withdraw.",
-      hit: "Any attempt to raise leverage is denied on this computer.",
+      hit: "Raising leverage is denied here.",
     },
     {
       k: "Allowed assets",
@@ -34,31 +34,39 @@ export function PolicyLaw({
     },
     {
       k: "Max slippage",
-      v: pinned ? "80 bps" : "80 bps example until pinned",
+      v: pinned ? "80 bps" : "80 bps until pinned",
       why: "Host rejects a book that would slip past this band.",
-      hit: "The preview is not eligible. No order is sent.",
+      hit: "The preview is not eligible.",
     },
   ];
   return (
-    <div className="card">
-      <p className="label">Your policy</p>
+    <section>
       <p className="fine">Host enforced. Chat can explain this. Chat cannot mutate it.</p>
-      <div className="policy-grid">
-        {cells.map((c) => (
-          <div key={c.k} className="policy-cell">
-            <p className="label">{c.k}</p>
-            <strong>{c.v}</strong>
-            <p className="host-enforced">Host enforced</p>
-            <p className="fine">{c.why}</p>
-            <p className="fine">If violated: {c.hit}</p>
-          </div>
-        ))}
-      </div>
+      <table className="desk-table">
+        <thead>
+          <tr>
+            <th>Control</th>
+            <th>Value</th>
+            <th>Why</th>
+            <th>If violated</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((c) => (
+            <tr key={c.k}>
+              <td>{c.k}</td>
+              <td>{c.v}</td>
+              <td>{c.why}</td>
+              <td>{c.hit}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
       {onPin ? (
         <button type="button" className="linkish" onClick={onPin} disabled={busy}>
           {pinned ? "Policy pinned on this computer" : "Pin policy on this computer"}
         </button>
       ) : null}
-    </div>
+    </section>
   );
 }

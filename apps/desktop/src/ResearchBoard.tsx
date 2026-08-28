@@ -30,6 +30,7 @@ type ResearchRole = {
   proposed_side?: string;
   survives?: boolean;
   kill?: boolean;
+  elapsed_ms?: number;
 };
 
 function roleVerified(roles: ResearchRole[], name: string) {
@@ -117,6 +118,35 @@ function roleState(roles: ResearchRole[], name: string, stage: string) {
   if (mark === "lit") return "running";
   if (mark === "done") return "success";
   return "pending";
+}
+
+function namedRoleLabel(st: string, stop: string | null, kind: string) {
+  if (stop === "POLICY_DENIED" || stop === "POLICY_REJECTED" || kind === "POLICY_DENIED") return "POLICY BLOCKED";
+  if (stop === "DIRECT_PROVIDER_TIMEOUT" || kind === "DIRECT_PROVIDER_TIMEOUT") return "PROVIDER TIMEOUT";
+  if (stop === "DIRECT_PROVIDER_UNAVAILABLE" || kind === "DIRECT_PROVIDER_UNAVAILABLE") return "PROVIDER UNAVAILABLE";
+  if (stop === "COMPANION_NOT_RUNNING" || stop === "companion_down") return "COMPANION FAILURE";
+  if (
+    stop === "TEE_VERIFY_FAIL" ||
+    stop === "TEE_SIGNATURE_INVALID" ||
+    stop === "TEE_SIGNER_MISMATCH" ||
+    stop === "TEE_RESPONSE_INVALID" ||
+    stop === "TEE_OPEN_FAIL"
+  ) {
+    return "TEE FAILURE";
+  }
+  if (st === "stand-down") return "STOOD DOWN";
+  if (st === "success") return "VERIFIED";
+  if (st === "running") return "RUNNING";
+  if (st === "failure") return "TEE FAILURE";
+  return "PENDING";
+}
+
+function roleReason(roles: ResearchRole[], name: string) {
+  const row = roles.find((r) => String(r.role || "").toLowerCase() === name);
+  if (!row) return "Waiting.";
+  if (row.kill || row.survives === false) return row.proposed_side ? `Stood down after ${row.proposed_side}` : "Stood down.";
+  if (String(row.verify_e2ee || "").toUpperCase() === "OK") return row.proposed_side ? `Proposed ${row.proposed_side}` : "Verified.";
+  return "Not finished.";
 }
 
 export function ResearchBoard({
@@ -271,7 +301,7 @@ export function ResearchBoard({
           </button>
         ) : null}
       </div>
-      <ComputeCard checks={checks} onCheck={onCheck} onEvidence={() => setTechOpen(true)} />
+      <ComputeCard checks={checks} onCheck={onCheck} />
       <p className="label" style={{ marginTop: 12 }}>
         Committee
       </p>
@@ -281,36 +311,47 @@ export function ResearchBoard({
           {shown.replaceAll("_", " ")} · {(researchElapsed / 1000).toFixed(1)}s elapsed. Live Direct round-trip, not a timer.
         </p>
       ) : null}
-      <div className="committee">
-        {(["researcher", "challenger", "risk"] as const).map((name) => {
-          const st = roleState(researchRoles, name, researchStage);
-          return (
-            <div key={name} className={`role-card ${st}`}>
-              <p className="label">{name}</p>
-              <p className="state">{st}</p>
-              <p className="fine">
-                {researchBusy
-                  ? `${(researchElapsed / 1000).toFixed(1)}s`
-                  : name === "researcher"
-                    ? "Reads the sealed book and proposes a side, or none."
-                    : name === "challenger"
-                      ? "Attacks that thesis over the same sealed book."
-                      : "Kills the idea if it should not trade."}
-              </p>
-            </div>
-          );
-        })}
-        <div className={`role-card ${teeState(researchRoles, researchBusy, researchStop)}`}>
-          <p className="label">TEE</p>
-          <p className="state">{teeState(researchRoles, researchBusy, researchStop)}</p>
-          <p className="fine">Direct TeeML</p>
-        </div>
-        <div className={`role-card ${engineState(researchStage, researchRoles, researchBusy)}`}>
-          <p className="label">Engine</p>
-          <p className="state">{engineState(researchStage, researchRoles, researchBusy)}</p>
-          <p className="fine">Host sizes. Model cannot raise clip.</p>
-        </div>
-      </div>
+      <table className="desk-table">
+        <thead>
+          <tr>
+            <th>Role</th>
+            <th>Status</th>
+            <th>Duration</th>
+            <th>Reason</th>
+          </tr>
+        </thead>
+        <tbody>
+          {(["researcher", "challenger", "risk"] as const).map((name) => {
+            const st = roleState(researchRoles, name, researchStage);
+            const row = researchRoles.find((r) => String(r.role || "").toLowerCase() === name);
+            const ms = row?.elapsed_ms || (researchBusy && st === "running" ? researchElapsed : 0);
+            return (
+              <tr key={name}>
+                <td>{name}</td>
+                <td className={`state ${st}`}>{namedRoleLabel(st, researchStop, researchKind)}</td>
+                <td>{ms ? `${(ms / 1000).toFixed(1)}s` : "—"}</td>
+                <td>{roleReason(researchRoles, name)}</td>
+              </tr>
+            );
+          })}
+          <tr>
+            <td>TEE</td>
+            <td className={`state ${teeState(researchRoles, researchBusy, researchStop)}`}>
+              {namedRoleLabel(teeState(researchRoles, researchBusy, researchStop), researchStop, researchKind)}
+            </td>
+            <td>{researchBusy ? `${(researchElapsed / 1000).toFixed(1)}s` : "—"}</td>
+            <td>Direct TeeML. Recovered signer must equal on-chain teeSigner.</td>
+          </tr>
+          <tr>
+            <td>Engine</td>
+            <td className={`state ${engineState(researchStage, researchRoles, researchBusy)}`}>
+              {namedRoleLabel(engineState(researchStage, researchRoles, researchBusy), researchStop, researchKind)}
+            </td>
+            <td>{researchBusy && roleVerified(researchRoles, "risk") ? `${(researchElapsed / 1000).toFixed(1)}s` : "—"}</td>
+            <td>Host sizes. Model cannot raise clip.</td>
+          </tr>
+        </tbody>
+      </table>
       {!researchBusy && (explained || researchKind) ? (
         <section className="why-banner" role="status">
           <p className="label">{title}</p>
@@ -349,13 +390,6 @@ export function ResearchBoard({
           onAuthorize={onAuthorize}
           onCancelBound={onCancelBound}
         />
-      ) : null}
-      {explained && !researchBusy && !preview ? (
-        <section className="why-banner" role="alert">
-          <p className="label">{title}</p>
-          <h2>{explained.title}</h2>
-          <p>{explained.body}</p>
-        </section>
       ) : null}
       {!researchBusy && !researchNote && !explained && !preview ? (
         <p className="fine">Private research has not been run on this machine in this session.</p>

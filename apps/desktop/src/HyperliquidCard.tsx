@@ -1,4 +1,5 @@
 import { LINKS, hyperliquidAPI, hyperliquidApp } from "./links";
+import { BrandMark } from "./BrandMark";
 
 export function HyperliquidCard({
   net,
@@ -35,7 +36,12 @@ export function HyperliquidCard({
     sessionExpires && sessionExpires > 0 ? new Date(sessionExpires).toISOString().replace(".000Z", "Z") : "";
   return (
     <section>
-      <p className="label">Hyperliquid</p>
+      <p className="label">
+        <span className="asset">
+          <BrandMark symbol="HL" />
+          Hyperliquid
+        </span>
+      </p>
       <dl className="status-grid hl-grid">
         <dt>Connected account</dt>
         <dd>{agent ? "yes" : "no"}</dd>

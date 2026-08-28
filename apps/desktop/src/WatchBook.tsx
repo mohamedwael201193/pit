@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { BrandMark } from "./BrandMark";
 
 type Coin = {
   coin: string;
@@ -56,7 +57,10 @@ export function WatchBook({
           <ul className="market-rows" aria-label="Opportunities">
             {coins.map((c) => (
               <li key={c.coin} className={c.coin === sel ? "on" : ""} onClick={() => setSel(c.coin)}>
-                <strong>{c.coin}</strong>
+                <span className="asset">
+                  <BrandMark symbol={c.coin} />
+                  <strong>{c.coin}</strong>
+                </span>
                 <span className="mark-num">{c.mark}</span>
                 <span>{c.trend || "—"}</span>
                 <span>{c.funding ?? "—"}</span>
