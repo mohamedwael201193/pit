@@ -9,6 +9,7 @@ export function HyperliquidCard({
   approved,
   approvedDetail,
   busy,
+  tradingCapital,
   onCreateSession,
   onCheck,
   onRevoke,
@@ -22,6 +23,7 @@ export function HyperliquidCard({
   approved: boolean;
   approvedDetail?: string;
   busy?: boolean;
+  tradingCapital?: string;
   onCreateSession: () => void;
   onConnectionPreview?: () => void;
   onCheck?: () => void;
@@ -35,8 +37,10 @@ export function HyperliquidCard({
     <section>
       <p className="label">Hyperliquid</p>
       <dl className="status-grid hl-grid">
-        <dt>Connected</dt>
+        <dt>Connected account</dt>
         <dd>{agent ? "yes" : "no"}</dd>
+        <dt>Trading capital</dt>
+        <dd>{tradingCapital || "—"}</dd>
         <dt>PIT Agent</dt>
         <dd>
           {agentName || "none"}
@@ -47,57 +51,40 @@ export function HyperliquidCard({
           {session}
           {ttl ? ` · until ${ttl}` : ""}
         </dd>
+        <dt>Expiration</dt>
+        <dd>{ttl || "—"}</dd>
         <dt>Order</dt>
         <dd>{sessionAlive && approved ? "yes" : "no"}</dd>
         <dt>Cancel</dt>
         <dd>{sessionAlive && approved ? "yes" : "no"}</dd>
         <dt>Withdraw</dt>
         <dd>no</dd>
-        <dt>Transfer</dt>
-        <dd>no</dd>
-        <dt>Leverage</dt>
-        <dd>no</dd>
         <dt>Approval</dt>
         <dd>{approved ? "Approved" : "Needs approval"}</dd>
       </dl>
       {approvedDetail ? <p className="fine">{approvedDetail}</p> : null}
-      <p className="fine">
-        Account is your wallet. PIT Agent can order and cancel only. Trading capital is not private compute.
-      </p>
+      <p className="fine">Account is your wallet. PIT Agent can order and cancel only. Trading capital is not private compute.</p>
       <div className="cta-row">
-        {!agent ? (
-          <button type="button" className="primary" onClick={onCreateSession} disabled={busy}>
-            Create secure session
-          </button>
-        ) : null}
-        {agent && !sessionAlive ? (
-          <button type="button" className="primary" onClick={onCreateSession} disabled={busy}>
-            Create secure session
-          </button>
-        ) : null}
-        {agent && !approved ? (
-          <a className="primary" href={hyperliquidAPI(net)} target="_blank" rel="noreferrer">
-            Open Hyperliquid API
-          </a>
-        ) : (
-          <a className="linkish" href={hyperliquidAPI(net)} target="_blank" rel="noreferrer">
-            Open Hyperliquid API
-          </a>
-        )}
-        <a className="linkish" href={hyperliquidApp(net)} target="_blank" rel="noreferrer">
-          Open Hyperliquid
+        <a className="primary" href={hyperliquidApp(net)} target="_blank" rel="noreferrer">
+          Connect Hyperliquid
         </a>
-        <button type="button" className="linkish" onClick={onRefreshApproval || onCheck} disabled={busy}>
-          Check approval
-        </button>
-        {sessionAlive ? (
+        <a className="linkish" href={hyperliquidAPI(net)} target="_blank" rel="noreferrer">
+          Open Hyperliquid API
+        </a>
+        <a className="linkish" href={hyperliquidAPI(net)} target="_blank" rel="noreferrer">
+          Approve PIT
+        </a>
+        {!agent || !sessionAlive ? (
           <button type="button" className="linkish" onClick={onCreateSession} disabled={busy}>
-            Refresh session
+            Create secure session
           </button>
         ) : null}
+        <button type="button" className="linkish" onClick={onRefreshApproval || onCheck} disabled={busy}>
+          Refresh status
+        </button>
         {onRevoke && agent ? (
           <button type="button" className="linkish" onClick={onRevoke} disabled={busy}>
-            Revoke PIT
+            Revoke
           </button>
         ) : null}
       </div>

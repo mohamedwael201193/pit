@@ -2,7 +2,7 @@ import { FormEvent, useEffect, useRef, useState } from "react";
 import {
   sendDeskCommand,
   fetchChatLog,
-  fetchModels,
+  fetchModelCatalog,
   type ChatMessage,
   type ChatReply,
   type DirectModel,
@@ -36,10 +36,14 @@ export function CommandChat({
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [lines, setLines] = useState<ChatMessage[]>([]);
-  const [models, setModels] = useState<DirectModel[]>([]);
+  const [privateModels, setPrivate] = useState<DirectModel[]>([]);
+  const [otherModels, setOther] = useState<DirectModel[]>([]);
+  const [unsupported, setUnsupported] = useState<DirectModel[]>([]);
   const [modelOpen, setModelOpen] = useState(false);
   const [picked, setPicked] = useState<DirectModel | null>(null);
+  const [lastUser, setLastUser] = useState("");
   const end = useRef<HTMLDivElement>(null);
+  const abort = useRef<AbortController | null>(null);
 
   useEffect(() => {
     let gone = false;
@@ -54,10 +58,12 @@ export function CommandChat({
 
   useEffect(() => {
     let gone = false;
-    void fetchModels().then((m) => {
+    void fetchModelCatalog().then((c) => {
       if (gone) return;
-      setModels(m);
-      setPicked(m[0] || null);
+      setPrivate(c.private_verified);
+      setOther(c.other_chat);
+      setUnsupported(c.unsupported);
+      setPicked(c.private_verified[0] || c.models[0] || null);
     });
     return () => {
       gone = true;
@@ -68,28 +74,37 @@ export function CommandChat({
     end.current?.scrollIntoView({ block: "end" });
   }, [lines, island?.stage, island?.elapsedMs]);
 
-  async function onSubmit(e: FormEvent) {
-    e.preventDefault();
-    const text = draft.trim();
+  async function ask(text: string) {
     if (!text || busy) return;
-    setDraft("");
     setBusy(true);
     setErr(null);
+    setLastUser(text);
     setLines((cur) => [...cur, { role: "user", text, ts: Date.now(), thread }]);
+    abort.current?.abort();
+    const ac = new AbortController();
+    abort.current = ac;
     try {
-      const r = await sendDeskCommand(text, thread);
+      const r = await sendDeskCommand(text, thread, ac.signal);
+      if (ac.signal.aborted) return;
       const reply = r.reply || r.error || "PIT could not complete that command.";
       setLines((cur) => [...cur, { role: "pit", text: reply, tool: r.tool, ts: Date.now(), thread, coin: r.coin }]);
       applyReply(r);
-    } catch {
-      setErr("Local PIT did not answer. A sealed job is not cancelled by a missed chat poll.");
-      setLines((cur) => [
-        ...cur,
-        { role: "pit", text: "Local PIT did not answer. The sealed job is not cancelled by a missed chat poll.", ts: Date.now() },
-      ]);
+    } catch (e) {
+      if (ac.signal.aborted) return;
+      const msg = e instanceof Error && e.name === "AbortError" ? "Stopped." : "Local PIT did not answer. A sealed job is not cancelled by a missed chat poll.";
+      setErr(msg);
+      setLines((cur) => [...cur, { role: "pit", text: msg, ts: Date.now() }]);
     } finally {
       setBusy(false);
     }
+  }
+
+  async function onSubmit(e: FormEvent) {
+    e.preventDefault();
+    const text = draft.trim();
+    if (!text) return;
+    setDraft("");
+    await ask(text);
   }
 
   function applyReply(r: ChatReply) {
@@ -100,8 +115,8 @@ export function CommandChat({
   }
 
   const modelLabel = picked
-    ? `${picked.private_book ? "Private + Verified" : picked.label || "Direct"} · ${picked.model}`
-    : "Direct";
+    ? `${picked.private_book ? "Private + Verified" : picked.label || "Desk"} · ${picked.model}`
+    : "Host-parsed";
 
   return (
     <section className="command" aria-label="Trading desk command">
@@ -116,49 +131,30 @@ export function CommandChat({
           </button>
           {modelOpen ? (
             <div className="model-menu" role="listbox">
-              <p className="label">Private research models</p>
-              {models.length === 0 ? (
-                <p className="fine">No Direct-compatible model is listed for this network.</p>
+              <p className="label">Private + verified</p>
+              {privateModels.length === 0 ? (
+                <p className="fine">No verified Direct SKU on this network.</p>
               ) : (
-                models.map((m) => (
-                  <button
-                    key={m.model}
-                    type="button"
-                    className={picked?.model === m.model ? "on" : "linkish"}
-                    onClick={() => {
-                      setPicked(m);
-                      setModelOpen(false);
-                    }}
-                  >
-                    {m.model}
-                    <span className="fine" style={{ display: "block", marginTop: 2 }}>
-                      {m.path || "Direct"} · {m.private_book ? "Private" : "not private"} ·{" "}
-                      {m.proven_e2ee ? "Verified" : "unproven"} · {m.verifiability || "TeeML"}
-                      {m.provider
-                        ? ` · ${m.provider.length > 12 ? `${m.provider.slice(0, 6)}…${m.provider.slice(-4)}` : m.provider}`
-                        : ""}
-                    </span>
-                    {m.latency ? (
-                      <span className="fine" style={{ display: "block" }}>
-                        {m.latency}
-                      </span>
-                    ) : null}
-                    {m.cost ? (
-                      <span className="fine" style={{ display: "block" }}>
-                        {m.cost}
-                      </span>
-                    ) : null}
-                  </button>
+                privateModels.map((m) => (
+                  <ModelRow key={m.model} m={m} picked={picked} onPick={() => { setPicked(m); setModelOpen(false); }} />
                 ))
               )}
-              <p className="fine">Only verified Direct models appear. Router SKUs are not listed as private.</p>
+              <p className="label">Other supported chat</p>
+              {otherModels.map((m) => (
+                <ModelRow key={m.model} m={m} picked={picked} onPick={() => { setPicked(m); setModelOpen(false); }} />
+              ))}
+              <p className="label">Unsupported for private research</p>
+              {unsupported.map((m) => (
+                <ModelRow key={m.model} m={m} picked={picked} onPick={() => { setPicked(m); setModelOpen(false); }} disabled={!m.private_book} />
+              ))}
+              <p className="fine">Private book operations use a verified Direct path only. Catalog presence is not privacy.</p>
             </div>
           ) : null}
         </div>
       </div>
       <div className="transcript" role="log">
         {lines.length === 0 ? (
-          <p className="fine">Try: What is happening? Research ETH privately. Show my positions. Explain my policy.</p>
+          <p className="fine">Try: What is interesting right now? Research ETH privately. Why did the committee reject it? Show my positions.</p>
         ) : (
           lines.map((m, i) => (
             <div key={`${m.ts}-${i}`} className={m.role === "user" ? "turn user" : "turn pit"}>
@@ -166,11 +162,7 @@ export function CommandChat({
                 <span className="who">{m.role === "user" ? "You" : "PIT"}</span>
                 {m.ts ? <time dateTime={new Date(m.ts).toISOString()}>{new Date(m.ts).toLocaleTimeString()}</time> : null}
                 {m.role === "pit" ? (
-                  <button
-                    type="button"
-                    className="copy-turn"
-                    onClick={() => void navigator.clipboard.writeText(m.text || "")}
-                  >
+                  <button type="button" className="copy-turn" onClick={() => void navigator.clipboard.writeText(m.text || "")}>
                     Copy
                   </button>
                 ) : null}
@@ -224,6 +216,23 @@ export function CommandChat({
           <p className="fine" style={{ margin: 0 }}>
             Enter send · Shift+Enter newline
           </p>
+          {busy ? (
+            <button
+              type="button"
+              className="linkish"
+              onClick={() => {
+                abort.current?.abort();
+                setBusy(false);
+              }}
+            >
+              Stop
+            </button>
+          ) : null}
+          {lastUser && !busy ? (
+            <button type="button" className="linkish" onClick={() => void ask(lastUser)}>
+              Retry
+            </button>
+          ) : null}
           {island?.busy && onStop ? (
             <button type="button" className="linkish" onClick={onStop}>
               Stop research
@@ -235,6 +244,34 @@ export function CommandChat({
         </div>
       </form>
     </section>
+  );
+}
+
+function ModelRow({
+  m,
+  picked,
+  onPick,
+  disabled,
+}: {
+  m: DirectModel;
+  picked: DirectModel | null;
+  onPick: () => void;
+  disabled?: boolean;
+}) {
+  return (
+    <button type="button" className={picked?.model === m.model ? "on" : "linkish"} onClick={onPick} disabled={disabled}>
+      {m.model}
+      <span className="fine" style={{ display: "block", marginTop: 2 }}>
+        {m.path || "Direct"} · {m.private_book ? "Private" : "not private"} · {m.proven_e2ee ? "Verified" : "unproven"}
+        {m.capability ? ` · ${m.capability}` : ""}
+        {m.provider ? ` · ${m.provider.length > 12 ? `${m.provider.slice(0, 6)}…${m.provider.slice(-4)}` : m.provider}` : ""}
+      </span>
+      {m.note ? (
+        <span className="fine" style={{ display: "block" }}>
+          {m.note}
+        </span>
+      ) : null}
+    </button>
   );
 }
 
@@ -255,7 +292,7 @@ function ChatCard({
   onNavigate: (view: string) => void;
   onOpenPreview: () => void;
 }) {
-  if (!tool || tool === "help" || tool === "status") return null;
+  if (!tool || tool === "help" || tool === "status" || tool === "greet") return null;
   if (tool === "research.start") {
     return (
       <article className="chat-card">
@@ -282,6 +319,7 @@ function ChatCard({
     return (
       <article className="chat-card">
         <p className="label">Market</p>
+        <p>Live Hyperliquid marks. Side is not decided on Watch.</p>
         <button type="button" className="linkish" onClick={() => onNavigate("watch")}>
           Open Watch
         </button>

@@ -10,18 +10,29 @@ import (
 	"github.com/mohamedwael201193/pit/internal/deskcmd"
 	"github.com/mohamedwael201193/pit/internal/hl"
 	"github.com/mohamedwael201193/pit/internal/session"
+	"github.com/mohamedwael201193/pit/internal/watch"
 )
 
 func (h *Hub) decorateChat(parsed deskcmd.Result) deskcmd.Result {
 	switch parsed.Tool {
 	case "status":
 		parsed.Reply = h.replyDeskStatus()
+	case "greet":
+		parsed.Reply = "Hello. " + h.replyDeskStatus()
 	case "positions.get":
 		parsed.Reply = h.replyPositions()
 	case "research.result", "preview.show":
 		parsed.Reply = h.replyResearch(parsed.Reply)
 	case "session.status":
 		parsed.Reply = h.replySession()
+	case "watch.get":
+		parsed.Reply = h.replyWatch(parsed)
+	case "research.start":
+		if live := h.replyWatch(parsed); live != "" {
+			parsed.Reply = live + " " + parsed.Reply
+		}
+	case "policy.get":
+		parsed.Reply = "Policy is pinned host law on this computer. Chat cannot raise clip, leverage, or permissions. Open Policy to read the exact constraints."
 	}
 	return parsed
 }
@@ -31,6 +42,8 @@ func (h *Hub) replyDeskStatus() string {
 	running := h.job.running
 	coin := h.job.coin
 	stage := h.job.stage
+	eligible := h.job.eligible
+	hash := h.job.previewHash
 	h.researchMu.Unlock()
 	st, err := cli.Load(h.Dir)
 	wallet := "unbound"
@@ -49,7 +62,51 @@ func (h *Hub) replyDeskStatus() string {
 	if running {
 		return fmt.Sprintf("Researching %s — %s still running. Compute money, not trading capital. Chat cannot AUTHORIZE. Open Research for the live board.", strings.ToUpper(coin), strings.ReplaceAll(stage, "_", " "))
 	}
-	return fmt.Sprintf("Idle. Wallet %s. %s. Open Desk for what needs you. Chat cannot AUTHORIZE.", wallet, sess)
+	if eligible && hash != "" {
+		return fmt.Sprintf("Idle. Wallet %s. %s. Exact preview is waiting for AUTHORIZE on Research. Chat cannot AUTHORIZE.", wallet, sess)
+	}
+	return fmt.Sprintf("Idle. Wallet %s. %s. Open Watch to discover, Research to investigate. Chat cannot AUTHORIZE.", wallet, sess)
+}
+
+func (h *Hub) replyWatch(parsed deskcmd.Result) string {
+	st, err := cli.Load(h.Dir)
+	if err != nil || strings.TrimSpace(st.Wallet) == "" {
+		if parsed.Coin != "" {
+			return parsed.Coin + " is in the policy universe. Bind this computer to load the live Hyperliquid mark. Side is not decided here."
+		}
+		return "Watch lists policy-eligible public markets after this computer is bound. Empty is honest until then."
+	}
+	netName := "mainnet"
+	if strings.TrimSpace(st.Network) != "" {
+		netName = st.Network
+	}
+	net, nerr := config.ParseNetwork(netName)
+	if nerr != nil {
+		return "Wrong network. Watch stays unread."
+	}
+	cands, lerr := watch.Live(hl.New(config.For(net)), watch.PolicyForWatch())
+	if lerr != nil {
+		return "Hyperliquid did not return a live book. Empty Watch is the honest state. No invented scores."
+	}
+	view := watch.Public(cands, string(net))
+	if len(view.Coins) == 0 {
+		return "No opportunities match your policy. Empty is honest. Side is not decided on Watch."
+	}
+	row := view.Coins[0]
+	if parsed.Coin != "" {
+		for _, c := range view.Coins {
+			if c.Coin == parsed.Coin {
+				row = c
+				break
+			}
+		}
+	}
+	fit := "PASS"
+	if !row.Eligible {
+		fit = "BLOCKED"
+	}
+	return fmt.Sprintf("%s mark %g (oracle %g, funding %g, open interest %.0f). %s Trend: %s. Host rank %d, not a model score. Policy %s. Freshness %s. Side is not decided here.",
+		row.Coin, row.Mark, row.Oracle, row.Funding, row.OpenInterest, row.Why, row.Trend, row.Rank, fit, row.Freshness)
 }
 
 func (h *Hub) replyPositions() string {

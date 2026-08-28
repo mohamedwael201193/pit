@@ -49,4 +49,16 @@ func TestLocalModelsDirectOnly(t *testing.T) {
 	if len(models) != 1 {
 		t.Fatalf("catalog %d", len(models))
 	}
+	groups, _ := got["groups"].(map[string]any)
+	if groups == nil {
+		t.Fatal("groups")
+	}
+	un, _ := groups["unsupported"].([]any)
+	if len(un) == 0 {
+		t.Fatal("unsupported")
+	}
+	row, _ := un[0].(map[string]any)
+	if row["private_book"] == true {
+		t.Fatal("catalog marked private")
+	}
 }

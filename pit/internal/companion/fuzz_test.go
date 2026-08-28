@@ -56,3 +56,48 @@ func TestChatResearchDoesNotExecute(t *testing.T) {
 		t.Fatal(rec.Body.String())
 	}
 }
+
+func TestChatGreetingIsNotCannedHelp(t *testing.T) {
+	h := New(t.TempDir())
+	req := local(httptest.NewRequest(http.MethodPost, "/local/chat", bytes.NewBufferString(`{"text":"HI"}`)))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+	h.Handler().ServeHTTP(rec, req)
+	if strings.Contains(rec.Body.String(), "I can research a policy market") {
+		t.Fatal(rec.Body.String())
+	}
+	if !strings.Contains(rec.Body.String(), "Hello") {
+		t.Fatal(rec.Body.String())
+	}
+	if strings.Contains(rec.Body.String(), `"execute":true`) {
+		t.Fatal(rec.Body.String())
+	}
+}
+
+func TestChatTypoResearchDoesNotExecute(t *testing.T) {
+	h := New(t.TempDir())
+	req := local(httptest.NewRequest(http.MethodPost, "/local/chat", bytes.NewBufferString(`{"text":"HI WHAT PRICE OF ETH NOW AND GIVE ME REASEARCH AND DO TRADE"}`)))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+	h.Handler().ServeHTTP(rec, req)
+	if strings.Contains(rec.Body.String(), `"execute":true`) || strings.Contains(rec.Body.String(), `"posted":true`) {
+		t.Fatal(rec.Body.String())
+	}
+	if !strings.Contains(rec.Body.String(), `"start_research":true`) {
+		t.Fatal(rec.Body.String())
+	}
+}
+
+func TestAutomationCannotAuthorize(t *testing.T) {
+	h := New(t.TempDir())
+	req := local(httptest.NewRequest(http.MethodPost, "/local/automation", bytes.NewBufferString(`{"watch":true,"auto_research":true,"execute":true}`)))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+	h.Handler().ServeHTTP(rec, req)
+	if strings.Contains(rec.Body.String(), `"execute":true`) {
+		t.Fatal(rec.Body.String())
+	}
+	if !strings.Contains(rec.Body.String(), "automation_cannot_authorize") {
+		t.Fatal(rec.Body.String())
+	}
+}

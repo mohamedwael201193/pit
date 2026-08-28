@@ -4,6 +4,7 @@ import { EvidenceDrawer } from "./EvidenceDrawer";
 import { PreviewNote } from "./PreviewNote";
 import { committeeVerified, oidBelongsToPreview, researchCardTitle } from "./honesty";
 import { explainStop, explainStopHref } from "./explain";
+import { researchWhyCopy } from "./researchWhy";
 import { hyperliquidAPI } from "./links";
 import type { BindResult, DoctorCheck, LocalStatus } from "./companion";
 
@@ -178,8 +179,8 @@ export function ResearchBoard({
   techOpen: boolean;
   setTechOpen: (v: boolean | ((c: boolean) => boolean)) => void;
   researchEvidenceText: string;
-  eligible: Array<{ coin: string; mark: number; reason: string; oracle?: number; funding?: number; openInterest?: number }>;
-  coins?: Array<{ coin: string; mark: number; oracle?: number; funding?: number; openInterest?: number }>;
+  eligible: Array<{ coin: string; mark: number; reason: string; why?: string; oracle?: number; funding?: number; openInterest?: number }>;
+  coins?: Array<{ coin: string; mark: number; oracle?: number; funding?: number; openInterest?: number; reason?: string; why?: string }>;
   net: string;
   onResearch: (coin?: string) => void;
   onCancel: () => void;
@@ -197,6 +198,18 @@ export function ResearchBoard({
   const verified = committeeVerified(researchRoles);
   const snap = (coins || []).find((c) => c.coin === (coin || "ETH")) || eligible.find((c) => c.coin === (coin || "ETH"));
   const title = researchCardTitle(researchKind || researchStop, verified);
+  const whyRows = !researchBusy
+    ? researchWhyCopy({
+        coin: coin || "ETH",
+        kind: researchKind,
+        note: researchNote,
+        stop: researchStop,
+        deny: preview?.deny,
+        eligible: Boolean(preview?.eligible),
+        roles: researchRoles,
+        snap: snap,
+      })
+    : [];
   return (
     <main className="page dense">
       <div className="page-head">
@@ -228,6 +241,7 @@ export function ResearchBoard({
           </div>
         </div>
       ) : null}
+      <p className="fine">{snap && "why" in snap && snap.why ? snap.why : "Selected from Watch because it is in your policy universe with a live venue book."}</p>
       <p className="label" style={{ marginTop: 12 }}>
         Thesis
       </p>
@@ -249,7 +263,7 @@ export function ResearchBoard({
           onClick={() => onResearch(coin)}
           disabled={researchBusy || !checks.find((c) => c.name === "direct_credit")?.ok}
         >
-          Start research
+          Research privately
         </button>
         {researchBusy ? (
           <button type="button" className="linkish" onClick={onCancel}>
@@ -277,7 +291,11 @@ export function ResearchBoard({
               <p className="fine">
                 {researchBusy
                   ? `${(researchElapsed / 1000).toFixed(1)}s`
-                  : researchRoles.find((r) => String(r.role).toLowerCase() === name)?.proposed_side || "—"}
+                  : name === "researcher"
+                    ? "Reads the sealed book and proposes a side, or none."
+                    : name === "challenger"
+                      ? "Attacks that thesis over the same sealed book."
+                      : "Kills the idea if it should not trade."}
               </p>
             </div>
           );
@@ -304,6 +322,16 @@ export function ResearchBoard({
               {explainStopHref(whyCode)?.label}
             </a>
           ) : null}
+        </section>
+      ) : null}
+      {!researchBusy && whyRows.length ? (
+        <section className="why-list" aria-label="Why">
+          {whyRows.map((row) => (
+            <div key={row.q}>
+              <p className="label">{row.q}</p>
+              <p>{row.a}</p>
+            </div>
+          ))}
         </section>
       ) : null}
       {!researchBusy && preview ? (
@@ -431,6 +459,10 @@ export function PreviewContract({
           <tr>
             <th>Session</th>
             <td>PIT Agent · {sessionAlive ? "Active" : "None"}</td>
+          </tr>
+          <tr>
+            <th>Estimated cost</th>
+            <td>Trading capital at the venue after AUTHORIZE. Private compute was already spent on research.</td>
           </tr>
           <tr>
             <th>Preview hash</th>

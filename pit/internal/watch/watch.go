@@ -2,6 +2,7 @@ package watch
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/mohamedwael201193/pit/internal/hl"
@@ -43,6 +44,9 @@ func Scan(books []hl.BookSnapshot, p policy.Policy) ([]Candidate, error) {
 		}
 		out = append(out, Candidate{Coin: strings.ToUpper(b.Coin), Reason: reason, Book: b})
 	}
+	sort.SliceStable(out, func(i, j int) bool {
+		return Rank(out[i]) > Rank(out[j])
+	})
 	return out, nil
 }
 

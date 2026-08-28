@@ -215,8 +215,8 @@ export async function pinLocalPolicy(): Promise<BindResult> {
   }
 }
 
-export async function fetchWatch(network: string): Promise<{ coins?: Array<{ coin: string; reason: string; mark: number; eligible?: boolean; oracle?: number; funding?: number; openInterest?: number }>; sign?: boolean; trade?: boolean }> {
-  const native = rejectSecrets(await nativeJson<{ coins?: Array<{ coin: string; reason: string; mark: number; eligible?: boolean; oracle?: number; funding?: number; openInterest?: number }>; sign?: boolean; trade?: boolean }>("local_watch", { network }));
+export async function fetchWatch(network: string): Promise<{ coins?: Array<{ coin: string; reason: string; why?: string; trend?: string; rank?: number; freshness?: string; mark: number; eligible?: boolean; oracle?: number; funding?: number; openInterest?: number; timestamp?: string }>; sign?: boolean; trade?: boolean }> {
+  const native = rejectSecrets(await nativeJson<{ coins?: Array<{ coin: string; reason: string; why?: string; trend?: string; rank?: number; freshness?: string; mark: number; eligible?: boolean; oracle?: number; funding?: number; openInterest?: number; timestamp?: string }>; sign?: boolean; trade?: boolean }>("local_watch", { network }));
   if (native) return native;
   const fetched = await fetchJson<{ coins?: Array<{ coin: string; reason: string; mark: number; eligible?: boolean; oracle?: number; funding?: number; openInterest?: number }>; sign?: boolean; trade?: boolean }>(`/watch?network=${network}`);
   if (fetched) return fetched;
@@ -357,6 +357,7 @@ export type DirectModel = {
   verifiability?: string;
   proven_e2ee?: boolean;
   private_book?: boolean;
+  capability?: string;
   note?: string;
   latency?: string;
   cost?: string;
@@ -409,16 +410,19 @@ async function localGet<T extends object>(cmd: string, path: string): Promise<T 
   return rejectSecrets(await fetchJson<T>(path));
 }
 
-export async function sendDeskCommand(text: string, thread = "desk"): Promise<ChatReply> {
+export async function sendDeskCommand(text: string, thread = "desk", signal?: AbortSignal): Promise<ChatReply> {
   try {
     const native = await nativeJsonOrError<ChatReply>("local_chat", { text, thread });
+    if (signal?.aborted) throw new DOMException("Aborted", "AbortError");
     if (native.sign || native.trade) return { error: "companion_denied", execute: false };
     return { ...native, execute: false };
-  } catch {
+  } catch (e) {
+    if (e instanceof DOMException && e.name === "AbortError") throw e;
     const body = await fetchJson<ChatReply>("/local/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ text, thread }),
+      signal,
     });
     if (!body || body.sign || body.trade) {
       return { error: "companion_http", execute: false, reply: "PIT could not reach the local companion." };
@@ -455,8 +459,53 @@ export async function mutateChatThread(op: "new" | "rename" | "delete", id?: str
 }
 
 export async function fetchModels(): Promise<DirectModel[]> {
-  const body = await localGet<{ models?: DirectModel[]; sign?: boolean }>("local_models", "/local/models");
-  return Array.isArray(body?.models) ? body.models : [];
+  const cat = await fetchModelCatalog();
+  return cat.models;
+}
+
+export async function fetchModelCatalog(): Promise<{
+  models: DirectModel[];
+  private_verified: DirectModel[];
+  other_chat: DirectModel[];
+  unsupported: DirectModel[];
+}> {
+  const body = await localGet<{
+    models?: DirectModel[];
+    groups?: { private_verified?: DirectModel[]; other_chat?: DirectModel[]; unsupported?: DirectModel[] };
+    sign?: boolean;
+  }>("local_models", "/local/models");
+  const models = Array.isArray(body?.models) ? body.models : [];
+  return {
+    models,
+    private_verified: body?.groups?.private_verified || models.filter((m) => m.private_book),
+    other_chat: body?.groups?.other_chat || [],
+    unsupported: body?.groups?.unsupported || [],
+  };
+}
+
+export type AutoPrefs = {
+  watch?: boolean;
+  auto_research?: boolean;
+  notify?: boolean;
+  cadence_minutes?: number;
+  trigger?: string;
+  markets?: string[];
+  execute?: boolean;
+};
+
+export async function fetchAutomation(): Promise<AutoPrefs> {
+  const body = await localGet<{ prefs?: AutoPrefs; sign?: boolean }>("local_automation", "/local/automation");
+  return body?.prefs || { watch: true, notify: true, auto_research: false, cadence_minutes: 15, trigger: "policy_pass" };
+}
+
+export async function saveAutomation(prefs: AutoPrefs): Promise<AutoPrefs> {
+  const body = await fetchJson<{ prefs?: AutoPrefs; error?: string; execute?: boolean }>("/local/automation", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ...prefs, execute: false }),
+  });
+  if (body?.execute) return prefs;
+  return body?.prefs || prefs;
 }
 
 export async function fetchActivity(): Promise<ActivityEvent[]> {

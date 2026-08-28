@@ -24,6 +24,24 @@ function dayLabel(ts?: number) {
   return d.toISOString().slice(0, 10);
 }
 
+function humanKind(kind?: string) {
+  const k = String(kind || "event");
+  if (k === "opportunity") return "Opportunity";
+  if (k.startsWith("research")) return "Research";
+  if (k.includes("committee")) return "Committee";
+  if (k.includes("preview")) return "Preview";
+  if (k.includes("author")) return "Approval";
+  if (k.includes("fill")) return "Fill";
+  if (k.includes("cancel")) return "Cancel";
+  if (k.includes("order")) return "Order";
+  if (k.includes("policy")) return "Policy";
+  if (k.includes("session")) return "Session";
+  if (k.includes("receipt") || k.includes("proof")) return "Proof";
+  if (k.includes("position")) return "Position";
+  if (k.includes("automation")) return "Prepared";
+  return k.replaceAll(".", " ");
+}
+
 export function ActivityTimeline({ events, lastOid }: { events: EventRow[]; lastOid?: string }) {
   const grouped = new Map<string, EventRow[]>();
   for (const ev of events) {
@@ -43,7 +61,7 @@ export function ActivityTimeline({ events, lastOid }: { events: EventRow[]; last
             {rows.map((ev, i) => (
               <li key={`${ev.ts}-${i}`}>
                 <time>{ev.ts ? new Date(ev.ts).toLocaleTimeString() : ""}</time>{" "}
-                <strong>{ev.kind || ev.action || "event"}</strong>
+                <strong>{humanKind(ev.kind)}</strong>
                 {ev.market ? ` ${ev.market}` : ""} {ev.status || ""}
                 {ev.job_id ? ` · job ${ev.job_id}` : ""}
                 {ev.oid ? ` · OID ${ev.oid}` : ""}

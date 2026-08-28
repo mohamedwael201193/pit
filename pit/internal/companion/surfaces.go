@@ -397,17 +397,46 @@ func (h *Hub) localModels(w http.ResponseWriter, r *http.Request) {
 	if sku.ProvenE2EE {
 		label = "Private + Verified"
 	}
+	direct := map[string]any{
+		"model": sku.Model, "verifiability": sku.Verifiability, "proven_e2ee": sku.ProvenE2EE,
+		"label": label, "path": "Direct", "provider": sku.Provider,
+		"role_separation": true, "private_book": sku.ProvenE2EE,
+		"capability": "sealed private research",
+		"note":       "Private only when TeeML is proven on this network. Role separation on one SKU, not three independent models.",
+		"latency":    "Live sealed round-trip. Typical 30–90s per role when the provider is live. Not a timer.",
+		"cost":       "Estimated ~3 0G locked for one sealed committee. Public catalog pricing is not this path.",
+	}
+	private := []map[string]any{}
+	other := []map[string]any{}
+	if sku.ProvenE2EE {
+		private = append(private, direct)
+	} else {
+		other = append(other, direct)
+	}
+	hostChat := map[string]any{
+		"model": "host-parsed", "label": "Desk command", "path": "host",
+		"private_book": false, "proven_e2ee": false, "capability": "chat",
+		"note": "Desk chat is host-parsed on this computer. It is not a sealed model and cannot AUTHORIZE.",
+	}
+	other = append(other, hostChat)
+	unsupported := []map[string]any{{
+		"model": "public-catalog", "label": "Public compute catalog", "path": "unsupported",
+		"private_book": false, "proven_e2ee": false, "capability": "not used",
+		"note": "SKUs that only exist on the public compute catalog are unsupported for private research. PIT never routes the sealed book there.",
+	}}
+	models := private
+	if len(models) == 0 {
+		models = []map[string]any{}
+	}
 	writeLocal(w, http.StatusOK, map[string]any{
 		"ok": true, "network": string(net), "sign": false, "trade": false,
-		"note": "Role separation on one Direct TeeML SKU. Not three independent models. Router catalog is not this list.",
-		"models": []map[string]any{{
-			"model": sku.Model, "verifiability": sku.Verifiability, "proven_e2ee": sku.ProvenE2EE,
-			"label": label, "path": "Direct", "provider": sku.Provider,
-			"role_separation": true, "private_book": sku.ProvenE2EE,
-			"note":    "Private. Routed directly to the verified compute path. Role separation on one SKU, not three independent models.",
-			"latency": "Live sealed round-trip. Typical 30–90s per role when the provider is live. Not a timer.",
-			"cost":    "Estimated ~3 0G locked for one sealed committee. Router pricing is not this path.",
-		}},
+		"note":   "Private book uses Direct only. Presence in a catalog does not make a model private.",
+		"models": models,
+		"groups": map[string]any{
+			"private_verified": private,
+			"other_chat":       other,
+			"unsupported":      unsupported,
+		},
 	})
 }
 

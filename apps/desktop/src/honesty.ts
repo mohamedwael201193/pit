@@ -29,6 +29,7 @@ export function researchCardTitle(kind?: string | null, verified?: boolean): str
   if (kind === "MARKET_DENIED") return "MARKET NOT USABLE";
   if (kind === "DIRECT_CREDIT_INSUFFICIENT") return "PRIVATE COMPUTE NEEDS FUNDS";
   if (kind === "DIRECT_PROVIDER_TIMEOUT") return "PROVIDER TIMEOUT";
+  if (kind === "COMPANION_NOT_RUNNING" || kind === "companion_down") return "COMPANION FAILURE";
   if (kind === "TEE_SIGNATURE_INVALID" || kind === "TEE_SIGNER_MISMATCH" || kind === "TEE_VERIFY_FAIL") {
     return "TEE VERIFICATION FAILED";
   }

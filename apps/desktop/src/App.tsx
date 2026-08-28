@@ -16,6 +16,7 @@ import {
   describeBindError,
   doctor,
   fetchActivity,
+  fetchAutomation,
   fetchCalibration,
   fetchChatThreads,
   fetchIdentity,
@@ -32,6 +33,7 @@ import {
   researchEvidence,
   researchStatus,
   revokeLocalSession,
+  saveAutomation,
   setKillSwitch,
   startResearch,
   wakeCompanion,
@@ -47,7 +49,8 @@ import {
 import { LINKS, explorerAddress, hyperliquidAPI, hyperliquidApp } from "./links";
 import { nextFix } from "./nextFix";
 import { probes } from "./readiness";
-import { committeeVerified } from "./honesty";
+import { committeeVerified, researchCardTitle } from "./honesty";
+import { AutomationPane, type AutoPrefs } from "./AutomationPane";
 import { CommandChat } from "./CommandChat";
 import { ActivityTimeline } from "./ActivityTimeline";
 import { PositionsPanel } from "./PositionsPanel";
@@ -65,7 +68,7 @@ import { askNotify, deskNotify } from "./notify";
 type Net = "mainnet" | "testnet";
 type View = "home" | "watch" | "research" | "positions" | "activity" | "policy" | "security" | "account" | "settings";
 
-type Coin = { coin: string; reason: string; mark: number; eligible?: boolean; oracle?: number; funding?: number; openInterest?: number };
+type Coin = { coin: string; reason: string; why?: string; trend?: string; rank?: number; freshness?: string; mark: number; eligible?: boolean; oracle?: number; funding?: number; openInterest?: number; timestamp?: string };
 
 type ResearchRole = {
   role?: string;
@@ -78,6 +81,21 @@ type ResearchRole = {
 
 function sleep(ms: number) {
   return new Promise((resolve) => window.setTimeout(resolve, ms));
+}
+
+function eventLine(ev: ActivityEvent) {
+  const kind = String(ev.kind || "event");
+  const label =
+    kind === "opportunity"
+      ? "Opportunity"
+      : kind.startsWith("research")
+        ? "Research"
+        : kind.includes("preview")
+          ? "Preview"
+          : kind.includes("order") || kind.includes("fill")
+            ? "Order"
+            : kind.replaceAll(".", " ");
+  return `${label} ${ev.market || ""} ${ev.status || ""}`.trim();
 }
 
 const SETUP_KEY = "pit.desk.setup";
@@ -156,7 +174,9 @@ export function App() {
   const [threads, setThreads] = useState<ChatThread[]>([{ id: "desk", title: "Desk" }]);
   const [memoryEpoch, setMemoryEpoch] = useState(0);
   const [summary, setSummary] = useState<AccountSummary>({});
+  const [autoPrefs, setAutoPrefs] = useState<AutoPrefs>({ watch: true, notify: true, auto_research: false, cadence_minutes: 15, trigger: "policy_pass" });
   const fillKey = useRef("");
+  const lastNotify = useRef(0);
 
   useEffect(() => {
     let gone = false;
@@ -342,7 +362,14 @@ export function App() {
             watchBusy = false;
           });
         void fetchActivity().then((ev) => {
-          if (!gone) setActivity(ev);
+          if (!gone) {
+            setActivity(ev);
+            const last = ev[ev.length - 1];
+            if (last?.kind === "opportunity" && last.ts && last.ts !== lastNotify.current) {
+              lastNotify.current = last.ts;
+              deskNotify("Watch", `${last.market || "A market"} is interesting under your policy.`);
+            }
+          }
         });
         void fetchPositions().then((p) => {
           if (gone) return;
@@ -448,6 +475,9 @@ export function App() {
     void fetchChatThreads().then((rows) => {
       if (!gone && rows.length) setThreads(rows);
     });
+    void fetchAutomation().then((p) => {
+      if (!gone) setAutoPrefs(p);
+    });
     return () => {
       gone = true;
     };
@@ -477,7 +507,7 @@ export function App() {
   const eligible = coins.filter((c) => c.eligible);
   const walletCheck = checks.find((c) => c.name === "wallet");
   const attention = nextFix(companionUp, status, checks, items, sessionAlive, net);
-  const showChat = view === "home" || view === "watch" || view === "research";
+  const showChat = view === "home";
   const doing = researchBusy
     ? `Researching ${researchCoin}`
     : preview?.eligible
@@ -825,7 +855,7 @@ export function App() {
       <aside className="rail">
         <div className="rail-brand">
           <div className="word">PIT.</div>
-          <p className="kicker">{status?.version || "0.2.2"} · local execution</p>
+          <p className="kicker">{status?.version || "0.2.3"} · local execution</p>
         </div>
         <nav className="rail-nav" aria-label="Desk">
           {RAIL.map((item) => (
@@ -877,10 +907,12 @@ export function App() {
             {agent ? <p className="fine">PIT Agent {agent}</p> : null}
             <p className="island" role="status">
               {researchBusy
-                ? `Job ${researchJobId || "…"} · ${researchStage} · ${Math.round(researchElapsed / 1000)}s`
-                : activity.length
-                  ? `${activity[activity.length - 1].kind || "event"} ${activity[activity.length - 1].market || ""} ${activity[activity.length - 1].status || ""}`.trim()
-                  : "No new desk events"}
+                ? `Researching ${researchCoin} · ${Math.round(researchElapsed / 1000)}s`
+                : researchKind
+                  ? researchCardTitle(researchKind, committeeVerified(researchRoles))
+                  : activity.length
+                    ? eventLine(activity[activity.length - 1])
+                    : "No new desk events"}
               {restartAllowed ? "" : " · Restart blocked while research runs"}
             </p>
           </div>
@@ -889,7 +921,7 @@ export function App() {
           <article className="card stop" role="status">
             <p className="label">COMPANION VERSION</p>
             <p>
-              This window expects PIT 0.2.2. The local companion is {status.version}. Close PIT, install the matching
+              This window expects PIT 0.2.3. The local companion is {status.version}. Close PIT, install the matching
               desktop, then launch again. A running sealed job is not cancelled by this warning.
             </p>
           </article>
@@ -977,7 +1009,6 @@ export function App() {
               ready={attention.title === "Desk is ready"}
               items={items}
               attention={attention}
-              coins={coins}
               code={code}
               companionUp={companionUp}
               sessionAlive={sessionAlive}
@@ -985,6 +1016,8 @@ export function App() {
               protectedOk={Boolean(checks.find((c) => c.name === "direct_auth")?.ok)}
               policyPinned={pinned}
               hlApproved={Boolean(checks.find((c) => c.name === "hl_agent" && c.ok))}
+              researchBusy={researchBusy}
+              awaitingAuth={Boolean(preview?.eligible)}
               onResearch={(c) => void researchThis(c)}
               onGo={(v) => setView(v)}
             />
@@ -995,7 +1028,6 @@ export function App() {
             coins={coins}
             computeReady={Boolean(checks.find((c) => c.name === "direct_credit")?.ok)}
             researchBusy={researchBusy}
-            recent={activity}
             onResearch={(c) => void researchThis(c)}
           />
         ) : null}
@@ -1004,7 +1036,7 @@ export function App() {
           <main className="page dense">
             <p className="eyebrow">Positions</p>
             <h1>Portfolio</h1>
-            <p className="lead">Venue state from your Hyperliquid trading account. PIT cannot withdraw. No invented liquidation values.</p>
+            <p className="lead">Live Hyperliquid exposure for the connected trading account. PIT cannot withdraw.</p>
             <div className="equity">
               <article className="card">
                 <p className="label">Total equity</p>
@@ -1071,9 +1103,9 @@ export function App() {
 
         {setupDone && view === "activity" ? (
           <main className="page dense">
-            <p className="eyebrow">LEDGER</p>
-            <h1>Activity</h1>
-            <p className="lead">Exact-once orders, cancels, receipts, and stops. Empty is honest until this machine records one.</p>
+            <p className="eyebrow">Activity</p>
+            <h1>Timeline</h1>
+            <p className="lead">Opportunity, research, committee, preview, approval, order, fill, policy, session, receipt. Historical fills never appear inside a new preview.</p>
             <ActivityTimeline events={activity} lastOid={lastOid} />
             <article className="card">
               <p className="label">LAST VENUE ORDER</p>
@@ -1134,6 +1166,7 @@ export function App() {
               approved={Boolean(checks.find((c) => c.name === "hl_agent" && c.ok))}
               approvedDetail={checks.find((c) => c.name === "hl_agent")?.detail}
               busy={bindBusy}
+              tradingCapital={summary.accountValue}
               onCreateSession={() => void onSession()}
               onCheck={() => void onCheck()}
               onRevoke={() => void onRevoke()}
@@ -1216,6 +1249,14 @@ export function App() {
             <h1>Settings</h1>
             <NetworkToggle net={net} onChange={setNet} />
             <NetworkBanner net={net} />
+            <AutomationPane
+              prefs={autoPrefs}
+              busy={bindBusy}
+              onSave={(p) => {
+                setAutoPrefs(p);
+                void saveAutomation(p).then(setAutoPrefs);
+              }}
+            />
             <CapabilityMatrix net={net} />
             <article className="card">
               <p className="label">UPDATES</p>

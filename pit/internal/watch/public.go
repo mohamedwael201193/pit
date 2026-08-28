@@ -9,6 +9,10 @@ import (
 type PublicCoin struct {
 	Coin         string  `json:"coin"`
 	Reason       string  `json:"reason"`
+	Why          string  `json:"why"`
+	Trend        string  `json:"trend,omitempty"`
+	Rank         int     `json:"rank"`
+	Freshness    string  `json:"freshness"`
 	Mark         float64 `json:"mark"`
 	Oracle       float64 `json:"oracle,omitempty"`
 	Funding      float64 `json:"funding,omitempty"`
@@ -41,6 +45,10 @@ func Public(cands []Candidate, net string) PublicView {
 		coins = append(coins, PublicCoin{
 			Coin:         c.Coin,
 			Reason:       c.Reason,
+			Why:          WhyHuman(c),
+			Trend:        Trend(c.Book),
+			Rank:         Rank(c),
+			Freshness:    "live",
 			Mark:         c.Book.MarkPx,
 			Oracle:       c.Book.OraclePx,
 			Funding:      c.Book.Funding,

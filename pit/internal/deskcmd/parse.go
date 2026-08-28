@@ -19,39 +19,34 @@ type Result struct {
 	Trade         bool   `json:"trade"`
 }
 
-var allowedCoins = map[string]bool{
-	"ETH": true, "BTC": true, "SOL": true, "HYPE": true, "DOGE": true, "AVAX": true,
-}
-
 func Parse(text string) Result {
 	raw := strings.TrimSpace(text)
 	low := strings.ToLower(raw)
 	out := Result{Sign: false, Trade: false, Execute: false, Mutate: false}
 	if raw == "" {
-		out.Reply = "Ask about a market, research, policy, session, evidence, or an official page. PIT will not execute from chat."
+		out.Reply = "Ask about a live market, private research, positions, policy, or an official page. Chat cannot AUTHORIZE."
 		out.Tool = "help"
 		return out
 	}
-	if wantsExecute(low) || wantsFlatten(low) {
+	if wantsFlatten(low) {
 		out.Tool = "refuse_execute"
 		out.Navigate = "preview"
-		if wantsFlatten(low) {
-			out.Reply = "PIT will not flatten from chat. Prepare a reduce-only close on this computer, then type AUTHORIZE there."
-			return out
-		}
-		out.Reply = "PIT will not buy, sell, or authorize from chat. Review the exact preview on this computer, then type AUTHORIZE there."
+		out.Reply = "PIT will not flatten from chat. Prepare a reduce-only close on this computer, then type AUTHORIZE there."
 		return out
 	}
+	execAsk := wantsExecute(low)
+	coin := firstCoin(low)
+
 	if strings.Contains(low, "forget") && (strings.Contains(low, "memory") || strings.Contains(low, "everything")) {
 		out.Tool = "memory.forget"
 		out.Mutate = true
 		out.Reply = "Forget wipes workspace working memory and lessons. It never deletes venue positions or receipts."
 		return out
 	}
-	if strings.Contains(low, "happening") || strings.Contains(low, "what is pit doing") {
+	if strings.Contains(low, "happening") || strings.Contains(low, "what is pit doing") || strings.Contains(low, "waiting for") {
 		out.Tool = "status"
 		out.Navigate = "home"
-		out.Reply = "Desk shows live status. Chat cannot see the sealed book. Research, preview, and session stay on this computer."
+		out.Reply = "Desk shows live status. Chat cannot see the sealed book."
 		return out
 	}
 	if strings.Contains(low, "learn") || strings.Contains(low, "calibration") {
@@ -102,10 +97,16 @@ func Parse(text string) Result {
 		out.Reply = "Opening research evidence on this computer. The sealed prompt stays private."
 		return out
 	}
-	if strings.Contains(low, "preview") {
+	if strings.Contains(low, "preview") || strings.Contains(low, "prepare this trade") || strings.Contains(low, "prepare the trade") {
+		if execAsk {
+			out.Tool = "refuse_execute"
+			out.Navigate = "preview"
+			out.Reply = "PIT will not buy, sell, or authorize from chat. Review the exact preview on this computer, then type AUTHORIZE there."
+			return out
+		}
 		out.Tool = "preview.show"
 		out.Navigate = "research"
-		out.Reply = "The exact preview is on the desk. Chat cannot AUTHORIZE it."
+		out.Reply = "The exact preview is on Research. Chat cannot AUTHORIZE it."
 		return out
 	}
 	if strings.Contains(low, "changed") || strings.Contains(low, "recent") || strings.Contains(low, "activity") || strings.Contains(low, "yesterday") {
@@ -114,28 +115,16 @@ func Parse(text string) Result {
 		out.Reply = "Recent desk events are on Activity. Historical fills never appear inside a new preview."
 		return out
 	}
-	if strings.Contains(low, "opportunit") || strings.Contains(low, "match my policy") || strings.Contains(low, "watch") {
-		out.Tool = "watch.get"
-		out.Navigate = "watch"
-		out.Reply = "Watch lists policy-eligible public markets. Empty is honest."
-		return out
-	}
-	if strings.Contains(low, "compare") {
-		out.Tool = "watch.get"
-		out.Navigate = "watch"
-		out.Reply = "Comparison uses the public book under your policy. Private research stays sealed until you start it."
-		return out
-	}
-	if strings.Contains(low, "blocked") || strings.Contains(low, "rejected") || strings.Contains(low, "stood down") || strings.Contains(low, "kill") {
+	if strings.Contains(low, "blocked") || strings.Contains(low, "rejected") || strings.Contains(low, "stood down") || strings.Contains(low, "committee") {
 		out.Tool = "research.result"
 		out.Navigate = "research"
 		out.Reply = "A committee stand-down or policy block is a verified result, not a crash. Open Research for the named reason."
 		return out
 	}
-	if strings.Contains(low, "position") || strings.Contains(low, "pnl") || strings.Contains(low, "exposure") {
+	if strings.Contains(low, "position") || strings.Contains(low, "pnl") || strings.Contains(low, "exposure") || (strings.Contains(low, "risk") && !wantsResearch(low)) {
 		out.Tool = "positions.get"
 		out.Navigate = "positions"
-		out.Reply = "Positions are read from your Hyperliquid trading account, not the PIT agent address."
+		out.Reply = "Positions are read from your Hyperliquid trading account, not the PIT agent address. Chat cannot flatten."
 		return out
 	}
 	if strings.Contains(low, "policy") {
@@ -144,8 +133,7 @@ func Parse(text string) Result {
 		out.Reply = "Policy is host law. Chat cannot raise clip, leverage, or permissions."
 		return out
 	}
-	if strings.Contains(low, "research") || strings.Contains(low, "prepare") {
-		coin := firstCoin(low)
+	if wantsResearch(low) {
 		if coin == "" {
 			coin = "ETH"
 		}
@@ -153,19 +141,38 @@ func Parse(text string) Result {
 		out.StartResearch = true
 		out.Coin = coin
 		out.Mutate = true
+		out.Navigate = "research"
 		out.Reply = fmt.Sprintf("%s is eligible only if your policy allows it. I will start a sealed Direct research pass. That spends private compute, not trading capital. It will not place an order.", coin)
+		if execAsk {
+			out.Reply += " Chat cannot AUTHORIZE. Review the exact preview on Research, then type AUTHORIZE there."
+		}
 		return out
 	}
-	if strings.Contains(low, "why") {
-		coin := firstCoin(low)
+	if wantsWatch(low) || wantsPrice(low) {
 		out.Tool = "watch.get"
 		out.Navigate = "watch"
-		if coin == "" {
-			out.Reply = "Public Watch shows mark, oracle, funding, and open interest. Private thesis stays sealed."
-		} else {
+		if coin != "" {
 			out.Coin = coin
-			out.Reply = fmt.Sprintf("I can explain the public %s book under your policy. Private research stays sealed until you start it.", coin)
+			out.Reply = fmt.Sprintf("Live Hyperliquid marks for %s under your policy. Side is not decided here. Private thesis stays sealed until you start research.", coin)
+		} else {
+			out.Reply = "Watch lists policy-eligible public markets from the live Hyperliquid book. Empty is honest. No invented scores."
 		}
+		if execAsk {
+			out.Navigate = "preview"
+			out.Reply += " Chat cannot AUTHORIZE. Open Research for the exact preview."
+		}
+		return out
+	}
+	if execAsk {
+		out.Tool = "refuse_execute"
+		out.Navigate = "preview"
+		out.Reply = "PIT will not buy, sell, or authorize from chat. Review the exact preview on this computer, then type AUTHORIZE there."
+		return out
+	}
+	if greetingOnly(low) {
+		out.Tool = "greet"
+		out.Navigate = "home"
+		out.Reply = "Hello. Ask what is interesting, a live price, private research, or your positions. Chat cannot AUTHORIZE."
 		return out
 	}
 	if _, err := url.ParseRequestURI(raw); err == nil {
@@ -174,7 +181,7 @@ func Parse(text string) Result {
 		return out
 	}
 	out.Tool = "help"
-	out.Reply = "I can research a policy market, explain Watch, show evidence, open official Hyperliquid or 0G pages, or explain policy and session. I cannot execute."
+	out.Reply = "Ask a specific desk question: what is interesting, a live price, research a policy market, evidence, positions, or policy. Chat cannot AUTHORIZE."
 	return out
 }
 
@@ -184,7 +191,8 @@ func wantsFlatten(low string) bool {
 
 func wantsExecute(low string) bool {
 	needles := []string{
-		"buy now", "sell now", "trade now", "just do it", "just buy", "just sell",
+		"buy now", "sell now", "trade now", "do trade", "do the trade", "execute trade",
+		"just do it", "just buy", "just sell", "trade it", "make a trade",
 		"i authorize", "i authorise", "execute this", "place the order",
 		"go long now", "go short now",
 	}
@@ -199,8 +207,43 @@ func wantsExecute(low string) bool {
 	return false
 }
 
+func wantsResearch(low string) bool {
+	if strings.Contains(low, "research") {
+		return true
+	}
+	for _, n := range []string{"reasearch", "reaserch", "reseach", "reserach", "resarch", "reasearh"} {
+		if strings.Contains(low, n) {
+			return true
+		}
+	}
+	return strings.Contains(low, "sealed pass") || strings.Contains(low, "research privately")
+}
+
+func wantsWatch(low string) bool {
+	return strings.Contains(low, "opportunit") ||
+		strings.Contains(low, "match my policy") ||
+		strings.Contains(low, "watch") ||
+		strings.Contains(low, "interesting") ||
+		strings.Contains(low, "strongest") ||
+		strings.Contains(low, "compare")
+}
+
+func wantsPrice(low string) bool {
+	return strings.Contains(low, "price") || strings.Contains(low, "mark px") || strings.Contains(low, "how much is")
+}
+
+func greetingOnly(low string) bool {
+	t := strings.Trim(low, "!?. ")
+	switch t {
+	case "hi", "hello", "hey", "yo", "gm", "thanks", "thank you", "hi there":
+		return true
+	}
+	return false
+}
+
 func firstCoin(low string) string {
-	for coin := range allowedCoins {
+	order := []string{"ETH", "BTC", "SOL", "HYPE", "DOGE", "AVAX"}
+	for _, coin := range order {
 		if strings.Contains(low, strings.ToLower(coin)) {
 			return coin
 		}

@@ -1,6 +1,9 @@
 package deskcmd
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func TestRefuseExecute(t *testing.T) {
 	for _, q := range []string{"buy ETH", "trade now", "I authorize it", "just do it", "flatten ETH", "close my position"} {
@@ -73,6 +76,40 @@ func TestHappeningAndPositions(t *testing.T) {
 	}
 	r = Parse("Show me my current positions")
 	if r.Navigate != "positions" || r.Execute {
+		t.Fatalf("%+v", r)
+	}
+}
+
+func TestGreetingIsNotCannedHelp(t *testing.T) {
+	r := Parse("HI")
+	if r.Execute || r.Tool != "greet" {
+		t.Fatalf("%+v", r)
+	}
+	if strings.Contains(r.Reply, "I can research a policy market") {
+		t.Fatal(r.Reply)
+	}
+}
+
+func TestTypoResearchStartsSealedPass(t *testing.T) {
+	r := Parse("HI WHAT PRICE OF ETH NOW AND GIVE ME REASEARCH AND DO TRADE")
+	if r.Execute || !r.StartResearch || r.Coin != "ETH" {
+		t.Fatalf("%+v", r)
+	}
+	if !strings.Contains(r.Reply, "cannot AUTHORIZE") {
+		t.Fatal(r.Reply)
+	}
+}
+
+func TestStrongestOpportunityIsWatch(t *testing.T) {
+	r := Parse("Find the strongest opportunity.")
+	if r.Execute || r.StartResearch || r.Tool != "watch.get" {
+		t.Fatalf("%+v", r)
+	}
+}
+
+func TestDoTradeAloneRefuses(t *testing.T) {
+	r := Parse("do trade")
+	if r.Execute || r.StartResearch || r.Tool != "refuse_execute" {
 		t.Fatalf("%+v", r)
 	}
 }

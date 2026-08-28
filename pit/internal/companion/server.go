@@ -65,6 +65,7 @@ func New(dir string) *Hub {
 	h.researchMu.Lock()
 	h.loadJobLocked()
 	h.researchMu.Unlock()
+	go h.autoLoop()
 	return h
 }
 
@@ -133,6 +134,7 @@ func (h *Hub) Handler() http.Handler {
 	mux.HandleFunc("/local/update", h.localUpdate)
 	mux.HandleFunc("/local/explain", h.localExplain)
 	mux.HandleFunc("/local/models", h.localModels)
+	mux.HandleFunc("/local/automation", h.localAutomation)
 	mux.HandleFunc("/local/kill", h.localKill)
 	mux.HandleFunc("/direct/intent", h.deviceDirectIntent)
 	mux.HandleFunc("/direct/complete", h.deviceDirectComplete)

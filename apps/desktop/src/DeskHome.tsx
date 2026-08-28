@@ -3,17 +3,38 @@ import { prettyCode } from "./companion";
 import type { NextFix } from "./nextFix";
 import type { Probe } from "./readiness";
 
-type Coin = { coin: string; reason: string; mark: number; eligible?: boolean; funding?: number; openInterest?: number; oracle?: number };
+const LOOP = [
+  "Watch",
+  "Research privately",
+  "Challenge",
+  "Explain",
+  "Policy check",
+  "Exact preview",
+  "You approve",
+  "Execute",
+  "Prove",
+  "Learn",
+] as const;
 
 function tone(ok: boolean) {
   return ok ? "ok" : "bad";
+}
+
+function loopIndex(ready: boolean, attention: NextFix): number {
+  const t = attention.title.toLowerCase();
+  if (!ready && t.includes("wallet")) return 0;
+  if (t.includes("protect")) return 1;
+  if (t.includes("session") || t.includes("approve")) return 6;
+  if (t.includes("policy")) return 4;
+  if (t.includes("fund") || t.includes("research")) return 1;
+  if (ready) return 0;
+  return 0;
 }
 
 export function DeskHome({
   ready,
   items,
   attention,
-  coins,
   code,
   companionUp,
   sessionAlive,
@@ -21,13 +42,14 @@ export function DeskHome({
   protectedOk,
   policyPinned,
   hlApproved,
+  researchBusy,
+  awaitingAuth,
   onResearch,
   onGo,
 }: {
   ready: boolean;
   items: Probe[];
   attention: NextFix;
-  coins: Coin[];
   code: string;
   companionUp: boolean;
   sessionAlive: boolean;
@@ -35,22 +57,38 @@ export function DeskHome({
   protectedOk: boolean;
   policyPinned: boolean;
   hlApproved: boolean;
+  researchBusy?: boolean;
+  awaitingAuth?: boolean;
   onResearch: (coin: string) => void;
   onGo: (view: "watch" | "research" | "security" | "settings") => void;
 }) {
-  const eth = coins.find((c) => c.coin === "ETH");
   const showPair = items.find((p) => p.id === "wallet")?.state !== "ok";
+  let lit = loopIndex(ready, attention);
+  if (researchBusy) lit = 1;
+  if (awaitingAuth) lit = 6;
   return (
-    <main className="page dense">
+    <main className="page dense desk-story">
       <div className="page-head">
         <div>
           <p className="eyebrow">Desk</p>
-          <h1>{ready ? "Ready" : attention.title}</h1>
+          <h1>{ready ? "Private trading desk" : attention.title}</h1>
         </div>
         <p className="fine" style={{ margin: 0 }}>
           Chat cannot AUTHORIZE.
         </p>
       </div>
+      <ol className="loop" aria-label="How PIT works">
+        {LOOP.map((step, i) => (
+          <li key={step} className={i === lit ? "on" : ""}>
+            <span>{String(i + 1).padStart(2, "0")}</span>
+            {step}
+          </li>
+        ))}
+      </ol>
+      <p className="lead">
+        PIT watches the public book under your policy, researches your private strategy in sealed compute, challenges
+        itself, then waits for you to approve the exact order.
+      </p>
       <dl className="ready-strip">
         <div>
           <dt>Research</dt>
@@ -82,9 +120,14 @@ export function DeskHome({
           </p>
         </div>
         <div className="cta-row">
-          {ready && eth ? (
-            <button type="button" className="primary" onClick={() => onResearch("ETH")}>
-              Research ETH
+          {ready ? (
+            <button type="button" className="primary" onClick={() => onGo("watch")}>
+              Open Watch
+            </button>
+          ) : null}
+          {ready ? (
+            <button type="button" className="linkish" onClick={() => onResearch("ETH")}>
+              Research ETH privately
             </button>
           ) : null}
           {attention.href ? (
@@ -115,36 +158,6 @@ export function DeskHome({
           </a>
         </section>
       ) : null}
-      <p className="label" style={{ marginTop: 14 }}>
-        Markets
-      </p>
-      <div className="market-head">
-        <span>Asset</span>
-        <span>Mark</span>
-        <span>Oracle</span>
-        <span>Funding</span>
-        <span>OI</span>
-        <span>Policy</span>
-        <span>Ready</span>
-        <span></span>
-      </div>
-      <ul className="market-rows" aria-label="Policy markets">
-        {coins.slice(0, 3).map((c) => (
-          <li key={c.coin}>
-            <strong>{c.coin}</strong>
-            <span className="mark-num">{c.mark || "—"}</span>
-            <span>{c.oracle ?? "—"}</span>
-            <span>{c.funding ?? "—"}</span>
-            <span>{c.openInterest ? Math.round(c.openInterest) : "—"}</span>
-            <span>{c.eligible ? "PASS" : "BLOCKED"}</span>
-            <span>{computeReady ? "Ready" : "Needs compute"}</span>
-            <button type="button" className="linkish" onClick={() => onResearch(c.coin)} disabled={!c.eligible}>
-              Research
-            </button>
-          </li>
-        ))}
-      </ul>
-      <p className="fine">Public Hyperliquid marks. Side is not decided here.</p>
     </main>
   );
 }

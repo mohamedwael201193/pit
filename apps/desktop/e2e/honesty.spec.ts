@@ -1,4 +1,5 @@
 import { committeeVerified, oidBelongsToPreview, researchCardTitle } from "../src/honesty";
+import { researchWhyCopy } from "../src/researchWhy";
 
 export function assertHonesty() {
   const one = [{ role: "researcher", verify_e2ee: "OK" }];
@@ -14,4 +15,7 @@ export function assertHonesty() {
   if (researchCardTitle("COMMITTEE_INCOMPLETE") === "RESEARCH VERIFIED") throw new Error("incomplete title");
   if (oidBelongsToPreview("0xold", "0xnew")) throw new Error("stale oid");
   if (!oidBelongsToPreview("0xabc", "0xabc")) throw new Error("matching hash");
+  const why = researchWhyCopy({ coin: "ETH", kind: "READY_STOOD_DOWN", roles: three, deny: "no_side" });
+  if (why.length !== 6) throw new Error("why rows");
+  if (!why[3].a.toLowerCase().includes("stand-down")) throw new Error("stand-down why");
 }

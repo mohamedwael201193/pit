@@ -38,4 +38,7 @@ func TestPublicCarriesVenueFields(t *testing.T) {
 	if v.Coins[0].Oracle != 2510 || v.Coins[0].Funding == 0 || v.Coins[0].OpenInterest == 0 {
 		t.Fatalf("%+v", v.Coins[0])
 	}
+	if v.Coins[0].Why == "" || v.Coins[0].Rank < 1 || v.Coins[0].Freshness != "live" {
+		t.Fatalf("%+v", v.Coins[0])
+	}
 }
