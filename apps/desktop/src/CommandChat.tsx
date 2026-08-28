@@ -73,7 +73,7 @@ export function CommandChat({
     setLines((cur) => [...cur, { role: "user", text, ts: Date.now(), thread }]);
     try {
       const r = await sendDeskCommand(text, thread);
-      const reply = r.reply || "PIT did not execute.";
+      const reply = r.reply || r.error || "PIT could not complete that command.";
       setLines((cur) => [...cur, { role: "pit", text: reply, tool: r.tool, ts: Date.now(), thread, coin: r.coin }]);
       applyReply(r);
     } catch {

@@ -413,9 +413,16 @@ export async function sendDeskCommand(text: string, thread = "desk"): Promise<Ch
     const native = await nativeJsonOrError<ChatReply>("local_chat", { text, thread });
     if (native.sign || native.trade) return { error: "companion_denied", execute: false };
     return { ...native, execute: false };
-  } catch (e) {
-    const msg = e instanceof Error ? e.message : "companion_http";
-    return { error: msg || "companion_http", execute: false };
+  } catch {
+    const body = await fetchJson<ChatReply>("/local/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text, thread }),
+    });
+    if (!body || body.sign || body.trade) {
+      return { error: "companion_http", execute: false, reply: "PIT could not reach the local companion." };
+    }
+    return { ...body, execute: false };
   }
 }
 
