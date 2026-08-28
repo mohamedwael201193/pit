@@ -51,10 +51,42 @@ func ParsePositions(raw json.RawMessage) []Position {
 	return out
 }
 
+type ClearinghouseSummary struct {
+	AccountValue    string `json:"accountValue,omitempty"`
+	TotalMarginUsed string `json:"totalMarginUsed,omitempty"`
+	TotalNtlPos     string `json:"totalNtlPos,omitempty"`
+	Withdrawable    string `json:"withdrawable,omitempty"`
+}
+
+func ParseClearinghouse(raw json.RawMessage) ClearinghouseSummary {
+	var st struct {
+		MarginSummary struct {
+			AccountValue    string `json:"accountValue"`
+			TotalNtlPos     string `json:"totalNtlPos"`
+			TotalMarginUsed string `json:"totalMarginUsed"`
+		} `json:"marginSummary"`
+		Withdrawable string `json:"withdrawable"`
+	}
+	if json.Unmarshal(raw, &st) != nil {
+		return ClearinghouseSummary{}
+	}
+	return ClearinghouseSummary{
+		AccountValue:    st.MarginSummary.AccountValue,
+		TotalMarginUsed: st.MarginSummary.TotalMarginUsed,
+		TotalNtlPos:     st.MarginSummary.TotalNtlPos,
+		Withdrawable:    st.Withdrawable,
+	}
+}
+
 func (c *Client) Positions(user string) ([]Position, error) {
+	rows, _, err := c.Clearinghouse(user)
+	return rows, err
+}
+
+func (c *Client) Clearinghouse(user string) ([]Position, ClearinghouseSummary, error) {
 	raw, err := c.postInfo(map[string]any{"type": "clearinghouseState", "user": user})
 	if err != nil {
-		return nil, err
+		return nil, ClearinghouseSummary{}, err
 	}
-	return ParsePositions(raw), nil
+	return ParsePositions(raw), ParseClearinghouse(raw), nil
 }

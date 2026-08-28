@@ -70,7 +70,7 @@ func (h *Hub) localPositions(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	c := hl.New(config.For(net))
-	rows, perr := c.Positions(user)
+	rows, acct, perr := c.Clearinghouse(user)
 	if perr != nil {
 		writeLocal(w, http.StatusOK, map[string]any{"ok": false, "error": "HYPERLIQUID_OUTAGE", "positions": []any{}, "sign": false, "trade": false, "account": user})
 		return
@@ -92,6 +92,10 @@ func (h *Hub) localPositions(w http.ResponseWriter, r *http.Request) {
 	writeLocal(w, http.StatusOK, map[string]any{
 		"ok": true, "account": user, "queried": "master", "positions": out, "sign": false, "trade": false,
 		"lastOrder": cli.LoadLastOrder(h.Dir),
+		"summary": map[string]any{
+			"accountValue": acct.AccountValue, "totalMarginUsed": acct.TotalMarginUsed,
+			"totalNtlPos": acct.TotalNtlPos, "withdrawable": acct.Withdrawable,
+		},
 	})
 }
 
@@ -100,9 +104,14 @@ func (h *Hub) localChat(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var body struct {
-		Text string `json:"text"`
+		Text   string `json:"text"`
+		Thread string `json:"thread"`
 	}
 	_ = json.NewDecoder(r.Body).Decode(&body)
+	thread := strings.TrimSpace(body.Thread)
+	if thread == "" {
+		thread = "desk"
+	}
 	if secretful(body.Text) {
 		writeLocal(w, http.StatusOK, map[string]any{
 			"ok": false, "error": "secret_refused", "reply": "PIT will not store or send secrets in chat.",
@@ -118,12 +127,12 @@ func (h *Hub) localChat(w http.ResponseWriter, r *http.Request) {
 	if parsed.StartResearch {
 		parsed.Reply = parsed.Reply + " Chat cannot AUTHORIZE. The desk will start the sealed job on this computer."
 	}
-	appendChat(h.Dir, "user", body.Text, "")
-	appendChat(h.Dir, "pit", parsed.Reply, parsed.Tool)
+	appendChatThread(h.Dir, "user", body.Text, "", thread)
+	appendChatThread(h.Dir, "pit", parsed.Reply, parsed.Tool, thread)
 	writeLocal(w, http.StatusOK, map[string]any{
 		"ok": true, "reply": parsed.Reply, "tool": parsed.Tool, "mutate": parsed.Mutate,
 		"execute": false, "start_research": parsed.StartResearch, "coin": parsed.Coin,
-		"navigate": parsed.Navigate, "open_url": parsed.OpenURL, "sign": false, "trade": false,
+		"navigate": parsed.Navigate, "open_url": parsed.OpenURL, "thread": thread, "sign": false, "trade": false,
 	})
 }
 
@@ -136,7 +145,8 @@ func (h *Hub) localChatLog(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "origin_denied", http.StatusForbidden)
 		return
 	}
-	writeLocal(w, http.StatusOK, map[string]any{"messages": readChat(h.Dir, 80), "sign": false, "trade": false})
+	thread := strings.TrimSpace(r.URL.Query().Get("thread"))
+	writeLocal(w, http.StatusOK, map[string]any{"messages": readChatThread(h.Dir, thread, 80), "sign": false, "trade": false})
 }
 
 func (h *Hub) localMemoryForget(w http.ResponseWriter, r *http.Request) {
@@ -286,21 +296,29 @@ func (h *Hub) localExplain(w http.ResponseWriter, r *http.Request) {
 }
 
 type chatLine struct {
-	TS    int64  `json:"ts"`
-	Role  string `json:"role"`
-	Text  string `json:"text"`
-	Tool  string `json:"tool,omitempty"`
-	Sign  bool   `json:"sign"`
-	Trade bool   `json:"trade"`
+	TS     int64  `json:"ts"`
+	Role   string `json:"role"`
+	Text   string `json:"text"`
+	Tool   string `json:"tool,omitempty"`
+	Thread string `json:"thread,omitempty"`
+	Sign   bool   `json:"sign"`
+	Trade  bool   `json:"trade"`
 }
 
 func chatPath(dir string) string { return filepath.Join(dir, "chat-transcript.jsonl") }
 
 func appendChat(dir, role, text, tool string) {
+	appendChatThread(dir, role, text, tool, "desk")
+}
+
+func appendChatThread(dir, role, text, tool, thread string) {
 	if secretful(text) {
 		return
 	}
-	raw, err := json.Marshal(chatLine{TS: time.Now().UnixMilli(), Role: role, Text: text, Tool: tool})
+	if strings.TrimSpace(thread) == "" {
+		thread = "desk"
+	}
+	raw, err := json.Marshal(chatLine{TS: time.Now().UnixMilli(), Role: role, Text: text, Tool: tool, Thread: thread})
 	if err != nil {
 		return
 	}
@@ -314,9 +332,16 @@ func appendChat(dir, role, text, tool string) {
 	}
 	defer f.Close()
 	_, _ = f.Write([]byte(sealed + "\n"))
+	if role == "user" {
+		touchThread(dir, thread, text)
+	}
 }
 
 func readChat(dir string, limit int) []chatLine {
+	return readChatThread(dir, "", limit)
+}
+
+func readChatThread(dir, thread string, limit int) []chatLine {
 	raw, err := os.ReadFile(chatPath(dir))
 	if err != nil || strings.Contains(strings.ToLower(string(raw)), "app-sk-") {
 		return nil
@@ -332,6 +357,12 @@ func readChat(dir string, limit int) []chatLine {
 		}
 		var row chatLine
 		if json.Unmarshal(plain, &row) != nil {
+			continue
+		}
+		if row.Thread == "" {
+			row.Thread = "desk"
+		}
+		if thread != "" && row.Thread != thread {
 			continue
 		}
 		out = append(out, row)
@@ -371,7 +402,10 @@ func (h *Hub) localModels(w http.ResponseWriter, r *http.Request) {
 		"note": "Role separation on one Direct TeeML SKU. Not three independent models. Router catalog is not this list.",
 		"models": []map[string]any{{
 			"model": sku.Model, "verifiability": sku.Verifiability, "proven_e2ee": sku.ProvenE2EE,
-			"label": label, "role_separation": true, "private_book": sku.ProvenE2EE,
+			"label": label, "path": "Direct", "role_separation": true, "private_book": sku.ProvenE2EE,
+			"note": "Private. Routed directly to the verified compute path. Role separation on one SKU, not three independent models.",
+			"latency": "Live sealed round-trip. Typical 30–90s per role when the provider is live. Not a timer.",
+			"cost": "Estimated ~3 0G locked for one sealed committee. Router pricing is not this path.",
 		}},
 	})
 }

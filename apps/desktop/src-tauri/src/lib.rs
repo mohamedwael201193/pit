@@ -1,3 +1,4 @@
+use serde::{Deserialize, Serialize};
 use std::fs::{self, OpenOptions};
 use std::io::{Read, Write};
 use std::net::{SocketAddr, TcpStream};
@@ -5,6 +6,64 @@ use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 use std::sync::Mutex;
 use std::time::Duration;
+use tauri::{Manager, PhysicalPosition, PhysicalSize};
+
+#[derive(Serialize, Deserialize)]
+struct Bounds {
+    x: i32,
+    y: i32,
+    w: u32,
+    h: u32,
+}
+
+fn bounds_file() -> Option<PathBuf> {
+    let base = std::env::var_os("APPDATA")?;
+    Some(PathBuf::from(base).join("pit").join("window-bounds.json"))
+}
+
+fn restore_bounds(window: &tauri::WebviewWindow) {
+    let Some(path) = bounds_file() else {
+        return;
+    };
+    let Ok(raw) = fs::read_to_string(path) else {
+        return;
+    };
+    let Ok(b) = serde_json::from_str::<Bounds>(&raw) else {
+        return;
+    };
+    if b.w < 1100 || b.h < 720 {
+        return;
+    }
+    let _ = window.set_position(PhysicalPosition::new(b.x, b.y));
+    let _ = window.set_size(PhysicalSize::new(b.w, b.h));
+}
+
+fn save_bounds(window: &tauri::Window) {
+    let Ok(pos) = window.outer_position() else {
+        return;
+    };
+    let Ok(size) = window.outer_size() else {
+        return;
+    };
+    if size.width < 1100 || size.height < 720 {
+        return;
+    }
+    let Some(path) = bounds_file() else {
+        return;
+    };
+    if let Some(dir) = path.parent() {
+        let _ = fs::create_dir_all(dir);
+    }
+    let body = Bounds {
+        x: pos.x,
+        y: pos.y,
+        w: size.width,
+        h: size.height,
+    };
+    if let Ok(raw) = serde_json::to_string(&body) {
+        let _ = fs::write(path, raw);
+    }
+}
 
 #[tauri::command]
 fn companion_url() -> String {
@@ -147,13 +206,54 @@ async fn local_positions() -> Result<serde_json::Value, String> {
 }
 
 #[tauri::command]
-async fn local_chat(text: String) -> Result<serde_json::Value, String> {
-    json_post("/local/chat".into(), serde_json::json!({ "text": text }), 20).await
+async fn local_chat(text: String, thread: Option<String>) -> Result<serde_json::Value, String> {
+    json_post(
+        "/local/chat".into(),
+        serde_json::json!({ "text": text, "thread": thread.unwrap_or_else(|| "desk".into()) }),
+        20,
+    )
+    .await
 }
 
 #[tauri::command]
-async fn local_chat_log() -> Result<serde_json::Value, String> {
-    json_get("/local/chat/log".into(), 8).await
+async fn local_chat_log(thread: Option<String>) -> Result<serde_json::Value, String> {
+    let t = thread.unwrap_or_else(|| "desk".into());
+    json_get(format!("/local/chat/log?thread={t}"), 8).await
+}
+
+#[tauri::command]
+async fn local_chat_threads() -> Result<serde_json::Value, String> {
+    json_get("/local/chat/threads".into(), 8).await
+}
+
+#[tauri::command]
+async fn local_chat_thread(op: String, id: Option<String>, title: Option<String>) -> Result<serde_json::Value, String> {
+    json_post(
+        "/local/chat/thread".into(),
+        serde_json::json!({ "op": op, "id": id, "title": title }),
+        8,
+    )
+    .await
+}
+
+#[tauri::command]
+fn window_min(window: tauri::Window) {
+    let _ = window.minimize();
+}
+
+#[tauri::command]
+fn window_toggle_max(window: tauri::Window) {
+    if window.is_maximized().unwrap_or(false) {
+        let _ = window.unmaximize();
+    } else {
+        let _ = window.maximize();
+    }
+}
+
+#[tauri::command]
+fn window_close(window: tauri::Window) {
+    save_bounds(&window);
+    let _ = window.close();
 }
 
 #[tauri::command]
@@ -425,7 +525,7 @@ fn same_install(path: &Path) -> bool {
     path.parent().map(|p| p == dir).unwrap_or(false)
 }
 
-const SIDECAR_VERSION: &str = "0.2.0";
+const SIDECAR_VERSION: &str = "0.2.1";
 
 fn companion_version() -> Option<String> {
     let raw = loopback_get("/health").ok()?;
@@ -549,6 +649,22 @@ fn start_companion() {
 pub fn run() {
     start_companion();
     tauri::Builder::default()
+        .setup(|app| {
+            if let Some(w) = app.get_webview_window("main") {
+                restore_bounds(&w);
+                let _ = w.show();
+                let _ = w.set_focus();
+            }
+            Ok(())
+        })
+        .on_window_event(|window, event| {
+            if matches!(
+                event,
+                tauri::WindowEvent::Moved(_) | tauri::WindowEvent::Resized(_)
+            ) {
+                save_bounds(window);
+            }
+        })
         .invoke_handler(tauri::generate_handler![
             companion_url,
             export_session,
@@ -575,6 +691,8 @@ pub fn run() {
             local_positions,
             local_chat,
             local_chat_log,
+            local_chat_threads,
+            local_chat_thread,
             local_memory_forget,
             local_calibration,
             local_security,
@@ -582,7 +700,10 @@ pub fn run() {
             local_update,
             local_explain,
             local_models,
-            ensure_companion
+            ensure_companion,
+            window_min,
+            window_toggle_max,
+            window_close
         ])
         .run(tauri::generate_context!())
         .expect("PIT desktop failed to start");

@@ -37,7 +37,7 @@ function PairingBlock({
         {display}
       </p>
       <p className="fine">
-        Type this code at {LINKS.pair}. It expires in two minutes and works once. The website never receives a session key.
+        Type this code on the pairing page. It expires in two minutes and works once. The website never receives a session key.
       </p>
       {expires ? <p className="fine">Expires {expires}</p> : null}
     </article>

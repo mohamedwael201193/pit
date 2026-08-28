@@ -1,14 +1,12 @@
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { AuthorizeGate } from "./AuthorizeGate";
 import { CapabilityMatrix } from "./CapabilityMatrix";
-import { EmptyHome } from "./EmptyHome";
 import { KillNote } from "./KillNote";
 import { NAMED } from "./namedStates";
 import { NetworkBanner } from "./NetworkBanner";
 import { NetworkToggle } from "./NetworkToggle";
 import { PermissionsCard } from "./Permissions";
 import { PolicyLaw } from "./PolicyLaw";
-import { PreviewNote } from "./PreviewNote";
 import { SessionNote } from "./SessionNote";
 import { HyperliquidCard } from "./HyperliquidCard";
 import { committeeDeny, explainCommittee } from "./committee";
@@ -23,6 +21,7 @@ import {
   doctor,
   fetchActivity,
   fetchCalibration,
+  fetchChatThreads,
   fetchIdentity,
   fetchPositions,
   fetchSecurity,
@@ -30,6 +29,7 @@ import {
   fetchWatch,
   forgetMemory,
   localStatus,
+  mutateChatThread,
   pairCode,
   pinLocalPolicy,
   prettyCode,
@@ -39,30 +39,38 @@ import {
   setKillSwitch,
   startResearch,
   wakeCompanion,
+  type AccountSummary,
   type ActivityEvent,
   type BindResult,
+  type ChatThread,
   type DoctorCheck,
   type LocalStatus,
   type SecurityDomain,
   type VenuePosition,
 } from "./companion";
-import { explainStop, explainStopHref } from "./explain";
-import { LINKS, hyperliquidAPI, hyperliquidApp } from "./links";
+import { explainStop } from "./explain";
+import { LINKS, explorerAddress, hyperliquidAPI, hyperliquidApp } from "./links";
 import { nextFix } from "./nextFix";
 import { probes, type Probe } from "./readiness";
 import { setupPath } from "./setupPath";
 import { WelcomePath } from "./WelcomePath";
-import { committeeVerified, oidBelongsToPreview, researchCardTitle } from "./honesty";
+import { committeeVerified } from "./honesty";
 import { CommandChat } from "./CommandChat";
-import { EvidenceDrawer } from "./EvidenceDrawer";
 import { ActivityTimeline } from "./ActivityTimeline";
 import { PositionsPanel } from "./PositionsPanel";
 import { SecurityCenter } from "./SecurityCenter";
-import { ComputeCard } from "./ComputeCard";
 import { SetupWizard } from "./SetupWizard";
+import { TitleBar } from "./TitleBar";
+import { BootGate } from "./BootGate";
+import { CommandPalette } from "./CommandPalette";
+import { ThreadRail } from "./ThreadRail";
+import { DeskHome } from "./DeskHome";
+import { WatchBook } from "./WatchBook";
+import { ResearchBoard } from "./ResearchBoard";
+import { askNotify, deskNotify } from "./notify";
 
 type Net = "mainnet" | "testnet";
-type View = "home" | "watch" | "research" | "activity" | "policy" | "security" | "account" | "settings";
+type View = "home" | "watch" | "research" | "positions" | "activity" | "policy" | "security" | "account" | "settings";
 
 type Coin = { coin: string; reason: string; mark: number; eligible?: boolean; oracle?: number; funding?: number; openInterest?: number };
 
@@ -208,6 +216,7 @@ const RAIL: { id: View; label: string }[] = [
   { id: "home", label: "Desk" },
   { id: "watch", label: "Watch" },
   { id: "research", label: "Research" },
+  { id: "positions", label: "Positions" },
   { id: "activity", label: "Activity" },
   { id: "policy", label: "Policy" },
   { id: "security", label: "Security" },
@@ -380,6 +389,12 @@ export function App() {
       return false;
     }
   });
+  const [booted, setBooted] = useState(false);
+  const [palette, setPalette] = useState(false);
+  const [thread, setThread] = useState("desk");
+  const [threads, setThreads] = useState<ChatThread[]>([{ id: "desk", title: "Desk" }]);
+  const [summary, setSummary] = useState<AccountSummary>({});
+  const fillKey = useRef("");
 
   useEffect(() => {
     let gone = false;
@@ -569,6 +584,7 @@ export function App() {
           setPositions(p.positions);
           setPositionAccount(p.account || "");
           setPositionErr(p.error || "");
+          setSummary(p.summary || {});
         });
         void fetchSecurity().then((d) => {
           if (!gone) setSecurityDomains(d);
@@ -640,6 +656,46 @@ export function App() {
     }
     setSetupDone(true);
   }, [sessionAlive]);
+
+  useEffect(() => {
+    askNotify();
+  }, []);
+
+  useEffect(() => {
+    if (companionUp || ticks >= 8) setBooted(true);
+  }, [companionUp, ticks]);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setPalette((v) => !v);
+      }
+      if (e.key === "Escape") setPalette(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+  useEffect(() => {
+    if (!companionUp) return;
+    let gone = false;
+    void fetchChatThreads().then((rows) => {
+      if (!gone && rows.length) setThreads(rows);
+    });
+    return () => {
+      gone = true;
+    };
+  }, [companionUp, thread]);
+
+  useEffect(() => {
+    if (status?.lastOrder?.status === "filled" && lastOid) {
+      const key = `fill-${lastOid}`;
+      if (fillKey.current === key) return;
+      fillKey.current = key;
+      deskNotify("Order filled", `OID ${lastOid}. Historical fills never appear inside a new preview.`);
+    }
+  }, [status?.lastOrder?.status, lastOid]);
 
   const denyCode = String(preview?.deny || "");
   const committee = committeeDeny(denyCode) || committeeDeny(researchStop);
@@ -971,10 +1027,47 @@ export function App() {
 
   return (
     <div className="app">
+      <TitleBar status={doing} />
+      <BootGate
+        open={!booted}
+        rows={[
+          { id: "ws", label: "loading secure workspace", state: companionUp ? "ok" : "wait" },
+          { id: "companion", label: "starting companion", state: companionUp ? "ok" : ticks >= 8 ? "fail" : "wait" },
+          { id: "wallet", label: "checking wallet binding", state: items.find((p) => p.id === "wallet")?.state === "ok" ? "ok" : "wait" },
+          { id: "compute", label: "checking private compute", state: checks.find((c) => c.name === "direct_credit")?.ok ? "ok" : "wait" },
+          { id: "policy", label: "checking policy", state: pinned ? "ok" : "wait" },
+          { id: "session", label: "checking trading session", state: sessionAlive ? "ok" : "wait" },
+          { id: "venue", label: "checking venue connection", state: checks.find((c) => c.name === "hl_agent")?.ok ? "ok" : "wait" },
+        ]}
+        stuck={companionStuck ? "Companion is slow on this computer. Close old PIT windows and launch again. A sealed job is not cancelled." : undefined}
+      />
+      <CommandPalette
+        open={palette}
+        onClose={() => setPalette(false)}
+        actions={[
+          { id: "desk", label: "Open Desk", run: () => setView("home") },
+          { id: "watch", label: "Open Watch", run: () => setView("watch") },
+          { id: "research", label: "Open Research", run: () => setView("research") },
+          { id: "positions", label: "Open Positions", run: () => setView("positions") },
+          { id: "activity", label: "Open Activity", run: () => setView("activity") },
+          { id: "policy", label: "Open Policy", run: () => setView("policy") },
+          { id: "security", label: "Open Security", run: () => setView("security") },
+          { id: "account", label: "Open Account", run: () => setView("account") },
+          { id: "settings", label: "Open Settings", run: () => setView("settings") },
+          { id: "start", label: "Start research", run: () => void researchThis("ETH") },
+          { id: "hl", label: "Open Hyperliquid", run: () => window.open(hyperliquidApp(net), "_blank", "noopener,noreferrer") },
+          { id: "hlapi", label: "Open Hyperliquid API", run: () => window.open(hyperliquidAPI(net), "_blank", "noopener,noreferrer") },
+          { id: "og", label: "Open 0G Private Compute", run: () => window.open(LINKS.pcAdvanced, "_blank", "noopener,noreferrer") },
+          { id: "check", label: "Check system", run: () => void onCheck() },
+          { id: "preview", label: "Show current preview", run: () => setView("research") },
+          { id: "act", label: "Show latest activity", run: () => setView("activity") },
+        ]}
+      />
+      <div className="work">
       <aside className="rail">
         <div className="rail-brand">
           <div className="word">PIT.</div>
-          <p className="kicker">{status?.version || "0.2.0"} · local execution</p>
+          <p className="kicker">{status?.version || "0.2.1"} · local execution</p>
         </div>
         <nav className="rail-nav" aria-label="Desk">
           {RAIL.map((item) => (
@@ -993,8 +1086,10 @@ export function App() {
         </nav>
         <div className="rail-foot">
           <p>{net === "mainnet" ? "MAINNET" : "TESTNET"}</p>
+          <p>{status?.wallet ? `${status.wallet.slice(0, 6)}…${status.wallet.slice(-4)}` : "unbound"}</p>
+          <p>{sessionAlive ? "session live" : "no session"}</p>
+          <p>{checks.find((c) => c.name === "direct_credit")?.ok ? "compute ready" : "compute action"}</p>
           <p>{companionUp ? "companion live" : "starting companion"}</p>
-          <p>{status?.version || "PIT 0.2.0"}</p>
           <button type="button" className="ghost" onClick={() => setView("settings")}>
             Help / Diagnostics
           </button>
@@ -1030,11 +1125,11 @@ export function App() {
             </p>
           </div>
         </header>
-        {companionUp && status?.version && !String(status.version).includes("0.2.0") ? (
+        {companionUp && status?.version && !String(status.version).startsWith("0.2.") ? (
           <article className="card stop" role="status">
             <p className="label">COMPANION VERSION</p>
             <p>
-              This window expects PIT 0.2.0. The local companion is {status.version}. Close PIT, install the matching
+              This window expects PIT 0.2.1. The local companion is {status.version}. Close PIT, install the matching
               desktop, then launch again. A running sealed job is not cancelled by this warning.
             </p>
           </article>
@@ -1070,41 +1165,112 @@ export function App() {
             researchVerified={committeeVerified(researchRoles)}
           />
         ) : (
-          <div className="desk-body">
+          <div className={view === "home" ? "desk-body with-threads" : "desk-body"}>
+            {view === "home" ? (
+              <ThreadRail
+                threads={threads}
+                active={thread}
+                onSelect={setThread}
+                onNew={() => {
+                  void mutateChatThread("new").then((r) => {
+                    if (r.threads) setThreads(r.threads);
+                    if (r.id) setThread(r.id);
+                  });
+                }}
+                onRename={(id, title) => {
+                  void mutateChatThread("rename", id, title).then((r) => {
+                    if (r.threads) setThreads(r.threads);
+                  });
+                }}
+                onDelete={(id) => {
+                  void mutateChatThread("delete", id).then((r) => {
+                    if (r.threads) setThreads(r.threads);
+                    if (thread === id) setThread("desk");
+                  });
+                }}
+              />
+            ) : null}
             <CommandChat
+              thread={thread}
               onNavigate={(v) => setView(v as View)}
               onResearch={(c) => void researchThis(c)}
               onOpenPreview={() => setView("research")}
+              island={{
+                busy: researchBusy,
+                coin: researchCoin,
+                stage: researchStage,
+                elapsedMs: researchElapsed,
+                jobId: researchJobId,
+                pollMiss,
+                roles: researchRoles,
+              }}
             />
             <div className="book">
 
         {setupDone && view === "home" ? (
+          <>
+            <DeskHome
+              ready={attention.title === "Desk is ready"}
+              items={items}
+              attention={attention}
+              coins={coins}
+              net={net}
+              code={code}
+              companionUp={companionUp}
+              sessionAlive={sessionAlive}
+              computeReady={Boolean(checks.find((c) => c.name === "direct_credit")?.ok)}
+              policyPinned={pinned}
+              hlApproved={Boolean(checks.find((c) => c.name === "hl_agent" && c.ok))}
+              onResearch={(c) => void researchThis(c)}
+              onGo={(v) => setView(v)}
+              hl={{
+                net,
+                agent,
+                agentName: status?.agentName,
+                sessionAlive,
+                sessionExpires: status?.sessionExpires,
+                approved: Boolean(checks.find((c) => c.name === "hl_agent" && c.ok)),
+                approvedDetail: checks.find((c) => c.name === "hl_agent")?.detail,
+                busy: bindBusy,
+                onCreateSession: () => void onSession(),
+                onConnectionPreview: () => void onConnectionPreview(),
+                onCheck: () => void onCheck(),
+                onRevoke: () => void onRevoke(),
+              }}
+            />
+            <WelcomePath steps={path} onGo={(v) => setView(v)} />
+          </>
+        ) : null}
+
+        {setupDone && view === "watch" ? (
+          <WatchBook
+            coins={coins}
+            computeReady={Boolean(checks.find((c) => c.name === "direct_credit")?.ok)}
+            researchBusy={researchBusy}
+            onResearch={(c) => void researchThis(c)}
+          />
+        ) : null}
+
+        {setupDone && view === "positions" ? (
           <main className="page dense">
-            <p className="eyebrow">HOME</p>
-            <h1>Authorize on this computer. Never in the browser.</h1>
-            <p className="lead">{NAMED.SEED_FORBIDDEN}</p>
-            <NetworkBanner net={net} />
-            <div className="desk-grid">
-              <PairingBlock code={code} expires={expires} companionUp={companionUp} />
+            <p className="eyebrow">Positions</p>
+            <h1>Portfolio</h1>
+            <p className="lead">Venue state from your Hyperliquid trading account. PIT cannot withdraw. No invented liquidation values.</p>
+            <div className="equity">
               <article className="card">
-                <p className="label">READINESS</p>
-                <ProbeList items={items} net={net} onGo={(v) => setView(v)} />
+                <p className="label">Total equity</p>
+                <p className="num">{summary.accountValue || "—"}</p>
+              </article>
+              <article className="card">
+                <p className="label">Available margin</p>
+                <p className="num">{summary.withdrawable || "—"}</p>
+                <p className="fine">Venue withdrawable. PIT cannot withdraw.</p>
+              </article>
+              <article className="card">
+                <p className="label">Exposure</p>
+                <p className="num">{summary.totalNtlPos || "—"}</p>
               </article>
             </div>
-            <HyperliquidCard
-              net={net}
-              agent={agent}
-              agentName={status?.agentName}
-              sessionAlive={sessionAlive}
-              sessionExpires={status?.sessionExpires}
-              approved={Boolean(checks.find((c) => c.name === "hl_agent" && c.ok))}
-              approvedDetail={checks.find((c) => c.name === "hl_agent")?.detail}
-              busy={bindBusy}
-              onCreateSession={() => void onSession()}
-              onConnectionPreview={() => void onConnectionPreview()}
-              onCheck={() => void onCheck()}
-              onRevoke={() => void onRevoke()}
-            />
             <PositionsPanel
               account={positionAccount || status?.wallet}
               positions={positions}
@@ -1113,276 +1279,44 @@ export function App() {
               onReduceOnlyClose={(c) => void onReduceOnlyClose(c)}
               closeBusy={bindBusy}
             />
-            <EmptyHome count={eligible.length} next={attention} onGo={(v) => setView(v)} />
-            <WelcomePath steps={path} onGo={(v) => setView(v)} />
-            {companionStuck && !explained ? (
-              <article className="card stop" role="status">
-                <p className="label">LOCAL COMPANION</p>
-                <h2>PIT is waiting for the process on this computer</h2>
-                <p>
-                  No order was placed. Close any old PIT window, reinstall so the local companion is included, then
-                  launch PIT again. A terminal is not required.
-                </p>
-              </article>
-            ) : null}
-          </main>
-        ) : null}
-
-        {setupDone && view === "watch" ? (
-          <main className="page dense">
-            <p className="eyebrow">LIVE BOOKS</p>
-            <h1>Watch</h1>
-            <p className="lead">Public Hyperliquid marks only. This window cannot place an order.</p>
-            {coins.length === 0 ? (
-              <p className="fine">Empty Watch is the honest state until live books arrive.</p>
-            ) : (
-              <table className="desk-table">
-                <thead>
-                  <tr>
-                    <th>Market</th>
-                    <th>Mark</th>
-                    <th>Oracle</th>
-                    <th>Funding</th>
-                    <th>Open interest</th>
-                    <th>Policy</th>
-                    <th>Research</th>
-                    <th>Why</th>
-                    <th></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {coins.map((c) => (
-                    <tr key={c.coin}>
-                      <td>{c.coin}</td>
-                      <td className="mark-num">{c.mark}</td>
-                      <td>{c.oracle || "—"}</td>
-                      <td>{c.funding ?? "—"}</td>
-                      <td>{c.openInterest ? Math.round(c.openInterest) : "—"}</td>
-                      <td>{c.eligible ? "PASS" : "BLOCKED"}</td>
-                      <td>{checks.find((x) => x.name === "direct_credit")?.ok ? "Ready" : "Needs compute"}</td>
-                      <td>{c.reason}</td>
-                      <td>
-                        <button type="button" className="linkish" onClick={() => void researchThis(c.coin)}>
-                          Research this
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-            <p className="fine">Confidence NOT ENOUGH DATA. Side is not decided on this surface.</p>
           </main>
         ) : null}
 
         {setupDone && view === "research" ? (
-          <main className="page dense">
-            <p className="eyebrow">SEALED PATH</p>
-            <h1>Research</h1>
-            <p className="lead">
-              Private book → Direct TeeML → researcher / challenger / risk → host size → policy → exact preview. Watch
-              never places the order. Same provider is labeled as role separation, not three independent models.
-            </p>
-            <article className="card">
-              <p className="label">SEALED HYPOTHESIS</p>
-              <p>This is your intent, sealed into the private book. The committee may still stand down. Host sizes.</p>
-              <div className="cta-row">
-                {(["none", "long", "short"] as const).map((h) => (
-                  <button
-                    key={h}
-                    type="button"
-                    className={hypothesis === h ? "linkish on" : "linkish off"}
-                    onClick={() => setHypothesis(h)}
-                    disabled={researchBusy}
-                  >
-                    {h === "none" ? "No bias" : h === "long" ? "Consider long" : "Consider short"}
-                  </button>
-                ))}
-              </div>
-            </article>
-            <ComputeCard checks={checks} onCheck={() => void onCheck()} />
-            <article className="card">
-              <p className="label">PRIVATE RESEARCH</p>
-              <p>Provider Direct · glm-5.2 · Role separation, not three independent models. Estimated ~3 0G locked.</p>
-              <button
-                type="button"
-                className="on"
-                onClick={() => void researchThis(researchCoin)}
-                disabled={researchBusy || !checks.find((c) => c.name === "direct_credit")?.ok}
-              >
-                Start Research
-              </button>
-            </article>
-            {researchBusy ? (
-              <ResearchProgress
-                stage={researchStage}
-                elapsedMs={researchElapsed}
-                coin={researchCoin}
-                roles={researchRoles}
-                pollMiss={pollMiss}
-                onCancel={() => void onCancelResearch()}
-              />
-            ) : null}
-            {researchNote && !explained && !researchBusy ? (
-              <article className="card">
-                <p className="label">{researchCardTitle(researchKind, committeeVerified(researchRoles))}</p>
-                <p>{researchNote}</p>
-                {researchJobId ? <p className="fine">Job {researchJobId}</p> : null}
-                <ul className="doctor">
-                  {researchRoles.map((role) => (
-                    <li key={role.role}>
-                      <strong>{role.verify_e2ee}</strong> {role.role}
-                      {role.proposed_side ? ` side ${role.proposed_side}` : ""}
-                      {role.survives === false ? " stood down" : ""}
-                      {role.kill ? " kill" : ""}
-                      {role.pubkey_signer ? ` ${role.pubkey_signer}` : ""}
-                    </li>
-                  ))}
-                </ul>
-              </article>
-            ) : null}
-            {committeeCopy && !researchBusy ? (
-              <article className="card" role="status">
-                <p className="label">COMMITTEE DECISION</p>
-                <h2>{committeeCopy.title}</h2>
-                <p>{committeeCopy.body}</p>
-                <p className="fine">Change the sealed hypothesis or wait for a different book. PIT will not invent a side.</p>
-              </article>
-            ) : null}
-            {!researchBusy && preview ? (
-              <article className="card">
-                <p className="label">EXACT PREVIEW</p>
-                {preview.eligible ? (
-                  <>
-                    {preview.kind === "connection_test" ? (
-                      <p className="fine">Connection test. This is not a research recommendation. Host sized a policy clip.</p>
-                    ) : preview.kind === "reduce_only_close" ? (
-                      <p className="fine">Reduce-only close. This is not a research recommendation. Type AUTHORIZE to send it. PIT cannot withdraw.</p>
-                    ) : (
-                      <p className="label">OPPORTUNITY FOUND</p>
-                    )}
-                    <p>
-                      {preview.market} {preview.side} {preview.sz} @ {preview.limitPx}
-                    </p>
-                    <p className="fine">Hash {preview.hash || previewHash}. Model size was ignored. Host sized this clip.</p>
-                    {sessionAlive ? (
-                      <form onSubmit={(e) => void onAuthorize(e)}>
-                        <input
-                          aria-label="type AUTHORIZE"
-                          autoComplete="off"
-                          value={authTyped}
-                          onChange={(ev) => setAuthTyped(ev.target.value)}
-                          placeholder="Type AUTHORIZE"
-                        />
-                        <button type="submit" disabled={authBusy || !previewHash}>
-                          Authorize
-                        </button>
-                      </form>
-                    ) : (
-                      <p>Create a local session, then type AUTHORIZE here.</p>
-                    )}
-                    {oidBelongsToPreview(status?.lastOrder?.hash, previewHash, preview.hash) && lastOid ? (
-                      status?.lastOrder?.status !== "filled" && !status?.lastOrder?.cancelled ? (
-                        <form onSubmit={(e) => void onCancelBound(e)}>
-                          <p className="fine">OID {lastOid} is resting for this preview. Type AUTHORIZE again to cancel. PIT cannot withdraw.</p>
-                          <button type="submit" disabled={authBusy}>
-                            Cancel this order
-                          </button>
-                        </form>
-                      ) : status?.lastOrder?.status === "filled" ? (
-                        <p className="fine">
-                          OID {lastOid} FILLED for this preview. Flatten only with a reduce-only close that YOU authorize. PIT cannot withdraw.
-                        </p>
-                      ) : null
-                    ) : null}
-                    {authErr ? (
-                      <p className="err" role="alert">
-                        {authErr === "approveAgent_required"
-                          ? "Approve this agent on Hyperliquid before PIT will send an order."
-                          : authErr}
-                      </p>
-                    ) : null}
-                    {authErr === "approveAgent_required" ? (
-                      <a className="linkish" href={hyperliquidAPI(net)} target="_blank" rel="noreferrer">
-                        Open Hyperliquid
-                      </a>
-                    ) : null}
-                  </>
-                ) : (
-                  <p>
-                    {preview.deny === "no_side"
-                      ? "Stand down. The committee did not propose a side. This is a verified result, not a crash. No order was placed."
-                      : `Host did not size a trade (${preview.deny || "no_side"}). Committee envelopes stay independent. The model cannot raise clip. No order was placed.`}
-                  </p>
-                )}
-              </article>
-            ) : null}
-            {explained && !researchBusy ? (
-              <article className="card stop" role="alert">
-                <p className="label">RESEARCH STOPPED</p>
-                <h2>{explained.title}</h2>
-                <p>{explained.body}</p>
-                {researchRoles.length ? (
-                  <ul className="doctor">
-                    {researchRoles.map((role) => (
-                      <li key={role.role}>
-                        <strong>{role.verify_e2ee || "STOP"}</strong> {role.role}
-                      {role.proposed_side ? ` side ${role.proposed_side}` : ""} {role.pubkey_signer}
-                      </li>
-                    ))}
-                  </ul>
-                ) : null}
-                {explainStopHref(researchStop) ? (
-                  <a className="linkish" href={explainStopHref(researchStop)?.href} target="_blank" rel="noreferrer">
-                    {explainStopHref(researchStop)?.label}
-                  </a>
-                ) : null}
-                <button type="button" className="linkish" onClick={() => setTechOpen((v) => !v)}>
-                  {techOpen ? "Hide technical evidence" : "View technical evidence"}
-                </button>
-                {techOpen ? (
-                  <pre className="pipe evidence">
-                    Code {researchStop}
-                    {"\n"}
-                    {researchEvidenceText || "Verification is fail-closed. Router fallback is impossible."}
-                  </pre>
-                ) : null}
-                <button type="button" onClick={() => void researchThis(researchCoin)} disabled={researchBusy}>
-                  Retry
-                </button>
-              </article>
-            ) : null}
-            {!researchBusy && !researchNote && !explained ? (
-              <p className="fine">Private research has not been run on this machine in this session.</p>
-            ) : null}
-            <PreviewNote />
-            <EvidenceDrawer
-              jobId={researchJobId}
-              roles={researchRoles}
-              preview={preview}
-              previewHash={previewHash}
-              kind={researchKind}
-              deny={preview?.deny}
-              evidence={researchEvidenceText}
-            />
-            {eligible.length === 0 ? (
-              <p className="fine">No policy-eligible market is waiting. Watch does not invent cards.</p>
-            ) : (
-              <ul className="watch-grid">
-                {eligible.map((c) => (
-                  <li key={c.coin} className="card">
-                    <p className="label">{c.coin}</p>
-                    <p className="mark-num">{c.mark}</p>
-                    <p>Policy PASS</p>
-                    <p className="fine">{c.reason}</p>
-                    <button type="button" className="linkish" onClick={() => void researchThis(c.coin)}>
-                      Research this
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </main>
+          <ResearchBoard
+            coin={researchCoin}
+            hypothesis={hypothesis}
+            setHypothesis={setHypothesis}
+            researchBusy={researchBusy}
+            researchStage={researchStage}
+            researchElapsed={researchElapsed}
+            researchRoles={researchRoles}
+            pollMiss={pollMiss}
+            researchJobId={researchJobId}
+            researchKind={researchKind}
+            researchNote={researchNote}
+            researchStop={researchStop}
+            preview={preview}
+            previewHash={previewHash}
+            authTyped={authTyped}
+            setAuthTyped={setAuthTyped}
+            authBusy={authBusy}
+            authErr={authErr}
+            lastOid={lastOid}
+            status={status}
+            sessionAlive={sessionAlive}
+            checks={checks}
+            techOpen={techOpen}
+            setTechOpen={setTechOpen}
+            researchEvidenceText={researchEvidenceText}
+            eligible={eligible}
+            net={net}
+            onResearch={(c) => void researchThis(c)}
+            onCancel={() => void onCancelResearch()}
+            onAuthorize={(e) => void onAuthorize(e)}
+            onCancelBound={(e) => void onCancelBound(e)}
+            onCheck={() => void onCheck()}
+          />
         ) : null}
 
         {setupDone && view === "activity" ? (
@@ -1499,11 +1433,18 @@ export function App() {
             <article className="card">
               <p className="label">THIS WORKSPACE</p>
               <p>Wallet {walletCheck?.ok ? walletCheck.detail : "unbound"}</p>
-              <p>Network {net}</p>
-              <p>Agent {agent || "none"}</p>
-              {status?.agentName ? <p>Agent name {status.agentName} (under 17 characters on Hyperliquid)</p> : null}
-              <p>Session {sessionAlive ? "order/cancel live" : "none"}</p>
-              <p>Kill {status?.kill ? "on" : "off"}</p>
+              <p>Network {net === "mainnet" ? "MAINNET" : "TESTNET"}</p>
+              <p>PIT Agent {status?.agentName || "none"}</p>
+              <p>Agent address {agent || "none"}</p>
+              <p>Session {sessionAlive ? "Active" : "none"}{status?.sessionExpires ? ` until ${new Date(status.sessionExpires).toISOString().replace(".000Z", "Z")}` : ""}</p>
+              <p>Hyperliquid {checks.find((c) => c.name === "hl_agent")?.ok ? "Connected" : "Needs approval"}</p>
+              <p>Private compute {checks.find((c) => c.name === "direct_credit")?.ok ? "Ready" : "Needs action"}</p>
+              {status?.workspace ? <p>Desk ID {status.workspace}</p> : null}
+              {status?.wallet ? (
+                <a className="linkish" href={explorerAddress(status.wallet)} target="_blank" rel="noreferrer">
+                  View on explorer
+                </a>
+              ) : null}
             </article>
             <article className="card">
               <p className="label">DESK IDENTITY</p>
@@ -1595,6 +1536,7 @@ export function App() {
             </div>
           </div>
         )}
+      </div>
       </div>
     </div>
   );

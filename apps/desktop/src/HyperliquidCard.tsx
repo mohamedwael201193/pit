@@ -61,10 +61,18 @@ export function HyperliquidCard({
         <strong>STATUS</strong> {status}
         {approvedDetail ? ` — ${approvedDetail}` : ""}
       </p>
-      <p>
-        ORDER {sessionAlive && approved ? "yes" : "waiting"} · CANCEL {sessionAlive && approved ? "yes" : "waiting"} ·
-        WITHDRAW no · TRANSFER no · LEVERAGE no
-      </p>
+      <dl className="status-grid" style={{ marginTop: 8 }}>
+        <dt>Order</dt>
+        <dd>{sessionAlive && approved ? "yes" : "waiting"}</dd>
+        <dt>Cancel</dt>
+        <dd>{sessionAlive && approved ? "yes" : "waiting"}</dd>
+        <dt>Withdraw</dt>
+        <dd>no</dd>
+        <dt>Transfer</dt>
+        <dd>no</dd>
+        <dt>Leverage</dt>
+        <dd>no</dd>
+      </dl>
       <p className="fine">{next}</p>
       <div className="cta-row">
         <a className="linkish" href={hyperliquidApp(net)} target="_blank" rel="noreferrer">

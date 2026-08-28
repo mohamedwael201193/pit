@@ -69,7 +69,7 @@ export function explainStop(code: string | null): { title: string; body: string 
   }
   if (code === "TEE_OPEN_FAIL") {
     return {
-      title: "Research stopped",
+      title: "Sealed response could not be opened",
       body: "The sealed response could not be opened. PIT did not fall back to Router or plaintext. No order was placed.",
     };
   }
@@ -195,7 +195,7 @@ export function explainStop(code: string | null): { title: string; body: string 
   }
   if (code === "COMMITTEE_INCOMPLETE") {
     return {
-      title: "Committee did not finish",
+      title: "Research ended before all committee roles completed",
       body: "Researcher, challenger, and risk must all finish over the same sealed book. PIT did not invent a result. No order was placed.",
     };
   }
@@ -225,8 +225,8 @@ export function explainStop(code: string | null): { title: string; body: string 
   }
   if (code === "TEE_SIGNER_MISMATCH") {
     return {
-      title: "Research stopped",
-      body: "The recovered signer did not match the on-chain teeSigner PIT expected. No order was placed.",
+      title: "Unexpected TEE signer",
+      body: "The recovered signer did not match the on-chain TEE signer PIT expected. No order was placed.",
     };
   }
   if (code === "RESEARCHER_FAILED" || code === "CHALLENGER_FAILED" || code === "RISK_FAILED") {
@@ -260,7 +260,7 @@ export function explainStop(code: string | null): { title: string; body: string 
     };
   }
   return {
-    title: "Research stopped",
+    title: "Research incomplete",
     body: "PIT halted this step. No order was placed. No funds moved.",
   };
 }

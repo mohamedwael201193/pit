@@ -162,3 +162,28 @@ commands.allow = ["local_explain"]
 identifier = "allow-local-models"
 description = "Read Direct SKUs for the bound network. Never a Router catalog."
 commands.allow = ["local_models"]
+
+[[permission]]
+identifier = "allow-local-chat-threads"
+description = "List encrypted desk threads. Never secrets."
+commands.allow = ["local_chat_threads"]
+
+[[permission]]
+identifier = "allow-local-chat-thread"
+description = "Create, rename, or delete a desk thread. Never secrets."
+commands.allow = ["local_chat_thread"]
+
+[[permission]]
+identifier = "allow-window-min"
+description = "Minimize the PIT window."
+commands.allow = ["window_min"]
+
+[[permission]]
+identifier = "allow-window-toggle-max"
+description = "Maximize or restore the PIT window."
+commands.allow = ["window_toggle_max"]
+
+[[permission]]
+identifier = "allow-window-close"
+description = "Close the PIT window."
+commands.allow = ["window_close"]

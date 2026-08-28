@@ -19,6 +19,14 @@ func TestParsePositionsEmpty(t *testing.T) {
 	}
 }
 
+func TestParseClearinghouse(t *testing.T) {
+	raw := []byte(`{"marginSummary":{"accountValue":"54.23","totalNtlPos":"10.2","totalMarginUsed":"10.2"},"withdrawable":"44"}`)
+	got := ParseClearinghouse(raw)
+	if got.AccountValue != "54.23" || got.Withdrawable != "44" {
+		t.Fatalf("%+v", got)
+	}
+}
+
 func TestParsePositionsLeverage(t *testing.T) {
 	raw := []byte(`{"assetPositions":[{"position":{"coin":"ETH","szi":"0.0041","entryPx":"2489.7","marginUsed":"10","leverage":{"type":"cross","value":"1"}}}]}`)
 	got := ParsePositions(raw)

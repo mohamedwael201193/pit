@@ -124,6 +124,8 @@ func (h *Hub) Handler() http.Handler {
 	mux.HandleFunc("/local/positions", h.localPositions)
 	mux.HandleFunc("/local/chat", h.localChat)
 	mux.HandleFunc("/local/chat/log", h.localChatLog)
+	mux.HandleFunc("/local/chat/threads", h.localChatThreads)
+	mux.HandleFunc("/local/chat/thread", h.localChatThread)
 	mux.HandleFunc("/local/memory/forget", h.localMemoryForget)
 	mux.HandleFunc("/local/calibration", h.localCalibration)
 	mux.HandleFunc("/local/security", h.localSecurity)

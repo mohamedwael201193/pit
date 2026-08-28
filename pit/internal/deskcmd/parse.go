@@ -48,6 +48,30 @@ func Parse(text string) Result {
 		out.Reply = "Forget wipes workspace working memory and lessons. It never deletes venue positions or receipts."
 		return out
 	}
+	if strings.Contains(low, "happening") || strings.Contains(low, "what is pit doing") {
+		out.Tool = "status"
+		out.Navigate = "home"
+		out.Reply = "Desk shows live status. Chat cannot see the sealed book. Research, preview, and session stay on this computer."
+		return out
+	}
+	if strings.Contains(low, "learn") || strings.Contains(low, "calibration") {
+		out.Tool = "calibration.get"
+		out.Navigate = "settings"
+		out.Reply = "Calibration stays NOT ENOUGH DATA until enough real outcomes exist. PIT will not invent a lesson."
+		return out
+	}
+	if strings.Contains(low, "hyperliquid") && (strings.Contains(low, "ready") || strings.Contains(low, "approved")) {
+		out.Tool = "session.status"
+		out.Navigate = "security"
+		out.Reply = "Hyperliquid is ready only after this computer has a session and the PIT agent is listed. Open Security. Chat cannot approve the agent."
+		return out
+	}
+	if strings.Contains(low, "open pairing") || strings.Contains(low, "pair this") {
+		out.Tool = "links.open"
+		out.OpenURL = "https://pit0g.vercel.app/pair"
+		out.Reply = "Opening pairing. The website never receives a session key."
+		return out
+	}
 	if strings.Contains(low, "open hyperliquid api") {
 		out.Tool = "links.open"
 		out.OpenURL = "https://app.hyperliquid.xyz/API"
@@ -110,7 +134,7 @@ func Parse(text string) Result {
 	}
 	if strings.Contains(low, "position") || strings.Contains(low, "pnl") || strings.Contains(low, "exposure") {
 		out.Tool = "positions.get"
-		out.Navigate = "home"
+		out.Navigate = "positions"
 		out.Reply = "Positions are read from your Hyperliquid trading account, not the PIT agent address."
 		return out
 	}

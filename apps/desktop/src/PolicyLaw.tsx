@@ -7,28 +7,53 @@ export function PolicyLaw({
   onPin?: () => void;
   busy?: boolean;
 }) {
-  const rows = [
-    ["Max trade", pinned ? "10 USD (pinned)" : "example 10 USD until your file is pinned"],
-    ["Max daily loss", pinned ? "50 USD (pinned)" : "example 50 USD until your file is pinned"],
-    ["Max leverage", pinned ? "1x (pinned)" : "example 1x until your file is pinned"],
-    ["Max slippage", pinned ? "80 bps (pinned)" : "example 80 bps until your file is pinned"],
-    ["Cooldown", "0 s"],
-    ["Session TTL", "24h local mint; Hyperliquid approval until venue date"],
-    ["Min calibration", "NOT ENOUGH DATA until N is large enough"],
-    ["Allowed", "ETH, BTC, SOL, HYPE, DOGE, AVAX on Hyperliquid"],
-    ["Kill", "off until you flip it"],
+  const cells = [
+    {
+      k: "Max trade",
+      v: pinned ? "$10" : "$10 example until pinned",
+      why: "Host sizes every clip to this ceiling. The model cannot raise it.",
+      hit: "A larger idea is refused. No order is sent.",
+    },
+    {
+      k: "Max leverage",
+      v: pinned ? "1x" : "1x example until pinned",
+      why: "Session cannot change leverage. PIT cannot withdraw.",
+      hit: "Any attempt to raise leverage is denied on this computer.",
+    },
+    {
+      k: "Allowed assets",
+      v: "ETH BTC SOL HYPE DOGE AVAX",
+      why: "Watch and research stay inside this universe.",
+      hit: "A coin outside the list is blocked before a sealed request starts.",
+    },
+    {
+      k: "Kill switch",
+      v: "Off until you flip it",
+      why: "You halt new orders. The model cannot turn this off.",
+      hit: "New AUTHORIZE posts are refused while it is on.",
+    },
+    {
+      k: "Max slippage",
+      v: pinned ? "80 bps" : "80 bps example until pinned",
+      why: "Host rejects a book that would slip past this band.",
+      hit: "The preview is not eligible. No order is sent.",
+    },
   ];
   return (
     <div className="card">
-      <p className="label">YOUR POLICY</p>
-      <ul className="perms">
-        {rows.map(([k, v]) => (
-          <li key={k}>
-            {k}: {v}
-          </li>
+      <p className="label">Your policy</p>
+      <p className="fine">Host enforced. Chat can explain this. Chat cannot mutate it.</p>
+      <div className="policy-grid">
+        {cells.map((c) => (
+          <div key={c.k} className="policy-cell">
+            <p className="label">{c.k}</p>
+            <strong>{c.v}</strong>
+            <p className="host-enforced">Host enforced</p>
+            <p className="fine">{c.why}</p>
+            <p className="fine">If violated: {c.hit}</p>
+          </div>
         ))}
-      </ul>
-      <p className="fine">The model cannot raise clip, leverage, or permissions.</p>
+      </div>
       {onPin ? (
         <button type="button" className="linkish" onClick={onPin} disabled={busy}>
           {pinned ? "Policy pinned on this computer" : "Pin policy on this computer"}

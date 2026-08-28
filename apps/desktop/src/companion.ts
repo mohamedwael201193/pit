@@ -107,7 +107,7 @@ type TauriWindow = Window & {
   __TAURI__?: { core?: { invoke: (cmd: string, args?: unknown) => Promise<unknown> } };
 };
 
-function nativeInvoke<T>(cmd: string, args?: unknown): Promise<T> | null {
+export function nativeInvoke<T = unknown>(cmd: string, args?: unknown): Promise<T> | null {
   const w = window as TauriWindow;
   const inv = w.__TAURI_INTERNALS__?.invoke ?? w.__TAURI__?.core?.invoke;
   if (typeof inv !== "function") return null;
@@ -347,7 +347,19 @@ export async function cancelBoundOrder(typed: string): Promise<BindResult> {
   }
 }
 
-export type ChatMessage = { ts?: number; role?: string; text?: string; tool?: string };
+export type ChatMessage = { ts?: number; role?: string; text?: string; tool?: string; thread?: string; coin?: string };
+export type ChatThread = { id: string; title: string; created?: number; updated?: number; preview?: string };
+export type DirectModel = {
+  model?: string;
+  label?: string;
+  path?: string;
+  verifiability?: string;
+  proven_e2ee?: boolean;
+  private_book?: boolean;
+  note?: string;
+  latency?: string;
+  cost?: string;
+};
 export type ChatReply = BindResult & {
   reply?: string;
   tool?: string;
@@ -356,6 +368,7 @@ export type ChatReply = BindResult & {
   coin?: string;
   navigate?: string;
   open_url?: string;
+  thread?: string;
 };
 export type ActivityEvent = {
   ts?: number;
@@ -395,9 +408,9 @@ async function localGet<T extends object>(cmd: string, path: string): Promise<T 
   return rejectSecrets(await fetchJson<T>(path));
 }
 
-export async function sendDeskCommand(text: string): Promise<ChatReply> {
+export async function sendDeskCommand(text: string, thread = "desk"): Promise<ChatReply> {
   try {
-    const native = await nativeJsonOrError<ChatReply>("local_chat", { text });
+    const native = await nativeJsonOrError<ChatReply>("local_chat", { text, thread });
     if (native.sign || native.trade) return { error: "companion_denied", execute: false };
     return { ...native, execute: false };
   } catch (e) {
@@ -406,9 +419,36 @@ export async function sendDeskCommand(text: string): Promise<ChatReply> {
   }
 }
 
-export async function fetchChatLog(): Promise<ChatMessage[]> {
-  const body = await localGet<{ messages?: ChatMessage[]; sign?: boolean }>("local_chat_log", "/local/chat/log");
+export async function fetchChatLog(thread = "desk"): Promise<ChatMessage[]> {
+  const qs = `/local/chat/log?thread=${encodeURIComponent(thread)}`;
+  const native = rejectSecrets(await nativeJson<{ messages?: ChatMessage[]; sign?: boolean }>("local_chat_log", { thread }));
+  if (native && Array.isArray(native.messages)) return native.messages;
+  const body = rejectSecrets(await fetchJson<{ messages?: ChatMessage[]; sign?: boolean }>(qs));
   return Array.isArray(body?.messages) ? body.messages : [];
+}
+
+export async function fetchChatThreads(): Promise<ChatThread[]> {
+  const body = await localGet<{ threads?: ChatThread[]; sign?: boolean }>("local_chat_threads", "/local/chat/threads");
+  return Array.isArray(body?.threads) ? body.threads : [];
+}
+
+export async function mutateChatThread(op: "new" | "rename" | "delete", id?: string, title?: string): Promise<{ threads?: ChatThread[]; id?: string; error?: string }> {
+  try {
+    const native = await nativeJsonOrError<{ threads?: ChatThread[]; id?: string; error?: string; sign?: boolean }>(
+      "local_chat_thread",
+      { op, id, title },
+    );
+    if (native.sign) return { error: "companion_denied" };
+    return native;
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : "companion_http";
+    return { error: msg };
+  }
+}
+
+export async function fetchModels(): Promise<DirectModel[]> {
+  const body = await localGet<{ models?: DirectModel[]; sign?: boolean }>("local_models", "/local/models");
+  return Array.isArray(body?.models) ? body.models : [];
 }
 
 export async function fetchActivity(): Promise<ActivityEvent[]> {
@@ -416,17 +456,26 @@ export async function fetchActivity(): Promise<ActivityEvent[]> {
   return Array.isArray(body?.events) ? body.events : [];
 }
 
+export type AccountSummary = {
+  accountValue?: string;
+  totalMarginUsed?: string;
+  totalNtlPos?: string;
+  withdrawable?: string;
+};
+
 export async function fetchPositions(): Promise<{
   account?: string;
   positions: VenuePosition[];
   error?: string;
   lastOrder?: LocalStatus["lastOrder"];
+  summary?: AccountSummary;
 }> {
   const body = await localGet<{
     account?: string;
     positions?: VenuePosition[];
     error?: string;
     lastOrder?: LocalStatus["lastOrder"];
+    summary?: AccountSummary;
     sign?: boolean;
   }>("local_positions", "/local/positions");
   return {
@@ -434,6 +483,7 @@ export async function fetchPositions(): Promise<{
     positions: Array.isArray(body?.positions) ? body.positions : [],
     error: body?.error,
     lastOrder: body?.lastOrder,
+    summary: body?.summary,
   };
 }
 

@@ -47,6 +47,17 @@ func TestWhyAndForget(t *testing.T) {
 	}
 }
 
+func TestHappeningAndPositions(t *testing.T) {
+	r := Parse("What is happening?")
+	if r.Execute || r.Navigate != "home" {
+		t.Fatalf("%+v", r)
+	}
+	r = Parse("Show me my current positions")
+	if r.Navigate != "positions" || r.Execute {
+		t.Fatalf("%+v", r)
+	}
+}
+
 func TestNoShell(t *testing.T) {
 	r := Parse("rm -rf /")
 	if r.StartResearch || r.Execute {

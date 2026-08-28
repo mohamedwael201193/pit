@@ -195,16 +195,52 @@
           "markdownDescription": "Always denies session export from the webview."
         },
         {
+          "description": "Read the local activity timeline. Never a secret.",
+          "type": "string",
+          "const": "allow-local-activity",
+          "markdownDescription": "Read the local activity timeline. Never a secret."
+        },
+        {
           "description": "Authorize the exact preview on this computer. Order and cancel only. Never returns a session key.",
           "type": "string",
           "const": "allow-local-authorize",
           "markdownDescription": "Authorize the exact preview on this computer. Order and cancel only. Never returns a session key."
         },
         {
+          "description": "Read calibration honesty. NOT ENOUGH DATA until N is enough.",
+          "type": "string",
+          "const": "allow-local-calibration",
+          "markdownDescription": "Read calibration honesty. NOT ENOUGH DATA until N is enough."
+        },
+        {
           "description": "Cancel the authorized order on this computer. Never withdraws.",
           "type": "string",
           "const": "allow-local-cancel-order",
           "markdownDescription": "Cancel the authorized order on this computer. Never withdraws."
+        },
+        {
+          "description": "Send a trading-desk command. Never executes a trade.",
+          "type": "string",
+          "const": "allow-local-chat",
+          "markdownDescription": "Send a trading-desk command. Never executes a trade."
+        },
+        {
+          "description": "Read the local chat transcript. Never a secret.",
+          "type": "string",
+          "const": "allow-local-chat-log",
+          "markdownDescription": "Read the local chat transcript. Never a secret."
+        },
+        {
+          "description": "Create, rename, or delete a desk thread. Never secrets.",
+          "type": "string",
+          "const": "allow-local-chat-thread",
+          "markdownDescription": "Create, rename, or delete a desk thread. Never secrets."
+        },
+        {
+          "description": "List encrypted desk threads. Never secrets.",
+          "type": "string",
+          "const": "allow-local-chat-threads",
+          "markdownDescription": "List encrypted desk threads. Never secrets."
         },
         {
           "description": "Read the one-time pairing code over a native loopback GET with no Origin.",
@@ -237,6 +273,18 @@
           "markdownDescription": "Read doctor checks over a native loopback GET with no Origin."
         },
         {
+          "description": "Read research explanation without the sealed prompt.",
+          "type": "string",
+          "const": "allow-local-explain",
+          "markdownDescription": "Read research explanation without the sealed prompt."
+        },
+        {
+          "description": "Read agent identity honesty. iTransfer remains unavailable on mainnet.",
+          "type": "string",
+          "const": "allow-local-identity",
+          "markdownDescription": "Read agent identity honesty. iTransfer remains unavailable on mainnet."
+        },
+        {
           "description": "Bind a public wallet on this machine. Never a secret.",
           "type": "string",
           "const": "allow-local-init",
@@ -249,10 +297,28 @@
           "markdownDescription": "Flip the local kill switch. Never exports a session key."
         },
         {
+          "description": "Forget workspace working memory. Never deletes receipts.",
+          "type": "string",
+          "const": "allow-local-memory-forget",
+          "markdownDescription": "Forget workspace working memory. Never deletes receipts."
+        },
+        {
+          "description": "Read Direct SKUs for the bound network. Never a Router catalog.",
+          "type": "string",
+          "const": "allow-local-models",
+          "markdownDescription": "Read Direct SKUs for the bound network. Never a Router catalog."
+        },
+        {
           "description": "Pin the default policy file for this workspace.",
           "type": "string",
           "const": "allow-local-policy",
           "markdownDescription": "Pin the default policy file for this workspace."
+        },
+        {
+          "description": "Read Hyperliquid positions for the bound master account.",
+          "type": "string",
+          "const": "allow-local-positions",
+          "markdownDescription": "Read Hyperliquid positions for the bound master account."
         },
         {
           "description": "Start sealed Direct research on this computer. Never returns the private book.",
@@ -291,6 +357,12 @@
           "markdownDescription": "Delete the local session. Never exports the key."
         },
         {
+          "description": "Read security domain states. Never a secret.",
+          "type": "string",
+          "const": "allow-local-security",
+          "markdownDescription": "Read security domain states. Never a secret."
+        },
+        {
           "description": "Mint or reuse a local order/cancel session. Never returns the key.",
           "type": "string",
           "const": "allow-local-session",
@@ -303,10 +375,34 @@
           "markdownDescription": "Read companion status over a native loopback GET with no Origin."
         },
         {
+          "description": "Read updater gate. Restart is refused while research is running.",
+          "type": "string",
+          "const": "allow-local-update",
+          "markdownDescription": "Read updater gate. Restart is refused while research is running."
+        },
+        {
           "description": "Read public Hyperliquid marks from the local companion. Never a secret.",
           "type": "string",
           "const": "allow-local-watch",
           "markdownDescription": "Read public Hyperliquid marks from the local companion. Never a secret."
+        },
+        {
+          "description": "Close the PIT window.",
+          "type": "string",
+          "const": "allow-window-close",
+          "markdownDescription": "Close the PIT window."
+        },
+        {
+          "description": "Minimize the PIT window.",
+          "type": "string",
+          "const": "allow-window-min",
+          "markdownDescription": "Minimize the PIT window."
+        },
+        {
+          "description": "Maximize or restore the PIT window.",
+          "type": "string",
+          "const": "allow-window-toggle-max",
+          "markdownDescription": "Maximize or restore the PIT window."
         },
         {
           "description": "Default core plugins set.\n#### This default permission set includes:\n\n- `core:path:default`\n- `core:event:default`\n- `core:window:default`\n- `core:webview:default`\n- `core:app:default`\n- `core:image:default`\n- `core:resources:default`\n- `core:menu:default`\n- `core:tray:default`",

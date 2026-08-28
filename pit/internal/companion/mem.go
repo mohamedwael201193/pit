@@ -115,6 +115,7 @@ func forgetMemoryFiles(dir string) {
 	_ = os.Remove(filepath.Join(dir, "memory-working.json"))
 	_ = os.Remove(workingPath(dir))
 	_ = os.Remove(chatPath(dir))
+	_ = os.Remove(threadsPath(dir))
 	store, err := keyring.OpenProduct(dir)
 	if err == nil {
 		_ = store.Delete("memory", "v1")

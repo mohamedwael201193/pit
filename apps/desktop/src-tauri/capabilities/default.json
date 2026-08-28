@@ -37,6 +37,12 @@
     "allow-local-identity",
     "allow-local-update",
     "allow-local-explain",
-    "allow-local-models"
+    "allow-local-models",
+    "allow-local-chat-threads",
+    "allow-local-chat-thread",
+    "allow-window-min",
+    "allow-window-toggle-max",
+    "allow-window-close",
+    "core:window:allow-start-dragging"
   ]
 }
