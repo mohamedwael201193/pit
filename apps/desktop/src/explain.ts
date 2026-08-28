@@ -1,3 +1,22 @@
+import { LINKS } from "./links";
+
+export function explainStopHref(code: string | null): { href: string; label: string } | null {
+  if (!code) return null;
+  if (
+    code === "DIRECT_CREDIT_INSUFFICIENT" ||
+    code === "DIRECT_PROVIDER_TIMEOUT" ||
+    code === "DIRECT_PROVIDER_UNAVAILABLE" ||
+    code === "direct_ledger" ||
+    code === "SPONSOR_QUOTA"
+  ) {
+    return { href: LINKS.pcAdvanced, label: "Open 0G Private Compute" };
+  }
+  if (code === "approveAgent_required" || code === "AGENT_NOT_APPROVED" || code === "SESSION_EXPIRED") {
+    return { href: LINKS.hlAPI, label: "Open Hyperliquid API" };
+  }
+  return null;
+}
+
 export function explainStop(code: string | null): { title: string; body: string } | null {
   if (!code) return null;
   if (code === "direct_token_required" || code === "sealer_not_wired") {
@@ -98,8 +117,20 @@ export function explainStop(code: string | null): { title: string; body: string 
   }
   if (code === "DIRECT_PROVIDER_UNAVAILABLE") {
     return {
-      title: "0G Direct credit ran out",
-      body: "Researcher may already be verified. Challenger and risk did not finish because the provider rejected the next sealed call (insufficient locked Direct balance). Top up the same wallet at pc.0g.ai Advanced. PIT did not fall back to Router. No order was placed.",
+      title: "Private provider is not reachable",
+      body: "The sealed provider did not accept this request. Earlier roles may already be verified. PIT did not fall back to Router. No order was placed.",
+    };
+  }
+  if (code === "DIRECT_CREDIT_INSUFFICIENT") {
+    return {
+      title: "Not enough private compute",
+      body: "PIT will not start a 3-role sealed committee without Direct capacity for this wallet. Open 0G Private Compute with the same wallet. No order was placed.",
+    };
+  }
+  if (code === "DIRECT_PROVIDER_TIMEOUT") {
+    return {
+      title: "Private provider timed out",
+      body: "The sealed request did not finish in time. That is a provider delay, not a TEE failure. Earlier roles may already be verified. Retry. No order was placed.",
     };
   }
   if (code === "HL_MARKET_UNAVAILABLE") {

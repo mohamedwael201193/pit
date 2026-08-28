@@ -46,8 +46,12 @@ func classifyResearch(code string) string {
 		return "HL_MARKET_UNAVAILABLE"
 	case "SPONSOR_QUOTA":
 		return "SPONSOR_QUOTA"
-	case "sealer_not_wired", "direct_ledger", "direct_provider_http":
+	case "sealer_not_wired", "direct_provider_http", "DIRECT_PROVIDER_UNAVAILABLE", "sealer_runtime", "direct_no_chat_id":
 		return "DIRECT_PROVIDER_UNAVAILABLE"
+	case "direct_ledger":
+		return "DIRECT_CREDIT_INSUFFICIENT"
+	case "DIRECT_PROVIDER_TIMEOUT", "direct_signature_http":
+		return "DIRECT_PROVIDER_TIMEOUT"
 	case "TEE_VERIFY_FAIL":
 		return "TEE_SIGNATURE_INVALID"
 	case "TEE_OPEN_FAIL", "ROUTER_DOWNGRADE_DENIED", "NOT_TEEML":
@@ -67,7 +71,7 @@ func classifyResearch(code string) string {
 	}
 }
 
-func verifiedRolesFromDisk(dir string) []map[string]any {
+func compactRolesFromDisk(dir string) []map[string]any {
 	raw, err := os.ReadFile(filepath.Join(dir, "last-research.json"))
 	if err != nil || strings.Contains(strings.ToLower(string(raw)), "app-sk-") {
 		return nil
@@ -75,14 +79,12 @@ func verifiedRolesFromDisk(dir string) []map[string]any {
 	var body struct {
 		Roles []map[string]any `json:"roles"`
 	}
-	if json.Unmarshal(raw, &body) != nil {
+	if json.Unmarshal(raw, &body) != nil || len(body.Roles) == 0 {
 		return nil
 	}
 	out := make([]map[string]any, 0, len(body.Roles))
-	ok := 0
 	for _, rm := range body.Roles {
 		role := strings.TrimSpace(fmtString(rm["role"]))
-		verify := strings.TrimSpace(fmtString(rm["verify_e2ee"]))
 		if role == "" {
 			continue
 		}
@@ -102,7 +104,15 @@ func verifiedRolesFromDisk(dir string) []map[string]any {
 			item["kill"] = v
 		}
 		out = append(out, item)
-		if strings.EqualFold(verify, "OK") {
+	}
+	return out
+}
+
+func verifiedRolesFromDisk(dir string) []map[string]any {
+	out := compactRolesFromDisk(dir)
+	ok := 0
+	for _, rm := range out {
+		if strings.EqualFold(strings.TrimSpace(fmtString(rm["verify_e2ee"])), "OK") {
 			ok++
 		}
 	}
@@ -195,12 +205,16 @@ func (h *Hub) loadJobLocked() {
 }
 
 func attachPreviewLocked(h *Hub) {
-	if rep, err := cli.ReportFromLastResearch(h.Dir, h.job.coin); err == nil {
+	if h.job.preview != nil && strings.TrimSpace(h.job.previewHash) != "" {
+		return
+	}
+	rep, err := cli.CommitteeDecisionFromLastResearch(h.Dir, h.job.coin)
+	if err == nil {
 		h.job.deny = rep.Deny
 		h.job.eligible = rep.Eligible
-		h.job.preview = rep.Preview
-		h.job.previewHash = rep.PreviewHash
 		if !rep.Eligible {
+			h.job.preview = rep.Preview
+			h.job.previewHash = ""
 			return
 		}
 	}
@@ -237,7 +251,7 @@ func (h *Hub) persistJobLocked() {
 	if h.job.preview != nil {
 		body["preview"] = h.job.preview
 	}
-	if !h.job.running && len(h.job.roles) > 0 {
+	if len(h.job.roles) > 0 {
 		roles := make([]any, 0, len(h.job.roles))
 		for _, r := range h.job.roles {
 			roles = append(roles, r)
@@ -261,11 +275,14 @@ func (h *Hub) snapshotResearch() map[string]any {
 	if h.job.running && !h.job.started.IsZero() {
 		elapsed = time.Since(h.job.started).Milliseconds()
 	}
-	roles := make([]any, 0, len(h.job.roles))
-	if !h.job.running {
-		for _, role := range h.job.roles {
-			roles = append(roles, role)
+	if h.job.running {
+		if roles := compactRolesFromDisk(h.Dir); len(roles) > 0 {
+			h.job.roles = roles
 		}
+	}
+	roles := make([]any, 0, len(h.job.roles))
+	for _, role := range h.job.roles {
+		roles = append(roles, role)
 	}
 	body := map[string]any{
 		"ok":           h.job.err == "",
@@ -315,7 +332,12 @@ func (h *Hub) snapshotResearch() map[string]any {
 							}
 							body["roles"] = roles
 							body["verify"] = true
-							if rep, rerr := cli.ReportFromLastResearch(h.Dir, h.job.coin); rerr == nil {
+							if h.job.preview != nil && strings.TrimSpace(h.job.previewHash) != "" {
+								body["preview"] = h.job.preview
+								body["preview_hash"] = h.job.previewHash
+								body["deny"] = h.job.deny
+								body["eligible"] = h.job.eligible
+							} else if rep, rerr := cli.CommitteeDecisionFromLastResearch(h.Dir, h.job.coin); rerr == nil {
 								body["preview"] = rep.Preview
 								body["preview_hash"] = rep.PreviewHash
 								body["deny"] = rep.Deny
@@ -337,6 +359,9 @@ func (h *Hub) setStage(stage string) {
 		return
 	}
 	h.job.stage = stage
+	if roles := compactRolesFromDisk(h.Dir); len(roles) > 0 {
+		h.job.roles = roles
+	}
 	if !h.job.started.IsZero() {
 		h.job.elapsedMS = time.Since(h.job.started).Milliseconds()
 	}
@@ -367,6 +392,7 @@ func (h *Hub) beginResearch(coin string) {
 		stage:   "READING_MARKET",
 		coin:    want,
 	}
+	_ = os.WriteFile(filepath.Join(h.Dir, "last-research.json"), []byte(`{"sign":false,"trade":false,"roles":[]}`), 0o600)
 	h.persistJobLocked()
 	h.researchMu.Unlock()
 	go h.execResearch(want)
@@ -396,6 +422,11 @@ func (h *Hub) execResearch(coin string) {
 	if err != nil {
 		h.job.err = classifyResearch(err.Error())
 		h.job.stage = "FAILED"
+		if len(h.job.roles) == 0 {
+			if roles := compactRolesFromDisk(h.Dir); len(roles) > 0 {
+				h.job.roles = roles
+			}
+		}
 		h.persistJobLocked()
 		return
 	}

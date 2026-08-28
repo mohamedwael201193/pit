@@ -35,8 +35,8 @@ import {
   type DoctorCheck,
   type LocalStatus,
 } from "./companion";
-import { explainStop } from "./explain";
-import { LINKS, hyperliquidAPI } from "./links";
+import { explainStop, explainStopHref } from "./explain";
+import { LINKS, hyperliquidAPI, hyperliquidApp } from "./links";
 import { nextFix } from "./nextFix";
 import { probes, type Probe } from "./readiness";
 import { setupPath } from "./setupPath";
@@ -57,40 +57,109 @@ const RESEARCH_STAGES = [
   "CHALLENGER",
   "RISK",
   "DETERMINISTIC_ENGINE",
-	"POLICY",
+  "POLICY",
   "PREVIEW",
   "READY",
 ] as const;
 
+type ResearchRole = {
+  role?: string;
+  verify_e2ee?: string;
+  pubkey_signer?: string;
+  proposed_side?: string;
+  survives?: boolean;
+  kill?: boolean;
+};
+
 function sleep(ms: number) {
   return new Promise((resolve) => window.setTimeout(resolve, ms));
+}
+
+function roleVerified(roles: ResearchRole[], name: string) {
+  return roles.some(
+    (r) => String(r.role || "").toLowerCase() === name && String(r.verify_e2ee || "").toUpperCase() === "OK",
+  );
+}
+
+function canonicalResearchStage(stage: string, roles: ResearchRole[]) {
+  const s = (stage || "").toUpperCase();
+  if (s.endsWith("_VERIFIED")) {
+    const base = s.slice(0, -"_VERIFIED".length);
+    if (base === "RESEARCHER") return "CHALLENGER";
+    if (base === "CHALLENGER") return "RISK";
+    if (base === "RISK") return "DETERMINISTIC_ENGINE";
+  }
+  if (s.endsWith("_FAILED")) return s.slice(0, -"_FAILED".length);
+  if (s === "CONTACTING_PRIVATE_PROVIDER" || s === "RECEIVING_SEALED_RESPONSE" || s === "VERIFYING_TEE_SIGNATURE") {
+    if (roleVerified(roles, "challenger")) return "RISK";
+    if (roleVerified(roles, "researcher")) return "CHALLENGER";
+    return s;
+  }
+  if ((RESEARCH_STAGES as readonly string[]).includes(s)) return s;
+  return s;
+}
+
+function stageMark(name: string, stage: string, roles: ResearchRole[]) {
+  const s = canonicalResearchStage(stage, roles);
+  if (name === "RESEARCHER") {
+    if (roleVerified(roles, "researcher") || ["CHALLENGER", "RISK", "DETERMINISTIC_ENGINE", "POLICY", "PREVIEW", "READY"].includes(s)) {
+      return "done";
+    }
+    if (s === "RESEARCHER") return "lit";
+    return "";
+  }
+  if (name === "CHALLENGER") {
+    if (roleVerified(roles, "challenger") || ["RISK", "DETERMINISTIC_ENGINE", "POLICY", "PREVIEW", "READY"].includes(s)) {
+      return "done";
+    }
+    if (s === "CHALLENGER") return "lit";
+    return "";
+  }
+  if (name === "RISK") {
+    if (roleVerified(roles, "risk") || ["DETERMINISTIC_ENGINE", "POLICY", "PREVIEW", "READY"].includes(s)) return "done";
+    if (s === "RISK") return "lit";
+    return "";
+  }
+  const current = RESEARCH_STAGES.indexOf(s as (typeof RESEARCH_STAGES)[number]);
+  const i = RESEARCH_STAGES.indexOf(name as (typeof RESEARCH_STAGES)[number]);
+  if (current < 0 || i < 0) return "";
+  if (i < current) return "done";
+  if (i === current) return "lit";
+  return "";
 }
 
 function ResearchProgress({
   stage,
   elapsedMs,
   coin,
+  roles,
   onCancel,
 }: {
   stage: string;
   elapsedMs: number;
   coin: string;
+  roles: ResearchRole[];
   onCancel: () => void;
 }) {
-  const current = RESEARCH_STAGES.indexOf(stage as (typeof RESEARCH_STAGES)[number]);
+  const shown = canonicalResearchStage(stage, roles);
   return (
     <article className="card" role="status">
       <p className="label">LIVE SEALED REQUEST</p>
-      <h2>{stage.replaceAll("_", " ")}</h2>
+      <h2>{shown.replaceAll("_", " ")}</h2>
       <p>
         {coin || "ETH"} · {(elapsedMs / 1000).toFixed(1)}s elapsed. This is a live Direct round-trip, not a timer.
       </p>
       <ol className="pipe stages">
-        {RESEARCH_STAGES.map((name, i) => (
-          <li key={name} className={i === current ? "lit" : i < current ? "done" : ""}>
-            {name.replaceAll("_", " ")}
-          </li>
-        ))}
+        {RESEARCH_STAGES.map((name) => {
+          const mark = stageMark(name, stage, roles);
+          const prefix = mark === "done" ? "✓ " : mark === "lit" ? "● " : "○ ";
+          return (
+            <li key={name} className={mark}>
+              {prefix}
+              {name.replaceAll("_", " ")}
+            </li>
+          );
+        })}
       </ol>
       <button type="button" className="linkish" onClick={onCancel}>
         Cancel
@@ -189,6 +258,9 @@ function ProbeAction({ id, net, onGo }: { id: string; net: string; onGo?: (view:
             Create session
           </button>
         ) : null}
+        <a className="linkish" href={hyperliquidApp(net)} target="_blank" rel="noreferrer">
+          Open Hyperliquid
+        </a>
         <a className="linkish" href={hyperliquidAPI(net)} target="_blank" rel="noreferrer">
           Open Hyperliquid API
         </a>
@@ -247,6 +319,7 @@ function Setup({
   researchVerified,
   researchStage,
   researchElapsed,
+  researchRoles,
 }: {
   step: number;
   setStep: (n: number) => void;
@@ -275,6 +348,7 @@ function Setup({
   researchVerified: boolean;
   researchStage: string;
   researchElapsed: number;
+  researchRoles: ResearchRole[];
 }) {
   const directOk = Boolean(checks.find((c) => c.name === "direct_auth" && c.ok));
   const directDetail = checks.find((c) => c.name === "direct_auth")?.detail;
@@ -370,8 +444,11 @@ function Setup({
           </button>
           {agent ? <p className="fine">Agent {agent}. Approve this agent on Hyperliquid. Name must be under 17 characters. PIT cannot withdraw.</p> : null}
           {hlAgent ? <p className="fine">{hlAgent.ok ? "extraAgents lists this session." : hlAgent.detail}</p> : null}
-          <a className="linkish" href={hyperliquidAPI(net)} target="_blank" rel="noreferrer">
+          <a className="linkish" href={hyperliquidApp(net)} target="_blank" rel="noreferrer">
             Open Hyperliquid
+          </a>
+          <a className="linkish" href={hyperliquidAPI(net)} target="_blank" rel="noreferrer">
+            Open Hyperliquid API
           </a>
           {bindError ? (
             <p className="err" role="alert">
@@ -396,7 +473,7 @@ function Setup({
             {researchBusy ? "Research running…" : "Run a real research test"}
           </button>
           {researchBusy ? (
-            <ResearchProgress stage={researchStage} elapsedMs={researchElapsed} coin="ETH" onCancel={onCancelResearch} />
+            <ResearchProgress stage={researchStage} elapsedMs={researchElapsed} coin="ETH" roles={researchRoles} onCancel={onCancelResearch} />
           ) : null}
           {researchVerified ? <p className="fine">RESEARCH VERIFIED. VerifyE2EE matched the on-chain teeSigner.</p> : null}
         </>
@@ -441,9 +518,7 @@ export function App() {
   const [coins, setCoins] = useState<Coin[]>([]);
   const [researchStop, setResearchStop] = useState<string | null>(null);
   const [researchNote, setResearchNote] = useState<string | null>(null);
-  const [researchRoles, setResearchRoles] = useState<
-    Array<{ role?: string; verify_e2ee?: string; pubkey_signer?: string; proposed_side?: string; survives?: boolean; kill?: boolean }>
-  >([]);
+  const [researchRoles, setResearchRoles] = useState<ResearchRole[]>([]);
   const [researchBusy, setResearchBusy] = useState(false);
   const [researchStage, setResearchStage] = useState("READING_MARKET");
   const [researchElapsed, setResearchElapsed] = useState(0);
@@ -729,10 +804,7 @@ export function App() {
     const gen = ++researchGen.current;
     const want = (coin || "ETH").toUpperCase();
     setResearchNote(null);
-    setResearchRoles([]);
     setResearchEvidence("");
-    setPreview(null);
-    setPreviewHash("");
     setAuthErr(null);
     setResearchCoin(want);
     if (!companionUp) {
@@ -749,6 +821,12 @@ export function App() {
     const auth = checks.find((c) => c.name === "direct_auth");
     if (auth && !auth.ok) {
       setResearchStop("DIRECT_NOT_AUTHORIZED");
+      setView("research");
+      return;
+    }
+    const credit = checks.find((c) => c.name === "direct_credit");
+    if (credit && !credit.ok) {
+      setResearchStop("DIRECT_CREDIT_INSUFFICIENT");
       setView("research");
       return;
     }
@@ -800,11 +878,11 @@ export function App() {
           return;
         }
         if (st.running) continue;
-        if (st.error && !verified) {
+        if (st.error && !verified && !committeeDeny(deny)) {
           setResearchStop(st.error);
           return;
         }
-        if (roles.length === 0 && Date.now() - wall < 90000) {
+        if (roles.length === 0 && Date.now() - wall < 180000) {
           continue;
         }
         if (!verified) {
@@ -893,7 +971,7 @@ export function App() {
       <aside className="rail">
         <div className="rail-brand">
           <div className="word">PIT.</div>
-          <p className="kicker">{status?.version || "0.1.13"} · local execution</p>
+          <p className="kicker">{status?.version || "0.1.14"} · local execution</p>
         </div>
         <nav className="rail-nav" aria-label="Desk">
           {RAIL.map((item) => (
@@ -913,7 +991,7 @@ export function App() {
         <div className="rail-foot">
           <p>{net === "mainnet" ? "MAINNET" : "TESTNET"}</p>
           <p>{companionUp ? "companion live" : "starting companion"}</p>
-          <p>{status?.version || "PIT 0.1.13"}</p>
+          <p>{status?.version || "PIT 0.1.14"}</p>
           <button type="button" className="ghost" onClick={() => setView("settings")}>
             Help / Diagnostics
           </button>
@@ -964,6 +1042,7 @@ export function App() {
             researchVerified={Boolean(researchNote && !explained)}
             researchStage={researchStage}
             researchElapsed={researchElapsed}
+            researchRoles={researchRoles}
           />
         ) : null}
 
@@ -1077,11 +1156,28 @@ export function App() {
                 ))}
               </div>
             </article>
+            <article className="card">
+              <p className="label">PRIVATE RESEARCH</p>
+              <p>Provider Direct · Roles 3 · Estimated requirement about 3 0G locked.</p>
+              <p>
+                {checks.find((c) => c.name === "direct_credit")?.ok
+                  ? "Status Ready"
+                  : "Status Action required"}
+              </p>
+              <p className="fine">
+                {checks.find((c) => c.name === "direct_credit")?.detail ||
+                  "Private research uses real compute. PIT will not send your strategy until the required private compute capacity is available."}
+              </p>
+              <a className="linkish" href={LINKS.pcAdvanced} target="_blank" rel="noreferrer">
+                Open 0G Private Compute
+              </a>
+            </article>
             {researchBusy ? (
               <ResearchProgress
                 stage={researchStage}
                 elapsedMs={researchElapsed}
                 coin={researchCoin}
+                roles={researchRoles}
                 onCancel={() => void onCancelResearch()}
               />
             ) : null}
@@ -1189,6 +1285,11 @@ export function App() {
                       </li>
                     ))}
                   </ul>
+                ) : null}
+                {explainStopHref(researchStop) ? (
+                  <a className="linkish" href={explainStopHref(researchStop)?.href} target="_blank" rel="noreferrer">
+                    {explainStopHref(researchStop)?.label}
+                  </a>
                 ) : null}
                 <button type="button" className="linkish" onClick={() => setTechOpen((v) => !v)}>
                   {techOpen ? "Hide technical evidence" : "View technical evidence"}

@@ -36,6 +36,14 @@ func TestSealerExitErrorLedger(t *testing.T) {
 	if err == nil || err.Error() != "TEE_VERIFY_FAIL" {
 		t.Fatalf("%v", err)
 	}
+	err = sealerExitError(fmt.Errorf("exit"), []byte("PUBKEY Get \"https://example\": context deadline exceeded\n"))
+	if err == nil || err.Error() != "DIRECT_PROVIDER_TIMEOUT" {
+		t.Fatalf("timeout %v", err)
+	}
+	err = sealerExitError(fmt.Errorf("x"), []byte("noise"))
+	if err == nil || err.Error() != "DIRECT_PROVIDER_UNAVAILABLE" {
+		t.Fatalf("default %v", err)
+	}
 }
 
 func TestRequireSchemeRejectsHumanStdout(t *testing.T) {

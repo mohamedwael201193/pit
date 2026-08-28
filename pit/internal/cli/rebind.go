@@ -13,7 +13,7 @@ import (
 	"github.com/mohamedwael201193/pit/internal/policy"
 )
 
-func ReportFromLastResearch(dir, coin string) (compute.AskReport, error) {
+func CommitteeDecisionFromLastResearch(dir, coin string) (compute.AskReport, error) {
 	raw, err := os.ReadFile(filepath.Join(dir, "last-research.json"))
 	if err != nil {
 		return compute.AskReport{}, err
@@ -51,6 +51,37 @@ func ReportFromLastResearch(dir, coin string) (compute.AskReport, error) {
 		rep.Eligible = false
 		rep.Preview = map[string]any{"eligible": false, "deny": deny, "reasons": got.Reasons}
 		return rep, nil
+	}
+	rep.Eligible = true
+	if prev, hash, lerr := LoadPreview(dir); lerr == nil && strings.Contains(strings.ToUpper(prev.Market), want) {
+		rep.PreviewHash = hash
+		rep.Preview = map[string]any{
+			"eligible": true, "market": prev.Market, "side": prev.Side, "sz": prev.Sz,
+			"orderType": prev.OrderType, "limitPx": prev.LimitPx, "hash": hash, "cloid": prev.Cloid,
+			"expiryUnixMs": prev.ExpiryUnixMs,
+		}
+		return rep, nil
+	}
+	return rep, nil
+}
+
+func ReportFromLastResearch(dir, coin string) (compute.AskReport, error) {
+	rep, err := CommitteeDecisionFromLastResearch(dir, coin)
+	if err != nil || !rep.Eligible {
+		return rep, err
+	}
+	if strings.TrimSpace(rep.PreviewHash) != "" {
+		return rep, nil
+	}
+	st, err := Load(dir)
+	if err != nil {
+		return rep, err
+	}
+	p := policy.Default()
+	_ = CheckPinned(dir, st.WorkspaceID, p)
+	want := strings.ToUpper(strings.TrimSpace(coin))
+	if want == "" {
+		want = "ETH"
 	}
 	net, err := config.ParseNetwork(st.Network)
 	if err != nil {

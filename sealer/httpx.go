@@ -18,7 +18,7 @@ func getJSON(url string, hdr map[string]string) (int, []byte, http.Header, error
 	for k, v := range hdr {
 		req.Header.Set(k, v)
 	}
-	c := &http.Client{Timeout: 90 * time.Second}
+	c := &http.Client{Timeout: 180 * time.Second}
 	resp, err := c.Do(req)
 	if err != nil {
 		return 0, nil, nil, err

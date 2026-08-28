@@ -1,4 +1,4 @@
-import { LINKS, hyperliquidAPI } from "./links";
+import { LINKS, hyperliquidAPI, hyperliquidApp } from "./links";
 
 export function HyperliquidCard({
   net,
@@ -64,6 +64,9 @@ export function HyperliquidCard({
         <button type="button" className="linkish" onClick={onCreateSession} disabled={busy}>
           {sessionAlive ? "Refresh secure session" : "Create secure PIT session"}
         </button>
+        <a className="linkish" href={hyperliquidApp(net)} target="_blank" rel="noreferrer">
+          Open Hyperliquid
+        </a>
         <a className="linkish" href={hyperliquidAPI(net)} target="_blank" rel="noreferrer">
           Open Hyperliquid API
         </a>

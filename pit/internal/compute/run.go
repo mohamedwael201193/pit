@@ -61,6 +61,13 @@ func sealerExitError(err error, out []byte) error {
 		return nil
 	}
 	text := string(out)
+	low := strings.ToLower(text + " " + err.Error())
+	if strings.Contains(text, "VERIFY_FAIL") {
+		return fmt.Errorf("TEE_VERIFY_FAIL")
+	}
+	if strings.Contains(low, "timeout") || strings.Contains(low, "deadline exceeded") || strings.Contains(low, "deadlineexceeded") {
+		return fmt.Errorf("DIRECT_PROVIDER_TIMEOUT")
+	}
 	if ee, ok := err.(*exec.ExitError); ok {
 		switch ee.ExitCode() {
 		case 10:
@@ -68,26 +75,29 @@ func sealerExitError(err error, out []byte) error {
 		case 11:
 			return fmt.Errorf("NOT_TEEML")
 		case 1:
+			if strings.Contains(text, "PUBKEY") || strings.Contains(text, "POST") || strings.Contains(text, "SIG_FAIL") {
+				return fmt.Errorf("DIRECT_PROVIDER_TIMEOUT")
+			}
 			return fmt.Errorf("sealer_runtime")
 		case 3:
-			if strings.Contains(text, "POST_FAIL 401") || strings.Contains(text, "POST_FAIL 403") || strings.Contains(text, "POST_FAIL 400") || strings.Contains(strings.ToLower(text), "insufficient balance") {
+			if strings.Contains(text, "POST_FAIL 401") || strings.Contains(text, "POST_FAIL 403") || strings.Contains(text, "POST_FAIL 400") || strings.Contains(low, "insufficient balance") {
 				return fmt.Errorf("direct_ledger")
 			}
 			return fmt.Errorf("direct_provider_http")
 		case 4:
 			return fmt.Errorf("direct_no_chat_id")
 		case 5:
-			return fmt.Errorf("direct_signature_http")
+			return fmt.Errorf("DIRECT_PROVIDER_TIMEOUT")
 		case 6:
 			return fmt.Errorf("TEE_VERIFY_FAIL")
 		case 7:
 			return fmt.Errorf("TEE_OPEN_FAIL")
 		}
 	}
-	if strings.Contains(text, "POST_FAIL 401") || strings.Contains(text, "POST_FAIL 403") || strings.Contains(text, "POST_FAIL 400") || strings.Contains(strings.ToLower(text), "insufficient balance") {
+	if strings.Contains(text, "POST_FAIL 401") || strings.Contains(text, "POST_FAIL 403") || strings.Contains(text, "POST_FAIL 400") || strings.Contains(low, "insufficient balance") {
 		return fmt.Errorf("direct_ledger")
 	}
-	return fmt.Errorf("TEE_VERIFY_FAIL")
+	return fmt.Errorf("DIRECT_PROVIDER_UNAVAILABLE")
 }
 
 func stopped(stop func() bool) bool {

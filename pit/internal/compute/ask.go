@@ -113,7 +113,12 @@ func ProductAskReportStage(net config.Network, deskAuthorized bool, bin string, 
 		return AskReport{}, fmt.Errorf("research_cancelled")
 	}
 	notify(stage, "CONTACTING_PRIVATE_PROVIDER")
-	if err := RunCommitteeStages(bin, jobs, stage, stop); err != nil {
+	if lastPath != "" {
+		_ = os.WriteFile(lastPath, []byte(`{"sign":false,"trade":false,"roles":[]}`), 0o600)
+	}
+	if err := RunCommitteeStagesPersist(bin, jobs, stage, stop, func(done []DirectJob) {
+		_ = SavePublicEvidence(lastPath, done, nil)
+	}); err != nil {
 		rep = AskReport{Note: "Committee stopped. PIT did not fall back to Router.", Roles: publicJobs(jobs)}
 		return rep, err
 	}

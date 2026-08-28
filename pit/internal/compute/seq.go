@@ -8,6 +8,10 @@ func RunCommittee(bin string, jobs []DirectJob) error {
 }
 
 func RunCommitteeStages(bin string, jobs []DirectJob, stage StageFn, stop func() bool) error {
+	return RunCommitteeStagesPersist(bin, jobs, stage, stop, nil)
+}
+
+func RunCommitteeStagesPersist(bin string, jobs []DirectJob, stage StageFn, stop func() bool, persist func([]DirectJob)) error {
 	if len(jobs) != 3 {
 		return fmt.Errorf("committee_incomplete")
 	}
@@ -47,8 +51,16 @@ func RunCommitteeStages(bin string, jobs []DirectJob, stage StageFn, stop func()
 		}
 		notify(stage, labels[jobs[i].Role])
 		if err := RunSealedAskCtl(jobs[i], stage, stop); err != nil {
+			if persist != nil {
+				persist(jobs[:i+1])
+			}
+			notify(stage, labels[jobs[i].Role]+"_FAILED")
 			return err
 		}
+		if persist != nil {
+			persist(jobs[:i+1])
+		}
+		notify(stage, labels[jobs[i].Role]+"_VERIFIED")
 	}
 	return nil
 }

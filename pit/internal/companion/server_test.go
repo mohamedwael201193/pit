@@ -188,7 +188,7 @@ func TestLocalStatusVersionNoSecret(t *testing.T) {
 	if got["sign"] == true || got["trade"] == true {
 		t.Fatal(got)
 	}
-	if got["version"] != "0.1.13" {
+	if got["version"] != "0.1.14" {
 		t.Fatalf("version %v", got["version"])
 	}
 }
@@ -473,6 +473,36 @@ func TestResearchStatusOmitsEvidenceWhileRunning(t *testing.T) {
 	}
 }
 
+func TestResearchStatusIncludesCompactRolesWhileRunning(t *testing.T) {
+	dir := t.TempDir()
+	h := New(dir)
+	ev := `{"sign":false,"trade":false,"roles":[{"role":"researcher","verify_e2ee":"OK","pubkey_signer":"0xA46EA4FC5889AD35A1487e1Ed04dCcfa872146B9","teeSigner":"0xA46EA4FC5889AD35A1487e1Ed04dCcfa872146B9","proposed_side":"buy"}]}`
+	if err := os.WriteFile(filepath.Join(dir, "last-research.json"), []byte(ev), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	h.researchMu.Lock()
+	h.job = researchJob{ID: "job-2", running: true, stage: "RISK", coin: "ETH", started: time.Now()}
+	h.researchMu.Unlock()
+	req := local(httptest.NewRequest(http.MethodGet, "/local/research/status", nil))
+	rec := httptest.NewRecorder()
+	h.Handler().ServeHTTP(rec, req)
+	if rec.Code != 200 {
+		t.Fatal(rec.Body.String())
+	}
+	if strings.Contains(rec.Body.String(), `"evidence"`) {
+		t.Fatal("status must stay tiny while running")
+	}
+	if !strings.Contains(rec.Body.String(), `"verify_e2ee":"OK"`) {
+		t.Fatal(rec.Body.String())
+	}
+	if !strings.Contains(rec.Body.String(), `"RISK"`) {
+		t.Fatal(rec.Body.String())
+	}
+	if strings.Contains(strings.ToLower(rec.Body.String()), "app-sk-") {
+		t.Fatal("leak")
+	}
+}
+
 func TestClassifyResearch(t *testing.T) {
 	if classifyResearch("unbound") != "WORKSPACE_NOT_BOUND" {
 		t.Fatal("unbound")
@@ -498,6 +528,18 @@ func TestClassifyResearch(t *testing.T) {
 	if classifyResearch("committee_incomplete") != "COMMITTEE_INCOMPLETE" {
 		t.Fatal("incomplete")
 	}
+	if classifyResearch("DIRECT_PROVIDER_TIMEOUT") != "DIRECT_PROVIDER_TIMEOUT" {
+		t.Fatal("timeout")
+	}
+	if classifyResearch("direct_signature_http") != "DIRECT_PROVIDER_TIMEOUT" {
+		t.Fatal("sig http")
+	}
+	if classifyResearch("direct_ledger") != "DIRECT_CREDIT_INSUFFICIENT" {
+		t.Fatal("ledger")
+	}
+	if classifyResearch("sealer_runtime") != "DIRECT_PROVIDER_UNAVAILABLE" {
+		t.Fatal("runtime")
+	}
 }
 
 func TestResearchStatusHydratesRolesFromEvidence(t *testing.T) {
@@ -520,6 +562,41 @@ func TestResearchStatusHydratesRolesFromEvidence(t *testing.T) {
 		t.Fatal(rec.Body.String())
 	}
 	if !strings.Contains(rec.Body.String(), `"DIRECT_PROVIDER_UNAVAILABLE"`) {
+		t.Fatal(rec.Body.String())
+	}
+	if strings.Contains(strings.ToLower(rec.Body.String()), "app-sk-") {
+		t.Fatal("leak")
+	}
+}
+
+func TestResearchStatusKeepsPersistedPreview(t *testing.T) {
+	dir := t.TempDir()
+	h := New(dir)
+	ev := `{"sign":false,"trade":false,"roles":[{"role":"researcher","verify_e2ee":"OK","proposed_side":"buy"},{"role":"challenger","verify_e2ee":"OK","survives":true,"kill":false},{"role":"risk","verify_e2ee":"OK","survives":true,"kill":false}]}`
+	if err := os.WriteFile(filepath.Join(dir, "last-research.json"), []byte(ev), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	h.researchMu.Lock()
+	h.job = researchJob{
+		ID:          "job-keep",
+		done:        true,
+		stage:       "READY",
+		coin:        "ETH",
+		eligible:    true,
+		previewHash: "0xabcpreview",
+		preview:     map[string]any{"eligible": true, "market": "hyperliquid:perp:ETH", "side": "buy", "sz": 0.0041, "limitPx": "2482.2", "hash": "0xabcpreview"},
+	}
+	h.researchMu.Unlock()
+	req := local(httptest.NewRequest(http.MethodGet, "/local/research/status", nil))
+	rec := httptest.NewRecorder()
+	h.Handler().ServeHTTP(rec, req)
+	if rec.Code != 200 {
+		t.Fatal(rec.Body.String())
+	}
+	if !strings.Contains(rec.Body.String(), `"0xabcpreview"`) {
+		t.Fatal(rec.Body.String())
+	}
+	if !strings.Contains(rec.Body.String(), `"2482.2"`) {
 		t.Fatal(rec.Body.String())
 	}
 	if strings.Contains(strings.ToLower(rec.Body.String()), "app-sk-") {

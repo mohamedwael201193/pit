@@ -99,7 +99,7 @@ h1 { font-size: 48px; line-height: 0.95; letter-spacing: -0.04em; margin: 12px 0
 .pipe .done { opacity: 0.55; }
 .stages { list-style: none; padding: 0; margin: 16px 0 0; }
 .stages li { opacity: 0.4; }
-.stages .done { opacity: 0.75; }
+.stages li.done { opacity: 0.75; }
 .stages .lit { opacity: 1; color: var(--coral); font-weight: 700; }
 .evidence { white-space: pre-wrap; margin-top: 12px; max-height: 240px; overflow: auto; }
 .linkish, .stop button {
