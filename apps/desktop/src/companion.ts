@@ -311,9 +311,12 @@ export async function cancelResearch(): Promise<BindResult> {
   }
 }
 
-export async function connectionPreview(coin?: string): Promise<BindResult> {
+export async function connectionPreview(coin?: string, reduceOnly?: boolean): Promise<BindResult> {
   try {
-    const native = await nativeJsonOrError<BindResult>("local_connection_preview", { coin: coin || "ETH" });
+    const native = await nativeJsonOrError<BindResult>("local_connection_preview", {
+      coin: coin || "ETH",
+      reduceOnly: Boolean(reduceOnly),
+    });
     if (native.sign || native.trade) return { error: "companion_denied" };
     return native;
   } catch (e) {

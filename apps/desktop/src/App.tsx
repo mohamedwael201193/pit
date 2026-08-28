@@ -942,6 +942,33 @@ export function App() {
     setView("research");
   }
 
+  async function onReduceOnlyClose(coin: string) {
+    setBindBusy(true);
+    setAuthErr(null);
+    const r = await connectionPreview(coin, true);
+    setBindBusy(false);
+    if (r.error) {
+      setAuthErr(r.error);
+      setView("research");
+      return;
+    }
+    setPreview({
+      eligible: true,
+      kind: r.kind || "reduce_only_close",
+      market: r.market,
+      side: r.side,
+      sz: r.sz,
+      limitPx: r.limitPx,
+      hash: r.hash,
+      cloid: r.cloid,
+      note: r.note,
+    });
+    setPreviewHash(r.hash || "");
+    setResearchStop(null);
+    setResearchNote(r.note || "Reduce-only close preview. Type AUTHORIZE on this computer. PIT cannot withdraw.");
+    setView("research");
+  }
+
   return (
     <div className="app">
       <aside className="rail">
@@ -993,8 +1020,25 @@ export function App() {
             <p className="pair-chip">{code ? prettyCode(code) : companionUp ? "code rotating" : "starting companion"}</p>
             <p>Session {sessionAlive ? "order/cancel live" : "none"} · Compute {checks.find((c) => c.name === "direct_credit")?.ok ? "ready" : "action"}</p>
             {agent ? <p className="fine">PIT Agent {agent}</p> : null}
+            <p className="island" role="status">
+              {researchBusy
+                ? `Job ${researchJobId || "…"} · ${researchStage} · ${Math.round(researchElapsed / 1000)}s`
+                : activity.length
+                  ? `${activity[activity.length - 1].kind || "event"} ${activity[activity.length - 1].market || ""} ${activity[activity.length - 1].status || ""}`.trim()
+                  : "No new desk events"}
+              {restartAllowed ? "" : " · Restart blocked while research runs"}
+            </p>
           </div>
         </header>
+        {companionUp && status?.version && !String(status.version).includes("0.2.0") ? (
+          <article className="card stop" role="status">
+            <p className="label">COMPANION VERSION</p>
+            <p>
+              This window expects PIT 0.2.0. The local companion is {status.version}. Close PIT, install the matching
+              desktop, then launch again. A running sealed job is not cancelled by this warning.
+            </p>
+          </article>
+        ) : null}
 
         {!setupDone ? (
           <SetupWizard
@@ -1059,12 +1103,15 @@ export function App() {
               onCreateSession={() => void onSession()}
               onConnectionPreview={() => void onConnectionPreview()}
               onCheck={() => void onCheck()}
+              onRevoke={() => void onRevoke()}
             />
             <PositionsPanel
               account={positionAccount || status?.wallet}
               positions={positions}
               error={positionErr}
               lastOrder={status?.lastOrder}
+              onReduceOnlyClose={(c) => void onReduceOnlyClose(c)}
+              closeBusy={bindBusy}
             />
             <EmptyHome count={eligible.length} next={attention} onGo={(v) => setView(v)} />
             <WelcomePath steps={path} onGo={(v) => setView(v)} />
@@ -1209,6 +1256,8 @@ export function App() {
                   <>
                     {preview.kind === "connection_test" ? (
                       <p className="fine">Connection test. This is not a research recommendation. Host sized a policy clip.</p>
+                    ) : preview.kind === "reduce_only_close" ? (
+                      <p className="fine">Reduce-only close. This is not a research recommendation. Type AUTHORIZE to send it. PIT cannot withdraw.</p>
                     ) : (
                       <p className="label">OPPORTUNITY FOUND</p>
                     )}
@@ -1404,6 +1453,7 @@ export function App() {
               onCreateSession={() => void onSession()}
               onConnectionPreview={() => void onConnectionPreview()}
               onCheck={() => void onCheck()}
+              onRevoke={() => void onRevoke()}
             />
             <AuthorizeGate
               sessionAlive={sessionAlive}

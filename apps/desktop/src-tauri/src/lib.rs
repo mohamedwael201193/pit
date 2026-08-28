@@ -58,8 +58,11 @@ async fn local_session() -> Result<serde_json::Value, String> {
 }
 
 #[tauri::command]
-async fn local_connection_preview(coin: Option<String>) -> Result<serde_json::Value, String> {
-    let body = serde_json::json!({ "coin": coin.unwrap_or_else(|| "ETH".into()) });
+async fn local_connection_preview(coin: Option<String>, reduce_only: Option<bool>) -> Result<serde_json::Value, String> {
+    let body = serde_json::json!({
+        "coin": coin.unwrap_or_else(|| "ETH".into()),
+        "reduceOnly": reduce_only.unwrap_or(false)
+    });
     json_post("/local/connection-preview".into(), body, 20).await
 }
 

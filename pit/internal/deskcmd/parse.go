@@ -32,9 +32,13 @@ func Parse(text string) Result {
 		out.Tool = "help"
 		return out
 	}
-	if wantsExecute(low) {
+	if wantsExecute(low) || wantsFlatten(low) {
 		out.Tool = "refuse_execute"
 		out.Navigate = "preview"
+		if wantsFlatten(low) {
+			out.Reply = "PIT will not flatten from chat. Prepare a reduce-only close on this computer, then type AUTHORIZE there."
+			return out
+		}
 		out.Reply = "PIT will not buy, sell, or authorize from chat. Review the exact preview on this computer, then type AUTHORIZE there."
 		return out
 	}
@@ -148,6 +152,10 @@ func Parse(text string) Result {
 	out.Tool = "help"
 	out.Reply = "I can research a policy market, explain Watch, show evidence, open official Hyperliquid or 0G pages, or explain policy and session. I cannot execute."
 	return out
+}
+
+func wantsFlatten(low string) bool {
+	return strings.Contains(low, "flatten") || strings.Contains(low, "close my position") || strings.Contains(low, "close the position")
 }
 
 func wantsExecute(low string) bool {

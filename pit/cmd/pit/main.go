@@ -543,7 +543,7 @@ func cmdHyperliquid(args []string) {
 			body["approvedUntil"] = until
 		}
 		if linkErr != nil {
-			body["error"] = "extraAgents_query_failed"
+			body["error"] = "agent_list_query_failed"
 		}
 		_ = json.NewEncoder(os.Stdout).Encode(body)
 		return

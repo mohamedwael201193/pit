@@ -271,7 +271,7 @@ h1 { font-size: 48px; line-height: 0.95; letter-spacing: -0.04em; margin: 12px 0
   .top { flex-wrap: wrap; gap: 12px; }
 }
 .next-fix h2 { font-size: 22px; margin: 8px 0 10px; letter-spacing: -0.03em; }
-.cta-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.island { margin: 8px 0 0; font-size: 12px; letter-spacing: 0.02em; opacity: 0.85; }
 .setup-path { list-style: none; padding: 0; margin: 12px 0 0; }
 .setup-path li { display: grid; grid-template-columns: 92px 1fr; gap: 12px; padding: 12px 0; border-top: 1px solid #1c1e22; }
 .setup-path .tone { font-size: 11px; letter-spacing: 0.14em; padding-top: 4px; }

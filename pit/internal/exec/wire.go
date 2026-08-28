@@ -28,7 +28,7 @@ func WireFromPreview(p engine.Preview, asset int) (json.RawMessage, error) {
 	}
 	buy := strings.EqualFold(p.Side, "buy")
 	sz := strconv.FormatFloat(p.Sz, 'f', -1, 64)
-	return hl.BuildOrder(asset, buy, p.LimitPx, sz, p.Cloid)
+	return hl.BuildOrderFlags(asset, buy, p.LimitPx, sz, p.Cloid, p.ReduceOnly)
 }
 
 func NeedAssetIndex(ok bool, idx int) error {

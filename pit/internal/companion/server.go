@@ -179,15 +179,15 @@ func (h *Hub) health(w http.ResponseWriter, r *http.Request) {
 	running := h.job.running
 	h.researchMu.Unlock()
 	obs.WriteJSON(w, http.StatusOK, map[string]any{
-		"ok":                true,
-		"service":           "pit-companion",
-		"listen":            listen,
-		"sign":              false,
-		"trade":             false,
-		"pairing":           true,
-		"version":           version.Number,
-		"research_running":  running,
-		"restart_allowed":   !running,
+		"ok":               true,
+		"service":          "pit-companion",
+		"listen":           listen,
+		"sign":             false,
+		"trade":            false,
+		"pairing":          true,
+		"version":          version.Number,
+		"research_running": running,
+		"restart_allowed":  !running,
 	})
 }
 
@@ -400,9 +400,19 @@ func (h *Hub) localConnectionPreview(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var body struct {
-		Coin string `json:"coin"`
+		Coin       string `json:"coin"`
+		ReduceOnly bool   `json:"reduceOnly"`
 	}
 	_ = json.NewDecoder(r.Body).Decode(&body)
+	if body.ReduceOnly {
+		p, hash, err := cli.BindReduceOnlyClose(h.Dir, body.Coin)
+		if err != nil {
+			writeBindErr(w, err)
+			return
+		}
+		writeLocal(w, http.StatusOK, cli.ReduceOnlyPublic(p, hash))
+		return
+	}
 	p, hash, err := cli.BindConnectionPreview(h.Dir, body.Coin)
 	if err != nil {
 		writeBindErr(w, err)

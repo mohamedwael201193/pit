@@ -493,6 +493,10 @@ func (h *Hub) execResearch(coin string) {
 	h.job.stage = "READY"
 	h.persistJobLocked()
 	kind := TerminalKind(false, "", h.job.deny, namedRolesVerified(h.job.roles), h.job.eligible, h.job.roles)
+	writeWorkingMemory(h.Dir, map[string]any{
+		"coin": h.job.coin, "deny": h.job.deny, "eligible": h.job.eligible,
+		"hash": h.job.previewHash, "kind": kind, "job_id": h.job.ID,
+	})
 	evKind := "research.verified"
 	if kind == TermReadyStoodDown {
 		evKind = "research.stood_down"

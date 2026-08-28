@@ -112,8 +112,7 @@ func (h *Hub) localChat(w http.ResponseWriter, r *http.Request) {
 	}
 	parsed := deskcmd.Parse(body.Text)
 	if parsed.Tool == "memory.forget" {
-		_ = os.Remove(filepath.Join(h.Dir, "memory-working.json"))
-		_ = os.Remove(filepath.Join(h.Dir, "chat-transcript.jsonl"))
+		forgetMemoryFiles(h.Dir)
 		appendActivity(h.Dir, activityEvent{WorkspaceID: workspaceID(h.Dir), Kind: "memory.forgot", Action: "forget", Status: "ok"})
 	}
 	if parsed.StartResearch {
@@ -144,8 +143,7 @@ func (h *Hub) localMemoryForget(w http.ResponseWriter, r *http.Request) {
 	if !desktopOnly(w, r) {
 		return
 	}
-	_ = os.Remove(filepath.Join(h.Dir, "memory-working.json"))
-	_ = os.Remove(filepath.Join(h.Dir, "chat-transcript.jsonl"))
+	forgetMemoryFiles(h.Dir)
 	appendActivity(h.Dir, activityEvent{WorkspaceID: workspaceID(h.Dir), Kind: "memory.forgot", Action: "forget", Status: "ok"})
 	writeLocal(w, http.StatusOK, map[string]any{"ok": true, "sign": false, "trade": false})
 }
@@ -288,12 +286,12 @@ func (h *Hub) localExplain(w http.ResponseWriter, r *http.Request) {
 }
 
 type chatLine struct {
-	TS     int64  `json:"ts"`
-	Role   string `json:"role"`
-	Text   string `json:"text"`
-	Tool   string `json:"tool,omitempty"`
-	Sign   bool   `json:"sign"`
-	Trade  bool   `json:"trade"`
+	TS    int64  `json:"ts"`
+	Role  string `json:"role"`
+	Text  string `json:"text"`
+	Tool  string `json:"tool,omitempty"`
+	Sign  bool   `json:"sign"`
+	Trade bool   `json:"trade"`
 }
 
 func chatPath(dir string) string { return filepath.Join(dir, "chat-transcript.jsonl") }
@@ -306,12 +304,16 @@ func appendChat(dir, role, text, tool string) {
 	if err != nil {
 		return
 	}
+	sealed, err := sealBytes(dir, raw)
+	if err != nil {
+		return
+	}
 	f, err := os.OpenFile(chatPath(dir), os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0o600)
 	if err != nil {
 		return
 	}
 	defer f.Close()
-	_, _ = f.Write(append(raw, '\n'))
+	_, _ = f.Write([]byte(sealed + "\n"))
 }
 
 func readChat(dir string, limit int) []chatLine {
@@ -324,8 +326,12 @@ func readChat(dir string, limit int) []chatLine {
 		if strings.TrimSpace(ln) == "" {
 			continue
 		}
+		plain, err := openBytes(dir, ln)
+		if err != nil || secretful(string(plain)) {
+			continue
+		}
 		var row chatLine
-		if json.Unmarshal([]byte(ln), &row) != nil {
+		if json.Unmarshal(plain, &row) != nil {
 			continue
 		}
 		out = append(out, row)

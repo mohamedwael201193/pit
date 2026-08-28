@@ -12,11 +12,13 @@ export function HyperliquidCard({
   onCreateSession,
   onConnectionPreview,
   onCheck,
+  onRevoke,
+  onRefreshApproval,
 }: {
   net: string;
   agent: string;
   agentName?: string;
-  sessionAlive: boolean;
+  sessionAlive?: boolean;
   sessionExpires?: number;
   approved: boolean;
   approvedDetail?: string;
@@ -24,8 +26,9 @@ export function HyperliquidCard({
   onCreateSession: () => void;
   onConnectionPreview?: () => void;
   onCheck?: () => void;
+  onRevoke?: () => void;
+  onRefreshApproval?: () => void;
 }) {
-  const approval = approved ? "Approved" : agent ? "Needs approval" : "None";
   const session = sessionAlive ? "Active" : agent ? "Expired" : "Not created";
   const status = approved && sessionAlive ? "Ready" : !agent ? "Not connected" : approved ? "Session expired" : "Needs approval";
   const next = !agent
@@ -73,12 +76,25 @@ export function HyperliquidCard({
         <a className="linkish" href={hyperliquidAPI(net)} target="_blank" rel="noreferrer">
           Approve PIT
         </a>
+        <button
+          type="button"
+          className="linkish"
+          onClick={onRefreshApproval || onCheck}
+          disabled={busy || (!onRefreshApproval && !onCheck)}
+        >
+          Refresh approval
+        </button>
         <a className="linkish" href={hyperliquidAPI(net)} target="_blank" rel="noreferrer">
           Open Hyperliquid API
         </a>
         {onCheck ? (
           <button type="button" className="linkish" onClick={onCheck} disabled={busy}>
             Check again
+          </button>
+        ) : null}
+        {onRevoke ? (
+          <button type="button" className="linkish" onClick={onRevoke} disabled={busy || !agent}>
+            Revoke PIT
           </button>
         ) : null}
         {onConnectionPreview && sessionAlive && approved ? (
@@ -92,7 +108,8 @@ export function HyperliquidCard({
         <a href={LINKS.pcAdvanced} target="_blank" rel="noreferrer">
           0G Private Compute
         </a>
-        . That is not a Hyperliquid balance.
+        . That is not a Hyperliquid balance. Revoke PIT deletes the local session, then you remove the agent on Hyperliquid
+        API.
       </p>
     </article>
   );

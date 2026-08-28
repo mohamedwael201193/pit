@@ -49,7 +49,7 @@ Health (public Watch, `sign: false`): [pit-health.onrender.com](https://pit-heal
 ### How to verify your PIT download
 
 ```powershell
-Get-FileHash .\PIT_0.1.4_x64-setup.exe -Algorithm SHA256
+Get-FileHash .\PIT_0.2.0_x64-setup.exe -Algorithm SHA256
 ```
 
 Compare with `SHA256SUMS` on the same GitHub Release. The source commit is on the release tag.
@@ -62,7 +62,7 @@ Compare with `SHA256SUMS` on the same GitHub Release. The source commit is on th
 2. Pick **MAINNET** or **TESTNET**. One workspace is exactly one pair. Never mixed.
 3. Connect **your Hyperliquid account**. Spot USDC counts as funded.
 4. Set **your policy** (clip, leverage, kill, allowlist).
-5. Create **your session** on desktop or CLI (order + cancel, TTL ≤ 1h).
+5. Create **your session** on desktop or CLI (order + cancel, 24 hours; reused if Hyperliquid still lists the PIT agent).
 6. Ask, or wait for a policy-eligible opportunity.
 7. Type `AUTHORIZE` on the exact preview — or do nothing.
 
@@ -305,13 +305,13 @@ Official storage client (not the TypeScript SDK): `upload --url --file --key --e
 
 `proof` requires `--root`, `--out`, and `--key-file`. It never uses `PIT_MEMORY_KEY`.
 
-`status` prints the bound workspace, live session address, extraAgents link, ledger row, and whether the bound cloid is on the venue. It never prints a session key and never places an order.
+`status` prints the bound workspace, live session address, Hyperliquid PIT-agent list, ledger row, and whether the bound cloid is on the venue. It never prints a session key and never places an order.
 
 `preview` prints the exact bound fields from a **live mark** and the host sizer. It requires `--market`, `--side`, `--forecast`, and a live session. The model cannot set size. Any later mutation of the card invalidates `AUTHORIZE`.
 
 `proof` uses the official Go storage client with `--proof`. It does not use a global memory key.
 
-`authorize` requires a TTY, `--i-understand`, the exact word `AUTHORIZE`, a live session, and a bound preview. Piped `yes` is rejected. A matching token records `authorized` on the local ledger for that workspace and clientOrderId. A second click is `duplicate_click`. The CLI signs an L1 envelope locally from the session key, queries `extraAgents` on the matching venue, and posts only when that agent is present and unexpired. An unsigned or unlinked payload never reaches the venue.
+`authorize` requires a TTY, `--i-understand`, the exact word `AUTHORIZE`, a live session, and a bound preview. Piped `yes` is rejected. A matching token records `authorized` on the local ledger for that workspace and clientOrderId. A second click is `duplicate_click`. The CLI signs an L1 envelope locally from the session key, queries the Hyperliquid PIT-agent list on the matching venue, and posts only when that agent is present and unexpired. An unsigned or unlinked payload never reaches the venue.
 
 `opportunities` reads live venue books for the policy allowlist and never places an order. Empty Watch is a real empty state.
 
@@ -321,7 +321,7 @@ Restarting the process keeps a previewed action. A second click does not apply t
 
 Web refresh cannot sign. Desktop recovers the exact preview from the local ledger. Two wallets never share a workspace.
 
-`cancel` requires a live session and an authorized preview. It queries `frontendOpenOrders` for the bound cloid, builds a cancel wire from the live asset index, signs locally, and checks extraAgents. Missing venue state is `not_on_venue` or `query_exchange_first`. A linked cancel posts only when the cloid is on the venue. Cancel cannot withdraw.
+`cancel` requires a live session and an authorized preview. It queries `frontendOpenOrders` for the bound cloid, builds a cancel wire from the live asset index, signs locally, and checks the Hyperliquid PIT-agent list. Missing venue state is `not_on_venue` or `query_exchange_first`. A linked cancel posts only when the cloid is on the venue. Cancel cannot withdraw.
 
 `ask` requires `--market` and `--book` files. Missing files return `empty_envelope`. Missing sealer binary, missing Direct token (keychain or operator file), Galileo VerifyE2EE-unproven, or a Router URL all stop the operation. There is no fallback. MCP cannot export the token or invoke the sealer.
 
@@ -459,7 +459,7 @@ Use the **official Go client** only for proofs.
 - Open interest must be finite. Slippage above policy fails closed.
 - Mark price must be finite. Thin liquidity and cooldown fail closed. Script sealers (`.ts` / `.js` / `.mjs` / `.cjs`) are refused.
 - Leverage above policy, a foreign venue, `sendAsset`, and `approveAgent` fail closed. A timeout never blindly reposts.
-- Session mint is 24 hours. If extraAgents still lists the agent, PIT reuses it. A stale preview cannot authorize.
+- Session mint is 24 hours. If Hyperliquid still lists the PIT agent, PIT reuses it. A stale preview cannot authorize.
 - Calibration below the floor fails. SOL is outside the default universe. Galileo sealed ask stays disabled until VerifyE2EE is proven.
 - Impact prices must be finite. MCP forecasts never carry `sizeUsd`. Health JSON cannot include a session.
 - Strategy health needs 30 resolved samples. A TypeScript storage client is refused. MCP cannot export a session. Transfer of Agentic ID is not live on Aristotle.
@@ -484,7 +484,7 @@ If a Direct request fails, PIT **stops**. It does not retry on the Router.
 - Galileo iTransfer is an official path; PIT has **not** shown a transfer tx that changes `ownerOf`.
 - Galileo sealed committee is **not** the mainnet glm-5.2 committee. VerifyE2EE on Omni is still required before enabling testnet sealed ask.
 - Live Direct Seal + VerifyE2EE needs the native sealer and a wallet-signed Direct token in the OS keychain (or an operator `PIT_DIRECT_AUTH_FILE`). Python and TypeScript sealers are refused. A missing binary returns `sealer_not_wired`. A missing Direct token returns `direct_token_required`. A Router `sk-` key returns `router_api_key_denied`. Plaintext sealer output returns `TEE_VERIFY_FAIL`. The three roles share one provider unless the auth files actually differ. The provider Ledger still requires the user wallet to have Direct credit; PIT does not invent that credit.
-- Live Hyperliquid dust (`order` then `cancel`) requires a funded account on the matching venue, a user `AUTHORIZE`, a resolved asset index, a signed exchange payload, and an unexpired extraAgents row for the session agent. An unsigned or unlinked authorized ledger row is not a fill.
+- Live Hyperliquid dust (`order` then `cancel`) requires a funded account on the matching venue, a user `AUTHORIZE`, a resolved asset index, a signed exchange payload, and an unexpired PIT-agent row for the session agent. An unsigned or unlinked authorized ledger row is not a fill.
 - Desktop is the local authorize shell; full OS keychain packaging (Tauri / stronghold) can still be tightened.
 - Do not claim hardware quotes unless the verifier is wired.
 

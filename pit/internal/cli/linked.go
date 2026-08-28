@@ -28,5 +28,5 @@ func LiveAgent(network, user, workspace, agentAddr string, nowMs int64) (bool, i
 	return ok, until, nil
 }
 
-// LookupAgent is the extraAgents probe. Tests replace it so EnsureLocalSession never mints on a stub.
+// LookupAgent is the Hyperliquid PIT-agent list probe. Tests replace it so EnsureLocalSession never mints on a stub.
 var LookupAgent = LiveAgent

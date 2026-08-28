@@ -3,7 +3,7 @@ package deskcmd
 import "testing"
 
 func TestRefuseExecute(t *testing.T) {
-	for _, q := range []string{"buy ETH", "trade now", "I authorize it", "just do it"} {
+	for _, q := range []string{"buy ETH", "trade now", "I authorize it", "just do it", "flatten ETH", "close my position"} {
 		r := Parse(q)
 		if r.Execute || r.StartResearch {
 			t.Fatalf("%s %+v", q, r)

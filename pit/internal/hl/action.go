@@ -7,19 +7,19 @@ import (
 )
 
 type OrderWire struct {
-	Type    string        `json:"type"`
-	Orders  []OrderItem   `json:"orders"`
-	Grouping string       `json:"grouping"`
+	Type     string      `json:"type"`
+	Orders   []OrderItem `json:"orders"`
+	Grouping string      `json:"grouping"`
 }
 
 type OrderItem struct {
-	A      int     `json:"a"`
-	B      bool    `json:"b"`
-	P      string  `json:"p"`
-	S      string  `json:"s"`
-	R      bool    `json:"r"`
-	T      OrderT  `json:"t"`
-	C      string  `json:"c"`
+	A int    `json:"a"`
+	B bool   `json:"b"`
+	P string `json:"p"`
+	S string `json:"s"`
+	R bool   `json:"r"`
+	T OrderT `json:"t"`
+	C string `json:"c"`
 }
 
 type OrderT struct {
@@ -39,6 +39,10 @@ type CancelItem struct {
 }
 
 func BuildOrder(asset int, buy bool, px, sz, cloid string) (json.RawMessage, error) {
+	return BuildOrderFlags(asset, buy, px, sz, cloid, false)
+}
+
+func BuildOrderFlags(asset int, buy bool, px, sz, cloid string, reduceOnly bool) (json.RawMessage, error) {
 	if err := session.CheckAction("order"); err != nil {
 		return nil, err
 	}
@@ -46,7 +50,7 @@ func BuildOrder(asset int, buy bool, px, sz, cloid string) (json.RawMessage, err
 		return nil, err
 	}
 	w := OrderWire{Type: "order", Grouping: "na"}
-	item := OrderItem{A: asset, B: buy, P: px, S: sz, R: false, C: cloid}
+	item := OrderItem{A: asset, B: buy, P: px, S: sz, R: reduceOnly, C: cloid}
 	item.T.Limit.Tif = "Gtc"
 	w.Orders = []OrderItem{item}
 	return json.Marshal(w)

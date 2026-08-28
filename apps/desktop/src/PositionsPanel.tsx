@@ -16,11 +16,15 @@ export function PositionsPanel({
   positions,
   error,
   lastOrder,
+  onReduceOnlyClose,
+  closeBusy,
 }: {
   account?: string;
   positions: VenuePosition[];
   error?: string;
   lastOrder?: { oid?: string; status?: string; market?: string; side?: string; sz?: number };
+  onReduceOnlyClose?: (coin: string) => void;
+  closeBusy?: boolean;
 }) {
   return (
     <article className="card">
@@ -68,6 +72,23 @@ export function PositionsPanel({
       ) : (
         <p className="fine">No PIT order on this machine yet.</p>
       )}
+      {onReduceOnlyClose && positions.length ? (
+        <div className="cta-row">
+          {positions.map((p) =>
+            p.coin ? (
+              <button
+                key={`close-${p.coin}`}
+                type="button"
+                className="linkish"
+                disabled={closeBusy}
+                onClick={() => onReduceOnlyClose(p.coin!)}
+              >
+                Prepare reduce-only close {p.coin}
+              </button>
+            ) : null,
+          )}
+        </div>
+      ) : null}
     </article>
   );
 }

@@ -174,6 +174,7 @@ type Preview struct {
 	ForecastID    string  `json:"forecastId"`
 	Nonce         int64   `json:"nonce"`
 	WorkspaceID   string  `json:"workspaceId"`
+	ReduceOnly    bool    `json:"reduceOnly,omitempty"`
 }
 
 func CanonicalHash(p Preview) (string, error) {
