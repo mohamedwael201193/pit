@@ -2,7 +2,7 @@ package exec
 
 import (
 	"encoding/json"
-	"fmt"
+	"strings"
 )
 
 func ReceiptOID(body []byte) string {
@@ -28,13 +28,14 @@ func ReceiptOID(body []byte) string {
 				continue
 			}
 			var o struct {
-				OID any `json:"oid"`
+				OID json.RawMessage `json:"oid"`
 			}
 			if json.Unmarshal(raw, &o) != nil {
 				continue
 			}
-			s := fmt.Sprint(o.OID)
-			if s != "" && s != "<nil>" {
+			s := strings.TrimSpace(string(o.OID))
+			s = strings.Trim(s, `"`)
+			if s != "" && s != "null" {
 				return s
 			}
 		}

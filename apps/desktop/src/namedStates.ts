@@ -1,7 +1,7 @@
 export const NAMED = {
   SIGNATURE_DECLINED: "Signature declined. PIT did not collect a key.",
   WRONG_NETWORK: "Wrong network. Pick MAINNET or TESTNET and stay there.",
-  SESSION_EXPIRED: "Your session expired. Approve a new agent on this machine.",
+  SESSION_EXPIRED: "Your local session expired. Create a secure PIT session again. If extraAgents still lists this agent, PIT reuses it.",
   HL_UNFUNDED: "Your trading account shows no USDC. Spot USDC still counts as funded.",
   POLICY_BLOCK: "Your policy blocked this preview.",
   TEE_VERIFY_FAIL: "TeeML signature did not match the on-chain signer. Stopped.",

@@ -57,7 +57,7 @@ const STEPS = [
     id: 4,
     title: "Connect Hyperliquid",
     why: "PIT needs YOUR trading account. Spot USDC counts as funded.",
-    action: "Open Hyperliquid in your wallet. PIT reads public state only from the web.",
+    action: "Open Hyperliquid in your wallet, then open Hyperliquid API to approve the PIT agent. PIT reads public state only from the web.",
     fail: namedState("BACKEND_UNREACHABLE"),
     Diagram: DiagramHyperliquid,
   },
@@ -80,8 +80,8 @@ const STEPS = [
   {
     id: 7,
     title: "Create local session",
-    why: "The one-hour agent lives in the OS keychain. Not here.",
-    action: "Create the session in PIT Desktop, then approve the printed agent on Hyperliquid API (app.hyperliquid.xyz/API).",
+    why: "The 24-hour agent lives in the OS keychain. Not here. If extraAgents still lists it, PIT reuses the same address.",
+    action: "Create the session in PIT Desktop, then approve the printed agent on Hyperliquid API.",
     fail: namedState("SESSION_EXPIRED"),
     Diagram: DiagramSession,
   },
@@ -206,6 +206,11 @@ export function StartFlow() {
                 Pair PIT Desktop
               </ButtonLink>
               <DirectSign />
+              <div className="mt-6">
+                <ButtonLink href="https://pc.0g.ai/sdk/dashboard/funds" target="_blank" rel="noreferrer" variant="secondary" size="lg">
+                  Open 0G Private Compute
+                </ButtonLink>
+              </div>
               <div className="mt-8">
                 <Button type="button" trailingArrow size="lg" onClick={next}>
                   Continue
@@ -258,6 +263,13 @@ export function StartFlow() {
 
           {current.id !== 2 && current.id !== 3 && current.id !== 5 ? (
             <div className="mt-10">
+              {current.id === 4 || current.id === 7 || current.id === 8 ? (
+                <div className="mb-4">
+                  <ButtonLink href="https://app.hyperliquid.xyz/API" target="_blank" rel="noreferrer" size="lg">
+                    Open Hyperliquid API
+                  </ButtonLink>
+                </div>
+              ) : null}
               {step < 12 ? (
                 <Button type="button" trailingArrow size="lg" onClick={next}>
                   Continue

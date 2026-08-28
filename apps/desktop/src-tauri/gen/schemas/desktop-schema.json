@@ -213,6 +213,12 @@
           "markdownDescription": "Read the one-time pairing code over a native loopback GET with no Origin."
         },
         {
+          "description": "Prepare a host-sized connection-test preview. Never returns a session key.",
+          "type": "string",
+          "const": "allow-local-connection-preview",
+          "markdownDescription": "Prepare a host-sized connection-test preview. Never returns a session key."
+        },
+        {
           "description": "Issue a Direct challenge. Never returns the assembled token.",
           "type": "string",
           "const": "allow-local-direct-intent",

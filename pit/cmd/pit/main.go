@@ -47,6 +47,9 @@ Session
   pit session
   pit companion
   pit approve
+  pit hyperliquid
+  pit agent
+  pit compute
 
 Research
   pit watch
@@ -86,7 +89,7 @@ Every command accepts --json. Exit 0 on success, 2 on usage, 1 on failed doctor.
 PIT never asks for a seed phrase or a trading secret.
 Session keys stay on this machine (OS keychain unless PIT_KEYRING=file).
 authorize requires a TTY, the exact word AUTHORIZE, and a live session on this machine.
-pit session creates a 24-hour order/cancel agent. It never prints the key.
+pit session creates a 24-hour order/cancel agent. If extraAgents still lists that agent, PIT reuses it instead of minting a new address.
 pit companion listens on 127.0.0.1 only. Pairing does not send the session key to the browser.
 The desktop can bind, pin policy, and mint a session without a terminal.
 `)
@@ -115,6 +118,10 @@ func main() {
 		cmdPolicy()
 	case "session":
 		cmdSession()
+	case "hyperliquid", "agent":
+		cmdHyperliquid(rest[1:])
+	case "compute":
+		cmdCompute()
 	case "companion":
 		cmdCompanion()
 	case "status":
@@ -258,7 +265,7 @@ func cmdSession() {
 	fmt.Printf("agent     %s\n", sf.AgentAddr)
 	fmt.Printf("name      %s\n", name)
 	fmt.Printf("expires   %d\n", sf.Expires)
-	fmt.Println("ttl       1h")
+	fmt.Println("ttl       24h (reused while extraAgents lists this address)")
 	fmt.Println("order     allowed")
 	fmt.Println("cancel    allowed")
 	fmt.Println("withdraw  denied")
@@ -424,22 +431,109 @@ func cmdPair() {
 }
 
 func cmdApprove() {
+	cmdHyperliquid(nil)
+}
+
+func cmdHyperliquid(args []string) {
+	prepare := false
+	for _, a := range args {
+		if a == "--prepare" {
+			prepare = true
+		}
+	}
 	st, err := cli.Load(stateDir())
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "approve requires pit init first")
+		fmt.Fprintln(os.Stderr, "hyperliquid requires pit init first")
 		os.Exit(2)
 	}
-	sf, err := cli.LoadSession(stateDir())
+	sf, serr := cli.LoadSession(stateDir())
 	name, _ := session.AgentName(st.WorkspaceID)
+	now := time.Now().UnixMilli()
+	linked := false
+	var until int64
+	var linkErr error
+	if serr == nil {
+		linked, until, linkErr = cli.LookupAgent(st.Network, st.Wallet, st.WorkspaceID, sf.AgentAddr, now)
+	}
+	if prepare {
+		p, hash, err := cli.BindConnectionPreview(stateDir(), "ETH")
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
+		if asJSON {
+			_ = json.NewEncoder(os.Stdout).Encode(cli.ConnectionPreviewPublic(p, hash))
+			return
+		}
+		fmt.Println("kind      connection_test")
+		fmt.Printf("market    %s\n", p.Market)
+		fmt.Printf("side      %s\n", p.Side)
+		fmt.Printf("sz        %v\n", p.Sz)
+		fmt.Printf("limit     %s\n", p.LimitPx)
+		fmt.Printf("hash      %s\n", hash)
+		fmt.Println("this is not a research recommendation. type AUTHORIZE on the desktop to send it.")
+		return
+	}
+	if asJSON {
+		body := map[string]any{
+			"ok": true, "sign": false, "trade": false, "withdraw": false,
+			"order": true, "cancel": true, "api": "https://app.hyperliquid.xyz/API",
+		}
+		if serr == nil {
+			body["agent"] = sf.AgentAddr
+			body["expires"] = sf.Expires
+			body["sessionAlive"] = session.Alive(sf.Meta().Session(), now)
+		}
+		if name != "" {
+			body["name"] = name
+		}
+		body["linked"] = linked
+		if until > 0 {
+			body["approvedUntil"] = until
+		}
+		if linkErr != nil {
+			body["error"] = "extraAgents_query_failed"
+		}
+		_ = json.NewEncoder(os.Stdout).Encode(body)
+		return
+	}
 	fmt.Println("Open https://app.hyperliquid.xyz/API")
 	fmt.Println("API wallet name must be less than 17 characters.")
 	if name != "" {
 		fmt.Println("name", name)
 	}
-	if err == nil {
+	if serr == nil {
 		fmt.Println("address", sf.AgentAddr)
+		fmt.Println("expires", sf.Expires)
+	}
+	fmt.Println(cli.LinkCopy(linked, linkErr))
+	if linked {
+		fmt.Println("next      session is approved. AUTHORIZE stays on this computer.")
+	} else if serr == nil {
+		fmt.Println("next      paste the address into Hyperliquid API and click Authorize API Wallet.")
+	} else {
+		fmt.Println("next      create a local session on PIT Desktop, then approve that agent.")
 	}
 	fmt.Println("Click Authorize API Wallet. PIT still cannot withdraw.")
+}
+
+func cmdCompute() {
+	checks := cli.Doctor(stateDir())
+	if asJSON {
+		cli.PrintDoctor(os.Stdout, checks, true)
+		return
+	}
+	for _, c := range checks {
+		if c.Name == "direct_auth" || c.Name == "direct_sealer" || c.Name == "direct_credit" || c.Name == "tee" {
+			mark := "fail"
+			if c.OK {
+				mark = "ok"
+			}
+			fmt.Printf("%-16s %s  %s\n", c.Name, mark, c.Detail)
+		}
+	}
+	fmt.Println("Open https://pc.0g.ai/sdk/dashboard/funds")
+	fmt.Println("That page is provider credit, not a Hyperliquid balance.")
 }
 
 func cmdAsk(args []string) {

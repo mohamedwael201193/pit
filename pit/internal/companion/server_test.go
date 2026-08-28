@@ -188,7 +188,7 @@ func TestLocalStatusVersionNoSecret(t *testing.T) {
 	if got["sign"] == true || got["trade"] == true {
 		t.Fatal(got)
 	}
-	if got["version"] != "0.1.11" {
+	if got["version"] != "0.1.12" {
 		t.Fatalf("version %v", got["version"])
 	}
 }
@@ -488,6 +488,15 @@ func TestClassifyResearch(t *testing.T) {
 	}
 	if classifyResearch("SPONSOR_QUOTA") != "SPONSOR_QUOTA" {
 		t.Fatal("quota")
+	}
+	if classifyResearch("risk_killed") != "risk_killed" {
+		t.Fatal("risk")
+	}
+	if classifyResearch("challenger_killed") != "challenger_killed" {
+		t.Fatal("challenger")
+	}
+	if classifyResearch("committee_incomplete") != "COMMITTEE_INCOMPLETE" {
+		t.Fatal("incomplete")
 	}
 }
 

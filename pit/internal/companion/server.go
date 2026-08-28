@@ -107,6 +107,7 @@ func (h *Hub) Handler() http.Handler {
 	mux.HandleFunc("/local/doctor", h.localDoctor)
 	mux.HandleFunc("/local/init", h.localInit)
 	mux.HandleFunc("/local/session", h.localSession)
+	mux.HandleFunc("/local/connection-preview", h.localConnectionPreview)
 	mux.HandleFunc("/local/policy", h.localPolicy)
 	mux.HandleFunc("/local/revoke-session", h.localRevokeSession)
 	mux.HandleFunc("/local/direct-intent", h.localDirectIntent)
@@ -251,9 +252,11 @@ func (h *Hub) localStatus(w http.ResponseWriter, r *http.Request) {
 		body["workspace"] = st.WorkspaceID
 		body["kill"] = st.Kill
 		body["hypothesis"] = cli.LoadHypothesis(h.Dir)
-		if s, err := cli.LiveFromDisk(h.Dir, st.Kill, time.Now().UnixMilli()); err == nil {
-			body["sessionAlive"] = session.Alive(s, time.Now().UnixMilli())
-			body["agent"] = s.AgentAddr
+		if sf, serr := cli.LoadSession(h.Dir); serr == nil {
+			body["agent"] = sf.AgentAddr
+			body["sessionExpires"] = sf.Expires
+			now := time.Now().UnixMilli()
+			body["sessionAlive"] = session.Alive(sf.Meta().Session(), now) && !st.Kill
 			if name, nerr := session.AgentName(st.WorkspaceID); nerr == nil {
 				body["agentName"] = name
 			}
@@ -374,6 +377,22 @@ func (h *Hub) localSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeLocal(w, http.StatusOK, cli.SessionPublic(sf))
+}
+
+func (h *Hub) localConnectionPreview(w http.ResponseWriter, r *http.Request) {
+	if !desktopOnly(w, r) {
+		return
+	}
+	var body struct {
+		Coin string `json:"coin"`
+	}
+	_ = json.NewDecoder(r.Body).Decode(&body)
+	p, hash, err := cli.BindConnectionPreview(h.Dir, body.Coin)
+	if err != nil {
+		writeBindErr(w, err)
+		return
+	}
+	writeLocal(w, http.StatusOK, cli.ConnectionPreviewPublic(p, hash))
 }
 
 func (h *Hub) localPolicy(w http.ResponseWriter, r *http.Request) {

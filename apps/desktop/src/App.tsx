@@ -10,12 +10,15 @@ import { PermissionsCard } from "./Permissions";
 import { PolicyLaw } from "./PolicyLaw";
 import { PreviewNote } from "./PreviewNote";
 import { SessionNote } from "./SessionNote";
+import { HyperliquidCard } from "./HyperliquidCard";
+import { committeeDeny, explainCommittee } from "./committee";
 import {
   authorizePreview,
   bindWallet,
   createLocalSession,
   cancelBoundOrder,
   cancelResearch,
+  connectionPreview,
   describeBindError,
   doctor,
   fetchWatch,
@@ -154,7 +157,15 @@ function PairingBlock({
   );
 }
 
-function ProbeList({ items }: { items: Probe[] }) {
+function ProbeList({
+  items,
+  net,
+  onGo,
+}: {
+  items: Probe[];
+  net: string;
+  onGo?: (view: View) => void;
+}) {
   return (
     <ul className="probes">
       {items.map((p) => (
@@ -162,10 +173,50 @@ function ProbeList({ items }: { items: Probe[] }) {
           <strong>{p.state === "ok" ? "ready" : p.state === "fail" ? "fail" : "waiting"}</strong>
           <span>{p.label}</span>
           <em>{p.detail}</em>
+          {p.state !== "ok" ? <ProbeAction id={p.id} net={net} onGo={onGo} /> : null}
         </li>
       ))}
     </ul>
   );
+}
+
+function ProbeAction({ id, net, onGo }: { id: string; net: string; onGo?: (view: View) => void }) {
+  if (id === "hyperliquid" || id === "hl_agent" || id === "session") {
+    return (
+      <span className="cta-row">
+        {id === "session" ? (
+          <button type="button" className="linkish" onClick={() => onGo?.("security")}>
+            Create session
+          </button>
+        ) : null}
+        <a className="linkish" href={hyperliquidAPI(net)} target="_blank" rel="noreferrer">
+          Open Hyperliquid API
+        </a>
+      </span>
+    );
+  }
+  if (id === "direct") {
+    return (
+      <a className="linkish" href={LINKS.pcAdvanced} target="_blank" rel="noreferrer">
+        Open 0G Private Compute
+      </a>
+    );
+  }
+  if (id === "tee") {
+    return (
+      <button type="button" className="linkish" onClick={() => onGo?.("research")}>
+        Open Research
+      </button>
+    );
+  }
+  if (id === "wallet" || id === "local") {
+    return (
+      <a className="linkish" href={LINKS.pair} target="_blank" rel="noreferrer">
+        Open pairing
+      </a>
+    );
+  }
+  return null;
 }
 
 function Setup({
@@ -340,7 +391,7 @@ function Setup({
         <>
           <h1>Security check, then a real research test.</h1>
           <p className="lead">Each row is a live probe. Waiting is honest. Green is never invented. Research is a live sealed Direct request.</p>
-          <ProbeList items={items} />
+          <ProbeList items={items} net={net} />
           <button type="button" className="linkish" onClick={onResearch} disabled={researchBusy || !companionUp}>
             {researchBusy ? "Research running…" : "Run a real research test"}
           </button>
@@ -354,7 +405,7 @@ function Setup({
         <>
           <h1>Ready when the probes are real.</h1>
           <p className="lead">Watch is live public marks. Private research stays sealed. Authorize stays on this computer.</p>
-          <ProbeList items={items} />
+          <ProbeList items={items} net={net} />
         </>
       ) : null}
       <div className="row">
@@ -541,7 +592,12 @@ export function App() {
           setResearchNote(st.note || "Sealed committee verified on this computer.");
           return;
         }
-        if (st.error && !st.running) setResearchStop(st.error);
+        if (committeeDeny(String(st.deny || st.preview?.deny || "")) && !st.running) {
+          setResearchStop(null);
+          setResearchNote(st.note || "Sealed committee verified on this computer.");
+          return;
+        }
+        if (st.error && !st.running && !verified) setResearchStop(st.error);
       })
       .catch(() => undefined);
     return () => {
@@ -559,7 +615,14 @@ export function App() {
     setSetupDone(true);
   }, [sessionAlive]);
 
-  const explained = explainStop(researchStop);
+  const denyCode = String(preview?.deny || "");
+  const committee = committeeDeny(denyCode) || committeeDeny(researchStop);
+  const explained = committee ? null : explainStop(researchStop);
+  const committeeCopy = committeeDeny(denyCode)
+    ? explainCommittee(denyCode)
+    : committeeDeny(researchStop)
+      ? explainCommittee(researchStop || "")
+      : null;
   const companionStuck = !companionUp && ticks >= 5;
   const items = useMemo(
     () =>
@@ -614,7 +677,12 @@ export function App() {
       return;
     }
     if (r.agent) setAgent(r.agent);
-    setSessionAlive(true);
+    const s = await localStatus();
+    if (s) {
+      setStatus(s);
+      setSessionAlive(Boolean(s.sessionAlive));
+      if (s.agent) setAgent(s.agent);
+    }
     setChecks(await doctor());
   }
 
@@ -725,18 +793,22 @@ export function App() {
           setPreviewHash(st.preview_hash || st.preview.hash || "");
         }
         const verified = roles.length > 0 && roles.every((x) => String(x.verify_e2ee).toUpperCase() === "OK");
-        if (verified && !st.running) {
+        const deny = String(st.deny || st.preview?.deny || "");
+        if ((verified || st.verify || committeeDeny(deny)) && !st.running) {
           setResearchStop(null);
           setResearchNote(st.note || "Sealed committee verified on this computer.");
           return;
         }
         if (st.running) continue;
-        if (st.error) {
+        if (st.error && !verified) {
           setResearchStop(st.error);
           return;
         }
+        if (roles.length === 0 && Date.now() - wall < 90000) {
+          continue;
+        }
         if (!verified) {
-          setResearchStop("TEE_SIGNATURE_INVALID");
+          setResearchStop("COMMITTEE_INCOMPLETE");
           return;
         }
         setResearchNote(st.note || "Sealed committee verified on this computer.");
@@ -789,12 +861,39 @@ export function App() {
     setAuthTyped("");
   }
 
+  async function onConnectionPreview() {
+    setBindBusy(true);
+    setAuthErr(null);
+    const r = await connectionPreview("ETH");
+    setBindBusy(false);
+    if (r.error) {
+      setAuthErr(r.error);
+      setView("research");
+      return;
+    }
+    setPreview({
+      eligible: true,
+      kind: r.kind || "connection_test",
+      market: r.market,
+      side: r.side,
+      sz: r.sz,
+      limitPx: r.limitPx,
+      hash: r.hash,
+      cloid: r.cloid,
+      note: r.note,
+    });
+    setPreviewHash(r.hash || "");
+    setResearchStop(null);
+    setResearchNote(r.note || "Connection test preview. This is not a research recommendation.");
+    setView("research");
+  }
+
   return (
     <div className="app">
       <aside className="rail">
         <div className="rail-brand">
           <div className="word">PIT.</div>
-          <p className="kicker">{status?.version || "0.1.11"} · local execution</p>
+          <p className="kicker">{status?.version || "0.1.12"} · local execution</p>
         </div>
         <nav className="rail-nav" aria-label="Desk">
           {RAIL.map((item) => (
@@ -814,7 +913,7 @@ export function App() {
         <div className="rail-foot">
           <p>{net === "mainnet" ? "MAINNET" : "TESTNET"}</p>
           <p>{companionUp ? "companion live" : "starting companion"}</p>
-          <p>{status?.version || "PIT 0.1.11"}</p>
+          <p>{status?.version || "PIT 0.1.12"}</p>
           <button type="button" className="ghost" onClick={() => setView("settings")}>
             Help / Diagnostics
           </button>
@@ -878,9 +977,21 @@ export function App() {
               <PairingBlock code={code} expires={expires} companionUp={companionUp} />
               <article className="card">
                 <p className="label">READINESS</p>
-                <ProbeList items={items} />
+                <ProbeList items={items} net={net} onGo={(v) => setView(v)} />
               </article>
             </div>
+            <HyperliquidCard
+              net={net}
+              agent={agent}
+              agentName={status?.agentName}
+              sessionAlive={sessionAlive}
+              sessionExpires={status?.sessionExpires}
+              approved={Boolean(checks.find((c) => c.name === "hl_agent" && c.ok))}
+              approvedDetail={checks.find((c) => c.name === "hl_agent")?.detail}
+              busy={bindBusy}
+              onCreateSession={() => void onSession()}
+              onConnectionPreview={() => void onConnectionPreview()}
+            />
             <EmptyHome count={eligible.length} next={attention} onGo={(v) => setView(v)} />
             <WelcomePath steps={path} onGo={(v) => setView(v)} />
             {companionStuck && !explained ? (
@@ -983,10 +1094,20 @@ export function App() {
                     <li key={role.role}>
                       <strong>{role.verify_e2ee}</strong> {role.role}
                       {role.proposed_side ? ` side ${role.proposed_side}` : ""}
+                      {role.survives === false ? " stood down" : ""}
+                      {role.kill ? " kill" : ""}
                       {role.pubkey_signer ? ` ${role.pubkey_signer}` : ""}
                     </li>
                   ))}
                 </ul>
+              </article>
+            ) : null}
+            {committeeCopy && !researchBusy ? (
+              <article className="card" role="status">
+                <p className="label">COMMITTEE DECISION</p>
+                <h2>{committeeCopy.title}</h2>
+                <p>{committeeCopy.body}</p>
+                <p className="fine">Change the sealed hypothesis or wait for a different book. PIT will not invent a side.</p>
               </article>
             ) : null}
             {!researchBusy && preview ? (
@@ -994,6 +1115,11 @@ export function App() {
                 <p className="label">EXACT PREVIEW</p>
                 {preview.eligible ? (
                   <>
+                    {preview.kind === "connection_test" ? (
+                      <p className="fine">Connection test. This is not a research recommendation. Host sized a policy clip.</p>
+                    ) : (
+                      <p className="label">OPPORTUNITY FOUND</p>
+                    )}
                     <p>
                       {preview.market} {preview.side} {preview.sz} @ {preview.limitPx}
                     </p>
@@ -1126,6 +1252,18 @@ export function App() {
             <p className="eyebrow">PERMISSIONS</p>
             <h1>Security</h1>
             <p className="lead">Order and cancel only. Withdraw is impossible through PIT.</p>
+            <HyperliquidCard
+              net={net}
+              agent={agent}
+              agentName={status?.agentName}
+              sessionAlive={sessionAlive}
+              sessionExpires={status?.sessionExpires}
+              approved={Boolean(checks.find((c) => c.name === "hl_agent" && c.ok))}
+              approvedDetail={checks.find((c) => c.name === "hl_agent")?.detail}
+              busy={bindBusy}
+              onCreateSession={() => void onSession()}
+              onConnectionPreview={() => void onConnectionPreview()}
+            />
             <AuthorizeGate
               sessionAlive={sessionAlive}
               agent={agent}
@@ -1185,7 +1323,7 @@ export function App() {
                 </button>
                 {agent ? <p className="fine">Agent {agent}</p> : null}
                 <a className="linkish" href={hyperliquidAPI(net)} target="_blank" rel="noreferrer">
-                  Open Hyperliquid
+                  Open Hyperliquid API
                 </a>
               </article>
             ) : null}
@@ -1217,10 +1355,10 @@ export function App() {
             <article className="card">
               <p className="label">OFFICIAL LINKS</p>
               <a className="linkish" href={LINKS.pcAdvanced} target="_blank" rel="noreferrer">
-                Open 0G compute
+                Open 0G Private Compute
               </a>
               <a className="linkish" href={hyperliquidAPI(net)} target="_blank" rel="noreferrer">
-                Open Hyperliquid
+                Open Hyperliquid API
               </a>
               <a className="linkish" href={LINKS.releases} target="_blank" rel="noreferrer">
                 Open release

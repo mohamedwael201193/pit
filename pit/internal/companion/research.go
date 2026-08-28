@@ -54,10 +54,14 @@ func classifyResearch(code string) string {
 		return "TEE_RESPONSE_INVALID"
 	case "missing_tee_signer":
 		return "TEE_SIGNER_MISMATCH"
-	case "committee_incomplete", "bad_role", "duplicate_role":
+	case "bad_role", "duplicate_role":
 		return "RESEARCHER_FAILED"
 	case "asset_not_allowed", "kill_switch":
 		return "POLICY_REJECTED"
+	case "committee_incomplete":
+		return "COMMITTEE_INCOMPLETE"
+	case "risk_killed", "challenger_killed", "no_side":
+		return code
 	default:
 		return code
 	}
@@ -191,12 +195,20 @@ func (h *Hub) loadJobLocked() {
 }
 
 func attachPreviewLocked(h *Hub) {
+	if rep, err := cli.ReportFromLastResearch(h.Dir, h.job.coin); err == nil {
+		h.job.deny = rep.Deny
+		h.job.eligible = rep.Eligible
+		h.job.preview = rep.Preview
+		h.job.previewHash = rep.PreviewHash
+		if !rep.Eligible {
+			return
+		}
+	}
 	p, hash, err := cli.LoadPreview(h.Dir)
-	if err != nil {
+	if err != nil || !h.job.eligible {
 		return
 	}
 	h.job.previewHash = hash
-	h.job.eligible = true
 	h.job.preview = map[string]any{
 		"eligible": true, "market": p.Market, "side": p.Side, "sz": p.Sz,
 		"orderType": p.OrderType, "limitPx": p.LimitPx, "hash": hash, "cloid": p.Cloid,

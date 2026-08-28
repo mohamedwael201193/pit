@@ -21,4 +21,8 @@ func TestSessionAgentLinked(t *testing.T) {
 	if SessionAgentLinked(raw, "PIT-abcd1234", "0xdef", 1) {
 		t.Fatal("addr")
 	}
+	ok, until := SessionAgentUntil(json.RawMessage(`[{"name":"PIT-4bbee556","address":"0xfc64","validUntil":1803441284611}]`), "PIT-4bbee556", "0xFC64", 1)
+	if !ok || until != 1803441284611 {
+		t.Fatalf("until %v %d", ok, until)
+	}
 }

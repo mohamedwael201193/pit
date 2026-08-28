@@ -13,6 +13,7 @@
     "allow-ensure-companion",
     "allow-local-init",
     "allow-local-session",
+    "allow-local-connection-preview",
     "allow-local-policy",
     "allow-local-revoke-session",
     "allow-local-direct-intent",

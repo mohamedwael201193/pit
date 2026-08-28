@@ -44,7 +44,7 @@ export function PairPage() {
       if (body.device) {
         sessionStorage.setItem("pit_device", body.device);
       }
-      setMsg("This browser is paired. Connect your wallet next. It can read status. It cannot authorize or hold a session key.");
+      setMsg("BROWSER PAIRED. This browser can view. It cannot sign and cannot hold a session key. Next: Protect private research, then Connect Hyperliquid.");
     } catch {
       setErr(
         "PIT is not reachable on this computer. Launch the Windows app first. If Chrome asks to access other apps on this device, choose Allow. PIT only uses 127.0.0.1.",
@@ -60,14 +60,13 @@ export function PairPage() {
         <h1 className="mt-3 text-[2.5rem] font-semibold tracking-[-0.04em]">Pair this browser with PIT on this machine.</h1>
         <p className="mt-4 max-w-[42ch] text-[1.0625rem] leading-7 text-[rgb(240_231_212/0.7)]">
           PIT never asks for a seed phrase. The one-time code lives on your desktop. This site never receives your
-          session key.
+          session key. After pairing, sign Protect my strategy from the bound wallet.
         </p>
         <ol className="mt-8 grid gap-3 text-[0.975rem] leading-6 text-[rgb(240_231_212/0.75)]">
-          <li>1. Download PIT for Windows from <a className="text-[#d82f2f]" href="https://github.com/mohamedwael201193/pit/releases/latest">GitHub Releases</a> and install it.</li>
-          <li>2. Launch PIT. A pairing code appears on that window. A terminal is not required.</li>
-          <li>3. Type the code here. Expire is two minutes. One use.</li>
-          <li>4. If the browser asks to access other apps on this device, choose Allow. That is loopback only.</li>
-          <li>5. Connect your wallet. Sign Protect my strategy. Approve an order/cancel session on the machine.</li>
+          <li>1. Open PIT Desktop on this computer. A pairing code appears there.</li>
+          <li>2. Type the code shown in PIT Desktop. It expires in two minutes and works once.</li>
+          <li>3. If Chrome asks to access other apps on this device, choose Allow. That is loopback only.</li>
+          <li>4. After pairing, this browser can view. It cannot sign orders or hold a session key.</li>
         </ol>
         <label className="mt-10 block">
           <span className="text-[0.75rem] tracking-[0.12em] text-[rgb(240_231_212/0.5)]">ONE-TIME CODE</span>
@@ -99,8 +98,11 @@ export function PairPage() {
           the README.
         </p>
         <Link className="mt-6 inline-block text-[#d82f2f]" to="/app">
-          Connect wallet
+          Protect private research
         </Link>
+        <p className="mt-4 text-[0.875rem] text-[rgb(240_231_212/0.5)]">
+          If PIT Desktop is not open, launch it on this computer first.
+        </p>
       </div>
     </div>
   );

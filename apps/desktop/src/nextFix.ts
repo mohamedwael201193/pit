@@ -65,7 +65,7 @@ export function nextFix(
       why: "Orders and cancels are signed on this computer. Withdraw is impossible through PIT.",
       fix: "Create the session here, then approve that agent on Hyperliquid.",
       href: hyperliquidAPI(net),
-      hrefLabel: "Open Hyperliquid",
+      hrefLabel: "Open Hyperliquid API",
       go: "security",
       goLabel: "Open Security",
     };
@@ -75,9 +75,9 @@ export function nextFix(
     return {
       title: "Approve PIT on Hyperliquid",
       why: "extraAgents must list this session before AUTHORIZE can send an order.",
-      fix: "On Hyperliquid API, approve the agent printed on Security. PIT still cannot withdraw.",
+      fix: "Open Hyperliquid API. Authorize API Wallet using the PIT agent name and address on Security. PIT still cannot withdraw.",
       href: hyperliquidAPI(net),
-      hrefLabel: "Open Hyperliquid",
+      hrefLabel: "Open Hyperliquid API",
       go: "security",
       goLabel: "Open Security",
     };

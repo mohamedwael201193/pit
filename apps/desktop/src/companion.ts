@@ -4,6 +4,7 @@ export type LocalStatus = {
   sessionAlive?: boolean;
   agent?: string;
   agentName?: string;
+  sessionExpires?: number;
   hypothesis?: string;
   network?: string;
   wallet?: string;
@@ -75,12 +76,21 @@ export type BindResult = {
     expiryUnixMs?: number;
     notionalUsd?: number;
     reasons?: string[];
+    kind?: string;
+    note?: string;
   };
   preview_hash?: string;
   deny?: string;
   eligible?: boolean;
   oid?: string;
   posted?: boolean;
+  kind?: string;
+  market?: string;
+  side?: string;
+  sz?: number;
+  limitPx?: string;
+  hash?: string;
+  cloid?: string;
 };
 
 type TauriWindow = Window & {
@@ -279,6 +289,17 @@ export async function researchStatus(): Promise<BindResult> {
 export async function cancelResearch(): Promise<BindResult> {
   try {
     const native = await nativeJsonOrError<BindResult>("local_research_cancel");
+    if (native.sign || native.trade) return { error: "companion_denied" };
+    return native;
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : "companion_http";
+    return { error: msg || "companion_http" };
+  }
+}
+
+export async function connectionPreview(coin?: string): Promise<BindResult> {
+  try {
+    const native = await nativeJsonOrError<BindResult>("local_connection_preview", { coin: coin || "ETH" });
     if (native.sign || native.trade) return { error: "companion_denied" };
     return native;
   } catch (e) {

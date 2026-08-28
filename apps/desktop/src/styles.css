@@ -186,7 +186,7 @@ h1 { font-size: 48px; line-height: 0.95; letter-spacing: -0.04em; margin: 12px 0
 .probes { list-style: none; padding: 0; margin: 16px 0 0; }
 .probes li {
   display: grid;
-  grid-template-columns: 72px 160px 1fr;
+  grid-template-columns: 72px 160px 1fr auto;
   gap: 10px;
   padding: 8px 0;
   border-bottom: 1px solid #1c1e22;

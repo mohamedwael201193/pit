@@ -285,20 +285,25 @@ func checkHLAgent(dir string) Check {
 	if err != nil {
 		return Check{Name: "hl_agent", Detail: "unbound"}
 	}
-	live, err := LiveFromDisk(dir, st.Kill, time.Now().UnixMilli())
+	sf, err := LoadSession(dir)
 	if err != nil {
 		return Check{Name: "hl_agent", Detail: "Create a local session, then approve it on Hyperliquid. PIT cannot withdraw."}
 	}
-	linked, err := LiveLinked(st.Network, st.Wallet, live.Workspace, live.AgentAddr, time.Now().UnixMilli())
+	now := time.Now().UnixMilli()
+	linked, until, err := LookupAgent(st.Network, st.Wallet, st.WorkspaceID, sf.AgentAddr, now)
 	if err != nil {
 		return Check{Name: "hl_agent", Detail: "extraAgents query failed. AUTHORIZE stays off until Hyperliquid lists this agent."}
 	}
+	name, _ := session.AgentName(st.WorkspaceID)
 	if !linked {
-		name, _ := session.AgentName(st.WorkspaceID)
-		detail := "Approve this agent on Hyperliquid. extraAgents must list the address. Name " + name + " (under 17 characters). PIT never signs withdraw, transfer, leverage, or account admin."
+		detail := "Approve this agent on Hyperliquid API. Name " + name + " address " + sf.AgentAddr + ". PIT never signs withdraw, transfer, leverage, or account admin."
 		return Check{Name: "hl_agent", Detail: detail}
 	}
-	return Check{Name: "hl_agent", OK: true, Detail: "extraAgents lists this session. PIT still refuses withdraw, transfer, leverage, and account admin."}
+	untilNote := ""
+	if until > 0 {
+		untilNote = " until " + time.UnixMilli(until).UTC().Format("2006-01-02")
+	}
+	return Check{Name: "hl_agent", OK: true, Detail: "extraAgents lists this session" + untilNote + ". PIT still refuses withdraw, transfer, leverage, and account admin."}
 }
 
 func checkPolicy(dir string) Check {

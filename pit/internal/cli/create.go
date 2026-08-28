@@ -31,14 +31,36 @@ func EnsureLocalSession(dir string) (SessionFile, bool, error) {
 	if err != nil {
 		return SessionFile{}, false, fmt.Errorf("unbound")
 	}
-	if _, err := LiveFromDisk(dir, st.Kill, time.Now().UnixMilli()); err == nil {
-		sf, err := LoadSession(dir)
-		if err == nil {
+	now := time.Now().UnixMilli()
+	sf, loadErr := LoadSession(dir)
+	if loadErr == nil {
+		linked, until, qerr := LookupAgent(st.Network, st.Wallet, st.WorkspaceID, sf.AgentAddr, now)
+		if qerr == nil && linked {
+			return extendApprovedSession(dir, sf, now, until)
+		}
+		if _, err := LiveFromDisk(dir, st.Kill, now); err == nil {
 			return sf, false, nil
 		}
+		if qerr != nil {
+			return SessionFile{}, false, qerr
+		}
 	}
-	sf, err := CreateLocalSession(dir, st.WorkspaceID, st.Network, "v1")
+	sf, err = CreateLocalSession(dir, st.WorkspaceID, st.Network, "v1")
 	return sf, true, err
+}
+
+func extendApprovedSession(dir string, sf SessionFile, nowMs, until int64) (SessionFile, bool, error) {
+	want := until
+	if want <= nowMs {
+		want = nowMs + int64(session.DefaultTTLHours)*3600*1000
+	}
+	if sf.Expires != want {
+		sf.Expires = want
+		if err := SaveSession(dir, sf); err != nil {
+			return SessionFile{}, false, err
+		}
+	}
+	return sf, false, nil
 }
 
 func CreateLocalSession(dir, workspace, network, policyVer string) (SessionFile, error) {

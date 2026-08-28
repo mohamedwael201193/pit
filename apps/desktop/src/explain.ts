@@ -14,7 +14,7 @@ export function explainStop(code: string | null): { title: string; body: string 
   }
   if (code === "TEE_VERIFY_FAIL") {
     return {
-      title: "Research stopped",
+      title: "TEE verification failed",
       body: "We could not verify that the AI result came from the provider PIT expected. No order was placed. No funds moved.",
     };
   }
@@ -110,8 +110,32 @@ export function explainStop(code: string | null): { title: string; body: string 
   }
   if (code === "TEE_SIGNATURE_INVALID" || code === "TEE_RESPONSE_INVALID") {
     return {
-      title: "Research stopped",
+      title: "TEE verification failed",
       body: "We could not verify that the AI result came from the provider PIT expected. No order was placed. No funds moved.",
+    };
+  }
+  if (code === "COMMITTEE_INCOMPLETE") {
+    return {
+      title: "Committee did not finish",
+      body: "Researcher, challenger, and risk must all finish over the same sealed book. PIT did not invent a result. No order was placed.",
+    };
+  }
+  if (code === "risk_killed" || code === "RISK_KILLED") {
+    return {
+      title: "Committee stood down — risk",
+      body: "Researcher, challenger, and risk all verified. Risk killed the idea. That is a verified result, not a TEE failure. No order was placed.",
+    };
+  }
+  if (code === "challenger_killed" || code === "CHALLENGER_KILLED") {
+    return {
+      title: "Committee stood down — challenger",
+      body: "The challenger did not survive the thesis. That is a verified result. No order was placed.",
+    };
+  }
+  if (code === "no_side" || code === "NO_SIDE") {
+    return {
+      title: "Committee stood down — no side",
+      body: "The sealed committee did not propose a side. Host will not invent a trade. No order was placed.",
     };
   }
   if (code === "POLICY_REJECTED") {

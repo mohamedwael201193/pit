@@ -180,7 +180,16 @@ func ExecuteDeskCancel(dir, typed string) OrderResult {
 		out.Error = "preview_required"
 		return out
 	}
-	rec, err := LookupAction(dir, st.Network, live.Workspace, card.Cloid)
+	cloid := card.Cloid
+	rec, err := LookupAction(dir, st.Network, live.Workspace, cloid)
+	if err != nil || rec.OID == "" {
+		if last := LoadLastOrder(dir); last != nil {
+			if posted, _ := last["cloid"].(string); posted != "" {
+				cloid = posted
+				rec, err = LookupAction(dir, st.Network, live.Workspace, cloid)
+			}
+		}
+	}
 	if err != nil || rec.OID == "" {
 		out.Error = "cancel_requires_posted_order"
 		return out
@@ -195,7 +204,7 @@ func ExecuteDeskCancel(dir, typed string) OrderResult {
 		out.Error = err.Error()
 		return out
 	}
-	raw, err := CancelWire(book.Asset, card.Cloid)
+	raw, err := CancelWire(book.Asset, cloid)
 	if err != nil {
 		out.Error = err.Error()
 		return out
@@ -223,11 +232,11 @@ func ExecuteDeskCancel(dir, typed string) OrderResult {
 	}
 	out.OK = true
 	out.Posted = true
-	out.Cloid = card.Cloid
+	out.Cloid = cloid
 	out.Hash = hash
 	out.Market = card.Market
 	saveLastOrder(dir, map[string]any{
-		"ok": true, "posted": true, "cancelled": true, "cloid": card.Cloid, "hash": hash,
+		"ok": true, "posted": true, "cancelled": true, "cloid": cloid, "hash": hash,
 		"market": card.Market, "sign": false, "trade": false,
 	})
 	return out
