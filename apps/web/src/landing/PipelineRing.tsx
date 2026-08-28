@@ -12,7 +12,7 @@ const COPY: Record<(typeof PIPELINE)[number], string> = {
   RISK: "Risk scores what remains after the challenge.",
   POLICY: "Your clip, assets, and kill. The model cannot raise them.",
   AUTHORIZE: "Desktop or CLI. This browser cannot sign the order.",
-  EXECUTE: "Order or cancel only. extraAgents must list the session.",
+  EXECUTE: "Order or cancel only. Hyperliquid must list the PIT agent.",
   PROVE: "0G Storage with the official Go client --proof.",
   LEARN: "Brier and ECE after outcomes. No fake 72 percent.",
 };

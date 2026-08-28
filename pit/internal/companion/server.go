@@ -120,6 +120,17 @@ func (h *Hub) Handler() http.Handler {
 	mux.HandleFunc("/local/research/cancel", h.localResearchCancel)
 	mux.HandleFunc("/local/authorize", h.localAuthorize)
 	mux.HandleFunc("/local/cancel", h.localCancelOrder)
+	mux.HandleFunc("/local/activity", h.localActivity)
+	mux.HandleFunc("/local/positions", h.localPositions)
+	mux.HandleFunc("/local/chat", h.localChat)
+	mux.HandleFunc("/local/chat/log", h.localChatLog)
+	mux.HandleFunc("/local/memory/forget", h.localMemoryForget)
+	mux.HandleFunc("/local/calibration", h.localCalibration)
+	mux.HandleFunc("/local/security", h.localSecurity)
+	mux.HandleFunc("/local/identity", h.localIdentity)
+	mux.HandleFunc("/local/update", h.localUpdate)
+	mux.HandleFunc("/local/explain", h.localExplain)
+	mux.HandleFunc("/local/models", h.localModels)
 	mux.HandleFunc("/local/kill", h.localKill)
 	mux.HandleFunc("/direct/intent", h.deviceDirectIntent)
 	mux.HandleFunc("/direct/complete", h.deviceDirectComplete)
@@ -164,14 +175,19 @@ func (h *Hub) health(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		listen = DefaultAddr
 	}
+	h.researchMu.Lock()
+	running := h.job.running
+	h.researchMu.Unlock()
 	obs.WriteJSON(w, http.StatusOK, map[string]any{
-		"ok":      true,
-		"service": "pit-companion",
-		"listen":  listen,
-		"sign":    false,
-		"trade":   false,
-		"pairing": true,
-		"version": version.Number,
+		"ok":                true,
+		"service":           "pit-companion",
+		"listen":            listen,
+		"sign":              false,
+		"trade":             false,
+		"pairing":           true,
+		"version":           version.Number,
+		"research_running":  running,
+		"restart_allowed":   !running,
 	})
 }
 

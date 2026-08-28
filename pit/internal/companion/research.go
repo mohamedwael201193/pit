@@ -68,6 +68,10 @@ func classifyResearch(code string) string {
 		return "COMMITTEE_INCOMPLETE"
 	case "risk_killed", "challenger_killed", "no_side":
 		return code
+	case "research_cancelled":
+		return TermCanceledByUser
+	case "429", "direct_rate_limited":
+		return TermDirectRateLimited
 	default:
 		return code
 	}
@@ -244,15 +248,7 @@ func jobRetryable(code string) bool {
 }
 
 func rolesVerified(roles []map[string]any) bool {
-	if len(roles) == 0 {
-		return false
-	}
-	for _, rm := range roles {
-		if !strings.EqualFold(strings.TrimSpace(fmtString(rm["verify_e2ee"])), "OK") {
-			return false
-		}
-	}
-	return true
+	return namedRolesVerified(roles)
 }
 
 func (h *Hub) bumpLocked() {
@@ -334,14 +330,13 @@ func (h *Hub) snapshotResearch() map[string]any {
 	for _, role := range h.job.roles {
 		roles = append(roles, role)
 	}
-	verified := h.job.done && h.job.err == "" && rolesVerified(h.job.roles) && len(h.job.roles) >= 3
-	if !verified && !h.job.running && rolesVerified(h.job.roles) && len(h.job.roles) >= 3 {
-		verified = true
+	verified := namedRolesVerified(h.job.roles)
+	if verified && !h.job.running {
 		attachPreviewLocked(h)
 	}
 	now := time.Now()
 	body := map[string]any{
-		"ok":                h.job.err == "" || verified,
+		"ok":                (h.job.err == "" && h.job.running) || verified,
 		"job_id":            h.job.ID,
 		"workspace_id":      workspaceID(h.Dir),
 		"running":           h.job.running,
@@ -365,6 +360,11 @@ func (h *Hub) snapshotResearch() map[string]any {
 		"deny":              h.job.deny,
 		"preview":           h.job.preview,
 		"preview_hash":      h.job.previewHash,
+	}
+	kind := TerminalKind(h.job.running, h.job.err, h.job.deny, verified, h.job.eligible, h.job.roles)
+	if kind != "" {
+		body["terminal_kind"] = kind
+		body["card_title"] = researchCardTitle(kind)
 	}
 	if h.job.err != "" && !verified {
 		body["error"] = h.job.err
@@ -440,6 +440,10 @@ func (h *Hub) beginResearch(coin string) {
 	}
 	_ = os.WriteFile(filepath.Join(h.Dir, "last-research.json"), []byte(`{"sign":false,"trade":false,"roles":[]}`), 0o600)
 	h.persistJobLocked()
+	appendActivity(h.Dir, activityEvent{
+		WorkspaceID: workspaceID(h.Dir), Kind: "research.started", Market: want,
+		Action: "research", Status: "running", JobID: h.job.ID,
+	})
 	h.researchMu.Unlock()
 	go h.execResearch(want)
 }
@@ -458,6 +462,10 @@ func (h *Hub) execResearch(coin string) {
 		h.job.err = "research_cancelled"
 		h.job.stage = "CANCELED"
 		h.persistJobLocked()
+		appendActivity(h.Dir, activityEvent{
+			WorkspaceID: workspaceID(h.Dir), Kind: "research.canceled", Market: h.job.coin,
+			Action: "research", Status: TermCanceledByUser, JobID: h.job.ID, Reason: TermCanceledByUser,
+		})
 		return
 	}
 	h.job.note = rep.Note
@@ -475,11 +483,24 @@ func (h *Hub) execResearch(coin string) {
 			}
 		}
 		h.persistJobLocked()
+		appendActivity(h.Dir, activityEvent{
+			WorkspaceID: workspaceID(h.Dir), Kind: "research.failed", Market: h.job.coin,
+			Action: "research", Status: h.job.err, JobID: h.job.ID, Reason: h.job.err,
+		})
 		return
 	}
 	h.job.err = ""
 	h.job.stage = "READY"
 	h.persistJobLocked()
+	kind := TerminalKind(false, "", h.job.deny, namedRolesVerified(h.job.roles), h.job.eligible, h.job.roles)
+	evKind := "research.verified"
+	if kind == TermReadyStoodDown {
+		evKind = "research.stood_down"
+	}
+	appendActivity(h.Dir, activityEvent{
+		WorkspaceID: workspaceID(h.Dir), Kind: evKind, Market: h.job.coin,
+		Action: "research", Status: kind, JobID: h.job.ID, PreviewHash: h.job.previewHash, Reason: h.job.deny,
+	})
 }
 
 func (h *Hub) localResearchStart(w http.ResponseWriter, r *http.Request) {
@@ -563,6 +584,15 @@ func (h *Hub) localAuthorize(w http.ResponseWriter, r *http.Request) {
 	if got.Error != "" {
 		out["ok"] = false
 		out["error"] = got.Error
+		appendActivity(h.Dir, activityEvent{
+			WorkspaceID: workspaceID(h.Dir), Kind: "approval.rejected", PreviewHash: body.Hash,
+			Action: "authorize", Status: "failed", Reason: got.Error,
+		})
+	} else {
+		appendActivity(h.Dir, activityEvent{
+			WorkspaceID: workspaceID(h.Dir), Kind: "order.submitted", Market: got.Market,
+			Action: "authorize", Status: "submitted", OID: got.OID, PreviewHash: got.Hash,
+		})
 	}
 	writeLocal(w, http.StatusOK, out)
 }

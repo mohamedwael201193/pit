@@ -21,7 +21,14 @@ import {
   connectionPreview,
   describeBindError,
   doctor,
+  fetchActivity,
+  fetchCalibration,
+  fetchIdentity,
+  fetchPositions,
+  fetchSecurity,
+  fetchUpdate,
   fetchWatch,
+  forgetMemory,
   localStatus,
   pairCode,
   pinLocalPolicy,
@@ -32,9 +39,12 @@ import {
   setKillSwitch,
   startResearch,
   wakeCompanion,
+  type ActivityEvent,
   type BindResult,
   type DoctorCheck,
   type LocalStatus,
+  type SecurityDomain,
+  type VenuePosition,
 } from "./companion";
 import { explainStop, explainStopHref } from "./explain";
 import { LINKS, hyperliquidAPI, hyperliquidApp } from "./links";
@@ -42,6 +52,14 @@ import { nextFix } from "./nextFix";
 import { probes, type Probe } from "./readiness";
 import { setupPath } from "./setupPath";
 import { WelcomePath } from "./WelcomePath";
+import { committeeVerified, oidBelongsToPreview, researchCardTitle } from "./honesty";
+import { CommandChat } from "./CommandChat";
+import { EvidenceDrawer } from "./EvidenceDrawer";
+import { ActivityTimeline } from "./ActivityTimeline";
+import { PositionsPanel } from "./PositionsPanel";
+import { SecurityCenter } from "./SecurityCenter";
+import { ComputeCard } from "./ComputeCard";
+import { SetupWizard } from "./SetupWizard";
 
 type Net = "mainnet" | "testnet";
 type View = "home" | "watch" | "research" | "activity" | "policy" | "security" | "account" | "settings";
@@ -187,7 +205,7 @@ function ResearchProgress({
 const SETUP_KEY = "pit.desk.setup";
 
 const RAIL: { id: View; label: string }[] = [
-  { id: "home", label: "Home" },
+  { id: "home", label: "Desk" },
   { id: "watch", label: "Watch" },
   { id: "research", label: "Research" },
   { id: "activity", label: "Activity" },
@@ -307,220 +325,6 @@ function ProbeAction({ id, net, onGo }: { id: string; net: string; onGo?: (view:
   return null;
 }
 
-function Setup({
-  step,
-  setStep,
-  net,
-  setNet,
-  items,
-  code,
-  expires,
-  companionUp,
-  walletDraft,
-  setWalletDraft,
-  bindError,
-  bindBusy,
-  boundWallet,
-  pinned,
-  agent,
-  sessionAlive,
-  onBind,
-  onSession,
-  onPolicy,
-  onResearch,
-  onCancelResearch,
-  onDone,
-  checks,
-  researchBusy,
-  researchVerified,
-  researchStage,
-  researchElapsed,
-  researchRoles,
-}: {
-  step: number;
-  setStep: (n: number) => void;
-  net: Net;
-  setNet: (n: Net) => void;
-  items: Probe[];
-  code: string;
-  expires: string;
-  companionUp: boolean;
-  walletDraft: string;
-  setWalletDraft: (v: string) => void;
-  bindError: string | null;
-  bindBusy: boolean;
-  boundWallet: string;
-  pinned: boolean;
-  agent: string;
-  sessionAlive: boolean;
-  onBind: () => void;
-  onSession: () => void;
-  onPolicy: () => void;
-  onResearch: () => void;
-  onCancelResearch: () => void;
-  onDone: () => void;
-  checks: DoctorCheck[];
-  researchBusy: boolean;
-  researchVerified: boolean;
-  researchStage: string;
-  researchElapsed: number;
-  researchRoles: ResearchRole[];
-}) {
-  const directOk = Boolean(checks.find((c) => c.name === "direct_auth" && c.ok));
-  const directDetail = checks.find((c) => c.name === "direct_auth")?.detail;
-  const hlAgent = checks.find((c) => c.name === "hl_agent");
-  const last = 9;
-  return (
-    <section className="setup">
-      <p className="eyebrow">FIRST RUN · {step + 1} / {last + 1}</p>
-      {step === 0 ? (
-        <>
-          <h1>Your private trading desk.</h1>
-          <p className="lead">PIT researches in a sealed enclave, then waits for you. Nothing leaves this machine without an exact authorize.</p>
-        </>
-      ) : null}
-      {step === 1 ? (
-        <>
-          <h1>Your wallet stays yours.</h1>
-          <p className="lead">{NAMED.SEED_FORBIDDEN}</p>
-          <p className="lead">The browser never holds a Hyperliquid session key, a memory key, or a Direct token.</p>
-        </>
-      ) : null}
-      {step === 2 ? (
-        <>
-          <h1>Pair the browser to this machine.</h1>
-          <p className="lead">Launch is local. The one-time code never includes a secret.</p>
-          <PairingBlock code={code} expires={expires} companionUp={companionUp} />
-        </>
-      ) : null}
-      {step === 3 ? (
-        <>
-          <h1>Pick one world and stay there.</h1>
-          <NetworkToggle net={net} onChange={setNet} />
-          <NetworkBanner net={net} />
-        </>
-      ) : null}
-      {step === 4 ? (
-        <>
-          <h1>Connect your wallet.</h1>
-          <p className="lead">
-            Paste the public 0x address on this computer, or pair the browser and connect with Privy. PIT never asks for
-            a seed or a private key.
-          </p>
-          <form
-            className="bind-form card"
-            onSubmit={(e) => {
-              e.preventDefault();
-              onBind();
-            }}
-          >
-            <label htmlFor="desk-wallet">Public wallet</label>
-            <input
-              id="desk-wallet"
-              autoComplete="off"
-              spellCheck={false}
-              placeholder="0x…"
-              value={walletDraft}
-              onChange={(e) => setWalletDraft(e.target.value)}
-            />
-            <button type="submit" className="linkish" disabled={bindBusy || !companionUp}>
-              {boundWallet ? "Wallet bound on this computer" : "Bind this computer"}
-            </button>
-            {boundWallet ? <p className="fine">Bound {boundWallet}</p> : null}
-            {bindError ? (
-              <p className="err" role="alert">
-                {bindError}
-              </p>
-            ) : null}
-          </form>
-        </>
-      ) : null}
-      {step === 5 ? (
-        <>
-          <h1>Protect my strategy.</h1>
-          <p className="lead">
-            PIT sends your private strategy only through 0G’s verified sealed path. Sign in the paired browser. This
-            computer stores the token. The website never receives it.
-          </p>
-          <p className="fine">This is not a withdraw. It cannot place a Hyperliquid order. It lasts 24 hours.</p>
-          <p className="fine">{directOk ? "Sealed-path signature is on this computer." : directDetail || "Waiting for the paired-browser signature."}</p>
-          <a className="linkish" href={LINKS.app} target="_blank" rel="noreferrer">
-            Open paired site
-          </a>
-        </>
-      ) : null}
-      {step === 6 ? (
-        <>
-          <h1>Hyperliquid is order and cancel only.</h1>
-          <p className="lead">order ✓ cancel ✓ withdraw ✗ leverage ✗ transfer ✗</p>
-          <PermissionsCard />
-          <SessionNote />
-          <button type="button" className="linkish" onClick={onSession} disabled={bindBusy || !companionUp || !boundWallet}>
-            {sessionAlive ? "Local session is live" : "Create local session"}
-          </button>
-          {agent ? <p className="fine">Agent {agent}. Approve this agent on Hyperliquid. Name must be under 17 characters. PIT cannot withdraw.</p> : null}
-          {hlAgent ? <p className="fine">{hlAgent.ok ? "extraAgents lists this session." : hlAgent.detail}</p> : null}
-          <a className="linkish" href={hyperliquidApp(net)} target="_blank" rel="noreferrer">
-            Open Hyperliquid
-          </a>
-          <a className="linkish" href={hyperliquidAPI(net)} target="_blank" rel="noreferrer">
-            Open Hyperliquid API
-          </a>
-          {bindError ? (
-            <p className="err" role="alert">
-              {bindError}
-            </p>
-          ) : null}
-        </>
-      ) : null}
-      {step === 7 ? (
-        <>
-          <h1>Pin a policy before research.</h1>
-          <p className="lead">The model cannot raise clip, leverage, or permissions. Pin writes a hash file on this computer.</p>
-          <PolicyLaw pinned={pinned} onPin={onPolicy} busy={bindBusy || !boundWallet} />
-        </>
-      ) : null}
-      {step === 8 ? (
-        <>
-          <h1>Security check, then a real research test.</h1>
-          <p className="lead">Each row is a live probe. Waiting is honest. Green is never invented. Research is a live sealed Direct request.</p>
-          <ProbeList items={items} net={net} />
-          <button type="button" className="linkish" onClick={onResearch} disabled={researchBusy || !companionUp}>
-            {researchBusy ? "Research running…" : "Run a real research test"}
-          </button>
-          {researchBusy ? (
-            <ResearchProgress stage={researchStage} elapsedMs={researchElapsed} coin="ETH" roles={researchRoles} pollMiss={false} onCancel={onCancelResearch} />
-          ) : null}
-          {researchVerified ? <p className="fine">RESEARCH VERIFIED. VerifyE2EE matched the on-chain teeSigner.</p> : null}
-        </>
-      ) : null}
-      {step === 9 ? (
-        <>
-          <h1>Ready when the probes are real.</h1>
-          <p className="lead">Watch is live public marks. Private research stays sealed. Authorize stays on this computer.</p>
-          <ProbeList items={items} net={net} />
-        </>
-      ) : null}
-      <div className="row">
-        {step > 0 ? (
-          <button type="button" className="off" onClick={() => setStep(step - 1)}>
-            Back
-          </button>
-        ) : null}
-        {step < last ? (
-          <button type="button" className="on" onClick={() => setStep(step + 1)}>
-            Continue
-          </button>
-        ) : (
-          <button type="button" className="on" onClick={onDone}>
-            Open the desk
-          </button>
-        )}
-      </div>
-    </section>
-  );
-}
-
 export function App() {
   const [view, setView] = useState<View>("home");
   const [net, setNet] = useState<Net>("mainnet");
@@ -542,12 +346,22 @@ export function App() {
   const [researchEvidenceText, setResearchEvidence] = useState<string>("");
   const [pollMiss, setPollMiss] = useState(false);
   const [researchJobId, setResearchJobId] = useState("");
+  const [researchKind, setResearchKind] = useState("");
   const [preview, setPreview] = useState<NonNullable<BindResult["preview"]> | null>(null);
   const [previewHash, setPreviewHash] = useState("");
   const [authTyped, setAuthTyped] = useState("");
   const [authBusy, setAuthBusy] = useState(false);
   const [authErr, setAuthErr] = useState<string | null>(null);
   const [lastOid, setLastOid] = useState("");
+  const [activity, setActivity] = useState<ActivityEvent[]>([]);
+  const [positions, setPositions] = useState<VenuePosition[]>([]);
+  const [positionAccount, setPositionAccount] = useState("");
+  const [positionErr, setPositionErr] = useState("");
+  const [securityDomains, setSecurityDomains] = useState<SecurityDomain[]>([]);
+  const [calibCopy, setCalibCopy] = useState("NOT ENOUGH DATA");
+  const [identityNote, setIdentityNote] = useState("Transfer of Agentic ID is not live on mainnet.");
+  const [updateNote, setUpdateNote] = useState("This build is checksum-verified, not OS-signed.");
+  const [restartAllowed, setRestartAllowed] = useState(true);
   const [hypothesis, setHypothesis] = useState<"none" | "long" | "short">("none");
   const researchGen = useRef(0);
   const researchBusyRef = useRef(false);
@@ -580,11 +394,12 @@ export function App() {
       if (st.coin) setResearchCoin(String(st.coin).toUpperCase());
       const roles = Array.isArray(st.roles) ? st.roles : [];
       if (roles.length) setResearchRoles(roles);
+      if (st.terminal_kind) setResearchKind(String(st.terminal_kind));
       if (st.preview) {
         setPreview(st.preview);
         setPreviewHash(st.preview_hash || st.preview.hash || "");
       }
-      const verified = roles.length > 0 && roles.every((x) => String(x.verify_e2ee).toUpperCase() === "OK");
+      const verified = committeeVerified(roles, st.verify);
       const deny = String(st.deny || st.preview?.deny || "");
       if ((verified || st.verify || committeeDeny(deny)) && !st.running) {
         setResearchStop(null);
@@ -623,7 +438,8 @@ export function App() {
             setPreview(next.preview);
             setPreviewHash(next.preview_hash || next.preview.hash || "");
           }
-          const ok = nextRoles.length > 0 && nextRoles.every((x) => String(x.verify_e2ee).toUpperCase() === "OK");
+          if (next.terminal_kind) setResearchKind(String(next.terminal_kind));
+          const ok = committeeVerified(nextRoles, next.verify);
           const nextDeny = String(next.deny || next.preview?.deny || "");
           if ((ok || next.verify || committeeDeny(nextDeny)) && !next.running) {
             setResearchStop(null);
@@ -745,6 +561,29 @@ export function App() {
           .finally(() => {
             watchBusy = false;
           });
+        void fetchActivity().then((ev) => {
+          if (!gone) setActivity(ev);
+        });
+        void fetchPositions().then((p) => {
+          if (gone) return;
+          setPositions(p.positions);
+          setPositionAccount(p.account || "");
+          setPositionErr(p.error || "");
+        });
+        void fetchSecurity().then((d) => {
+          if (!gone) setSecurityDomains(d);
+        });
+        void fetchCalibration().then((c) => {
+          if (!gone) setCalibCopy(c.copy || "NOT ENOUGH DATA");
+        });
+        void fetchIdentity().then((id) => {
+          if (!gone) setIdentityNote(id.note || "Transfer of Agentic ID is not live on mainnet.");
+        });
+        void fetchUpdate().then((u) => {
+          if (gone) return;
+          setRestartAllowed(u.restart_allowed !== false);
+          setUpdateNote(u.note || "This build is checksum-verified, not OS-signed.");
+        });
       }
     };
     const loop = () => {
@@ -764,10 +603,11 @@ export function App() {
       .then((st) => {
         if (gone || st.sign || st.trade) return;
         const roles = Array.isArray(st.roles) ? st.roles : [];
-        const verified = roles.length > 0 && roles.every((x) => String(x.verify_e2ee).toUpperCase() === "OK");
+        const verified = committeeVerified(roles, st.verify);
         if (st.stage) setResearchStage(st.stage);
         if (typeof st.elapsed_ms === "number") setResearchElapsed(st.elapsed_ms);
         if (roles.length) setResearchRoles(roles);
+      if (st.terminal_kind) setResearchKind(String(st.terminal_kind));
         if (st.coin) setResearchCoin(st.coin);
         if (st.preview) {
           setPreview(st.preview);
@@ -825,6 +665,16 @@ export function App() {
   const walletCheck = checks.find((c) => c.name === "wallet");
   const attention = nextFix(companionUp, status, checks, items, sessionAlive, net);
   const path = setupPath(companionUp, status, checks, sessionAlive, net);
+  const doing = researchBusy
+    ? `Researching ${researchCoin}`
+    : preview?.eligible
+      ? "Awaiting AUTHORIZE"
+      : "Idle";
+  const cost = researchBusy
+    ? "Private compute (0G Direct)"
+    : preview?.eligible
+      ? "Trading capital only after you type AUTHORIZE"
+      : "None";
 
   function finishSetup() {
     try {
@@ -850,6 +700,10 @@ export function App() {
       setStatus(s);
       if (s.wallet) setWalletDraft(s.wallet);
     }
+    setChecks(await doctor());
+  }
+
+  async function onCheck() {
     setChecks(await doctor());
   }
 
@@ -979,6 +833,7 @@ export function App() {
       if (st.coin) setResearchCoin(String(st.coin).toUpperCase());
       const roles = Array.isArray(st.roles) ? st.roles : [];
       if (roles.length) setResearchRoles(roles);
+      if (st.terminal_kind) setResearchKind(String(st.terminal_kind));
       if (st.preview) {
         setPreview(st.preview);
         setPreviewHash(st.preview_hash || st.preview.hash || "");
@@ -997,7 +852,7 @@ export function App() {
         }
         setPollMiss(false);
         const roles = applyStatus(st);
-        const verified = roles.length > 0 && roles.every((x) => String(x.verify_e2ee).toUpperCase() === "OK");
+        const verified = committeeVerified(roles, st.verify);
         const deny = String(st.deny || st.preview?.deny || "");
         if ((verified || st.verify || committeeDeny(deny)) && !st.running) {
           setResearchStop(null);
@@ -1092,7 +947,7 @@ export function App() {
       <aside className="rail">
         <div className="rail-brand">
           <div className="word">PIT.</div>
-          <p className="kicker">{status?.version || "0.1.15"} · local execution</p>
+          <p className="kicker">{status?.version || "0.2.0"} · local execution</p>
         </div>
         <nav className="rail-nav" aria-label="Desk">
           {RAIL.map((item) => (
@@ -1112,7 +967,7 @@ export function App() {
         <div className="rail-foot">
           <p>{net === "mainnet" ? "MAINNET" : "TESTNET"}</p>
           <p>{companionUp ? "companion live" : "starting companion"}</p>
-          <p>{status?.version || "PIT 0.1.15"}</p>
+          <p>{status?.version || "PIT 0.2.0"}</p>
           <button type="button" className="ghost" onClick={() => setView("settings")}>
             Help / Diagnostics
           </button>
@@ -1122,20 +977,27 @@ export function App() {
       <div className="stage">
         <header className="bar">
           <div>
-            <p className="eyebrow">WORKSPACE</p>
+            <p className="eyebrow">
+              WHERE · {net === "mainnet" ? "MAINNET" : "TESTNET"} · {view.toUpperCase()}
+            </p>
             <p>{status?.workspace || status?.wallet || walletCheck?.detail || "unbound"}</p>
           </div>
-          <NetworkToggle net={net} onChange={setNet} />
+          <div>
+            <p className="eyebrow">WHAT PIT IS DOING</p>
+            <p>{doing}</p>
+            <p className="fine">Needs: {attention.title}</p>
+            <p className="fine">Cost: {cost}</p>
+          </div>
           <div className="bar-meta">
+            <NetworkToggle net={net} onChange={setNet} />
             <p className="pair-chip">{code ? prettyCode(code) : companionUp ? "code rotating" : "starting companion"}</p>
-            <p>Wallet {walletCheck?.ok ? "bound" : "waiting"}</p>
-            <p>Session {sessionAlive ? "order/cancel live" : "none"}</p>
-            {agent ? <p className="fine">Agent {agent}</p> : null}
+            <p>Session {sessionAlive ? "order/cancel live" : "none"} · Compute {checks.find((c) => c.name === "direct_credit")?.ok ? "ready" : "action"}</p>
+            {agent ? <p className="fine">PIT Agent {agent}</p> : null}
           </div>
         </header>
 
         {!setupDone ? (
-          <Setup
+          <SetupWizard
             step={setupStep}
             setStep={setSetupStep}
             net={net}
@@ -1151,21 +1013,26 @@ export function App() {
             boundWallet={status?.wallet || ""}
             pinned={pinned}
             agent={agent}
+            agentName={status?.agentName}
             sessionAlive={sessionAlive}
             onBind={() => void onBind()}
             onSession={() => void onSession()}
             onPolicy={() => void onPolicy()}
             onResearch={() => void researchThis()}
-            onCancelResearch={() => void onCancelResearch()}
+            onCheck={() => void onCheck()}
             onDone={finishSetup}
             checks={checks}
             researchBusy={researchBusy}
-            researchVerified={Boolean(researchNote && !explained)}
-            researchStage={researchStage}
-            researchElapsed={researchElapsed}
-            researchRoles={researchRoles}
+            researchVerified={committeeVerified(researchRoles)}
           />
-        ) : null}
+        ) : (
+          <div className="desk-body">
+            <CommandChat
+              onNavigate={(v) => setView(v as View)}
+              onResearch={(c) => void researchThis(c)}
+              onOpenPreview={() => setView("research")}
+            />
+            <div className="book">
 
         {setupDone && view === "home" ? (
           <main className="page dense">
@@ -1191,6 +1058,13 @@ export function App() {
               busy={bindBusy}
               onCreateSession={() => void onSession()}
               onConnectionPreview={() => void onConnectionPreview()}
+              onCheck={() => void onCheck()}
+            />
+            <PositionsPanel
+              account={positionAccount || status?.wallet}
+              positions={positions}
+              error={positionErr}
+              lastOrder={status?.lastOrder}
             />
             <EmptyHome count={eligible.length} next={attention} onGo={(v) => setView(v)} />
             <WelcomePath steps={path} onGo={(v) => setView(v)} />
@@ -1224,6 +1098,7 @@ export function App() {
                     <th>Funding</th>
                     <th>Open interest</th>
                     <th>Policy</th>
+                    <th>Research</th>
                     <th>Why</th>
                     <th></th>
                   </tr>
@@ -1237,6 +1112,7 @@ export function App() {
                       <td>{c.funding ?? "—"}</td>
                       <td>{c.openInterest ? Math.round(c.openInterest) : "—"}</td>
                       <td>{c.eligible ? "PASS" : "BLOCKED"}</td>
+                      <td>{checks.find((x) => x.name === "direct_credit")?.ok ? "Ready" : "Needs compute"}</td>
                       <td>{c.reason}</td>
                       <td>
                         <button type="button" className="linkish" onClick={() => void researchThis(c.coin)}>
@@ -1277,21 +1153,10 @@ export function App() {
                 ))}
               </div>
             </article>
+            <ComputeCard checks={checks} onCheck={() => void onCheck()} />
             <article className="card">
               <p className="label">PRIVATE RESEARCH</p>
-              <p>Provider Direct · Roles 3 · Estimated requirement about 3 0G locked.</p>
-              <p>
-                {checks.find((c) => c.name === "direct_credit")?.ok
-                  ? "Status Ready"
-                  : "Status Action required"}
-              </p>
-              <p className="fine">
-                {checks.find((c) => c.name === "direct_credit")?.detail ||
-                  "Private research uses real compute. PIT will not send your strategy until the required private compute capacity is available."}
-              </p>
-              <a className="linkish" href={LINKS.pcAdvanced} target="_blank" rel="noreferrer">
-                Open 0G Private Compute
-              </a>
+              <p>Provider Direct · glm-5.2 · Role separation, not three independent models. Estimated ~3 0G locked.</p>
               <button
                 type="button"
                 className="on"
@@ -1313,7 +1178,7 @@ export function App() {
             ) : null}
             {researchNote && !explained && !researchBusy ? (
               <article className="card">
-                <p className="label">RESEARCH VERIFIED</p>
+                <p className="label">{researchCardTitle(researchKind, committeeVerified(researchRoles))}</p>
                 <p>{researchNote}</p>
                 {researchJobId ? <p className="fine">Job {researchJobId}</p> : null}
                 <ul className="doctor">
@@ -1367,18 +1232,19 @@ export function App() {
                     ) : (
                       <p>Create a local session, then type AUTHORIZE here.</p>
                     )}
-                    {lastOid && status?.lastOrder?.status !== "filled" && !status?.lastOrder?.cancelled ? (
-                      <form onSubmit={(e) => void onCancelBound(e)}>
-                        <p className="fine">OID {lastOid} is resting. Type AUTHORIZE again to cancel this order. PIT cannot withdraw.</p>
-                        <button type="submit" disabled={authBusy}>
-                          Cancel this order
-                        </button>
-                      </form>
-                    ) : null}
-                    {lastOid && status?.lastOrder?.status === "filled" ? (
-                      <p className="fine">
-                        OID {lastOid} FILLED. This size is a position. Cancel does not apply. Flatten only with a reduce-only close that YOU authorize. PIT cannot withdraw.
-                      </p>
+                    {oidBelongsToPreview(status?.lastOrder?.hash, previewHash, preview.hash) && lastOid ? (
+                      status?.lastOrder?.status !== "filled" && !status?.lastOrder?.cancelled ? (
+                        <form onSubmit={(e) => void onCancelBound(e)}>
+                          <p className="fine">OID {lastOid} is resting for this preview. Type AUTHORIZE again to cancel. PIT cannot withdraw.</p>
+                          <button type="submit" disabled={authBusy}>
+                            Cancel this order
+                          </button>
+                        </form>
+                      ) : status?.lastOrder?.status === "filled" ? (
+                        <p className="fine">
+                          OID {lastOid} FILLED for this preview. Flatten only with a reduce-only close that YOU authorize. PIT cannot withdraw.
+                        </p>
+                      ) : null
                     ) : null}
                     {authErr ? (
                       <p className="err" role="alert">
@@ -1441,6 +1307,15 @@ export function App() {
               <p className="fine">Private research has not been run on this machine in this session.</p>
             ) : null}
             <PreviewNote />
+            <EvidenceDrawer
+              jobId={researchJobId}
+              roles={researchRoles}
+              preview={preview}
+              previewHash={previewHash}
+              kind={researchKind}
+              deny={preview?.deny}
+              evidence={researchEvidenceText}
+            />
             {eligible.length === 0 ? (
               <p className="fine">No policy-eligible market is waiting. Watch does not invent cards.</p>
             ) : (
@@ -1466,8 +1341,9 @@ export function App() {
             <p className="eyebrow">LEDGER</p>
             <h1>Activity</h1>
             <p className="lead">Exact-once orders, cancels, receipts, and stops. Empty is honest until this machine records one.</p>
+            <ActivityTimeline events={activity} lastOid={lastOid} />
             <article className="card">
-              <p className="label">THIS MACHINE</p>
+              <p className="label">LAST VENUE ORDER</p>
               {lastOid ? (
                 <>
                   <p>
@@ -1490,7 +1366,6 @@ export function App() {
               ) : (
                 <p>No order id is shown until Hyperliquid accepts one after you type AUTHORIZE.</p>
               )}
-              {status?.lastOrder?.cloid ? <p>Last cloid {status.lastOrder.cloid}</p> : null}
             </article>
           </main>
         ) : null}
@@ -1509,6 +1384,14 @@ export function App() {
             <p className="eyebrow">PERMISSIONS</p>
             <h1>Security</h1>
             <p className="lead">Order and cancel only. Withdraw is impossible through PIT.</p>
+            <SecurityCenter
+              domains={securityDomains}
+              net={net}
+              onSession={() => void onSession()}
+              onPolicy={() => void onPolicy()}
+              onCheck={() => void onCheck()}
+              busy={bindBusy}
+            />
             <HyperliquidCard
               net={net}
               agent={agent}
@@ -1520,6 +1403,7 @@ export function App() {
               busy={bindBusy}
               onCreateSession={() => void onSession()}
               onConnectionPreview={() => void onConnectionPreview()}
+              onCheck={() => void onCheck()}
             />
             <AuthorizeGate
               sessionAlive={sessionAlive}
@@ -1571,6 +1455,15 @@ export function App() {
               <p>Session {sessionAlive ? "order/cancel live" : "none"}</p>
               <p>Kill {status?.kill ? "on" : "off"}</p>
             </article>
+            <article className="card">
+              <p className="label">DESK IDENTITY</p>
+              <p>{identityNote}</p>
+              <p className="fine">Identity is optional. Trading does not wait on mint. Transfer of Agentic ID is unavailable on mainnet.</p>
+            </article>
+            <article className="card">
+              <p className="label">CALIBRATION</p>
+              <p>{calibCopy}</p>
+            </article>
             {!sessionAlive ? (
               <article className="card">
                 <p className="label">CONNECT TRADING</p>
@@ -1595,6 +1488,27 @@ export function App() {
             <NetworkToggle net={net} onChange={setNet} />
             <NetworkBanner net={net} />
             <CapabilityMatrix net={net} />
+            <article className="card">
+              <p className="label">UPDATES</p>
+              <p>{updateNote}</p>
+              <p>Restart {restartAllowed ? "allowed" : "refused — research is running. PIT will not replace pit.exe under a live job."}</p>
+              <a className="linkish" href={LINKS.releases} target="_blank" rel="noreferrer">
+                Open release
+              </a>
+            </article>
+            <article className="card">
+              <p className="label">MEMORY</p>
+              <p>Forget wipes working memory and chat on this workspace. Receipts and venue positions stay.</p>
+              <button
+                type="button"
+                className="linkish"
+                onClick={() => {
+                  void forgetMemory();
+                }}
+              >
+                Forget this workspace memory
+              </button>
+            </article>
             <article className="card">
               <p className="label">DOCTOR</p>
               {checks.length === 0 ? (
@@ -1628,6 +1542,9 @@ export function App() {
             <p className="fine">{NAMED.TRANSFER_NOT_LIVE}</p>
           </main>
         ) : null}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

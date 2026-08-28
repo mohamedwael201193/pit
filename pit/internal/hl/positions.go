@@ -7,6 +7,8 @@ type Position struct {
 	Sz            string `json:"szi"`
 	EntryPx       string `json:"entryPx,omitempty"`
 	UnrealizedPnl string `json:"unrealizedPnl,omitempty"`
+	Leverage      string `json:"leverage,omitempty"`
+	MarginUsed    string `json:"marginUsed,omitempty"`
 }
 
 func ParsePositions(raw json.RawMessage) []Position {
@@ -17,6 +19,11 @@ func ParsePositions(raw json.RawMessage) []Position {
 				Szi           string `json:"szi"`
 				EntryPx       string `json:"entryPx"`
 				UnrealizedPnl string `json:"unrealizedPnl"`
+				MarginUsed    string `json:"marginUsed"`
+				Leverage      struct {
+					Type  string `json:"type"`
+					Value string `json:"value"`
+				} `json:"leverage"`
 			} `json:"position"`
 		} `json:"assetPositions"`
 	}
@@ -28,11 +35,17 @@ func ParsePositions(raw json.RawMessage) []Position {
 		if row.Position.Coin == "" {
 			continue
 		}
+		lev := row.Position.Leverage.Value
+		if lev == "" {
+			lev = row.Position.Leverage.Type
+		}
 		out = append(out, Position{
 			Coin:          row.Position.Coin,
 			Sz:            row.Position.Szi,
 			EntryPx:       row.Position.EntryPx,
 			UnrealizedPnl: row.Position.UnrealizedPnl,
+			Leverage:      lev,
+			MarginUsed:    row.Position.MarginUsed,
 		})
 	}
 	return out

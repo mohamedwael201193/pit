@@ -68,3 +68,35 @@ func TestLoadJobMarksFailedWhenNoEvidence(t *testing.T) {
 		t.Fatal(rec.Body.String())
 	}
 }
+
+func TestOneRoleNeverVerify(t *testing.T) {
+	dir := t.TempDir()
+	ev := map[string]any{
+		"sign": false, "trade": false,
+		"roles": []any{
+			map[string]any{"role": "researcher", "verify_e2ee": "OK", "pubkey_signer": "0xA46EA4FC5889AD35A1487e1Ed04dCcfa872146B9"},
+		},
+	}
+	raw, _ := json.Marshal(ev)
+	if err := os.WriteFile(filepath.Join(dir, "last-research.json"), raw, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	job, _ := json.Marshal(map[string]any{"id": "job-one", "running": false, "done": true, "stage": "READY", "coin": "ETH", "pid": 1, "sign": false, "trade": false})
+	if err := os.WriteFile(filepath.Join(dir, "research-job.json"), job, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	h := New(dir)
+	req := local(httptest.NewRequest(http.MethodGet, "/local/research/status", nil))
+	rec := httptest.NewRecorder()
+	h.Handler().ServeHTTP(rec, req)
+	body := rec.Body.String()
+	if strings.Contains(body, `"verify":true`) {
+		t.Fatal(body)
+	}
+	if !strings.Contains(body, "COMMITTEE_INCOMPLETE") {
+		t.Fatal(body)
+	}
+	if strings.Contains(body, `"card_title":"RESEARCH VERIFIED"`) {
+		t.Fatal(body)
+	}
+}

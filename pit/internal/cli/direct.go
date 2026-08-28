@@ -220,6 +220,12 @@ func RunWorkspaceResearchStage(dir, coin string, stage compute.StageFn, stop fun
 		if err := compute.ConsumeSponsorQuota(dir, st.WorkspaceID); err != nil {
 			return compute.AskReport{}, err
 		}
+	} else {
+		sku := compute.ForNetwork(net)
+		probe := compute.ProbeDirectAccount(config.For(net), st.Wallet, sku.Provider)
+		if probe.Present && !probe.EnoughForCommittee() {
+			return compute.AskReport{}, fmt.Errorf("direct_ledger")
+		}
 	}
 	p := policy.Default()
 	_ = CheckPinned(dir, st.WorkspaceID, p)

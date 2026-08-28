@@ -33,7 +33,7 @@ export const CAPABILITY: CapRow[] = [
     label: "Hyperliquid",
     mainnet: "partial",
     testnet: "partial",
-    note: "Order and cancel after extraAgents lists the local session. Withdraw is impossible.",
+    note: "Order and cancel after Hyperliquid lists the local PIT agent. Withdraw is impossible.",
   },
   {
     id: "agentic",

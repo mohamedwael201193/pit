@@ -79,6 +79,42 @@ export function explainStop(code: string | null): { title: string; body: string 
       body: "You cancelled this sealed request. No order was placed. No funds moved.",
     };
   }
+  if (code === "research_cancelled" || code === "CANCELED_BY_USER") {
+    return {
+      title: "You cancelled",
+      body: "You cancelled this sealed request. No order was placed. No funds moved.",
+    };
+  }
+  if (code === "DIRECT_RATE_LIMITED") {
+    return {
+      title: "Too many sealed requests",
+      body: "The sealed provider rate-limited this workspace. Wait, then retry. That is not a TEE failure. No order was placed.",
+    };
+  }
+  if (code === "WRONG_NETWORK") {
+    return {
+      title: "Wrong network",
+      body: "This workspace is bound to one world. Mixing MAINNET compute with TESTNET venue is refused.",
+    };
+  }
+  if (code === "POLICY_DENIED" || code === "POLICY_REJECTED") {
+    return {
+      title: "Policy blocked this",
+      body: "The pinned policy rejected this market or the kill switch is on. No order was placed.",
+    };
+  }
+  if (code === "MARKET_DENIED") {
+    return {
+      title: "Market not usable",
+      body: "PIT will not invent a book. Watch still works. No order was placed.",
+    };
+  }
+  if (code === "READY_STOOD_DOWN") {
+    return {
+      title: "Committee stood down",
+      body: "Three roles verified. The committee did not propose a trade. That is a verified result, not a crash.",
+    };
+  }
   if (code === "companion_http") {
     return {
       title: "Local PIT dropped a status poll",
@@ -214,7 +250,7 @@ export function explainStop(code: string | null): { title: string; body: string 
   if (code === "approveAgent_required") {
     return {
       title: "Approve PIT on Hyperliquid",
-      body: "This computer has an order/cancel session. extraAgents does not list it yet. Open Hyperliquid API and approve the agent shown on Security. PIT still cannot withdraw. No order was placed.",
+      body: "This computer has an order/cancel session. Hyperliquid does not list it yet. Open Hyperliquid API and approve the agent shown on Security. PIT still cannot withdraw. No order was placed.",
     };
   }
   if (code === "preview_required" || code === "need_exact_AUTHORIZE" || code === "preview_hash_mismatch") {

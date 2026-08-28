@@ -3,8 +3,8 @@ export function PermissionsCard() {
     <div className="card">
       <p className="label">YOUR SESSION</p>
       <ul className="perms">
-        <li>ORDER — allowed after extraAgents lists this agent</li>
-        <li>CANCEL — allowed after extraAgents lists this agent</li>
+        <li>ORDER — allowed after Hyperliquid lists this PIT agent</li>
+        <li>CANCEL — allowed after Hyperliquid lists this PIT agent</li>
         <li>WITHDRAW — denied by PIT. PIT never signs it.</li>
         <li>FUND TRANSFER — denied by PIT. PIT never signs it.</li>
         <li>LEVERAGE — denied by PIT policy. PIT never signs it.</li>

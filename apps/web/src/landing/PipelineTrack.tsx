@@ -42,7 +42,7 @@ function copyFor(label: string): string {
     case "AUTHORIZE":
       return "Desktop or CLI. This browser cannot sign the order.";
     case "EXECUTE":
-      return "Order or cancel only. extraAgents must list the session.";
+      return "Order or cancel only. Hyperliquid must list the PIT agent.";
     case "PROVE":
       return "0G Storage with the official Go client --proof.";
     case "LEARN":

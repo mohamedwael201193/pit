@@ -13,7 +13,7 @@ export type LocalStatus = {
   sign?: boolean;
   trade?: boolean;
   version?: string;
-  lastOrder?: { oid?: string; cloid?: string; market?: string; side?: string; sz?: number; status?: string; posted?: boolean; cancelled?: boolean; venue?: string };
+  lastOrder?: { oid?: string; cloid?: string; hash?: string; market?: string; side?: string; sz?: number; status?: string; posted?: boolean; cancelled?: boolean; venue?: string };
 };
 
 export type PairCode = {
@@ -68,6 +68,8 @@ export type BindResult = {
   seq?: number;
   heartbeat_unix_ms?: number;
   terminal?: boolean;
+  terminal_kind?: string;
+  card_title?: string;
   retryable?: boolean;
   current_stage?: string;
   evidence?: unknown;
@@ -340,6 +342,153 @@ export async function cancelBoundOrder(typed: string): Promise<BindResult> {
     const msg = e instanceof Error ? e.message : "companion_http";
     return { error: msg || "companion_http" };
   }
+}
+
+export type ChatMessage = { ts?: number; role?: string; text?: string; tool?: string };
+export type ChatReply = BindResult & {
+  reply?: string;
+  tool?: string;
+  execute?: boolean;
+  start_research?: boolean;
+  coin?: string;
+  navigate?: string;
+  open_url?: string;
+};
+export type ActivityEvent = {
+  ts?: number;
+  kind?: string;
+  market?: string;
+  action?: string;
+  status?: string;
+  job_id?: string;
+  preview_hash?: string;
+  oid?: string;
+  reason?: string;
+};
+export type SecurityDomain = {
+  id?: string;
+  state?: string;
+  why?: string;
+  means?: string;
+  do?: string;
+  href?: string;
+  hrefLabel?: string;
+};
+export type VenuePosition = {
+  coin?: string;
+  sz?: string;
+  entryPx?: string;
+  markPx?: number;
+  unrealizedPnl?: string;
+  leverage?: string;
+  marginUsed?: string;
+  account?: string;
+  policyClipUsd?: number;
+};
+
+async function localGet<T extends object>(cmd: string, path: string): Promise<T | null> {
+  const native = rejectSecrets(await nativeJson<T>(cmd));
+  if (native) return native;
+  return rejectSecrets(await fetchJson<T>(path));
+}
+
+export async function sendDeskCommand(text: string): Promise<ChatReply> {
+  try {
+    const native = await nativeJsonOrError<ChatReply>("local_chat", { text });
+    if (native.sign || native.trade) return { error: "companion_denied", execute: false };
+    return { ...native, execute: false };
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : "companion_http";
+    return { error: msg || "companion_http", execute: false };
+  }
+}
+
+export async function fetchChatLog(): Promise<ChatMessage[]> {
+  const body = await localGet<{ messages?: ChatMessage[]; sign?: boolean }>("local_chat_log", "/local/chat/log");
+  return Array.isArray(body?.messages) ? body.messages : [];
+}
+
+export async function fetchActivity(): Promise<ActivityEvent[]> {
+  const body = await localGet<{ events?: ActivityEvent[]; sign?: boolean }>("local_activity", "/local/activity");
+  return Array.isArray(body?.events) ? body.events : [];
+}
+
+export async function fetchPositions(): Promise<{
+  account?: string;
+  positions: VenuePosition[];
+  error?: string;
+  lastOrder?: LocalStatus["lastOrder"];
+}> {
+  const body = await localGet<{
+    account?: string;
+    positions?: VenuePosition[];
+    error?: string;
+    lastOrder?: LocalStatus["lastOrder"];
+    sign?: boolean;
+  }>("local_positions", "/local/positions");
+  return {
+    account: body?.account,
+    positions: Array.isArray(body?.positions) ? body.positions : [],
+    error: body?.error,
+    lastOrder: body?.lastOrder,
+  };
+}
+
+export async function fetchSecurity(): Promise<SecurityDomain[]> {
+  const body = await localGet<{ domains?: SecurityDomain[]; sign?: boolean }>("local_security", "/local/security");
+  return Array.isArray(body?.domains) ? body.domains : [];
+}
+
+export async function fetchCalibration(): Promise<{ n?: number; need?: number; copy?: string; enough?: boolean }> {
+  return (
+    (await localGet<{ n?: number; need?: number; copy?: string; enough?: boolean; sign?: boolean }>(
+      "local_calibration",
+      "/local/calibration",
+    )) || { copy: "NOT ENOUGH DATA" }
+  );
+}
+
+export async function fetchIdentity(): Promise<{ itransfer?: string; iclone?: string; note?: string }> {
+  return (
+    (await localGet<{ itransfer?: string; iclone?: string; note?: string; sign?: boolean }>("local_identity", "/local/identity")) || {
+      itransfer: "UNAVAILABLE",
+      iclone: "UNAVAILABLE",
+    }
+  );
+}
+
+export async function fetchUpdate(): Promise<{
+  version?: string;
+  research_running?: boolean;
+  restart_allowed?: boolean;
+  authenticode?: boolean;
+  note?: string;
+}> {
+  return (
+    (await localGet<{
+      version?: string;
+      research_running?: boolean;
+      restart_allowed?: boolean;
+      authenticode?: boolean;
+      note?: string;
+      sign?: boolean;
+    }>("local_update", "/local/update")) || { authenticode: false, restart_allowed: true }
+  );
+}
+
+export async function forgetMemory(): Promise<BindResult> {
+  try {
+    const native = await nativeJsonOrError<BindResult>("local_memory_forget");
+    if (native.sign || native.trade) return { error: "companion_denied" };
+    return native;
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : "companion_http";
+    return { error: msg || "companion_http" };
+  }
+}
+
+export async function fetchExplain(): Promise<BindResult> {
+  return (await localGet<BindResult>("local_explain", "/local/explain")) || {};
 }
 
 export async function runResearch(coin: string): Promise<BindResult> {

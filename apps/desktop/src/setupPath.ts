@@ -65,7 +65,7 @@ export function setupPath(
     {
       id: "approve",
       title: "Approve PIT agent",
-      why: "Authorize API Wallet with the printed name and address. extraAgents must list that address. PIT cannot withdraw.",
+      why: "Authorize API Wallet with the printed name and address. Hyperliquid must list that address. PIT cannot withdraw.",
       tone: agent?.ok ? "READY" : sessionAlive ? "ACTION" : "BLOCKED",
       href: hyperliquidAPI(net),
       hrefLabel: "Open Hyperliquid API",
@@ -75,7 +75,7 @@ export function setupPath(
     {
       id: "session",
       title: "Create secure session",
-      why: "Order and cancel only, on this computer. If extraAgents still lists this agent, PIT reuses it and does not mint a new address.",
+      why: "Order and cancel only, on this computer. If Hyperliquid still lists this PIT agent, PIT reuses it and does not mint a new address.",
       tone: sessionAlive ? "READY" : wallet?.ok ? "ACTION" : "BLOCKED",
       go: "security",
       goLabel: "Create session",

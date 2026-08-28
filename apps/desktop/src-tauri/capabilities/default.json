@@ -26,6 +26,17 @@
     "allow-local-authorize",
     "allow-local-cancel-order",
     "allow-local-watch",
-    "allow-local-kill"
+    "allow-local-kill",
+    "allow-local-activity",
+    "allow-local-positions",
+    "allow-local-chat",
+    "allow-local-chat-log",
+    "allow-local-memory-forget",
+    "allow-local-calibration",
+    "allow-local-security",
+    "allow-local-identity",
+    "allow-local-update",
+    "allow-local-explain",
+    "allow-local-models"
   ]
 }

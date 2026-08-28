@@ -91,7 +91,7 @@ Every command accepts --json. Exit 0 on success, 2 on usage, 1 on failed doctor.
 PIT never asks for a seed phrase or a trading secret.
 Session keys stay on this machine (OS keychain unless PIT_KEYRING=file).
 authorize requires a TTY, the exact word AUTHORIZE, and a live session on this machine.
-pit session creates a 24-hour order/cancel agent. If extraAgents still lists that agent, PIT reuses it instead of minting a new address.
+pit session creates a 24-hour order/cancel agent. If Hyperliquid still lists that PIT agent, PIT reuses it instead of minting a new address.
 pit companion listens on 127.0.0.1 only. Pairing does not send the session key to the browser.
 The desktop can bind, pin policy, and mint a session without a terminal.
 `)
@@ -269,7 +269,7 @@ func cmdSession() {
 	fmt.Printf("agent     %s\n", sf.AgentAddr)
 	fmt.Printf("name      %s\n", name)
 	fmt.Printf("expires   %d\n", sf.Expires)
-	fmt.Println("ttl       24h (reused while extraAgents lists this address)")
+	fmt.Println("ttl       24h (reused while Hyperliquid lists this PIT agent)")
 	fmt.Println("order     allowed")
 	fmt.Println("cancel    allowed")
 	fmt.Println("withdraw  denied")

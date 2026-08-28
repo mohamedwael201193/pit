@@ -134,6 +134,61 @@ async fn local_kill(on: bool) -> Result<serde_json::Value, String> {
 }
 
 #[tauri::command]
+async fn local_activity() -> Result<serde_json::Value, String> {
+    json_get("/local/activity".into(), 8).await
+}
+
+#[tauri::command]
+async fn local_positions() -> Result<serde_json::Value, String> {
+    json_get("/local/positions".into(), 12).await
+}
+
+#[tauri::command]
+async fn local_chat(text: String) -> Result<serde_json::Value, String> {
+    json_post("/local/chat".into(), serde_json::json!({ "text": text }), 20).await
+}
+
+#[tauri::command]
+async fn local_chat_log() -> Result<serde_json::Value, String> {
+    json_get("/local/chat/log".into(), 8).await
+}
+
+#[tauri::command]
+async fn local_memory_forget() -> Result<serde_json::Value, String> {
+    json_post("/local/memory/forget".into(), serde_json::json!({}), 8).await
+}
+
+#[tauri::command]
+async fn local_calibration() -> Result<serde_json::Value, String> {
+    json_get("/local/calibration".into(), 8).await
+}
+
+#[tauri::command]
+async fn local_security() -> Result<serde_json::Value, String> {
+    json_get("/local/security".into(), 12).await
+}
+
+#[tauri::command]
+async fn local_identity() -> Result<serde_json::Value, String> {
+    json_get("/local/identity".into(), 8).await
+}
+
+#[tauri::command]
+async fn local_update() -> Result<serde_json::Value, String> {
+    json_get("/local/update".into(), 4).await
+}
+
+#[tauri::command]
+async fn local_explain() -> Result<serde_json::Value, String> {
+    json_get("/local/explain".into(), 8).await
+}
+
+#[tauri::command]
+async fn local_models() -> Result<serde_json::Value, String> {
+    json_get("/local/models".into(), 4).await
+}
+
+#[tauri::command]
 async fn local_research(coin: String) -> Result<serde_json::Value, String> {
     local_research_start(coin, None).await
 }
@@ -367,7 +422,7 @@ fn same_install(path: &Path) -> bool {
     path.parent().map(|p| p == dir).unwrap_or(false)
 }
 
-const SIDECAR_VERSION: &str = "0.1.15";
+const SIDECAR_VERSION: &str = "0.2.0";
 
 fn companion_version() -> Option<String> {
     let raw = loopback_get("/health").ok()?;
@@ -513,6 +568,17 @@ pub fn run() {
             local_cancel_order,
             local_watch,
             local_kill,
+            local_activity,
+            local_positions,
+            local_chat,
+            local_chat_log,
+            local_memory_forget,
+            local_calibration,
+            local_security,
+            local_identity,
+            local_update,
+            local_explain,
+            local_models,
             ensure_companion
         ])
         .run(tauri::generate_context!())

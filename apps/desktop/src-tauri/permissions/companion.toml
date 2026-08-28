@@ -107,3 +107,58 @@ commands.allow = ["local_watch"]
 identifier = "allow-local-kill"
 description = "Flip the local kill switch. Never exports a session key."
 commands.allow = ["local_kill"]
+
+[[permission]]
+identifier = "allow-local-activity"
+description = "Read the local activity timeline. Never a secret."
+commands.allow = ["local_activity"]
+
+[[permission]]
+identifier = "allow-local-positions"
+description = "Read Hyperliquid positions for the bound master account."
+commands.allow = ["local_positions"]
+
+[[permission]]
+identifier = "allow-local-chat"
+description = "Send a trading-desk command. Never executes a trade."
+commands.allow = ["local_chat"]
+
+[[permission]]
+identifier = "allow-local-chat-log"
+description = "Read the local chat transcript. Never a secret."
+commands.allow = ["local_chat_log"]
+
+[[permission]]
+identifier = "allow-local-memory-forget"
+description = "Forget workspace working memory. Never deletes receipts."
+commands.allow = ["local_memory_forget"]
+
+[[permission]]
+identifier = "allow-local-calibration"
+description = "Read calibration honesty. NOT ENOUGH DATA until N is enough."
+commands.allow = ["local_calibration"]
+
+[[permission]]
+identifier = "allow-local-security"
+description = "Read security domain states. Never a secret."
+commands.allow = ["local_security"]
+
+[[permission]]
+identifier = "allow-local-identity"
+description = "Read agent identity honesty. iTransfer remains unavailable on mainnet."
+commands.allow = ["local_identity"]
+
+[[permission]]
+identifier = "allow-local-update"
+description = "Read updater gate. Restart is refused while research is running."
+commands.allow = ["local_update"]
+
+[[permission]]
+identifier = "allow-local-explain"
+description = "Read research explanation without the sealed prompt."
+commands.allow = ["local_explain"]
+
+[[permission]]
+identifier = "allow-local-models"
+description = "Read Direct SKUs for the bound network. Never a Router catalog."
+commands.allow = ["local_models"]

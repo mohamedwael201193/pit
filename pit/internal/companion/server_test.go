@@ -188,7 +188,7 @@ func TestLocalStatusVersionNoSecret(t *testing.T) {
 	if got["sign"] == true || got["trade"] == true {
 		t.Fatal(got)
 	}
-	if got["version"] != "0.1.15" {
+	if got["version"] != "0.2.0" {
 		t.Fatalf("version %v", got["version"])
 	}
 }

@@ -74,7 +74,7 @@ export function nextFix(
   if (agent && !agent.ok) {
     return {
       title: "Approve PIT on Hyperliquid",
-      why: "extraAgents must list this session before AUTHORIZE can send an order.",
+      why: "Hyperliquid must list this session before AUTHORIZE can send an order.",
       fix: "Open Hyperliquid API. Authorize API Wallet using the PIT agent name and address on Security. PIT still cannot withdraw.",
       href: hyperliquidAPI(net),
       hrefLabel: "Open Hyperliquid API",

@@ -11,6 +11,7 @@ export function HyperliquidCard({
   busy,
   onCreateSession,
   onConnectionPreview,
+  onCheck,
 }: {
   net: string;
   agent: string;
@@ -22,54 +23,64 @@ export function HyperliquidCard({
   busy?: boolean;
   onCreateSession: () => void;
   onConnectionPreview?: () => void;
+  onCheck?: () => void;
 }) {
-  const approval = approved ? "Approved" : agent ? "Waiting" : "None";
+  const approval = approved ? "Approved" : agent ? "Needs approval" : "None";
   const session = sessionAlive ? "Active" : agent ? "Expired" : "Not created";
+  const status = approved && sessionAlive ? "Ready" : !agent ? "Not connected" : approved ? "Session expired" : "Needs approval";
   const next = !agent
     ? "Create a secure PIT session on this computer."
     : !approved
       ? "Open Hyperliquid API. Authorize API Wallet with the name and address below. PIT still cannot withdraw."
       : !sessionAlive
-        ? "Create a secure PIT session. extraAgents already lists this agent, so PIT will reuse it."
-        : "Session is live. Research, then type AUTHORIZE on the exact preview.";
+        ? "Create a secure PIT session. Hyperliquid already lists this agent, so PIT will reuse it."
+        : "Your trading account is ready. Research, then type AUTHORIZE on the exact preview.";
   const ttl =
-    sessionExpires && sessionExpires > 0
-      ? new Date(sessionExpires).toISOString().replace(".000Z", "Z")
-      : "";
+    sessionExpires && sessionExpires > 0 ? new Date(sessionExpires).toISOString().replace(".000Z", "Z") : "";
   return (
     <article className="card">
-      <p className="label">CONNECT HYPERLIQUID</p>
+      <p className="label">HYPERLIQUID</p>
       <p>
-        PIT needs your Hyperliquid account, a scoped PIT API agent, and a local session. Withdraw, transfer, leverage,
-        and account admin stay denied.
+        Connected {agent ? "yes" : "no"} · Account is your wallet. PIT Agent is a scoped API wallet. Withdraw, transfer,
+        leverage, and account admin stay denied.
       </p>
       <p>
-        <strong>PIT AGENT</strong> {agent || "none"}
-      </p>
-      {agentName ? <p>Name {agentName} (must be under 17 characters on Hyperliquid)</p> : null}
-      <p>
-        <strong>APPROVAL</strong> {approval}
-        {approvedDetail ? ` — ${approvedDetail}` : ""}
+        <strong>PIT AGENT</strong> {agent || "none"} {agentName ? `· ${agentName}` : ""}
       </p>
       <p>
         <strong>SESSION</strong> {session}
-        {ttl ? ` — expires ${ttl}` : ""}
+        {ttl ? ` — until ${ttl}` : ""}
       </p>
       <p>
-        ORDER {sessionAlive && approved ? "✅" : "waiting"} · CANCEL {sessionAlive && approved ? "✅" : "waiting"} ·
-        WITHDRAW ❌ · TRANSFER ❌ · LEVERAGE ❌
+        <strong>PERMISSION</strong> Order · Cancel · Withdraw denied · Transfer denied · Leverage denied
+      </p>
+      <p>
+        <strong>STATUS</strong> {status}
+        {approvedDetail ? ` — ${approvedDetail}` : ""}
+      </p>
+      <p>
+        ORDER {sessionAlive && approved ? "yes" : "waiting"} · CANCEL {sessionAlive && approved ? "yes" : "waiting"} ·
+        WITHDRAW no · TRANSFER no · LEVERAGE no
       </p>
       <p className="fine">{next}</p>
       <div className="cta-row">
-        <button type="button" className="linkish" onClick={onCreateSession} disabled={busy}>
-          {sessionAlive ? "Refresh secure session" : "Create secure PIT session"}
-        </button>
         <a className="linkish" href={hyperliquidApp(net)} target="_blank" rel="noreferrer">
-          Open Hyperliquid
+          Connect Hyperliquid
+        </a>
+        <button type="button" className="linkish" onClick={onCreateSession} disabled={busy}>
+          {sessionAlive ? "Refresh secure session" : "Create secure session"}
+        </button>
+        <a className="linkish" href={hyperliquidAPI(net)} target="_blank" rel="noreferrer">
+          Approve PIT
         </a>
         <a className="linkish" href={hyperliquidAPI(net)} target="_blank" rel="noreferrer">
           Open Hyperliquid API
         </a>
+        {onCheck ? (
+          <button type="button" className="linkish" onClick={onCheck} disabled={busy}>
+            Check again
+          </button>
+        ) : null}
         {onConnectionPreview && sessionAlive && approved ? (
           <button type="button" className="linkish" onClick={onConnectionPreview} disabled={busy}>
             Prepare connection-test preview
@@ -79,7 +90,7 @@ export function HyperliquidCard({
       <p className="fine">
         Private compute credit lives at{" "}
         <a href={LINKS.pcAdvanced} target="_blank" rel="noreferrer">
-          pc.0g.ai Advanced funds
+          0G Private Compute
         </a>
         . That is not a Hyperliquid balance.
       </p>

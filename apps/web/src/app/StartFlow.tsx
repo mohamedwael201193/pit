@@ -80,7 +80,7 @@ const STEPS = [
   {
     id: 7,
     title: "Create local session",
-    why: "The 24-hour agent lives in the OS keychain. Not here. If extraAgents still lists it, PIT reuses the same address.",
+    why: "The 24-hour agent lives in the OS keychain. Not here. If Hyperliquid still lists it, PIT reuses the same address.",
     action: "Create the session in PIT Desktop, then approve the printed agent on Hyperliquid API.",
     fail: namedState("SESSION_EXPIRED"),
     Diagram: DiagramSession,
@@ -89,7 +89,7 @@ const STEPS = [
     id: 8,
     title: "Approve scoped agent",
     why: "Your wallet must approveAgent the printed address. Withdraw stays denied.",
-    action: "Approve on Hyperliquid API. extraAgents must list PIT. Withdraw stays denied.",
+    action: "Approve on Hyperliquid API. Hyperliquid must list PIT. Withdraw stays denied.",
     fail: namedState("SESSION_EXPIRED"),
     Diagram: DiagramAuthorize,
   },

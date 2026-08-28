@@ -26,7 +26,7 @@ export function AuthorizeGate({
           <p className="label">YOUR SESSION</p>
           <p>
             Create a secure order/cancel session on this computer, then approve that agent on Hyperliquid API. If
-            extraAgents already lists this address, PIT reuses it. PIT cannot withdraw.
+            Hyperliquid already lists this address, PIT reuses it. PIT cannot withdraw.
           </p>
           <button type="button" className="linkish" onClick={onCreateSession} disabled={busy}>
             Create secure PIT session

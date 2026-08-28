@@ -1,6 +1,6 @@
 [package]
 name = "pit-desktop"
-version = "0.1.15"
+version = "0.2.0"
 description = "PIT local execution authority. Session keys never leave this machine."
 authors = ["PIT"]
 edition = "2021"

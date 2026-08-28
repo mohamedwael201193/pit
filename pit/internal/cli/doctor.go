@@ -292,7 +292,7 @@ func checkHLAgent(dir string) Check {
 	now := time.Now().UnixMilli()
 	linked, until, err := LookupAgent(st.Network, st.Wallet, st.WorkspaceID, sf.AgentAddr, now)
 	if err != nil {
-		return Check{Name: "hl_agent", Detail: "extraAgents query failed. AUTHORIZE stays off until Hyperliquid lists this agent."}
+		return Check{Name: "hl_agent", Detail: "Hyperliquid approval query failed. AUTHORIZE stays off until Hyperliquid lists this PIT agent."}
 	}
 	name, _ := session.AgentName(st.WorkspaceID)
 	if !linked {
@@ -303,7 +303,7 @@ func checkHLAgent(dir string) Check {
 	if until > 0 {
 		untilNote = " until " + time.UnixMilli(until).UTC().Format("2006-01-02")
 	}
-	return Check{Name: "hl_agent", OK: true, Detail: "extraAgents lists this session" + untilNote + ". PIT still refuses withdraw, transfer, leverage, and account admin."}
+	return Check{Name: "hl_agent", OK: true, Detail: "Hyperliquid lists this PIT agent" + untilNote + ". PIT still refuses withdraw, transfer, leverage, and account admin."}
 }
 
 func checkPolicy(dir string) Check {
