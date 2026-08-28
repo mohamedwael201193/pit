@@ -1,125 +1,150 @@
-import type { ComponentProps } from "react";
-import { EmptyHome } from "./EmptyHome";
-import { HyperliquidCard } from "./HyperliquidCard";
 import { LINKS } from "./links";
 import { prettyCode } from "./companion";
 import type { NextFix } from "./nextFix";
 import type { Probe } from "./readiness";
 
-type Coin = { coin: string; reason: string; mark: number; eligible?: boolean; funding?: number; openInterest?: number };
+type Coin = { coin: string; reason: string; mark: number; eligible?: boolean; funding?: number; openInterest?: number; oracle?: number };
+
+function tone(ok: boolean) {
+  return ok ? "ok" : "bad";
+}
 
 export function DeskHome({
   ready,
   items,
   attention,
   coins,
-  net,
   code,
   companionUp,
   sessionAlive,
   computeReady,
+  protectedOk,
   policyPinned,
   hlApproved,
   onResearch,
   onGo,
-  hl,
 }: {
   ready: boolean;
   items: Probe[];
   attention: NextFix;
   coins: Coin[];
-  net: string;
   code: string;
   companionUp: boolean;
   sessionAlive: boolean;
   computeReady: boolean;
+  protectedOk: boolean;
   policyPinned: boolean;
   hlApproved: boolean;
   onResearch: (coin: string) => void;
   onGo: (view: "watch" | "research" | "security" | "settings") => void;
-  hl: ComponentProps<typeof HyperliquidCard>;
 }) {
   const eth = coins.find((c) => c.coin === "ETH");
-  const showPair = !items.find((p) => p.id === "wallet") || items.find((p) => p.id === "wallet")?.state !== "ok";
+  const showPair = items.find((p) => p.id === "wallet")?.state !== "ok";
   return (
     <main className="page dense">
-      <p className="eyebrow">Desk</p>
-      <h1>{ready ? "Desk ready" : attention.title}</h1>
-      <p className="lead">What is happening, what needs you, what is ready. Chat cannot AUTHORIZE.</p>
-      <div className="action-center">
-        <article className="card">
-          <p className="label">Action center</p>
-          <dl className="status-grid">
-            <dt>Private research</dt>
-            <dd>{computeReady ? "READY" : "NEEDS ACTION"}</dd>
-            <dt>Trading session</dt>
-            <dd>{sessionAlive ? "READY" : "NEEDS ACTION"}</dd>
-            <dt>Hyperliquid</dt>
-            <dd>{hlApproved ? "APPROVED" : "NEEDS APPROVAL"}</dd>
-            <dt>Policy</dt>
-            <dd>{policyPinned ? "ACTIVE" : "UNPINNED"}</dd>
-            <dt>Compute</dt>
-            <dd>{computeReady ? "READY" : "NEEDS FUNDS"}</dd>
-          </dl>
-          <p className="fine">{attention.why}</p>
-          {eth && ready ? (
-            <>
-              <p>
-                ETH matches your policy at {eth.mark}. Research ETH privately?
-              </p>
-              <button type="button" className="primary" onClick={() => onResearch("ETH")}>
-                Research ETH
-              </button>
-            </>
-          ) : (
-            <div className="cta-row">
-              {attention.href ? (
-                <a className="linkish" href={attention.href} target="_blank" rel="noreferrer">
-                  {attention.hrefLabel || "Open"}
-                </a>
-              ) : null}
-              {attention.go ? (
-                <button type="button" className="linkish" onClick={() => onGo(attention.go!)}>
-                  {attention.goLabel || "Open"}
-                </button>
-              ) : null}
-            </div>
-          )}
-        </article>
-        <article className="card">
-          <p className="label">Next</p>
-          <EmptyHome count={coins.filter((c) => c.eligible).length} next={attention} onGo={onGo} />
-        </article>
+      <div className="page-head">
+        <div>
+          <p className="eyebrow">Desk</p>
+          <h1>{ready ? "Ready" : attention.title}</h1>
+        </div>
+        <p className="fine" style={{ margin: 0 }}>
+          Chat cannot AUTHORIZE.
+        </p>
       </div>
-      {showPair ? (
-        <article className="card pair-card">
-          <p className="label">Pair this computer</p>
-          <p className="pair-code" aria-label="pairing code">
-            {code ? prettyCode(code) : companionUp ? "rotating…" : "waiting for local PIT"}
+      <dl className="ready-strip">
+        <div>
+          <dt>Research</dt>
+          <dd className={tone(protectedOk)}>{protectedOk ? "PROTECTED" : "NEEDS PROTECT"}</dd>
+        </div>
+        <div>
+          <dt>Compute</dt>
+          <dd className={tone(computeReady)}>{computeReady ? "FUNDED" : "NEEDS FUNDS"}</dd>
+        </div>
+        <div>
+          <dt>Session</dt>
+          <dd className={tone(sessionAlive)}>{sessionAlive ? "LIVE" : "NONE"}</dd>
+        </div>
+        <div>
+          <dt>Hyperliquid</dt>
+          <dd className={tone(hlApproved)}>{hlApproved ? "APPROVED" : "NEEDS APPROVAL"}</dd>
+        </div>
+        <div>
+          <dt>Policy</dt>
+          <dd className={tone(policyPinned)}>{policyPinned ? "ACTIVE" : "UNPINNED"}</dd>
+        </div>
+      </dl>
+      <section className="next-row">
+        <div>
+          <p className="label">Next</p>
+          <h2>{attention.title}</h2>
+          <p className="fine" style={{ margin: 0 }}>
+            {attention.why}
           </p>
-          <p className="fine">The website never receives a session key. The code expires in two minutes.</p>
-          <a className="linkish" href={LINKS.pair} target="_blank" rel="noreferrer">
+        </div>
+        <div className="cta-row">
+          {ready && eth ? (
+            <button type="button" className="primary" onClick={() => onResearch("ETH")}>
+              Research ETH
+            </button>
+          ) : null}
+          {attention.href ? (
+            <a className="linkish" href={attention.href} target="_blank" rel="noreferrer">
+              {attention.hrefLabel || "Open official page"}
+            </a>
+          ) : null}
+          {attention.go ? (
+            <button type="button" className="linkish" onClick={() => onGo(attention.go!)}>
+              {attention.goLabel || "Open"}
+            </button>
+          ) : null}
+        </div>
+      </section>
+      {showPair ? (
+        <section className="next-row">
+          <div>
+            <p className="label">Pair this computer</p>
+            <p className="pair-chip" aria-label="pairing code">
+              {code ? prettyCode(code) : companionUp ? "rotating…" : "waiting for local PIT"}
+            </p>
+            <p className="fine" style={{ margin: 0 }}>
+              The website never receives a session key.
+            </p>
+          </div>
+          <a className="primary" href={LINKS.pair} target="_blank" rel="noreferrer">
             Open pairing
           </a>
-        </article>
+        </section>
       ) : null}
-      <div className="desk-grid" style={{ marginTop: 12 }}>
+      <p className="label" style={{ marginTop: 14 }}>
+        Markets
+      </p>
+      <div className="market-head">
+        <span>Asset</span>
+        <span>Mark</span>
+        <span>Oracle</span>
+        <span>Funding</span>
+        <span>OI</span>
+        <span>Policy</span>
+        <span>Ready</span>
+        <span></span>
+      </div>
+      <ul className="market-rows" aria-label="Policy markets">
         {coins.slice(0, 3).map((c) => (
-          <article key={c.coin} className="card">
-            <p className="label">{c.coin}</p>
-            <p className="mark-num">{c.mark || "—"}</p>
-            <p className="fine">
-              Funding {c.funding ?? "—"} · OI {c.openInterest ? Math.round(c.openInterest) : "—"} · Policy{" "}
-              {c.eligible ? "PASS" : "BLOCKED"}
-            </p>
-            <p className="fine">{c.reason}</p>
+          <li key={c.coin}>
+            <strong>{c.coin}</strong>
+            <span className="mark-num">{c.mark || "—"}</span>
+            <span>{c.oracle ?? "—"}</span>
+            <span>{c.funding ?? "—"}</span>
+            <span>{c.openInterest ? Math.round(c.openInterest) : "—"}</span>
+            <span>{c.eligible ? "PASS" : "BLOCKED"}</span>
+            <span>{computeReady ? "Ready" : "Needs compute"}</span>
             <button type="button" className="linkish" onClick={() => onResearch(c.coin)} disabled={!c.eligible}>
               Research
             </button>
-          </article>
+          </li>
         ))}
-      </div>
-      <HyperliquidCard {...hl} />
+      </ul>
+      <p className="fine">Public Hyperliquid marks. Side is not decided here.</p>
     </main>
   );
 }

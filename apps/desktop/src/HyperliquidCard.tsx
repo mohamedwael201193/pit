@@ -10,7 +10,6 @@ export function HyperliquidCard({
   approvedDetail,
   busy,
   onCreateSession,
-  onConnectionPreview,
   onCheck,
   onRevoke,
   onRefreshApproval,
@@ -29,96 +28,86 @@ export function HyperliquidCard({
   onRevoke?: () => void;
   onRefreshApproval?: () => void;
 }) {
-  const session = sessionAlive ? "Active" : agent ? "Expired" : "Not created";
-  const status = approved && sessionAlive ? "Ready" : !agent ? "Not connected" : approved ? "Session expired" : "Needs approval";
-  const next = !agent
-    ? "Create a secure PIT session on this computer."
-    : !approved
-      ? "Open Hyperliquid API. Authorize API Wallet with the name and address below. PIT still cannot withdraw."
-      : !sessionAlive
-        ? "Create a secure PIT session. Hyperliquid already lists this agent, so PIT will reuse it."
-        : "Your trading account is ready. Research, then type AUTHORIZE on the exact preview.";
+  const session = sessionAlive ? "Active" : agent ? "Needs session" : "Not created";
   const ttl =
     sessionExpires && sessionExpires > 0 ? new Date(sessionExpires).toISOString().replace(".000Z", "Z") : "";
   return (
-    <article className="card">
-      <p className="label">HYPERLIQUID</p>
-      <p>
-        Connected {agent ? "yes" : "no"} · Account is your wallet. PIT Agent is a scoped API wallet. Withdraw, transfer,
-        leverage, and account admin stay denied.
-      </p>
-      <p>
-        <strong>PIT AGENT</strong> {agent || "none"} {agentName ? `· ${agentName}` : ""}
-      </p>
-      <p>
-        <strong>SESSION</strong> {session}
-        {ttl ? ` — until ${ttl}` : ""}
-      </p>
-      <p>
-        <strong>PERMISSION</strong> Order · Cancel · Withdraw denied · Transfer denied · Leverage denied
-      </p>
-      <p>
-        <strong>STATUS</strong> {status}
-        {approvedDetail ? ` — ${approvedDetail}` : ""}
-      </p>
-      <dl className="status-grid" style={{ marginTop: 8 }}>
+    <section>
+      <p className="label">Hyperliquid</p>
+      <dl className="status-grid hl-grid">
+        <dt>Connected</dt>
+        <dd>{agent ? "yes" : "no"}</dd>
+        <dt>PIT Agent</dt>
+        <dd>
+          {agentName || "none"}
+          {agent ? ` · ${agent.slice(0, 6)}…${agent.slice(-4)}` : ""}
+        </dd>
+        <dt>Session</dt>
+        <dd>
+          {session}
+          {ttl ? ` · until ${ttl}` : ""}
+        </dd>
         <dt>Order</dt>
-        <dd>{sessionAlive && approved ? "yes" : "waiting"}</dd>
+        <dd>{sessionAlive && approved ? "yes" : "no"}</dd>
         <dt>Cancel</dt>
-        <dd>{sessionAlive && approved ? "yes" : "waiting"}</dd>
+        <dd>{sessionAlive && approved ? "yes" : "no"}</dd>
         <dt>Withdraw</dt>
         <dd>no</dd>
         <dt>Transfer</dt>
         <dd>no</dd>
         <dt>Leverage</dt>
         <dd>no</dd>
+        <dt>Approval</dt>
+        <dd>{approved ? "Approved" : "Needs approval"}</dd>
       </dl>
-      <p className="fine">{next}</p>
+      {approvedDetail ? <p className="fine">{approvedDetail}</p> : null}
+      <p className="fine">
+        Account is your wallet. PIT Agent can order and cancel only. Trading capital is not private compute.
+      </p>
       <div className="cta-row">
+        {!agent ? (
+          <button type="button" className="primary" onClick={onCreateSession} disabled={busy}>
+            Create secure session
+          </button>
+        ) : null}
+        {agent && !sessionAlive ? (
+          <button type="button" className="primary" onClick={onCreateSession} disabled={busy}>
+            Create secure session
+          </button>
+        ) : null}
+        {agent && !approved ? (
+          <a className="primary" href={hyperliquidAPI(net)} target="_blank" rel="noreferrer">
+            Open Hyperliquid API
+          </a>
+        ) : (
+          <a className="linkish" href={hyperliquidAPI(net)} target="_blank" rel="noreferrer">
+            Open Hyperliquid API
+          </a>
+        )}
         <a className="linkish" href={hyperliquidApp(net)} target="_blank" rel="noreferrer">
-          Connect Hyperliquid
+          Open Hyperliquid
         </a>
-        <button type="button" className="linkish" onClick={onCreateSession} disabled={busy}>
-          {sessionAlive ? "Refresh secure session" : "Create secure session"}
+        <button type="button" className="linkish" onClick={onRefreshApproval || onCheck} disabled={busy}>
+          Check approval
         </button>
-        <a className="linkish" href={hyperliquidAPI(net)} target="_blank" rel="noreferrer">
-          Approve PIT
-        </a>
-        <button
-          type="button"
-          className="linkish"
-          onClick={onRefreshApproval || onCheck}
-          disabled={busy || (!onRefreshApproval && !onCheck)}
-        >
-          Refresh approval
-        </button>
-        <a className="linkish" href={hyperliquidAPI(net)} target="_blank" rel="noreferrer">
-          Open Hyperliquid API
-        </a>
-        {onCheck ? (
-          <button type="button" className="linkish" onClick={onCheck} disabled={busy}>
-            Check again
+        {sessionAlive ? (
+          <button type="button" className="linkish" onClick={onCreateSession} disabled={busy}>
+            Refresh session
           </button>
         ) : null}
-        {onRevoke ? (
-          <button type="button" className="linkish" onClick={onRevoke} disabled={busy || !agent}>
+        {onRevoke && agent ? (
+          <button type="button" className="linkish" onClick={onRevoke} disabled={busy}>
             Revoke PIT
-          </button>
-        ) : null}
-        {onConnectionPreview && sessionAlive && approved ? (
-          <button type="button" className="linkish" onClick={onConnectionPreview} disabled={busy}>
-            Prepare connection-test preview
           </button>
         ) : null}
       </div>
       <p className="fine">
-        Private compute credit lives at{" "}
+        Compute money lives at{" "}
         <a href={LINKS.pcAdvanced} target="_blank" rel="noreferrer">
           0G Private Compute
         </a>
-        . That is not a Hyperliquid balance. Revoke PIT deletes the local session, then you remove the agent on Hyperliquid
-        API.
+        . That is not Hyperliquid.
       </p>
-    </article>
+    </section>
   );
 }

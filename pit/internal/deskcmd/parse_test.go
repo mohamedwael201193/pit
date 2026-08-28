@@ -47,6 +47,25 @@ func TestWhyAndForget(t *testing.T) {
 	}
 }
 
+func TestOperatorIntents(t *testing.T) {
+	r := Parse("Is Hyperliquid ready?")
+	if r.Tool != "session.status" || r.Execute || r.Navigate != "security" {
+		t.Fatalf("%+v", r)
+	}
+	r = Parse("Show the current preview.")
+	if r.Tool != "preview.show" || r.Navigate != "research" || r.Execute {
+		t.Fatalf("%+v", r)
+	}
+	r = Parse("Explain my policy.")
+	if r.Tool != "policy.get" || r.Navigate != "policy" || r.Execute {
+		t.Fatalf("%+v", r)
+	}
+	r = Parse("Open Hyperliquid API")
+	if r.OpenURL != "https://app.hyperliquid.xyz/API" || r.Execute {
+		t.Fatalf("%+v", r)
+	}
+}
+
 func TestHappeningAndPositions(t *testing.T) {
 	r := Parse("What is happening?")
 	if r.Execute || r.Navigate != "home" {

@@ -1,15 +1,11 @@
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
-import { AuthorizeGate } from "./AuthorizeGate";
 import { CapabilityMatrix } from "./CapabilityMatrix";
-import { KillNote } from "./KillNote";
 import { NAMED } from "./namedStates";
 import { NetworkBanner } from "./NetworkBanner";
 import { NetworkToggle } from "./NetworkToggle";
-import { PermissionsCard } from "./Permissions";
 import { PolicyLaw } from "./PolicyLaw";
-import { SessionNote } from "./SessionNote";
 import { HyperliquidCard } from "./HyperliquidCard";
-import { committeeDeny, explainCommittee } from "./committee";
+import { committeeDeny } from "./committee";
 import {
   authorizePreview,
   bindWallet,
@@ -48,12 +44,9 @@ import {
   type SecurityDomain,
   type VenuePosition,
 } from "./companion";
-import { explainStop } from "./explain";
 import { LINKS, explorerAddress, hyperliquidAPI, hyperliquidApp } from "./links";
 import { nextFix } from "./nextFix";
-import { probes, type Probe } from "./readiness";
-import { setupPath } from "./setupPath";
-import { WelcomePath } from "./WelcomePath";
+import { probes } from "./readiness";
 import { committeeVerified } from "./honesty";
 import { CommandChat } from "./CommandChat";
 import { ActivityTimeline } from "./ActivityTimeline";
@@ -74,21 +67,6 @@ type View = "home" | "watch" | "research" | "positions" | "activity" | "policy" 
 
 type Coin = { coin: string; reason: string; mark: number; eligible?: boolean; oracle?: number; funding?: number; openInterest?: number };
 
-const RESEARCH_STAGES = [
-  "READING_MARKET",
-  "SEALING_PRIVATE_BOOK",
-  "CONTACTING_PRIVATE_PROVIDER",
-  "RECEIVING_SEALED_RESPONSE",
-  "VERIFYING_TEE_SIGNATURE",
-  "RESEARCHER",
-  "CHALLENGER",
-  "RISK",
-  "DETERMINISTIC_ENGINE",
-  "POLICY",
-  "PREVIEW",
-  "READY",
-] as const;
-
 type ResearchRole = {
   role?: string;
   verify_e2ee?: string;
@@ -100,114 +78,6 @@ type ResearchRole = {
 
 function sleep(ms: number) {
   return new Promise((resolve) => window.setTimeout(resolve, ms));
-}
-
-function roleVerified(roles: ResearchRole[], name: string) {
-  return roles.some(
-    (r) => String(r.role || "").toLowerCase() === name && String(r.verify_e2ee || "").toUpperCase() === "OK",
-  );
-}
-
-function canonicalResearchStage(stage: string, roles: ResearchRole[]) {
-  const s = (stage || "").toUpperCase();
-  if (s === "RISK_START" || s === "RISK_HTTP_REQUEST" || s === "RISK_HTTP_RESPONSE" || s === "RISK_E2EE_VERIFY") {
-    return "RISK";
-  }
-  if (s.endsWith("_VERIFIED")) {
-    const base = s.slice(0, -"_VERIFIED".length);
-    if (base === "RESEARCHER") return "CHALLENGER";
-    if (base === "CHALLENGER") return "RISK";
-    if (base === "RISK") return "DETERMINISTIC_ENGINE";
-  }
-  if (s.endsWith("_FAILED")) return s.slice(0, -"_FAILED".length);
-  if (s === "CONTACTING_PRIVATE_PROVIDER" || s === "RECEIVING_SEALED_RESPONSE" || s === "VERIFYING_TEE_SIGNATURE") {
-    if (roleVerified(roles, "challenger")) return "RISK";
-    if (roleVerified(roles, "researcher")) return "CHALLENGER";
-    return s;
-  }
-  if ((RESEARCH_STAGES as readonly string[]).includes(s)) return s;
-  return s;
-}
-
-function stageMark(name: string, stage: string, roles: ResearchRole[]) {
-  const s = canonicalResearchStage(stage, roles);
-  if (name === "RESEARCHER") {
-    if (roleVerified(roles, "researcher") || ["CHALLENGER", "RISK", "DETERMINISTIC_ENGINE", "POLICY", "PREVIEW", "READY"].includes(s)) {
-      return "done";
-    }
-    if (s === "RESEARCHER") return "lit";
-    return "";
-  }
-  if (name === "CHALLENGER") {
-    if (roleVerified(roles, "challenger") || ["RISK", "DETERMINISTIC_ENGINE", "POLICY", "PREVIEW", "READY"].includes(s)) {
-      return "done";
-    }
-    if (s === "CHALLENGER") return "lit";
-    return "";
-  }
-  if (name === "RISK") {
-    if (roleVerified(roles, "risk") || ["DETERMINISTIC_ENGINE", "POLICY", "PREVIEW", "READY"].includes(s)) return "done";
-    if (s === "RISK") return "lit";
-    return "";
-  }
-  const current = RESEARCH_STAGES.indexOf(s as (typeof RESEARCH_STAGES)[number]);
-  const i = RESEARCH_STAGES.indexOf(name as (typeof RESEARCH_STAGES)[number]);
-  if (current < 0 || i < 0) return "";
-  if (i < current) return "done";
-  if (i === current) return "lit";
-  return "";
-}
-
-function ResearchProgress({
-  stage,
-  elapsedMs,
-  coin,
-  roles,
-  pollMiss,
-  onCancel,
-}: {
-  stage: string;
-  elapsedMs: number;
-  coin: string;
-  roles: ResearchRole[];
-  pollMiss?: boolean;
-  onCancel: () => void;
-}) {
-  const shown = canonicalResearchStage(stage, roles);
-  const riskLive = shown === "RISK" && !roleVerified(roles, "risk");
-  return (
-    <article className="card" role="status">
-      <p className="label">LIVE SEALED REQUEST</p>
-      <h2>{shown.replaceAll("_", " ")}</h2>
-      <p>
-        {coin || "ETH"} · {(elapsedMs / 1000).toFixed(1)}s elapsed. This is a live Direct round-trip, not a timer.
-      </p>
-      {riskLive ? (
-        <p>
-          Risk is running · {(elapsedMs / 1000).toFixed(1)}s. The provider is still working. PIT is not spinning a fake
-          timer.
-        </p>
-      ) : null}
-      {pollMiss ? (
-        <p role="status">Connection check missed — research is still running.</p>
-      ) : null}
-      <ol className="pipe stages">
-        {RESEARCH_STAGES.map((name) => {
-          const mark = stageMark(name, stage, roles);
-          const prefix = mark === "done" ? "✓ " : mark === "lit" ? "● " : "○ ";
-          return (
-            <li key={name} className={mark}>
-              {prefix}
-              {name.replaceAll("_", " ")}
-            </li>
-          );
-        })}
-      </ol>
-      <button type="button" className="linkish" onClick={onCancel}>
-        Cancel
-      </button>
-    </article>
-  );
 }
 
 const SETUP_KEY = "pit.desk.setup";
@@ -223,116 +93,6 @@ const RAIL: { id: View; label: string }[] = [
   { id: "account", label: "Account" },
   { id: "settings", label: "Settings" },
 ];
-
-function markProbe(p: Probe) {
-  if (p.state === "ok") return "pass";
-  if (p.state === "fail") return "fail";
-  return "wait";
-}
-
-function PairingBlock({
-  code,
-  expires,
-  companionUp,
-}: {
-  code: string;
-  expires: string;
-  companionUp: boolean;
-}) {
-  const display = code ? prettyCode(code) : companionUp ? "rotating…" : "waiting for local PIT";
-  const [copied, setCopied] = useState(false);
-  async function copy() {
-    if (!code) return;
-    try {
-      await navigator.clipboard.writeText(prettyCode(code));
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 1600);
-    } catch {
-      setCopied(false);
-    }
-  }
-  return (
-    <article className="card pair-card">
-      <p className="label">PAIR THIS COMPUTER</p>
-      <p className="pair-code" aria-label="pairing code">
-        {display}
-      </p>
-      <p className="fine">
-        Type this code at {LINKS.pair}. It expires in two minutes and works once. The website never receives a session
-        key.
-      </p>
-      {expires ? <p className="fine">Expires {expires}</p> : null}
-      <button type="button" className="linkish" onClick={() => void copy()} disabled={!code}>
-        {copied ? "Copied" : "Copy code"}
-      </button>
-    </article>
-  );
-}
-
-function ProbeList({
-  items,
-  net,
-  onGo,
-}: {
-  items: Probe[];
-  net: string;
-  onGo?: (view: View) => void;
-}) {
-  return (
-    <ul className="probes">
-      {items.map((p) => (
-        <li key={p.id} className={markProbe(p)}>
-          <strong>{p.state === "ok" ? "ready" : p.state === "fail" ? "fail" : "waiting"}</strong>
-          <span>{p.label}</span>
-          <em>{p.detail}</em>
-          {p.state !== "ok" ? <ProbeAction id={p.id} net={net} onGo={onGo} /> : null}
-        </li>
-      ))}
-    </ul>
-  );
-}
-
-function ProbeAction({ id, net, onGo }: { id: string; net: string; onGo?: (view: View) => void }) {
-  if (id === "hyperliquid" || id === "hl_agent" || id === "session") {
-    return (
-      <span className="cta-row">
-        {id === "session" ? (
-          <button type="button" className="linkish" onClick={() => onGo?.("security")}>
-            Create session
-          </button>
-        ) : null}
-        <a className="linkish" href={hyperliquidApp(net)} target="_blank" rel="noreferrer">
-          Open Hyperliquid
-        </a>
-        <a className="linkish" href={hyperliquidAPI(net)} target="_blank" rel="noreferrer">
-          Open Hyperliquid API
-        </a>
-      </span>
-    );
-  }
-  if (id === "direct") {
-    return (
-      <a className="linkish" href={LINKS.pcAdvanced} target="_blank" rel="noreferrer">
-        Open 0G Private Compute
-      </a>
-    );
-  }
-  if (id === "tee") {
-    return (
-      <button type="button" className="linkish" onClick={() => onGo?.("research")}>
-        Open Research
-      </button>
-    );
-  }
-  if (id === "wallet" || id === "local") {
-    return (
-      <a className="linkish" href={LINKS.pair} target="_blank" rel="noreferrer">
-        Open pairing
-      </a>
-    );
-  }
-  return null;
-}
 
 export function App() {
   const [view, setView] = useState<View>("home");
@@ -375,6 +135,7 @@ export function App() {
   const researchGen = useRef(0);
   const researchBusyRef = useRef(false);
   researchBusyRef.current = researchBusy;
+  const walletBoundRef = useRef("");
   const [techOpen, setTechOpen] = useState(false);
   const [ticks, setTicks] = useState(0);
   const [setupStep, setSetupStep] = useState(0);
@@ -393,6 +154,7 @@ export function App() {
   const [palette, setPalette] = useState(false);
   const [thread, setThread] = useState("desk");
   const [threads, setThreads] = useState<ChatThread[]>([{ id: "desk", title: "Desk" }]);
+  const [memoryEpoch, setMemoryEpoch] = useState(0);
   const [summary, setSummary] = useState<AccountSummary>({});
   const fillKey = useRef("");
 
@@ -522,7 +284,10 @@ export function App() {
             }
             if (s?.lastOrder?.oid) setLastOid(String(s.lastOrder.oid));
             if (s?.network === "testnet" || s?.network === "mainnet") setNet(s.network);
-            if (s?.wallet) setWalletDraft((cur) => cur || s.wallet || "");
+            if (s?.wallet) {
+              walletBoundRef.current = s.wallet;
+              setWalletDraft((cur) => cur || s.wallet || "");
+            }
           })
           .catch(() => {
             if (!gone && !researchBusyRef.current) {
@@ -534,7 +299,7 @@ export function App() {
             statusBusy = false;
           });
       }
-      if (!researchBusyRef.current && !codeBusy) {
+      if (!researchBusyRef.current && !codeBusy && !walletBoundRef.current) {
         codeBusy = true;
         pairCode()
           .then((p) => {
@@ -604,7 +369,7 @@ export function App() {
     };
     const loop = () => {
       tick();
-      if (!gone) timer = window.setTimeout(loop, 2000);
+      if (!gone) timer = window.setTimeout(loop, 4000);
     };
     loop();
     return () => {
@@ -697,14 +462,6 @@ export function App() {
     }
   }, [status?.lastOrder?.status, lastOid]);
 
-  const denyCode = String(preview?.deny || "");
-  const committee = committeeDeny(denyCode) || committeeDeny(researchStop);
-  const explained = committee ? null : explainStop(researchStop);
-  const committeeCopy = committeeDeny(denyCode)
-    ? explainCommittee(denyCode)
-    : committeeDeny(researchStop)
-      ? explainCommittee(researchStop || "")
-      : null;
   const companionStuck = !companionUp && ticks >= 5;
   const items = useMemo(
     () =>
@@ -720,7 +477,7 @@ export function App() {
   const eligible = coins.filter((c) => c.eligible);
   const walletCheck = checks.find((c) => c.name === "wallet");
   const attention = nextFix(companionUp, status, checks, items, sessionAlive, net);
-  const path = setupPath(companionUp, status, checks, sessionAlive, net);
+  const showChat = view === "home" || view === "watch" || view === "research";
   const doing = researchBusy
     ? `Researching ${researchCoin}`
     : preview?.eligible
@@ -1060,6 +817,7 @@ export function App() {
           { id: "og", label: "Open 0G Private Compute", run: () => window.open(LINKS.pcAdvanced, "_blank", "noopener,noreferrer") },
           { id: "check", label: "Check system", run: () => void onCheck() },
           { id: "preview", label: "Show current preview", run: () => setView("research") },
+          { id: "connecttest", label: "Prepare connection-test preview", run: () => void onConnectionPreview() },
           { id: "act", label: "Show latest activity", run: () => setView("activity") },
         ]}
       />
@@ -1067,7 +825,7 @@ export function App() {
       <aside className="rail">
         <div className="rail-brand">
           <div className="word">PIT.</div>
-          <p className="kicker">{status?.version || "0.2.1"} · local execution</p>
+          <p className="kicker">{status?.version || "0.2.2"} · local execution</p>
         </div>
         <nav className="rail-nav" aria-label="Desk">
           {RAIL.map((item) => (
@@ -1112,7 +870,9 @@ export function App() {
           </div>
           <div className="bar-meta">
             <NetworkToggle net={net} onChange={setNet} />
-            <p className="pair-chip">{code ? prettyCode(code) : companionUp ? "code rotating" : "starting companion"}</p>
+            {walletCheck?.ok ? null : (
+              <p className="pair-chip">{code ? prettyCode(code) : companionUp ? "code rotating" : "starting companion"}</p>
+            )}
             <p>Session {sessionAlive ? "order/cancel live" : "none"} · Compute {checks.find((c) => c.name === "direct_credit")?.ok ? "ready" : "action"}</p>
             {agent ? <p className="fine">PIT Agent {agent}</p> : null}
             <p className="island" role="status">
@@ -1129,7 +889,7 @@ export function App() {
           <article className="card stop" role="status">
             <p className="label">COMPANION VERSION</p>
             <p>
-              This window expects PIT 0.2.1. The local companion is {status.version}. Close PIT, install the matching
+              This window expects PIT 0.2.2. The local companion is {status.version}. Close PIT, install the matching
               desktop, then launch again. A running sealed job is not cancelled by this warning.
             </p>
           </article>
@@ -1165,7 +925,7 @@ export function App() {
             researchVerified={committeeVerified(researchRoles)}
           />
         ) : (
-          <div className={view === "home" ? "desk-body with-threads" : "desk-body"}>
+          <div className={view === "home" ? "desk-body with-threads" : showChat ? "desk-body" : "desk-body solo"}>
             {view === "home" ? (
               <ThreadRail
                 threads={threads}
@@ -1190,11 +950,14 @@ export function App() {
                 }}
               />
             ) : null}
+            {showChat ? (
             <CommandChat
+              key={`${thread}-${memoryEpoch}`}
               thread={thread}
               onNavigate={(v) => setView(v as View)}
               onResearch={(c) => void researchThis(c)}
               onOpenPreview={() => setView("research")}
+              onStop={() => void onCancelResearch()}
               island={{
                 busy: researchBusy,
                 coin: researchCoin,
@@ -1203,43 +966,28 @@ export function App() {
                 jobId: researchJobId,
                 pollMiss,
                 roles: researchRoles,
+                kind: researchKind,
               }}
             />
+            ) : null}
             <div className="book">
 
         {setupDone && view === "home" ? (
-          <>
             <DeskHome
               ready={attention.title === "Desk is ready"}
               items={items}
               attention={attention}
               coins={coins}
-              net={net}
               code={code}
               companionUp={companionUp}
               sessionAlive={sessionAlive}
               computeReady={Boolean(checks.find((c) => c.name === "direct_credit")?.ok)}
+              protectedOk={Boolean(checks.find((c) => c.name === "direct_auth")?.ok)}
               policyPinned={pinned}
               hlApproved={Boolean(checks.find((c) => c.name === "hl_agent" && c.ok))}
               onResearch={(c) => void researchThis(c)}
               onGo={(v) => setView(v)}
-              hl={{
-                net,
-                agent,
-                agentName: status?.agentName,
-                sessionAlive,
-                sessionExpires: status?.sessionExpires,
-                approved: Boolean(checks.find((c) => c.name === "hl_agent" && c.ok)),
-                approvedDetail: checks.find((c) => c.name === "hl_agent")?.detail,
-                busy: bindBusy,
-                onCreateSession: () => void onSession(),
-                onConnectionPreview: () => void onConnectionPreview(),
-                onCheck: () => void onCheck(),
-                onRevoke: () => void onRevoke(),
-              }}
             />
-            <WelcomePath steps={path} onGo={(v) => setView(v)} />
-          </>
         ) : null}
 
         {setupDone && view === "watch" ? (
@@ -1247,6 +995,7 @@ export function App() {
             coins={coins}
             computeReady={Boolean(checks.find((c) => c.name === "direct_credit")?.ok)}
             researchBusy={researchBusy}
+            recent={activity}
             onResearch={(c) => void researchThis(c)}
           />
         ) : null}
@@ -1310,6 +1059,7 @@ export function App() {
             setTechOpen={setTechOpen}
             researchEvidenceText={researchEvidenceText}
             eligible={eligible}
+            coins={coins}
             net={net}
             onResearch={(c) => void researchThis(c)}
             onCancel={() => void onCancelResearch()}
@@ -1385,21 +1135,9 @@ export function App() {
               approvedDetail={checks.find((c) => c.name === "hl_agent")?.detail}
               busy={bindBusy}
               onCreateSession={() => void onSession()}
-              onConnectionPreview={() => void onConnectionPreview()}
               onCheck={() => void onCheck()}
               onRevoke={() => void onRevoke()}
             />
-            <AuthorizeGate
-              sessionAlive={sessionAlive}
-              agent={agent}
-              agentName={status?.agentName}
-              net={net}
-              busy={bindBusy}
-              onCreateSession={() => void onSession()}
-            />
-            <PermissionsCard />
-            <SessionNote />
-            <KillNote />
             <article className="card">
               <p className="label">KILL SWITCH</p>
               <p>You flip this. The model cannot. New orders stop on this workspace until you turn it off.</p>
@@ -1494,7 +1232,7 @@ export function App() {
                 type="button"
                 className="linkish"
                 onClick={() => {
-                  void forgetMemory();
+                  void forgetMemory().then(() => setMemoryEpoch((n) => n + 1));
                 }}
               >
                 Forget this workspace memory

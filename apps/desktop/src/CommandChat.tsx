@@ -13,12 +13,14 @@ export function CommandChat({
   onNavigate,
   onResearch,
   onOpenPreview,
+  onStop,
   island,
 }: {
   thread: string;
   onNavigate: (view: string) => void;
   onResearch: (coin: string) => void;
   onOpenPreview: () => void;
+  onStop?: () => void;
   island?: {
     busy: boolean;
     coin: string;
@@ -27,10 +29,12 @@ export function CommandChat({
     jobId: string;
     pollMiss?: boolean;
     roles: Array<{ role?: string; verify_e2ee?: string }>;
+    kind?: string;
   };
 }) {
   const [draft, setDraft] = useState("");
   const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
   const [lines, setLines] = useState<ChatMessage[]>([]);
   const [models, setModels] = useState<DirectModel[]>([]);
   const [modelOpen, setModelOpen] = useState(false);
@@ -70,6 +74,7 @@ export function CommandChat({
     if (!text || busy) return;
     setDraft("");
     setBusy(true);
+    setErr(null);
     setLines((cur) => [...cur, { role: "user", text, ts: Date.now(), thread }]);
     try {
       const r = await sendDeskCommand(text, thread);
@@ -77,6 +82,7 @@ export function CommandChat({
       setLines((cur) => [...cur, { role: "pit", text: reply, tool: r.tool, ts: Date.now(), thread, coin: r.coin }]);
       applyReply(r);
     } catch {
+      setErr("Local PIT did not answer. A sealed job is not cancelled by a missed chat poll.");
       setLines((cur) => [
         ...cur,
         { role: "pit", text: "Local PIT did not answer. The sealed job is not cancelled by a missed chat poll.", ts: Date.now() },
@@ -101,8 +107,8 @@ export function CommandChat({
     <section className="command" aria-label="Trading desk command">
       <div className="command-head">
         <div>
-          <p className="label">Trading Desk Command</p>
-          <p className="fine">Host-parsed. Chat never sends your private book to a model. Chat cannot AUTHORIZE, size, or change policy.</p>
+          <p className="label">Command</p>
+          <p className="fine">Host-parsed. Private book never leaves this computer. Chat cannot AUTHORIZE.</p>
         </div>
         <div className="model-pick">
           <button type="button" aria-haspopup="listbox" aria-expanded={modelOpen} onClick={() => setModelOpen((v) => !v)}>
@@ -124,25 +130,51 @@ export function CommandChat({
                       setModelOpen(false);
                     }}
                   >
-                    {m.path || "Direct"} · {m.model}
+                    {m.model}
                     <span className="fine" style={{ display: "block", marginTop: 2 }}>
-                      {m.label}. {m.note || "Private. Routed directly to the verified compute path."}
+                      {m.path || "Direct"} · {m.private_book ? "Private" : "not private"} ·{" "}
+                      {m.proven_e2ee ? "Verified" : "unproven"} · {m.verifiability || "TeeML"}
+                      {m.provider
+                        ? ` · ${m.provider.length > 12 ? `${m.provider.slice(0, 6)}…${m.provider.slice(-4)}` : m.provider}`
+                        : ""}
                     </span>
+                    {m.latency ? (
+                      <span className="fine" style={{ display: "block" }}>
+                        {m.latency}
+                      </span>
+                    ) : null}
+                    {m.cost ? (
+                      <span className="fine" style={{ display: "block" }}>
+                        {m.cost}
+                      </span>
+                    ) : null}
                   </button>
                 ))
               )}
-              <p className="fine">Router catalog models are absent. Unavailable SKUs are not listed.</p>
+              <p className="fine">Only verified Direct models appear. Router SKUs are not listed as private.</p>
             </div>
           ) : null}
         </div>
       </div>
       <div className="transcript" role="log">
         {lines.length === 0 ? (
-          <p className="fine">Try: Research ETH privately. Why is ETH interesting? Show me the evidence. Open Hyperliquid.</p>
+          <p className="fine">Try: What is happening? Research ETH privately. Show my positions. Explain my policy.</p>
         ) : (
           lines.map((m, i) => (
             <div key={`${m.ts}-${i}`} className={m.role === "user" ? "turn user" : "turn pit"}>
-              <span className="who">{m.role === "user" ? "You" : "PIT"}</span>
+              <div className="turn-meta">
+                <span className="who">{m.role === "user" ? "You" : "PIT"}</span>
+                {m.ts ? <time dateTime={new Date(m.ts).toISOString()}>{new Date(m.ts).toLocaleTimeString()}</time> : null}
+                {m.role === "pit" ? (
+                  <button
+                    type="button"
+                    className="copy-turn"
+                    onClick={() => void navigator.clipboard.writeText(m.text || "")}
+                  >
+                    Copy
+                  </button>
+                ) : null}
+              </div>
               <p style={{ margin: 0 }}>{m.text}</p>
               {m.tool ? <ChatCard tool={m.tool} coin={m.coin} onNavigate={onNavigate} onOpenPreview={onOpenPreview} /> : null}
             </div>
@@ -153,9 +185,6 @@ export function CommandChat({
             <p className="label">Researching {island.coin}</p>
             <p>
               {island.stage.replaceAll("_", " ")} · {(island.elapsedMs / 1000).toFixed(1)}s elapsed
-            </p>
-            <p className="fine">
-              Private research · Direct · Private · Estimated ~30–60s per role when the provider is live. This is not a timer.
             </p>
             {island.pollMiss ? <p role="status">Live view delayed — research is still running.</p> : null}
             <p className="fine">
@@ -168,17 +197,20 @@ export function CommandChat({
             </button>
           </article>
         ) : null}
+        {err ? (
+          <p className="err" role="alert">
+            {err}
+          </p>
+        ) : null}
         <div ref={end} />
       </div>
       <form className="composer" onSubmit={(e) => void onSubmit(e)}>
-        <label htmlFor="desk-cmd" className="label">
-          Command
-        </label>
         <textarea
           id="desk-cmd"
           rows={2}
           value={draft}
           disabled={busy}
+          aria-label="Ask PIT"
           onChange={(e) => setDraft(e.target.value)}
           onKeyDown={(e) => {
             if (e.key === "Enter" && !e.shiftKey) {
@@ -186,12 +218,17 @@ export function CommandChat({
               e.currentTarget.form?.requestSubmit();
             }
           }}
-          placeholder="Research ETH privately."
+          placeholder="What is happening?"
         />
         <div className="composer-row">
           <p className="fine" style={{ margin: 0 }}>
             Enter send · Shift+Enter newline
           </p>
+          {island?.busy && onStop ? (
+            <button type="button" className="linkish" onClick={onStop}>
+              Stop research
+            </button>
+          ) : null}
           <button type="submit" className="primary" disabled={busy || !draft.trim()}>
             {busy ? "Working…" : "Send"}
           </button>
@@ -218,7 +255,7 @@ function ChatCard({
   onNavigate: (view: string) => void;
   onOpenPreview: () => void;
 }) {
-  if (!tool || tool === "help") return null;
+  if (!tool || tool === "help" || tool === "status") return null;
   if (tool === "research.start") {
     return (
       <article className="chat-card">
@@ -282,9 +319,25 @@ function ChatCard({
       </article>
     );
   }
-  return (
-    <p className="fine" style={{ marginTop: 4 }}>
-      Tool {tool}
-    </p>
-  );
+  if (tool === "session.status") {
+    return (
+      <article className="chat-card">
+        <p className="label">Hyperliquid</p>
+        <button type="button" className="linkish" onClick={() => onNavigate("security")}>
+          Open Security
+        </button>
+      </article>
+    );
+  }
+  if (tool === "research.result") {
+    return (
+      <article className="chat-card">
+        <p className="label">Evidence</p>
+        <button type="button" className="linkish" onClick={onOpenPreview}>
+          Open research
+        </button>
+      </article>
+    );
+  }
+  return null;
 }

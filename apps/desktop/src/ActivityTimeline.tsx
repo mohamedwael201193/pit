@@ -31,8 +31,7 @@ export function ActivityTimeline({ events, lastOid }: { events: EventRow[]; last
     grouped.set(k, [...(grouped.get(k) || []), ev]);
   }
   return (
-    <article className="card">
-      <p className="label">TIMELINE</p>
+    <section>
       <p className="fine">Historical fills live here. They never appear inside a new exact preview.</p>
       {events.length === 0 && !lastOid ? (
         <p>Empty is honest until this machine records a research, preview, or order.</p>
@@ -43,6 +42,7 @@ export function ActivityTimeline({ events, lastOid }: { events: EventRow[]; last
           <ul className="timeline">
             {rows.map((ev, i) => (
               <li key={`${ev.ts}-${i}`}>
+                <time>{ev.ts ? new Date(ev.ts).toLocaleTimeString() : ""}</time>{" "}
                 <strong>{ev.kind || ev.action || "event"}</strong>
                 {ev.market ? ` ${ev.market}` : ""} {ev.status || ""}
                 {ev.job_id ? ` · job ${ev.job_id}` : ""}
@@ -54,6 +54,6 @@ export function ActivityTimeline({ events, lastOid }: { events: EventRow[]; last
         </div>
       ))}
       {lastOid ? <p className="fine">Last venue OID on this machine: {lastOid}. Not a new preview.</p> : null}
-    </article>
+    </section>
   );
 }

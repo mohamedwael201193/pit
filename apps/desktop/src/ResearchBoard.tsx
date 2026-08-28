@@ -87,7 +87,30 @@ function stageMark(name: string, stage: string, roles: ResearchRole[]) {
   return "";
 }
 
+function teeState(roles: ResearchRole[], busy: boolean, stop: string | null) {
+  const teeFail =
+    stop === "TEE_VERIFY_FAIL" ||
+    stop === "TEE_SIGNATURE_INVALID" ||
+    stop === "TEE_SIGNER_MISMATCH" ||
+    stop === "TEE_RESPONSE_INVALID" ||
+    stop === "TEE_OPEN_FAIL";
+  if (teeFail) return "failure";
+  if (committeeVerified(roles)) return "success";
+  if (busy) return "running";
+  return "pending";
+}
+
+function engineState(stage: string, roles: ResearchRole[], busy: boolean) {
+  const s = canonicalResearchStage(stage, roles);
+  if (["POLICY", "PREVIEW", "READY"].includes(s) && !busy) return "success";
+  if (s === "DETERMINISTIC_ENGINE" || s === "POLICY" || s === "PREVIEW") return busy ? "running" : "success";
+  if (busy && roleVerified(roles, "risk")) return "running";
+  return "pending";
+}
+
 function roleState(roles: ResearchRole[], name: string, stage: string) {
+  const row = roles.find((r) => String(r.role || "").toLowerCase() === name);
+  if (row?.kill || row?.survives === false) return "stand-down";
   const mark = stageMark(name.toUpperCase(), stage, roles);
   if (roleVerified(roles, name)) return "success";
   if (mark === "lit") return "running";
@@ -122,6 +145,7 @@ export function ResearchBoard({
   setTechOpen,
   researchEvidenceText,
   eligible,
+  coins,
   net,
   onResearch,
   onCancel,
@@ -154,7 +178,8 @@ export function ResearchBoard({
   techOpen: boolean;
   setTechOpen: (v: boolean | ((c: boolean) => boolean)) => void;
   researchEvidenceText: string;
-  eligible: Array<{ coin: string; mark: number; reason: string }>;
+  eligible: Array<{ coin: string; mark: number; reason: string; oracle?: number; funding?: number; openInterest?: number }>;
+  coins?: Array<{ coin: string; mark: number; oracle?: number; funding?: number; openInterest?: number }>;
   net: string;
   onResearch: (coin?: string) => void;
   onCancel: () => void;
@@ -163,32 +188,61 @@ export function ResearchBoard({
   onCheck: () => void;
 }) {
   const shown = canonicalResearchStage(researchStage, researchRoles);
-  const explained = explainStop(researchStop);
+  const whyCode =
+    researchStop ||
+    (researchKind && researchKind !== "READY_ELIGIBLE" ? researchKind : "") ||
+    preview?.deny ||
+    null;
+  const explained = explainStop(whyCode || null);
   const verified = committeeVerified(researchRoles);
+  const snap = (coins || []).find((c) => c.coin === (coin || "ETH")) || eligible.find((c) => c.coin === (coin || "ETH"));
+  const title = researchCardTitle(researchKind || researchStop, verified);
   return (
     <main className="page dense">
-      <p className="eyebrow">Research</p>
-      <h1>{coin || "ETH"}</h1>
-      <p className="lead">Private committee evaluation. Host sizes. Chat cannot AUTHORIZE.</p>
-      <article className="card">
-        <p className="label">Thesis</p>
-        <p className="fine">Sealed into the private book. The committee may still stand down.</p>
-        <div className="cta-row">
-          {(["none", "long", "short"] as const).map((h) => (
-            <button
-              key={h}
-              type="button"
-              className={hypothesis === h ? "linkish on" : "linkish off"}
-              onClick={() => setHypothesis(h)}
-              disabled={researchBusy}
-            >
-              {h === "none" ? "No bias" : h === "long" ? "Consider long" : "Consider short"}
-            </button>
-          ))}
+      <div className="page-head">
+        <div>
+          <p className="eyebrow">Research</p>
+          <h1>{coin || "ETH"}</h1>
         </div>
-      </article>
-      <ComputeCard checks={checks} onCheck={onCheck} />
+        <p className="fine" style={{ margin: 0 }}>
+          Private committee. Host sizes. Chat cannot AUTHORIZE.
+        </p>
+      </div>
+      {snap ? (
+        <div className="snap">
+          <div>
+            <span>Mark</span>
+            <strong>{snap.mark}</strong>
+          </div>
+          <div>
+            <span>Oracle</span>
+            <strong>{"oracle" in snap ? snap.oracle ?? "—" : "—"}</strong>
+          </div>
+          <div>
+            <span>Funding</span>
+            <strong>{"funding" in snap ? snap.funding ?? "—" : "—"}</strong>
+          </div>
+          <div>
+            <span>OI</span>
+            <strong>{"openInterest" in snap && snap.openInterest ? Math.round(Number(snap.openInterest)) : "—"}</strong>
+          </div>
+        </div>
+      ) : null}
+      <p className="label" style={{ marginTop: 12 }}>
+        Thesis
+      </p>
       <div className="cta-row">
+        {(["none", "long", "short"] as const).map((h) => (
+          <button
+            key={h}
+            type="button"
+            className={hypothesis === h ? "linkish on" : "linkish off"}
+            onClick={() => setHypothesis(h)}
+            disabled={researchBusy}
+          >
+            {h === "none" ? "No bias" : h === "long" ? "Consider long" : "Consider short"}
+          </button>
+        ))}
         <button
           type="button"
           className="primary"
@@ -197,62 +251,60 @@ export function ResearchBoard({
         >
           Start research
         </button>
-      </div>
-      {researchBusy ? (
-        <article className="card" role="status">
-          <p className="label">Live sealed request</p>
-          <p>
-            {shown.replaceAll("_", " ")} · {coin} · {(researchElapsed / 1000).toFixed(1)}s elapsed. This is a live Direct
-            round-trip, not a timer.
-          </p>
-          {pollMiss ? <p role="status">Live view delayed — research is still running.</p> : null}
-          <div className="committee">
-            {(["researcher", "challenger", "risk"] as const).map((name) => (
-              <div key={name} className="role-card">
-                <p className="label">{name}</p>
-                <p className="state">{roleState(researchRoles, name, researchStage)}</p>
-                <p className="fine">{(researchElapsed / 1000).toFixed(1)}s</p>
-              </div>
-            ))}
-            <div className="role-card">
-              <p className="label">TEE</p>
-              <p className="state">{roleVerified(researchRoles, "researcher") ? "signer checked" : "pending"}</p>
-              <p className="fine">Direct · glm-5.2</p>
-            </div>
-          </div>
-          <ol className="pipe stages">
-            {RESEARCH_STAGES.map((name) => {
-              const mark = stageMark(name, researchStage, researchRoles);
-              const prefix = mark === "done" ? "✓ " : mark === "lit" ? "● " : "○ ";
-              return (
-                <li key={name} className={mark}>
-                  {prefix}
-                  {name.replaceAll("_", " ")}
-                </li>
-              );
-            })}
-          </ol>
+        {researchBusy ? (
           <button type="button" className="linkish" onClick={onCancel}>
-            Cancel
+            Stop
           </button>
-        </article>
+        ) : null}
+      </div>
+      <ComputeCard checks={checks} onCheck={onCheck} onEvidence={() => setTechOpen(true)} />
+      <p className="label" style={{ marginTop: 12 }}>
+        Committee
+      </p>
+      {pollMiss ? <p role="status">Live view delayed — research is still running.</p> : null}
+      {researchBusy ? (
+        <p role="status">
+          {shown.replaceAll("_", " ")} · {(researchElapsed / 1000).toFixed(1)}s elapsed. Live Direct round-trip, not a timer.
+        </p>
       ) : null}
-      {researchNote && !explained && !researchBusy ? (
-        <article className="card">
-          <p className="label">{researchCardTitle(researchKind, verified)}</p>
-          <p>{researchNote}</p>
+      <div className="committee">
+        {(["researcher", "challenger", "risk"] as const).map((name) => {
+          const st = roleState(researchRoles, name, researchStage);
+          return (
+            <div key={name} className={`role-card ${st}`}>
+              <p className="label">{name}</p>
+              <p className="state">{st}</p>
+              <p className="fine">
+                {researchBusy
+                  ? `${(researchElapsed / 1000).toFixed(1)}s`
+                  : researchRoles.find((r) => String(r.role).toLowerCase() === name)?.proposed_side || "—"}
+              </p>
+            </div>
+          );
+        })}
+        <div className={`role-card ${teeState(researchRoles, researchBusy, researchStop)}`}>
+          <p className="label">TEE</p>
+          <p className="state">{teeState(researchRoles, researchBusy, researchStop)}</p>
+          <p className="fine">Direct TeeML</p>
+        </div>
+        <div className={`role-card ${engineState(researchStage, researchRoles, researchBusy)}`}>
+          <p className="label">Engine</p>
+          <p className="state">{engineState(researchStage, researchRoles, researchBusy)}</p>
+          <p className="fine">Host sizes. Model cannot raise clip.</p>
+        </div>
+      </div>
+      {!researchBusy && (explained || researchKind) ? (
+        <section className="why-banner" role="status">
+          <p className="label">{title}</p>
+          <h2>{explained?.title || title}</h2>
+          <p>{explained?.body || researchNote}</p>
           {researchJobId ? <p className="fine">Job {researchJobId}</p> : null}
-          <ul className="doctor">
-            {researchRoles.map((role) => (
-              <li key={role.role}>
-                <strong>{role.verify_e2ee}</strong> {role.role}
-                {role.proposed_side ? ` side ${role.proposed_side}` : ""}
-                {role.survives === false ? " stood down" : ""}
-                {role.kill ? " kill" : ""}
-              </li>
-            ))}
-          </ul>
-        </article>
+          {explainStopHref(whyCode) ? (
+            <a className="linkish" href={explainStopHref(whyCode)?.href} target="_blank" rel="noreferrer">
+              {explainStopHref(whyCode)?.label}
+            </a>
+          ) : null}
+        </section>
       ) : null}
       {!researchBusy && preview ? (
         <PreviewContract
@@ -270,32 +322,14 @@ export function ResearchBoard({
           onCancelBound={onCancelBound}
         />
       ) : null}
-      {explained && !researchBusy ? (
-        <article className="card stop" role="alert">
-          <p className="label">{researchCardTitle(researchKind || researchStop, verified)}</p>
+      {explained && !researchBusy && !preview ? (
+        <section className="why-banner" role="alert">
+          <p className="label">{title}</p>
           <h2>{explained.title}</h2>
           <p>{explained.body}</p>
-          {explainStopHref(researchStop) ? (
-            <a className="linkish" href={explainStopHref(researchStop)?.href} target="_blank" rel="noreferrer">
-              {explainStopHref(researchStop)?.label}
-            </a>
-          ) : null}
-          <button type="button" className="linkish" onClick={() => setTechOpen((v) => !v)}>
-            {techOpen ? "Hide technical evidence" : "View technical evidence"}
-          </button>
-          {techOpen ? (
-            <pre className="pipe evidence">
-              Code {researchStop}
-              {"\n"}
-              {researchEvidenceText || "Verification is fail-closed. Router fallback is impossible."}
-            </pre>
-          ) : null}
-          <button type="button" onClick={() => onResearch(coin)} disabled={researchBusy}>
-            Retry
-          </button>
-        </article>
+        </section>
       ) : null}
-      {!researchBusy && !researchNote && !explained ? (
+      {!researchBusy && !researchNote && !explained && !preview ? (
         <p className="fine">Private research has not been run on this machine in this session.</p>
       ) : null}
       <PreviewNote />
@@ -307,18 +341,9 @@ export function ResearchBoard({
         kind={researchKind}
         deny={preview?.deny}
         evidence={researchEvidenceText}
+        open={techOpen}
+        onToggle={() => setTechOpen((v) => !v)}
       />
-      {eligible.length ? (
-        <div className="cta-row">
-          {eligible.map((c) => (
-            <button key={c.coin} type="button" className="linkish" onClick={() => onResearch(c.coin)}>
-              Research {c.coin}
-            </button>
-          ))}
-        </div>
-      ) : (
-        <p className="fine">No policy-eligible market is waiting. Watch does not invent cards.</p>
-      )}
     </main>
   );
 }
@@ -378,33 +403,50 @@ export function PreviewContract({
       <table className="kv">
         <tbody>
           <tr>
-            <th>Size</th>
+            <th>Asset</th>
+            <td>{preview.market}</td>
+          </tr>
+          <tr>
+            <th>Side</th>
+            <td>{preview.side}</td>
+          </tr>
+          <tr>
+            <th>Exact size</th>
             <td>
               {preview.sz} {preview.market}
             </td>
-          </tr>
-          <tr>
-            <th>Limit</th>
-            <td>{preview.limitPx}</td>
           </tr>
           <tr>
             <th>Venue</th>
             <td>Hyperliquid</td>
           </tr>
           <tr>
+            <th>Price</th>
+            <td>{preview.limitPx}</td>
+          </tr>
+          <tr>
+            <th>Policy</th>
+            <td>{preview.reasons?.length ? preview.reasons.join(" · ") : "Host clip and venue minimum already applied."}</td>
+          </tr>
+          <tr>
             <th>Session</th>
             <td>PIT Agent · {sessionAlive ? "Active" : "None"}</td>
           </tr>
           <tr>
-            <th>Compute</th>
-            <td>Verified private research</td>
+            <th>Preview hash</th>
+            <td className="hash">{preview.hash || previewHash}</td>
           </tr>
           <tr>
-            <th>Hash</th>
-            <td className="hash">{preview.hash || previewHash}</td>
+            <th>Will happen</th>
+            <td>PIT will send this exact order after you type AUTHORIZE on this card.</td>
+          </tr>
+          <tr>
+            <th>Will not happen</th>
+            <td>Chat cannot authorize. Size cannot change. Withdraw, transfer, and leverage stay denied.</td>
           </tr>
         </tbody>
       </table>
+      <p className="fine">AUTHORIZE approves only this exact preview. Any mutation invalidates it.</p>
       {sessionAlive ? (
         <form onSubmit={onAuthorize}>
           <input

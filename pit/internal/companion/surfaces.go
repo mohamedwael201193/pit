@@ -119,7 +119,7 @@ func (h *Hub) localChat(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
-	parsed := deskcmd.Parse(body.Text)
+	parsed := h.decorateChat(deskcmd.Parse(body.Text))
 	if parsed.Tool == "memory.forget" {
 		forgetMemoryFiles(h.Dir)
 		appendActivity(h.Dir, activityEvent{WorkspaceID: workspaceID(h.Dir), Kind: "memory.forgot", Action: "forget", Status: "ok"})
@@ -402,10 +402,11 @@ func (h *Hub) localModels(w http.ResponseWriter, r *http.Request) {
 		"note": "Role separation on one Direct TeeML SKU. Not three independent models. Router catalog is not this list.",
 		"models": []map[string]any{{
 			"model": sku.Model, "verifiability": sku.Verifiability, "proven_e2ee": sku.ProvenE2EE,
-			"label": label, "path": "Direct", "role_separation": true, "private_book": sku.ProvenE2EE,
-			"note": "Private. Routed directly to the verified compute path. Role separation on one SKU, not three independent models.",
+			"label": label, "path": "Direct", "provider": sku.Provider,
+			"role_separation": true, "private_book": sku.ProvenE2EE,
+			"note":    "Private. Routed directly to the verified compute path. Role separation on one SKU, not three independent models.",
 			"latency": "Live sealed round-trip. Typical 30–90s per role when the provider is live. Not a timer.",
-			"cost": "Estimated ~3 0G locked for one sealed committee. Router pricing is not this path.",
+			"cost":    "Estimated ~3 0G locked for one sealed committee. Router pricing is not this path.",
 		}},
 	})
 }

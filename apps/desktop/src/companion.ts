@@ -353,6 +353,7 @@ export type DirectModel = {
   model?: string;
   label?: string;
   path?: string;
+  provider?: string;
   verifiability?: string;
   proven_e2ee?: boolean;
   private_book?: boolean;
