@@ -1,6 +1,9 @@
 package hl
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"strings"
+)
 
 type Position struct {
 	Coin          string `json:"coin"`
@@ -11,18 +14,33 @@ type Position struct {
 	MarginUsed    string `json:"marginUsed,omitempty"`
 }
 
+func atomString(raw json.RawMessage) string {
+	if len(raw) == 0 || string(raw) == "null" {
+		return ""
+	}
+	var s string
+	if json.Unmarshal(raw, &s) == nil {
+		return s
+	}
+	var n json.Number
+	if json.Unmarshal(raw, &n) == nil {
+		return n.String()
+	}
+	return strings.Trim(string(raw), `"`)
+}
+
 func ParsePositions(raw json.RawMessage) []Position {
 	var st struct {
 		AssetPositions []struct {
 			Position struct {
-				Coin          string `json:"coin"`
-				Szi           string `json:"szi"`
-				EntryPx       string `json:"entryPx"`
-				UnrealizedPnl string `json:"unrealizedPnl"`
-				MarginUsed    string `json:"marginUsed"`
+				Coin          string          `json:"coin"`
+				Szi           json.RawMessage `json:"szi"`
+				EntryPx       json.RawMessage `json:"entryPx"`
+				UnrealizedPnl json.RawMessage `json:"unrealizedPnl"`
+				MarginUsed    json.RawMessage `json:"marginUsed"`
 				Leverage      struct {
-					Type  string `json:"type"`
-					Value string `json:"value"`
+					Type  string          `json:"type"`
+					Value json.RawMessage `json:"value"`
 				} `json:"leverage"`
 			} `json:"position"`
 		} `json:"assetPositions"`
@@ -35,17 +53,17 @@ func ParsePositions(raw json.RawMessage) []Position {
 		if row.Position.Coin == "" {
 			continue
 		}
-		lev := row.Position.Leverage.Value
+		lev := atomString(row.Position.Leverage.Value)
 		if lev == "" {
 			lev = row.Position.Leverage.Type
 		}
 		out = append(out, Position{
 			Coin:          row.Position.Coin,
-			Sz:            row.Position.Szi,
-			EntryPx:       row.Position.EntryPx,
-			UnrealizedPnl: row.Position.UnrealizedPnl,
+			Sz:            atomString(row.Position.Szi),
+			EntryPx:       atomString(row.Position.EntryPx),
+			UnrealizedPnl: atomString(row.Position.UnrealizedPnl),
 			Leverage:      lev,
-			MarginUsed:    row.Position.MarginUsed,
+			MarginUsed:    atomString(row.Position.MarginUsed),
 		})
 	}
 	return out

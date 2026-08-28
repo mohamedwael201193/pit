@@ -34,3 +34,14 @@ func TestParsePositionsLeverage(t *testing.T) {
 		t.Fatalf("%+v", got)
 	}
 }
+
+func TestParsePositionsLiveNumericLeverage(t *testing.T) {
+	raw := []byte(`{"assetPositions":[{"type":"oneWay","position":{"coin":"ETH","szi":"0.0041","leverage":{"type":"cross","value":20},"entryPx":"2489.7","unrealizedPnl":"-0.23534","marginUsed":"0.498621"}}]}`)
+	got := ParsePositions(raw)
+	if len(got) != 1 {
+		t.Fatalf("len %+v", got)
+	}
+	if got[0].Coin != "ETH" || got[0].Sz != "0.0041" || got[0].Leverage != "20" || got[0].EntryPx != "2489.7" {
+		t.Fatalf("%+v", got)
+	}
+}
