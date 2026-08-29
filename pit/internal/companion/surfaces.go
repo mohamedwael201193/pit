@@ -2,9 +2,11 @@ package companion
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -76,7 +78,7 @@ func (h *Hub) localPositions(w http.ResponseWriter, r *http.Request) {
 		writeLocal(w, http.StatusOK, map[string]any{"ok": false, "error": "HYPERLIQUID_OUTAGE", "positions": []any{}, "sign": false, "trade": false, "account": user})
 		return
 	}
-	pol := policy.Default()
+	pol := cli.ActivePolicy(h.Dir)
 	out := make([]map[string]any, 0, len(rows))
 	for _, p := range rows {
 		mark := 0.0
@@ -90,12 +92,27 @@ func (h *Hub) localPositions(w http.ResponseWriter, r *http.Request) {
 			"policyClipUsd": pol.MaxClipUSD,
 		})
 	}
+	openN := 0
+	for _, p := range rows {
+		if sz, err := strconv.ParseFloat(strings.TrimSpace(p.Sz), 64); err == nil && sz != 0 {
+			openN++
+		}
+	}
+	spot := hl.AccountView{}
+	if av, aerr := c.Account(user); aerr == nil {
+		spot = av
+	}
+	avail, _ := strconv.ParseFloat(strings.TrimSpace(acct.Withdrawable), 64)
+	gate, why := policy.ExecWhy(openN, avail, pol)
 	writeLocal(w, http.StatusOK, map[string]any{
 		"ok": true, "account": user, "queried": "master", "positions": out, "sign": false, "trade": false,
 		"lastOrder": cli.LoadLastOrder(h.Dir),
 		"summary": map[string]any{
 			"accountValue": acct.AccountValue, "totalMarginUsed": acct.TotalMarginUsed,
 			"totalNtlPos": acct.TotalNtlPos, "withdrawable": acct.Withdrawable,
+			"spotUsdc": fmt.Sprintf("%.4f", spot.SpotUSDC), "perpValue": fmt.Sprintf("%.4f", spot.PerpValue),
+			"fundingState": string(spot.State), "openCount": openN, "execGate": gate, "execWhy": why,
+			"policyClipUsd": pol.MaxClipUSD, "maxOpenPositions": pol.MaxOpenPositions, "maxLeverage": pol.MaxLeverage,
 		},
 	})
 }

@@ -4,7 +4,7 @@ import "testing"
 
 func TestCardsCoverLaw(t *testing.T) {
 	cs := Cards(Default())
-	if len(cs) != 12 {
+	if len(cs) != 14 {
 		t.Fatalf("%d", len(cs))
 	}
 	seen := map[string]bool{}

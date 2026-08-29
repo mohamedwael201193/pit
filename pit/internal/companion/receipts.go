@@ -14,7 +14,6 @@ import (
 	"github.com/mohamedwael201193/pit/internal/config"
 	"github.com/mohamedwael201193/pit/internal/evidence"
 	"github.com/mohamedwael201193/pit/internal/httpx"
-	"github.com/mohamedwael201193/pit/internal/policy"
 	"github.com/mohamedwael201193/pit/internal/proof"
 	"github.com/mohamedwael201193/pit/internal/receipt"
 	"github.com/mohamedwael201193/pit/internal/storage"
@@ -52,8 +51,9 @@ func (h *Hub) filer() (proof.Filer, error) {
 	return f, f.Ready()
 }
 
-func policyHash() string {
-	hash, err := policy.Default().Hash()
+func (h *Hub) policyHash() string {
+	pol := cli.ActivePolicy(h.Dir)
+	hash, err := pol.Hash()
 	if err != nil {
 		return ""
 	}
@@ -141,7 +141,7 @@ func (h *Hub) fileResearch(jobID, market, verdict, deny, previewHash string, rol
 	r.Verdict = verdict
 	r.Deny = deny
 	r.PreviewHash = previewHash
-	r.PolicyHash = policyHash()
+	r.PolicyHash = h.policyHash()
 	r.JobID = jobID
 	r.Model = model
 	r.Provider = provider
@@ -166,7 +166,7 @@ func (h *Hub) fileOrder(got cli.OrderResult, jobID string) {
 	r.Side = got.Side
 	r.Size = got.Sz
 	r.PreviewHash = got.Hash
-	r.PolicyHash = policyHash()
+	r.PolicyHash = h.policyHash()
 	r.OID = got.OID
 	r.Cloid = got.Cloid
 	r.OrderStatus = strings.TrimSpace(got.Status)

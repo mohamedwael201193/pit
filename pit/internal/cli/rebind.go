@@ -10,7 +10,6 @@ import (
 	"github.com/mohamedwael201193/pit/internal/config"
 	"github.com/mohamedwael201193/pit/internal/engine"
 	"github.com/mohamedwael201193/pit/internal/hl"
-	"github.com/mohamedwael201193/pit/internal/policy"
 )
 
 func CommitteeDecisionFromLastResearch(dir, coin string) (compute.AskReport, error) {
@@ -35,7 +34,7 @@ func CommitteeDecisionFromLastResearch(dir, coin string) (compute.AskReport, err
 	if err != nil {
 		return rep, err
 	}
-	p := policy.Default()
+	p := ActivePolicy(dir)
 	_ = CheckPinned(dir, st.WorkspaceID, p)
 	want := strings.ToUpper(strings.TrimSpace(coin))
 	if want == "" {
@@ -77,7 +76,7 @@ func ReportFromLastResearch(dir, coin string) (compute.AskReport, error) {
 	if err != nil {
 		return rep, err
 	}
-	p := policy.Default()
+	p := ActivePolicy(dir)
 	_ = CheckPinned(dir, st.WorkspaceID, p)
 	want := strings.ToUpper(strings.TrimSpace(coin))
 	if want == "" {

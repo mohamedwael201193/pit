@@ -309,10 +309,16 @@
           "markdownDescription": "Read Direct SKUs for the bound network. Never a Router catalog."
         },
         {
-          "description": "Pin the default policy file for this workspace.",
+          "description": "Read or pin host policy on this computer. Chat cannot mutate it.",
           "type": "string",
           "const": "allow-local-policy",
-          "markdownDescription": "Pin the default policy file for this workspace."
+          "markdownDescription": "Read or pin host policy on this computer. Chat cannot mutate it."
+        },
+        {
+          "description": "Read the pinned host policy. Never a secret.",
+          "type": "string",
+          "const": "allow-local-policy-get",
+          "markdownDescription": "Read the pinned host policy. Never a secret."
         },
         {
           "description": "Read Hyperliquid positions for the bound master account.",

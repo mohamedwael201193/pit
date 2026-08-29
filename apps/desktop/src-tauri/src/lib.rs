@@ -126,8 +126,13 @@ async fn local_connection_preview(coin: Option<String>, reduce_only: Option<bool
 }
 
 #[tauri::command]
-async fn local_policy() -> Result<serde_json::Value, String> {
-    json_post("/local/policy".into(), serde_json::json!({}), 8).await
+async fn local_policy(policy: Option<serde_json::Value>) -> Result<serde_json::Value, String> {
+    json_post("/local/policy".into(), policy.unwrap_or_else(|| serde_json::json!({})), 8).await
+}
+
+#[tauri::command]
+async fn local_policy_get() -> Result<serde_json::Value, String> {
+    json_get("/local/policy".into(), 8).await
 }
 
 #[tauri::command]
@@ -610,7 +615,7 @@ fn same_install(path: &Path) -> bool {
     path.parent().map(|p| p == dir).unwrap_or(false)
 }
 
-const SIDECAR_VERSION: &str = "0.4.1";
+const SIDECAR_VERSION: &str = "0.4.2";
 
 fn companion_version() -> Option<String> {
     let raw = loopback_get("/health").ok()?;
@@ -760,6 +765,7 @@ pub fn run() {
             local_session,
             local_connection_preview,
             local_policy,
+            local_policy_get,
             local_revoke_session,
             local_direct_intent,
             local_direct_status,

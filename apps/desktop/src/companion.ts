@@ -207,9 +207,12 @@ export async function createLocalSession(): Promise<BindResult> {
   }
 }
 
-export async function pinLocalPolicy(): Promise<BindResult> {
+export async function pinLocalPolicy(policy?: HostPolicy): Promise<BindResult & { policy?: HostPolicy; consequences?: string[]; pinned?: boolean; hash?: string }> {
   try {
-    const native = await nativeJsonOrError<BindResult>("local_policy");
+    const native = await nativeJsonOrError<BindResult & { policy?: HostPolicy; consequences?: string[]; pinned?: boolean; hash?: string }>(
+      "local_policy",
+      policy ? { policy } : undefined,
+    );
     if (native.sign || native.trade) return { error: "companion_denied" };
     return native;
   } catch (e) {
@@ -218,7 +221,27 @@ export async function pinLocalPolicy(): Promise<BindResult> {
   }
 }
 
-export async function fetchWatch(network: string): Promise<{ coins?: Array<{ coin: string; reason: string; why?: string; trend?: string; rank?: number; freshness?: string; mark: number; eligible?: boolean; oracle?: number; funding?: number; openInterest?: number; volume?: number; timestamp?: string; venue?: string; policyFit?: string; riskFlags?: string[]; provenance?: string; block?: string }>; best?: { coin: string; mark: number; why?: string; policyFit?: string }; bestWhy?: string; scanned?: number; count?: number; sign?: boolean; trade?: boolean }> {
+export async function fetchPolicy(): Promise<{
+  policy?: HostPolicy;
+  pinned?: boolean;
+  hash?: string;
+  consequences?: string[];
+  clipFloor?: number;
+  clipCeil?: number;
+}> {
+  const body = await localGet<{
+    policy?: HostPolicy;
+    pinned?: boolean;
+    hash?: string;
+    consequences?: string[];
+    clipFloor?: number;
+    clipCeil?: number;
+    sign?: boolean;
+  }>("local_policy_get", "/local/policy");
+  return body || {};
+}
+
+export async function fetchWatch(network: string): Promise<{ coins?: Array<{ coin: string; reason: string; why?: string; trend?: string; rank?: number; freshness?: string; mark: number; eligible?: boolean; oracle?: number; funding?: number; openInterest?: number; volume?: number; timestamp?: string; venue?: string; policyFit?: string; riskFlags?: string[]; provenance?: string; block?: string; execGate?: string; execWhy?: string }>; best?: { coin: string; mark: number; why?: string; policyFit?: string }; bestWhy?: string; scanned?: number; count?: number; execGate?: string; execWhy?: string; sign?: boolean; trade?: boolean }> {
   const native = rejectSecrets(await nativeJson<{ coins?: Array<{ coin: string; reason: string; why?: string; trend?: string; rank?: number; freshness?: string; mark: number; eligible?: boolean; oracle?: number; funding?: number; openInterest?: number; timestamp?: string }>; sign?: boolean; trade?: boolean }>("local_watch", { network }));
   if (native) return native;
   const fetched = await fetchJson<{ coins?: Array<{ coin: string; reason: string; mark: number; eligible?: boolean; oracle?: number; funding?: number; openInterest?: number }>; sign?: boolean; trade?: boolean }>(`/watch?network=${network}`);
@@ -684,6 +707,34 @@ export type AccountSummary = {
   totalMarginUsed?: string;
   totalNtlPos?: string;
   withdrawable?: string;
+  spotUsdc?: string;
+  perpValue?: string;
+  fundingState?: string;
+  openCount?: number;
+  execGate?: string;
+  execWhy?: string;
+  policyClipUsd?: number;
+  maxOpenPositions?: number;
+  maxLeverage?: number;
+};
+
+export type HostPolicy = {
+  version?: string;
+  maxClipUsd: number;
+  dailyLossUsd: number;
+  maxLeverage: number;
+  allowedAssets: string[];
+  allowedMarketTypes?: string[];
+  allowedVenues?: string[];
+  minSkillCalibration?: number;
+  cooldownSeconds: number;
+  sessionTtlSeconds: number;
+  killSwitch: boolean;
+  maxUncertainty: number;
+  maxSlippageBps: number;
+  minLiquidityUsd: number;
+  maxOpenPositions: number;
+  maxConsecutiveLosses: number;
 };
 
 export async function fetchPositions(): Promise<{

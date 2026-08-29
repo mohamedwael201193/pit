@@ -435,6 +435,14 @@ func (h *Hub) localConnectionPreview(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Hub) localPolicy(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodGet {
+		if !httpx.CodeOriginOK(r.Header.Get("Origin")) {
+			http.Error(w, "origin_denied", http.StatusForbidden)
+			return
+		}
+		writeLocal(w, http.StatusOK, h.policyPublic(nil))
+		return
+	}
 	if !desktopOnly(w, r) {
 		return
 	}
@@ -443,8 +451,16 @@ func (h *Hub) localPolicy(w http.ResponseWriter, r *http.Request) {
 		writeBindErr(w, fmt.Errorf("unbound"))
 		return
 	}
-	p := policy.Default()
-	path, err := cli.PinWorkspace(h.Dir, st.WorkspaceID, p)
+	draft := cli.ActivePolicy(h.Dir)
+	var body policy.Policy
+	if r.Body != nil {
+		_ = json.NewDecoder(r.Body).Decode(&body)
+		if body.MaxClipUSD > 0 {
+			draft = body
+		}
+	}
+	before := cli.ActivePolicy(h.Dir)
+	p, hash, err := policy.Save(h.Dir, st.WorkspaceID, draft)
 	if err != nil {
 		writeBindErr(w, err)
 		return
@@ -453,20 +469,10 @@ func (h *Hub) localPolicy(w http.ResponseWriter, r *http.Request) {
 		writeBindErr(w, err)
 		return
 	}
-	hash, err := p.Hash()
-	if err != nil {
-		writeBindErr(w, err)
-		return
-	}
-	writeLocal(w, http.StatusOK, map[string]any{
-		"ok":        true,
-		"pinned":    path,
-		"hash":      hash,
-		"version":   p.Version,
-		"workspace": st.WorkspaceID,
-		"sign":      false,
-		"trade":     false,
+	appendActivity(h.Dir, activityEvent{
+		WorkspaceID: st.WorkspaceID, Kind: "policy.pinned", Action: "pin", Status: "ok", PreviewHash: hash,
 	})
+	writeLocal(w, http.StatusOK, h.policyPublic(policy.Diff(before, p)))
 }
 
 func (h *Hub) localRevokeSession(w http.ResponseWriter, r *http.Request) {
@@ -543,9 +549,11 @@ func (h *Hub) watch(w http.ResponseWriter, r *http.Request) {
 		net = n
 	}
 	view := watch.EmptyPublic(string(net))
-	cands, err := watch.LiveUniverse(hl.New(config.For(net)), watch.PolicyForWatch())
+	pol := cli.ActivePolicy(h.Dir)
+	cands, err := watch.LiveUniverse(hl.New(config.For(net)), pol)
 	if err == nil {
 		view = watch.Public(cands, string(net))
+		view = annotateExec(view, h.openPositionCount(), h.availableUSD(), pol)
 	}
 	if r.Method == http.MethodHead {
 		w.Header().Set("Content-Type", "application/json")

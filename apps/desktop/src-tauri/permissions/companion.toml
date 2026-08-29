@@ -45,8 +45,13 @@ commands.allow = ["local_connection_preview"]
 
 [[permission]]
 identifier = "allow-local-policy"
-description = "Pin the default policy file for this workspace."
+description = "Read or pin host policy on this computer. Chat cannot mutate it."
 commands.allow = ["local_policy"]
+
+[[permission]]
+identifier = "allow-local-policy-get"
+description = "Read the pinned host policy. Never a secret."
+commands.allow = ["local_policy_get"]
 
 [[permission]]
 identifier = "allow-local-revoke-session"

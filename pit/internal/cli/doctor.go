@@ -15,6 +15,7 @@ import (
 	"github.com/mohamedwael201193/pit/internal/config"
 	"github.com/mohamedwael201193/pit/internal/hl"
 	"github.com/mohamedwael201193/pit/internal/keyring"
+	"github.com/mohamedwael201193/pit/internal/policy"
 	"github.com/mohamedwael201193/pit/internal/session"
 	"github.com/mohamedwael201193/pit/internal/storage"
 	"github.com/mohamedwael201193/pit/internal/version"
@@ -311,8 +312,9 @@ func checkPolicy(dir string) Check {
 	if err != nil {
 		return Check{Name: "policy", Detail: "unbound"}
 	}
-	if _, err := os.Stat(filepath.Join(dir, st.WorkspaceID+".policy")); err != nil {
-		return Check{Name: "policy", Detail: "not pinned"}
+	p := policy.Load(dir, st.WorkspaceID)
+	if err := CheckPinned(dir, st.WorkspaceID, p); err != nil {
+		return Check{Name: "policy", Detail: "Pin does not match host law. Open Security, preview, then pin on this computer. Chat cannot do this."}
 	}
 	return Check{Name: "policy", OK: true, Detail: "pinned"}
 }

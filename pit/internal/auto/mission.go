@@ -456,7 +456,7 @@ func Public(dir string) map[string]any {
 	m := LoadMission(dir)
 	p := Load(dir)
 	p.Execute = false
-	pol := policy.Default()
+	pol := policy.Peek(dir)
 	hash, _ := pol.Hash()
 	now := time.Now().Unix()
 	remainLosses := pol.MaxConsecutiveLosses - m.ConsecutiveLosses

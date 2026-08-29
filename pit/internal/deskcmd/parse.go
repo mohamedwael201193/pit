@@ -192,7 +192,13 @@ func Parse(text string) Result {
 		out.Reply = "A committee stand-down or policy block is a verified result, not a crash. Open Research for the named reason."
 		return out
 	}
-	if strings.Contains(low, "position") || strings.Contains(low, "pnl") || strings.Contains(low, "exposure") || strings.Contains(low, "explain my risk") || (strings.Contains(low, "risk") && !wantsResearch(low) && !strings.Contains(low, "committee")) {
+	if wantsPolicyMutate(low) {
+		out.Tool = "policy.get"
+		out.Navigate = "security"
+		out.Reply = "Chat cannot change policy. Open Security, edit the host limits, preview the consequences, then pin on this computer."
+		return out
+	}
+	if strings.Contains(low, "position") || strings.Contains(low, "pnl") || strings.Contains(low, "exposure") || strings.Contains(low, "balance") || strings.Contains(low, "margin") || strings.Contains(low, "explain my risk") || (strings.Contains(low, "risk") && !wantsResearch(low) && !strings.Contains(low, "committee")) {
 		out.Tool = "positions.get"
 		out.Navigate = "portfolio"
 		out.Reply = "Positions are read from your Hyperliquid trading account, not the PIT agent address. Chat cannot flatten."
@@ -205,15 +211,16 @@ func Parse(text string) Result {
 		return out
 	}
 	if wantsResearch(low) {
-		if coin == "" {
-			coin = "ETH"
-		}
 		out.Tool = "research.start"
 		out.StartResearch = true
 		out.Coin = coin
 		out.Mutate = true
 		out.Navigate = "research"
-		out.Reply = fmt.Sprintf("%s is eligible only if your policy allows it. I will start a sealed Direct research pass. That spends private compute, not trading capital. It will not place an order.", coin)
+		label := coin
+		if label == "" {
+			label = "the strongest policy-eligible book"
+		}
+		out.Reply = fmt.Sprintf("%s is eligible only if your policy allows it. I will start a sealed Direct research pass. That spends private compute, not trading capital. It will not place an order.", label)
 		if execAsk {
 			out.Reply += " Chat cannot AUTHORIZE. Review the exact preview on Research, then type AUTHORIZE there."
 		}
@@ -252,7 +259,7 @@ func Parse(text string) Result {
 		return out
 	}
 	out.Tool = "help"
-		out.Reply = "Ask a specific desk question: best opportunity, scan markets, research a policy market, evidence, positions, automation, or policy. Chat cannot AUTHORIZE."
+	out.Reply = "Ask a specific desk question: best opportunity, scan markets, research a policy market, evidence, positions, automation, or policy. Chat cannot AUTHORIZE."
 	return out
 }
 
@@ -409,4 +416,13 @@ func wantsResearchBest(low string) bool {
 
 func wantsTradeStrongest(low string) bool {
 	return strings.Contains(low, "trade the strongest") || strings.Contains(low, "trade the best")
+}
+
+func wantsPolicyMutate(low string) bool {
+	if strings.Contains(low, "raise clip") || strings.Contains(low, "raise leverage") || strings.Contains(low, "increase clip") {
+		return true
+	}
+	touch := strings.Contains(low, "change") || strings.Contains(low, "edit") || strings.Contains(low, "set") || strings.Contains(low, "raise") || strings.Contains(low, "increase")
+	target := strings.Contains(low, "policy") || strings.Contains(low, "clip") || strings.Contains(low, "leverage") || strings.Contains(low, "max open")
+	return touch && target
 }

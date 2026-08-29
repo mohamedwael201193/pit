@@ -158,7 +158,11 @@ export function CommandChat({
       <div className="command-head">
         <div>
           <p className="label">Chat</p>
-          <p className="fine">Host-parsed on this computer. Private book never leaves. Chat cannot AUTHORIZE.</p>
+          <p className="fine">
+            {picked?.private_book
+              ? `${picked.model} is the sealed research SKU. This thread stays host-parsed. Chat cannot AUTHORIZE or pin policy.`
+              : "Host-parsed on this computer. Live desk state is below. Chat cannot AUTHORIZE or pin policy."}
+          </p>
         </div>
         <div className="model-pick">
           <button type="button" aria-haspopup="listbox" aria-expanded={modelOpen} onClick={() => setModelOpen((v) => !v)}>
@@ -183,7 +187,7 @@ export function CommandChat({
                 <ModelRow key={m.model} m={m} picked={picked} onPick={() => { setPicked(m); setModelOpen(false); }} disabled />
               ))}
               <p className="fine">
-                Desk chat is host-parsed. glm-5.2 is used only on the proven Direct path for the sealed book. Catalog presence is not privacy.
+                Desk commands are host-parsed. A Private + Verified SKU is used only for sealed research, not as a chat stream. Catalog presence is not privacy.
               </p>
             </div>
           ) : null}

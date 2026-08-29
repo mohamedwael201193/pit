@@ -188,7 +188,7 @@ func TestLocalStatusVersionNoSecret(t *testing.T) {
 	if got["sign"] == true || got["trade"] == true {
 		t.Fatal(got)
 	}
-	if got["version"] != "0.4.1" {
+	if got["version"] != "0.4.2" {
 		t.Fatalf("version %v", got["version"])
 	}
 }
@@ -266,6 +266,62 @@ func TestDesktopInitSessionPolicyUserB(t *testing.T) {
 	}
 	if !strings.Contains(rec.Body.String(), a) {
 		t.Fatal("wallet missing")
+	}
+}
+
+func TestPolicyPinClampAndWebDenied(t *testing.T) {
+	h := New(t.TempDir())
+	req := local(httptest.NewRequest(http.MethodPost, "/local/init", strings.NewReader(`{"wallet":"0x1111111111111111111111111111111111111111","network":"mainnet"}`)))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+	h.Handler().ServeHTTP(rec, req)
+	if rec.Code != 200 {
+		t.Fatal(rec.Body.String())
+	}
+
+	req = local(httptest.NewRequest(http.MethodGet, "/local/policy", nil))
+	rec = httptest.NewRecorder()
+	h.Handler().ServeHTTP(rec, req)
+	if rec.Code != 200 {
+		t.Fatal(rec.Body.String())
+	}
+
+	body := `{"maxClipUsd":12,"dailyLossUsd":50,"maxLeverage":20,"allowedAssets":["ETH","BTC"],"maxOpenPositions":2,"maxSlippageBps":80,"cooldownSeconds":0,"sessionTtlSeconds":3600,"maxUncertainty":1,"minLiquidityUsd":0,"maxConsecutiveLosses":3}`
+	req = local(httptest.NewRequest(http.MethodPost, "/local/policy", strings.NewReader(body)))
+	req.Header.Set("Content-Type", "application/json")
+	rec = httptest.NewRecorder()
+	h.Handler().ServeHTTP(rec, req)
+	if rec.Code != 200 {
+		t.Fatal(rec.Body.String())
+	}
+	if strings.Contains(rec.Body.String(), `"maxLeverage":20`) {
+		t.Fatal("leverage must stay 1")
+	}
+	if !strings.Contains(rec.Body.String(), `"maxOpenPositions":2`) || !strings.Contains(rec.Body.String(), `"maxClipUsd":12`) {
+		t.Fatal(rec.Body.String())
+	}
+
+	req = local(httptest.NewRequest(http.MethodPost, "/local/policy", strings.NewReader(`{"maxClipUsd":1000,"maxLeverage":50}`)))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Origin", "https://pit0g.vercel.app")
+	rec = httptest.NewRecorder()
+	h.Handler().ServeHTTP(rec, req)
+	if rec.Code != http.StatusForbidden {
+		t.Fatalf("web pin %d", rec.Code)
+	}
+
+	req = local(httptest.NewRequest(http.MethodPost, "/local/policy", strings.NewReader(`{"maxClipUsd":1000,"maxLeverage":50,"dailyLossUsd":50,"allowedAssets":["ETH"],"maxOpenPositions":1,"maxSlippageBps":80,"sessionTtlSeconds":3600,"maxUncertainty":1,"maxConsecutiveLosses":3}`)))
+	req.Header.Set("Content-Type", "application/json")
+	rec = httptest.NewRecorder()
+	h.Handler().ServeHTTP(rec, req)
+	if rec.Code != 200 {
+		t.Fatal(rec.Body.String())
+	}
+	if strings.Contains(rec.Body.String(), `"maxClipUsd":1000`) || strings.Contains(rec.Body.String(), `"maxLeverage":50`) {
+		t.Fatal(rec.Body.String())
+	}
+	if !strings.Contains(rec.Body.String(), `"maxClipUsd":50`) {
+		t.Fatal(rec.Body.String())
 	}
 }
 

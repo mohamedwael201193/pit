@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/mohamedwael201193/pit/internal/identity"
+	"github.com/mohamedwael201193/pit/internal/policy"
 )
 
 func TestDoctorUnboundIsHonest(t *testing.T) {
@@ -71,6 +72,25 @@ func TestDoctorHLAgentUnbound(t *testing.T) {
 	}
 	if c.Name != "hl_agent" {
 		t.Fatal(c.Name)
+	}
+}
+
+func TestDoctorPolicyPinMustMatch(t *testing.T) {
+	dir := t.TempDir()
+	id := identity.NewWorkspaceID()
+	if err := Save(dir, DiskState{WorkspaceID: id, Network: "mainnet", Wallet: "0x1111111111111111111111111111111111111111"}); err != nil {
+		t.Fatal(err)
+	}
+	c := checkPolicy(dir)
+	if c.OK {
+		t.Fatal("missing pin must wait")
+	}
+	if _, err := PinWorkspace(dir, id, policy.Default()); err != nil {
+		t.Fatal(err)
+	}
+	c = checkPolicy(dir)
+	if !c.OK {
+		t.Fatal(c)
 	}
 }
 

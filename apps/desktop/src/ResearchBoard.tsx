@@ -227,11 +227,11 @@ export function ResearchBoard({
     null;
   const explained = explainStop(whyCode || null);
   const verified = committeeVerified(researchRoles);
-  const snap = (coins || []).find((c) => c.coin === (coin || "ETH")) || eligible.find((c) => c.coin === (coin || "ETH"));
+  const snap = (coins || []).find((c) => c.coin === coin) || eligible.find((c) => c.coin === coin);
   const title = researchCardTitle(researchKind || researchStop, verified);
   const whyRows = !researchBusy
     ? researchWhyCopy({
-        coin: coin || "ETH",
+        coin: coin || eligible[0]?.coin || "",
         kind: researchKind,
         note: researchNote,
         stop: researchStop,
@@ -246,7 +246,7 @@ export function ResearchBoard({
       <div className="page-head">
         <div>
           <p className="eyebrow">Research</p>
-          <h1>{coin || "ETH"}</h1>
+          <h1>{coin || "Pick a market"}</h1>
         </div>
         <p className="fine" style={{ margin: 0 }}>
           Private committee. Host sizes. Chat cannot AUTHORIZE.

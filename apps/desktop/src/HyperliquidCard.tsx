@@ -12,6 +12,7 @@ export function HyperliquidCard({
   approvedDetail,
   busy,
   tradingCapital,
+  account,
   onCreateSession,
   onCheck,
   onRevoke,
@@ -26,6 +27,7 @@ export function HyperliquidCard({
   approvedDetail?: string;
   busy?: boolean;
   tradingCapital?: string;
+  account?: string;
   onCreateSession: () => void;
   onConnectionPreview?: () => void;
   onCheck?: () => void;
@@ -45,7 +47,7 @@ export function HyperliquidCard({
       </p>
       <dl className="status-grid hl-grid">
         <dt>Connected account</dt>
-        <dd>{agent ? "yes" : "no"}</dd>
+        <dd>{account ? `${account.slice(0, 6)}…${account.slice(-4)}` : "no"}</dd>
         <dt>Trading capital</dt>
         <dd>{tradingCapital || "—"}</dd>
         <dt>PIT Agent</dt>

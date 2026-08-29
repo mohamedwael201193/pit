@@ -12,7 +12,6 @@ import (
 	"github.com/mohamedwael201193/pit/internal/config"
 	"github.com/mohamedwael201193/pit/internal/hl"
 	"github.com/mohamedwael201193/pit/internal/httpx"
-	"github.com/mohamedwael201193/pit/internal/policy"
 	"github.com/mohamedwael201193/pit/internal/session"
 	"github.com/mohamedwael201193/pit/internal/watch"
 )
@@ -62,7 +61,7 @@ func (h *Hub) autoTick() {
 		sessOK = session.Alive(sf.Meta().Session(), time.Now().UnixMilli()) && !kill
 	}
 	openN := h.openPositionCount()
-	pol := policy.Default()
+	pol := cli.ActivePolicy(h.Dir)
 	m.OpenPositions = openN
 	m.CurrentPosition = h.positionSummary()
 	if why := auto.MissionHaltReason(m, now, kill, sessOK, 0, pol); why != "" && m.Mode == auto.ModeGuarded {
@@ -119,7 +118,7 @@ func (h *Hub) autoTick() {
 	m.Stage = "scanning"
 	m.LastAction = "scanning"
 	_ = auto.SaveMission(h.Dir, m)
-	cands, lerr := watch.LiveUniverse(hl.New(config.For(net)), watch.PolicyForWatch())
+	cands, lerr := watch.LiveUniverse(hl.New(config.For(net)), pol)
 	p.LastScanUnix = now
 	m.NextScanUnix = now + cadence
 	m.ScanCount++
@@ -329,7 +328,7 @@ func (h *Hub) maybeGuardedExecute(hash, coin string, started time.Time) {
 	if sf, serr := cli.LoadSession(h.Dir); serr == nil {
 		sessOK = session.Alive(sf.Meta().Session(), time.Now().UnixMilli()) && !kill
 	}
-	pol := policy.Default()
+	pol := cli.ActivePolicy(h.Dir)
 	g := auto.ExecGate{
 		PreviewHash: hash,
 		StartedUnix: started.Unix(),
@@ -443,7 +442,7 @@ func (h *Hub) localMission(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if strings.TrimSpace(body.Typed) != "" || strings.EqualFold(body.Mode, auto.ModeGuarded) {
-		hash, _ := policy.Default().Hash()
+		hash, _ := cli.ActivePolicy(h.Dir).Hash()
 		m, err := auto.EnableGuarded(h.Dir, body.Typed, body.Hours, hash)
 		if err != nil {
 			writeLocal(w, http.StatusOK, map[string]any{"ok": false, "error": err.Error(), "execute": false, "sign": false, "trade": false})

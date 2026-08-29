@@ -15,6 +15,7 @@
     "allow-local-session",
     "allow-local-connection-preview",
     "allow-local-policy",
+    "allow-local-policy-get",
     "allow-local-revoke-session",
     "allow-local-direct-intent",
     "allow-local-direct-status",

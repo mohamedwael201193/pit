@@ -29,7 +29,7 @@ export function PositionsPanel({
   positions: VenuePosition[];
   error?: string;
   lastOrder?: { oid?: string; status?: string; market?: string; side?: string; sz?: number };
-  summary?: { accountValue?: string; withdrawable?: string; totalNtlPos?: string };
+  summary?: { accountValue?: string; withdrawable?: string; totalNtlPos?: string; spotUsdc?: string; execGate?: string; execWhy?: string };
   onReduceOnlyClose?: (coin: string) => void;
   closeBusy?: boolean;
   net?: string;
@@ -46,10 +46,20 @@ export function PositionsPanel({
           <dd>{summary?.withdrawable || "—"}</dd>
         </div>
         <div>
+          <dt>Spot USDC</dt>
+          <dd>{summary?.spotUsdc || "—"}</dd>
+        </div>
+        <div>
           <dt>Exposure</dt>
           <dd>{summary?.totalNtlPos || "—"}</dd>
         </div>
       </dl>
+      {summary?.execWhy ? (
+        <p className="fine" role="status">
+          {summary.execGate ? `Execution blocked: ${String(summary.execGate).replaceAll("_", " ")}. ` : ""}
+          {summary.execWhy} Venue leverage on an existing position is not PIT policy leverage.
+        </p>
+      ) : null}
       <p className="fine">
         Trading account {account || "unbound"} (master, not the PIT agent). Venue withdrawable is not a PIT withdraw.
       </p>

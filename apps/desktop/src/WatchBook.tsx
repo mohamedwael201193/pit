@@ -21,12 +21,16 @@ export type MarketCoin = {
   riskFlags?: string[];
   provenance?: string;
   block?: string;
+  execGate?: string;
+  execWhy?: string;
 };
 
 export function WatchBook({
   coins,
   bestWhy,
   scanned,
+  execGate,
+  execWhy,
   computeReady,
   researchBusy,
   onResearch,
@@ -34,6 +38,8 @@ export function WatchBook({
   coins: MarketCoin[];
   bestWhy?: string;
   scanned?: number;
+  execGate?: string;
+  execWhy?: string;
   computeReady: boolean;
   researchBusy: boolean;
   onResearch: (coin: string) => void;
@@ -70,6 +76,11 @@ export function WatchBook({
               <BrandMark symbol={best.coin} /> {best.coin} · {compactNum(best.mark)}
             </h2>
             <p>{best.why}</p>
+            {execGate ? (
+              <p className="fine" role="status">
+                Execution blocked: {execGate.replaceAll("_", " ")}. {execWhy || best.execWhy} Research can still run.
+              </p>
+            ) : null}
             <p className="fine">
               {bestWhy || "Highest host rank among policy-eligible live books. Not a model score."} · {best.venue || "hyperliquid"} · {best.provenance || "hyperliquid.info"}
             </p>

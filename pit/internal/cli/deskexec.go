@@ -108,6 +108,11 @@ func ExecuteDeskOrder(dir, typed, presentedHash string) OrderResult {
 		out.Error = "preview_hash_mismatch"
 		return out
 	}
+	p := ActivePolicy(dir)
+	if err := CheckPinned(dir, st.WorkspaceID, p); err != nil {
+		out.Error = err.Error()
+		return out
+	}
 	if card.WorkspaceID != live.Workspace || card.SessionID != live.ID {
 		out.Error = "wrong_workspace"
 		return out

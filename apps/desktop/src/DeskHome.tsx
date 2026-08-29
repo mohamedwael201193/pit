@@ -80,6 +80,48 @@ export function DeskHome({
         </div>
       </div>
       <p className="lead">{doing}</p>
+      <ol className="demo-path" aria-label="New user path">
+        <li className={items.find((p) => p.id === "wallet")?.state === "ok" ? "on" : ""}>
+          <button type="button" className="linkish" onClick={() => onGo("security")}>
+            1. Connect wallet
+          </button>
+        </li>
+        <li className={protectedOk ? "on" : ""}>
+          <button type="button" className="linkish" onClick={() => onGo("security")}>
+            2. Protect 0G strategy
+          </button>
+        </li>
+        <li className={hlApproved ? "on" : ""}>
+          <button type="button" className="linkish" onClick={() => onGo("security")}>
+            3. Connect Hyperliquid
+          </button>
+        </li>
+        <li className={sessionAlive ? "on" : ""}>
+          <button type="button" className="linkish" onClick={() => onGo("security")}>
+            4. Scoped session
+          </button>
+        </li>
+        <li className={policyPinned ? "on" : ""}>
+          <button type="button" className="linkish" onClick={() => onGo("security")}>
+            5. Pin policy
+          </button>
+        </li>
+        <li className={best ? "on" : ""}>
+          <button type="button" className="linkish" onClick={() => onGo("markets")}>
+            6. Live opportunities
+          </button>
+        </li>
+        <li className={researchBusy || researchKind ? "on" : ""}>
+          <button type="button" className="linkish" onClick={() => (best ? onResearch(best.coin) : onGo("research"))}>
+            7. Sealed research
+          </button>
+        </li>
+        <li className={awaitingAuth ? "on" : ""}>
+          <button type="button" className="linkish" onClick={() => onGo("research")}>
+            8. AUTHORIZE on this computer
+          </button>
+        </li>
+      </ol>
       <div className="chip-row" aria-label="Readiness">
         <Chip ok={protectedOk} label="Research" value={protectedOk ? "protected" : "needs protect"} />
         <Chip ok={computeReady} label="Compute" value={computeReady ? "funded" : "needs funds"} />

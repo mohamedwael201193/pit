@@ -12,7 +12,6 @@ import (
 	"github.com/mohamedwael201193/pit/internal/config"
 	"github.com/mohamedwael201193/pit/internal/hl"
 	"github.com/mohamedwael201193/pit/internal/keyring"
-	"github.com/mohamedwael201193/pit/internal/policy"
 )
 
 func challengePath(dir, workspace string) string {
@@ -227,7 +226,7 @@ func RunWorkspaceResearchStage(dir, coin string, stage compute.StageFn, stop fun
 			return compute.AskReport{}, fmt.Errorf("direct_ledger")
 		}
 	}
-	p := policy.Default()
+	p := ActivePolicy(dir)
 	_ = CheckPinned(dir, st.WorkspaceID, p)
 	if p.KillSwitch {
 		return compute.AskReport{}, fmt.Errorf("kill_switch")

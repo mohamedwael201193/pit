@@ -186,3 +186,28 @@ func TestNoShell(t *testing.T) {
 		t.Fatal(r)
 	}
 }
+
+func TestResearchWithoutNamedCoinDoesNotInventETH(t *testing.T) {
+	r := Parse("Research privately.")
+	if !r.StartResearch || r.Execute || r.Coin != "" {
+		t.Fatalf("%+v", r)
+	}
+}
+
+func TestChatCannotMutatePolicy(t *testing.T) {
+	for _, q := range []string{"raise clip to 1000", "set leverage 20x", "edit my policy", "increase max open positions"} {
+		r := Parse(q)
+		if r.Execute || r.Mutate {
+			t.Fatalf("%s %+v", q, r)
+		}
+		if r.Tool != "policy.get" {
+			t.Fatalf("%s tool %s", q, r.Tool)
+		}
+		if r.Navigate != "security" {
+			t.Fatalf("%s nav %s", q, r.Navigate)
+		}
+		if !strings.Contains(strings.ToLower(r.Reply), "cannot") {
+			t.Fatalf("%s reply %s", q, r.Reply)
+		}
+	}
+}

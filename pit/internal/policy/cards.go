@@ -26,6 +26,8 @@ func Cards(p Policy) []Card {
 		{Title: "Kill switch", Value: kill, Law: "YOU flip this. The model cannot."},
 		{Title: "Liquidity minimum", Value: fmt.Sprintf("%.2f USD", p.MinLiquidityUSD), Law: "Thin books are skipped."},
 		{Title: "Uncertainty maximum", Value: fmt.Sprintf("%.2f", p.MaxUncertainty), Law: "Vague theses do not trade."},
+		{Title: "Max open positions", Value: fmt.Sprintf("%d", p.MaxOpenPositions), Law: "A new order is refused while this ceiling is full. Existing positions are not flattened."},
+		{Title: "Consecutive loss limit", Value: fmt.Sprintf("%d", p.MaxConsecutiveLosses), Law: "A losing streak stops Guarded Autonomy. The model cannot raise this."},
 	}
 }
 

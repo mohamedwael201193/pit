@@ -11,7 +11,6 @@ import (
 	"github.com/mohamedwael201193/pit/internal/config"
 	"github.com/mohamedwael201193/pit/internal/engine"
 	"github.com/mohamedwael201193/pit/internal/hl"
-	"github.com/mohamedwael201193/pit/internal/policy"
 )
 
 func BindConnectionPreview(dir, coin string) (engine.Preview, string, error) {
@@ -31,8 +30,10 @@ func BindConnectionPreview(dir, coin string) (engine.Preview, string, error) {
 	if !linked {
 		return engine.Preview{}, "", fmt.Errorf("approveAgent_required")
 	}
-	p := policy.Default()
-	_ = CheckPinned(dir, st.WorkspaceID, p)
+	p := ActivePolicy(dir)
+	if err := CheckPinned(dir, st.WorkspaceID, p); err != nil {
+		return engine.Preview{}, "", err
+	}
 	want := strings.ToUpper(strings.TrimSpace(coin))
 	if want == "" {
 		want = "ETH"

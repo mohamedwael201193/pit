@@ -27,6 +27,8 @@ type PublicCoin struct {
 	PolicyFit    string   `json:"policyFit"`
 	RiskFlags    []string `json:"riskFlags,omitempty"`
 	Block        string   `json:"block,omitempty"`
+	ExecGate     string   `json:"execGate,omitempty"`
+	ExecWhy      string   `json:"execWhy,omitempty"`
 }
 
 type PublicView struct {
@@ -39,6 +41,8 @@ type PublicView struct {
 	Coins   []PublicCoin `json:"coins"`
 	Best    *PublicCoin  `json:"best,omitempty"`
 	BestWhy string       `json:"bestWhy,omitempty"`
+	ExecGate string      `json:"execGate,omitempty"`
+	ExecWhy  string      `json:"execWhy,omitempty"`
 	Source  string       `json:"source"`
 	Network string      `json:"network"`
 }

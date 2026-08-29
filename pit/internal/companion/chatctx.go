@@ -10,6 +10,7 @@ import (
 	"github.com/mohamedwael201193/pit/internal/config"
 	"github.com/mohamedwael201193/pit/internal/deskcmd"
 	"github.com/mohamedwael201193/pit/internal/hl"
+	"github.com/mohamedwael201193/pit/internal/policy"
 	"github.com/mohamedwael201193/pit/internal/session"
 	"github.com/mohamedwael201193/pit/internal/watch"
 )
@@ -40,7 +41,8 @@ func (h *Hub) decorateChat(parsed deskcmd.Result) deskcmd.Result {
 			parsed.Reply = live + " " + parsed.Reply
 		}
 	case "policy.get":
-		parsed.Reply = "Policy is pinned host law on this computer. Chat cannot raise clip, leverage, or permissions. Open Security to read the exact constraints."
+		parsed.Reply = h.replyPolicy()
+		parsed.Navigate = "security"
 	case "setup.guide":
 		parsed.Reply = h.replyDeskStatus() + " First-run setup walks wallet, network, Hyperliquid, session, Protect, private compute, then policy. Chat cannot AUTHORIZE."
 	case "mission.enable_required":
@@ -111,7 +113,7 @@ func (h *Hub) replyWatch(parsed deskcmd.Result) string {
 	if nerr != nil {
 		return "Wrong network. Markets stay unread."
 	}
-	cands, lerr := watch.LiveUniverse(hl.New(config.For(net)), watch.PolicyForWatch())
+	cands, lerr := watch.LiveUniverse(hl.New(config.For(net)), cli.ActivePolicy(h.Dir))
 	if lerr != nil {
 		return "Hyperliquid did not return a live book. Empty Markets is the honest state. No invented scores."
 	}
@@ -159,16 +161,16 @@ func (h *Hub) pickBestCoin() string {
 	}
 	net, nerr := config.ParseNetwork(netName)
 	if nerr != nil {
-		return "ETH"
+		return ""
 	}
-	cands, lerr := watch.Live(hl.New(config.For(net)), watch.PolicyForWatch())
+	cands, lerr := watch.LiveUniverse(hl.New(config.For(net)), cli.ActivePolicy(h.Dir))
 	if lerr != nil {
-		return "ETH"
+		return ""
 	}
 	if best, ok := watch.Best(cands); ok {
 		return best.Coin
 	}
-	return "ETH"
+	return ""
 }
 
 func (h *Hub) replyMissionEnable() string {
@@ -189,6 +191,19 @@ func (h *Hub) replyMissionStatus() string {
 	return fmt.Sprintf("Mode %s. Running %v. Best %s. Last action %s. Stop reason %s. Trades today %d. Chat cannot enable Guarded Autonomy.", m.Mode, m.Running, m.BestCoin, m.LastAction, m.LastStop, m.TradesToday)
 }
 
+func (h *Hub) replyPolicy() string {
+	p := cli.ActivePolicy(h.Dir)
+	open := h.openPositionCount()
+	avail := h.availableUSD()
+	block, why := policy.ExecWhy(open, avail, p)
+	gate := "Execution gate is clear."
+	if block != "" {
+		gate = "Execution blocked: " + strings.ReplaceAll(block, "_", " ") + ". " + why
+	}
+	return fmt.Sprintf("Host policy on this computer: max trade $%.0f, leverage 1x, assets %s, venue hyperliquid, max open %d, daily loss $%.0f, slippage %d bps, cooldown %ds, uncertainty %.2f, session TTL %ds. Chat cannot pin or mutate this. Open Security to edit and pin. %s",
+		p.MaxClipUSD, strings.Join(p.AllowedAssets, " "), p.MaxOpenPositions, p.DailyLossUSD, p.MaxSlippageBps, p.CooldownSeconds, p.MaxUncertainty, p.SessionTTLSeconds, gate)
+}
+
 func (h *Hub) replyPositions() string {
 	st, err := cli.Load(h.Dir)
 	if err != nil || strings.TrimSpace(st.Wallet) == "" {
@@ -200,7 +215,12 @@ func (h *Hub) replyPositions() string {
 	}
 	rows, acct, perr := hl.New(config.For(net)).Clearinghouse(st.Wallet)
 	if perr != nil {
-		return "Hyperliquid did not return clearinghouse state. Open Positions when the venue is reachable. PIT cannot withdraw."
+		return "Hyperliquid did not return clearinghouse state. Open Portfolio when the venue is reachable. PIT cannot withdraw."
+	}
+	av, _ := hl.New(config.For(net)).Account(st.Wallet)
+	spotNote := ""
+	if av.SpotUSDC > 0 {
+		spotNote = fmt.Sprintf(" Spot USDC %.4f.", av.SpotUSDC)
 	}
 	if len(rows) == 0 {
 		last := cli.LoadLastOrder(h.Dir)
@@ -208,7 +228,7 @@ func (h *Hub) replyPositions() string {
 		if s, ok := last["oid"].(string); ok && s != "" {
 			oid = " Last fill OID " + s + " is historical, not a new preview."
 		}
-		return "No open positions on the trading account. Equity " + acct.AccountValue + "." + oid
+		return "No open positions on the trading account. Equity " + acct.AccountValue + "." + spotNote + oid
 	}
 	parts := make([]string, 0, len(rows))
 	for _, p := range rows {
