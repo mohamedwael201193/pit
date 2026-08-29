@@ -57,8 +57,6 @@ export function nextFix(
       goLabel: "Open Security",
     };
   }
-  const teeOk =
-    Boolean(checks.find((c) => c.name === "tee" && c.ok)) || items.find((p) => p.id === "tee")?.state === "ok";
   if (!sessionAlive) {
     return {
       title: "Create a local session",
@@ -93,13 +91,26 @@ export function nextFix(
     };
   }
   const credit = checkNamed(checks, "direct_credit");
-  if (credit && !credit.ok && !teeOk) {
+  if (credit && !credit.ok) {
+    const unread = credit.detail.toLowerCase().includes("unread");
+    const sponsored = credit.detail.toLowerCase().includes("sponsor");
+    if (!unread && !sponsored) {
+      return {
+        title: "Fund private research",
+        why: "Sealed research is billed as 0G provider credit on this wallet. That is not Hyperliquid buying power and not PIT infrastructure.",
+        fix: "Open 0G Direct funds in Advanced mode with the same wallet. PIT only asks because this ledger is short.",
+        href: LINKS.pcAdvanced,
+        hrefLabel: "Open 0G Direct funds",
+      };
+    }
     return {
-      title: "Fund private research",
-      why: "0G Direct bills the wallet inside the sealed-path token. That is provider credit, not a Hyperliquid balance. Three sealed roles need about 3 0G locked.",
-      fix: "Open pc.0g.ai Advanced funds with the same wallet.",
-      href: LINKS.pcAdvanced,
-      hrefLabel: "Open 0G compute",
+      title: "Check private compute again",
+      why: unread
+        ? "The provider ledger was unread. That is not a zero balance and not a reason to visit a generic dashboard."
+        : "PIT can sponsor sealed research within the daily workspace cap.",
+      fix: "Use Check again on Security. Protect stays on this computer.",
+      go: "security",
+      goLabel: "Check again",
     };
   }
   const tee = items.find((p) => p.id === "tee");

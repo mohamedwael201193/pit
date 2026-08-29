@@ -107,6 +107,7 @@ func (h *Hub) Handler() http.Handler {
 	mux.HandleFunc("/status", h.status)
 	mux.HandleFunc("/local/status", h.localStatus)
 	mux.HandleFunc("/local/code", h.localCode)
+	mux.HandleFunc("/local/code/rotate", h.localCodeRotate)
 	mux.HandleFunc("/local/doctor", h.localDoctor)
 	mux.HandleFunc("/local/init", h.localInit)
 	mux.HandleFunc("/local/session", h.localSession)
@@ -289,15 +290,31 @@ func (h *Hub) localStatus(w http.ResponseWriter, r *http.Request) {
 				body["agentName"] = name
 			}
 		}
-		if last := cli.LoadLastOrder(h.Dir); last != nil {
-			body["lastOrder"] = last
-		}
 	}
 	ms := auto.LoadMission(h.Dir)
 	body["mode"] = ms.Mode
 	body["missionRunning"] = ms.Running && ms.Mode != auto.ModeManual
 	body["missionStop"] = ms.LastStop
+	h.mu.Lock()
+	paired := len(h.devices)
+	codeExp := h.codeExp
+	h.mu.Unlock()
+	body["paired"] = paired > 0
+	body["pairingDevices"] = paired
+	if !codeExp.IsZero() {
+		body["pairingExpires"] = codeExp.UTC().Format(time.RFC3339)
+	}
+	if last := cli.LoadLastOrder(h.Dir); last != nil {
+		body["lastOrder"] = last
+	}
 	writeLocal(w, http.StatusOK, body)
+}
+
+func (h *Hub) pairingPublic() (code string, exp time.Time, devices int) {
+	code, exp = h.Code()
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	return code, exp, len(h.devices)
 }
 
 func (h *Hub) localCode(w http.ResponseWriter, r *http.Request) {
@@ -309,10 +326,39 @@ func (h *Hub) localCode(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "origin_denied", http.StatusForbidden)
 		return
 	}
-	code, exp := h.Code()
+	code, exp, n := h.pairingPublic()
+	writeLocal(w, http.StatusOK, map[string]any{
+		"code":     code,
+		"expires":  exp.UTC().Format(time.RFC3339),
+		"paired":   n > 0,
+		"devices":  n,
+		"desktop":  true,
+		"browser":  n > 0,
+		"sign":     false,
+		"trade":    false,
+	})
+}
+
+func (h *Hub) localCodeRotate(w http.ResponseWriter, r *http.Request) {
+	if !desktopOnly(w, r) {
+		return
+	}
+	if r.Method != http.MethodPost {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+	h.mu.Lock()
+	h.rotateLocked(time.Now())
+	code := h.code
+	exp := h.codeExp
+	n := len(h.devices)
+	h.mu.Unlock()
 	writeLocal(w, http.StatusOK, map[string]any{
 		"code":    code,
 		"expires": exp.UTC().Format(time.RFC3339),
+		"paired":  n > 0,
+		"devices": n,
+		"rotated": true,
 		"sign":    false,
 		"trade":   false,
 	})

@@ -215,6 +215,11 @@ export function ProofTimeline() {
                   ) : (
                     <span className="fine">{row.duplicate ? "bytes already stored" : "no transaction recorded"}</span>
                   )}
+                  {row.job_id ? (
+                    <button type="button" className="linkish" onClick={() => void navigator.clipboard.writeText(String(row.job_id))}>
+                      Copy job
+                    </button>
+                  ) : null}
                   <button
                     type="button"
                     className="proof-verify"

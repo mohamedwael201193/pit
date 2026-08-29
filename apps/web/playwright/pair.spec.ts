@@ -12,6 +12,6 @@ test("pair page never asks for a seed or authorize", async ({ page }) => {
     "href",
     "https://github.com/mohamedwael201193/pit/releases/latest",
   );
-  await expect(page.getByRole("link", { name: "Open PIT Desktop" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Open PIT Desktop" })).toBeVisible();
   await expect(page.getByLabel("pairing code")).toBeVisible();
 });

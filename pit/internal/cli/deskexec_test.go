@@ -20,3 +20,16 @@ func TestExecuteDeskOrderNeedsPreview(t *testing.T) {
 		t.Fatalf("%+v", got)
 	}
 }
+
+func TestReconcileLastOrderDoesNotInventFill(t *testing.T) {
+	dir := t.TempDir()
+	saveLastOrder(dir, map[string]any{
+		"ok": true, "posted": true, "oid": "1", "status": "submitted", "lifecycle": "submitted",
+		"sign": false, "trade": false,
+	})
+	ReconcileLastOrder(dir)
+	last := LoadLastOrder(dir)
+	if last["lifecycle"] == "filled" || last["status"] == "filled" {
+		t.Fatalf("invented fill %+v", last)
+	}
+}

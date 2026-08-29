@@ -95,14 +95,40 @@ function EventIds({ ev }: { ev: EventRow }) {
   return (
     <span className="timeline-ids">
       {ev.job_id ? <span title={ev.job_id}>job {short(ev.job_id, 8)}</span> : null}
-      {ev.oid ? <span title={ev.oid}>OID {ev.oid}</span> : null}
-      {ev.preview_hash ? <span title={ev.preview_hash}>preview {short(ev.preview_hash)}</span> : null}
-      {ev.root ? <span title={ev.root}>root {short(ev.root)}</span> : null}
-      {ev.digest ? <span title={ev.digest}>digest {short(ev.digest)}</span> : null}
-      {ev.tx && !ev.tx_link ? <span title={ev.tx}>tx {short(ev.tx)}</span> : null}
-      {href ? (
-        <ExternalLink href={href}>{ev.tx_link ? "chain tx" : "open"}</ExternalLink>
+      {ev.oid ? (
+        <span title={ev.oid}>
+          OID {ev.oid}{" "}
+          <button type="button" className="linkish" onClick={() => void navigator.clipboard.writeText(String(ev.oid))}>
+            Copy
+          </button>
+        </span>
       ) : null}
+      {ev.preview_hash ? <span title={ev.preview_hash}>preview {short(ev.preview_hash)}</span> : null}
+      {ev.root ? (
+        <span title={ev.root}>
+          root {short(ev.root)}{" "}
+          <button type="button" className="linkish" onClick={() => void navigator.clipboard.writeText(String(ev.root))}>
+            Copy
+          </button>
+        </span>
+      ) : null}
+      {ev.digest ? (
+        <span title={ev.digest}>
+          digest {short(ev.digest)}{" "}
+          <button type="button" className="linkish" onClick={() => void navigator.clipboard.writeText(String(ev.digest))}>
+            Copy
+          </button>
+        </span>
+      ) : null}
+      {ev.tx && !ev.tx_link ? (
+        <span title={ev.tx}>
+          tx {short(ev.tx)}{" "}
+          <button type="button" className="linkish" onClick={() => void navigator.clipboard.writeText(String(ev.tx))}>
+            Copy
+          </button>
+        </span>
+      ) : null}
+      {href ? <ExternalLink href={href}>{ev.tx_link ? "Open explorer" : "Open"}</ExternalLink> : null}
     </span>
   );
 }

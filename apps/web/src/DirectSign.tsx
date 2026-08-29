@@ -118,8 +118,8 @@ export function DirectSign() {
     <div className="mt-6 max-w-[46ch]">
       <p className="text-[1.0625rem] leading-7 text-[rgb(240_231_212/0.78)]">
         Protect my strategy lets PIT obtain the wallet-signed authorization needed to use private Direct compute on this
-        computer. This signature lasts 24 hours. It cannot withdraw. It cannot place a Hyperliquid order. Direct
-        credit lives at pc.0g.ai — switch to Advanced. That is provider credit, not a Hyperliquid balance.
+        computer. This signature lasts 24 hours. It cannot withdraw. It cannot place a Hyperliquid order. PIT then checks
+        Direct eligibility on this computer. Provider credit is not Hyperliquid buying power.
       </p>
       <button
         type="button"
@@ -134,14 +134,18 @@ export function DirectSign() {
           <p className="text-[0.975rem] font-semibold text-[#f0e7d4]">PRIVATE RESEARCH PROTECTED</p>
           <p className="mt-2 text-[0.975rem] text-[#f0e7d4]">{msg}</p>
           <p className="mt-2 text-[0.975rem] leading-6 text-[rgb(240_231_212/0.75)]">
-            This browser never received your private token. Next: open PIT Desktop, then Connect Hyperliquid.
+            This browser never received your private token. Next: open PIT Desktop. PIT checks Direct eligibility
+            automatically. You are only asked to fund provider credit if that ledger is actually short.
           </p>
-          <a
+          <button
+            type="button"
             className="mt-4 inline-block rounded-full border border-[rgb(240_231_212/0.35)] px-6 py-3 font-semibold text-[#f0e7d4]"
-            href="http://127.0.0.1:17373/health"
+            onClick={() => {
+              void fetch("http://127.0.0.1:17373/health").catch(() => undefined);
+            }}
           >
-            Open PIT Desktop
-          </a>
+            Check desktop
+          </button>
         </div>
       ) : null}
       {err ? (

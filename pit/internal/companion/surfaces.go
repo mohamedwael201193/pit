@@ -279,7 +279,8 @@ func (h *Hub) localSecurity(w http.ResponseWriter, r *http.Request) {
 		"domains": []map[string]any{
 			securityDomain("wallet", named["wallet"], "Connect wallet", "Open pairing"),
 			{"id": "workspace", "state": "READY", "why": "This computer’s workspace is isolated by wallet.", "means": "Another wallet cannot read this session.", "do": "", "href": "", "hrefLabel": ""},
-			{"id": "compute", "state": map[bool]string{true: "READY", false: "ACTION REQUIRED"}[named["direct_auth"].OK], "why": named["direct_auth"].Detail, "means": "Sealed research needs Protect my strategy and Direct funds.", "do": "Protect my strategy, then Open 0G Private Compute", "href": "https://pc.0g.ai/sdk/dashboard/funds", "hrefLabel": "Open 0G Private Compute"},
+			directDomain(named["direct_auth"], named["direct_credit"]),
+			{"id": "compute", "state": map[bool]string{true: "READY", false: "ACTION REQUIRED"}[named["direct_credit"].OK], "why": named["direct_credit"].Detail, "means": "User-owned 0G provider credit is not Hyperliquid buying power and is not PIT infrastructure.", "do": computeDo(named["direct_auth"], named["direct_credit"]), "href": computeHref(named["direct_auth"], named["direct_credit"]), "hrefLabel": computeHrefLabel(named["direct_auth"], named["direct_credit"])},
 			{"id": "tee", "state": teeState, "why": teeWhy, "means": "VerifyE2EE must match the on-chain signer after a committee.", "do": "Run sealed research when compute is ready", "href": "", "hrefLabel": ""},
 			securityDomain("storage", named["storage"], "Install official storage client", "Open documentation"),
 			{"id": "chain", "state": map[bool]string{true: "READY", false: "UNAVAILABLE"}[chain.OK], "why": chain.Detail, "means": "0G Chain is required to anchor receipts.", "do": "Check 0G RPC", "href": "https://chainscan.0g.ai", "hrefLabel": "Open 0G explorer"},
@@ -289,22 +290,69 @@ func (h *Hub) localSecurity(w http.ResponseWriter, r *http.Request) {
 			securityDomain("policy", named["policy"], "Pin policy", "Open Policy"),
 			{"id": "execution", "state": execState, "why": execWhy, "means": "Host sizes from real available margin. Spot is not silently treated as perp margin.", "do": "Fund perp margin or enable unified account on Hyperliquid", "href": "https://app.hyperliquid.xyz", "hrefLabel": "Open Hyperliquid"},
 			{"id": "kill", "state": killState, "why": killWhy, "means": "YOU flip this. The model cannot.", "do": "Toggle kill on Security", "href": "", "hrefLabel": ""},
-			{"id": "identity", "state": "READY", "why": "Desk identity is optional. Transfer of Agentic ID is not live on mainnet.", "means": "Trading does not wait on mint.", "do": "None required", "href": "", "hrefLabel": ""},
+			{"id": "identity", "state": "OPTIONAL", "why": "Desk identity is optional. Transfer of Agentic ID is not live on mainnet.", "means": "Trading does not wait on mint.", "do": "None required", "href": "", "hrefLabel": ""},
 		},
 		"sign": false, "trade": false, "version": version.Number,
 	})
 }
 
 func securityDomain(id string, c cli.Check, do, hrefLabel string) map[string]any {
-	state := "NEEDS ACTION"
+	state := "ACTION REQUIRED"
 	if c.Name == "" {
-		state = "NEEDS ACTION"
+		state = "ACTION REQUIRED"
 	} else if c.OK {
 		state = "READY"
 	}
 	return map[string]any{
 		"id": id, "state": state, "why": c.Detail, "means": do, "do": do, "hrefLabel": hrefLabel,
 	}
+}
+
+func directDomain(auth, credit cli.Check) map[string]any {
+	if !auth.OK {
+		return map[string]any{
+			"id": "direct", "state": "ACTION REQUIRED", "why": auth.Detail,
+			"means": "A 24-hour wallet signature on the paired browser. This is not a funding dashboard and not trading capital.",
+			"do": "Protect my strategy", "href": "https://pit0g.vercel.app/app", "hrefLabel": "Protect my strategy",
+		}
+	}
+	return map[string]any{
+		"id": "direct", "state": "READY", "why": auth.Detail,
+		"means": "Sealed-path token is on this computer. Trading credentials stay separate.",
+		"do": "", "href": "", "hrefLabel": "",
+	}
+}
+
+func computeDo(auth, credit cli.Check) string {
+	if !auth.OK {
+		return "Protect my strategy first. Funding is not the next step."
+	}
+	if credit.OK {
+		return ""
+	}
+	low := strings.ToLower(credit.Detail)
+	if strings.Contains(low, "unread") {
+		return "Check again. Unread is not zero."
+	}
+	return "Fund Direct provider credit for this wallet only if the ledger shows it is short."
+}
+
+func computeHref(auth, credit cli.Check) string {
+	if !auth.OK || credit.OK {
+		return ""
+	}
+	low := strings.ToLower(credit.Detail)
+	if strings.Contains(low, "unread") || strings.Contains(low, "sponsor") {
+		return ""
+	}
+	return "https://pc.0g.ai/sdk/dashboard/funds"
+}
+
+func computeHrefLabel(auth, credit cli.Check) string {
+	if computeHref(auth, credit) == "" {
+		return ""
+	}
+	return "Open 0G Direct funds (Advanced)"
 }
 
 func (h *Hub) localIdentity(w http.ResponseWriter, r *http.Request) {
@@ -447,7 +495,23 @@ func (h *Hub) localModels(w http.ResponseWriter, r *http.Request) {
 			Model string `json:"model"`
 		}
 		_ = json.NewDecoder(r.Body).Decode(&body)
-		if err := saveChatModel(h.Dir, body.Model); err != nil {
+		picked := strings.TrimSpace(body.Model)
+		net := config.Mainnet
+		if st, err := cli.Load(h.Dir); err == nil && strings.TrimSpace(st.Network) != "" {
+			if n, nerr := config.ParseNetwork(st.Network); nerr == nil {
+				net = n
+			}
+		}
+		ok, why := compute.CatalogUsableForChat(picked, net)
+		if !ok {
+			_ = saveChatModel(h.Dir, "host-parsed")
+			writeLocal(w, http.StatusOK, map[string]any{
+				"ok": false, "picked": "host-parsed", "error": "catalog_listing_not_inference",
+				"why": why, "sign": false, "trade": false,
+			})
+			return
+		}
+		if err := saveChatModel(h.Dir, picked); err != nil {
 			writeBindErr(w, err)
 			return
 		}
@@ -471,6 +535,11 @@ func (h *Hub) localModels(w http.ResponseWriter, r *http.Request) {
 	if nerr != nil {
 		writeLocal(w, http.StatusOK, map[string]any{"ok": false, "error": TermWrongNetwork, "models": []any{}, "sign": false, "trade": false})
 		return
+	}
+	if picked := loadChatModel(h.Dir); picked != "" {
+		if ok, _ := compute.CatalogUsableForChat(picked, net); !ok {
+			_ = saveChatModel(h.Dir, "host-parsed")
+		}
 	}
 	sku := compute.ForNetwork(net)
 	label := "Private + Unverified"

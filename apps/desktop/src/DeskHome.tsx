@@ -1,8 +1,7 @@
 import { BrandMark } from "./BrandMark";
 import { EvidenceStrip } from "./EvidenceStrip";
-import { LINKS } from "./links";
+import { PairingDock } from "./PairingDock";
 import { ExternalLink } from "./ExternalLink";
-import { prettyCode } from "./companion";
 import { compactNum } from "./format";
 import type { NextFix } from "./nextFix";
 import type { Probe } from "./readiness";
@@ -42,6 +41,10 @@ export function DeskHome({
   researchStage,
   researchKind,
   awaitingAuth,
+  expires,
+  paired,
+  pairingDevices,
+  onRotatePair,
   coins,
   lastEvent,
   mode,
@@ -64,6 +67,10 @@ export function DeskHome({
   researchStage?: string;
   researchKind?: string;
   awaitingAuth?: boolean;
+  expires?: string;
+  paired?: boolean;
+  pairingDevices?: number;
+  onRotatePair?: () => void;
   coins: Coin[];
   lastEvent?: string;
   mode?: string;
@@ -71,11 +78,13 @@ export function DeskHome({
   onResearch: (coin: string) => void;
   onGo: (view: "markets" | "research" | "security" | "chat" | "automation" | "portfolio" | "activity") => void;
 }) {
-  const showPair = items.find((p) => p.id === "wallet")?.state !== "ok";
+  const showPair = true;
   const best =
     coins.find((c) => c.previewReady) ||
     coins.find((c) => c.executionFeasible) ||
     coins.find((c) => c.eligible);
+  const liveBook = Boolean(coins.find((c) => c.executionFeasible) || coins.find((c) => c.previewReady));
+  const sealedNow = Boolean(researchBusy);
   const modeLabel = mode === "guarded" ? "Guarded Autonomy" : mode === "research_only" ? "Research Only" : "Manual";
   return (
     <main className="page dense desk-home">
@@ -112,12 +121,12 @@ export function DeskHome({
             5. Pin policy
           </button>
         </li>
-        <li className={best ? "on" : ""}>
+        <li className={liveBook ? "on" : ""}>
           <button type="button" className="linkish" onClick={() => onGo("markets")}>
             6. Live opportunities
           </button>
         </li>
-        <li className={researchBusy || researchKind ? "on" : ""}>
+        <li className={sealedNow ? "on" : ""}>
           <button type="button" className="linkish" onClick={() => (best ? onResearch(best.coin) : onGo("research"))}>
             7. Sealed research
           </button>
@@ -219,7 +228,7 @@ export function DeskHome({
               <span className="fine" style={{ margin: 0 }}>
                 {best.why || best.trend || "In policy universe."}
               </span>
-              <button type="button" className="primary" disabled={researchBusy || !computeReady} onClick={() => onResearch(best.coin)}>
+              <button type="button" className="primary" disabled={researchBusy || !protectedOk || !computeReady} onClick={() => onResearch(best.coin)}>
                 Research privately
               </button>
             </li>
@@ -231,20 +240,14 @@ export function DeskHome({
       <EvidenceStrip onOpen={() => onGo("activity")} />
       {lastEvent ? <p className="fine">Recently: {lastEvent}</p> : null}
       {showPair ? (
-        <section className="next-row">
-          <div>
-            <p className="label">Pair this computer</p>
-            <p className="pair-chip" aria-label="pairing code">
-              {code ? prettyCode(code) : companionUp ? "rotating…" : "waiting for local PIT"}
-            </p>
-            <p className="fine" style={{ margin: 0 }}>
-              The website never receives a session key.
-            </p>
-          </div>
-          <ExternalLink className="primary" href={LINKS.pair}>
-            Open pairing
-          </ExternalLink>
-        </section>
+        <PairingDock
+          code={code}
+          expires={expires}
+          companionUp={companionUp}
+          paired={paired}
+          devices={pairingDevices}
+          onRotate={onRotatePair}
+        />
       ) : null}
     </main>
   );

@@ -208,9 +208,9 @@ func checkDirectCredit(dir string) Check {
 		if teeOK {
 			return Check{Name: "direct_credit", OK: true, Detail: "last committee verified. Provider ledger unread this pass — not treated as 0 0G."}
 		}
-		detail := "could not read the provider ledger. Open pc.0g.ai Advanced. This is unread, not zero."
+		detail := "Provider ledger unread this pass. Check again. Unread is not zero and is not a reason to fund."
 		if probe.Err != "" {
-			detail = "could not read the provider ledger (" + probe.Err + "). Open pc.0g.ai Advanced. This is unread, not zero."
+			detail = "Provider ledger unread (" + probe.Err + "). Check again. Unread is not zero."
 		}
 		return Check{Name: "direct_credit", Detail: detail}
 	}
@@ -220,7 +220,7 @@ func checkDirectCredit(dir string) Check {
 	if _, err := compute.LoadSponsorAuthFile(); err == nil {
 		return Check{Name: "direct_credit", OK: true, Detail: "Private research balance " + probe.BalanceOG() + " 0G. PIT can sponsor sealed research within a daily workspace cap."}
 	}
-	return Check{Name: "direct_credit", Detail: "Add private compute credit. Balance " + probe.BalanceOG() + " 0G. Three sealed roles need about 3 0G locked. Open pc.0g.ai Advanced with this wallet."}
+	return Check{Name: "direct_credit", Detail: "This wallet needs Direct provider credit for sealed research. Balance " + probe.BalanceOG() + " 0G. Three sealed roles lock about 3 0G. PIT does not send you to a generic dashboard unless this exact account is short."}
 }
 
 func checkTee(dir string) Check {

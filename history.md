@@ -1912,3 +1912,43 @@ CLASSIFICATION:
 - Full in-window click of every CTA: **PARTIAL** (copy harness + live probes)
 PRODUCTION READY: Installed 0.5.0 is production-ready for live scan, capital-honest ranking, host skills, catalog listing, evidence, and fail-closed AUTHORIZE. It is **not** production-ready for a new MAINNET clip until YOU pin matching host law, sign Protect if Direct is expired, and the venue has >= $10 available. Do not remint. Do not flatten from chat.
 NEXT STEP: On Security, preview then pin host law. Sign Protect my strategy if Direct is missing. Fund unified collateral above $10 if you want a clip. Anyone can check `pit evidence verify --root 0x9c65f36076cf2ee32c7e9a02354d1aef9ccf5f6c83289dba160b8c08710424d2`.
+
+---
+
+## M94 — Demo-ready pairing, honest setup, opportunity terminal 0.6.0 (2026-08-29)
+
+DATE/TIME: 2026-08-29 20:50+03
+PHASE: Finish PIT as a world-class private trading desktop. Two Grok 4.6 auditors plus live Chrome/repo inspection. Do not flatten. Do not remint. Do not invent fills, TEE, or 0G proofs. Never send the private book to Router.
+GOAL: Honest header and golden path; pairing code/expiry/regenerate/connected; Direct vs compute vs trading capital; catalog listing never inference; Markets as “what can I trade NOW”; execution lifecycle fail-closed; Activity/proof buttons; tests; overlay; push; Vercel+Render.
+
+RESULT:
+- **IMPLEMENTED:** Version **0.6.0**. Sidecar, desktop, companion `/health`, and `pit version` all **0.6.0**.
+  1. Header no longer says Awaiting AUTHORIZE unless a live eligible preview exists, policy is pinned, and the session is alive. Golden-path steps 6–8 are not all green from a stale research kind or a policy-PASS book.
+  2. Pairing dock on Desk and Security: code, expiry, regenerate, desktop connected, browser paired/unpaired. `/local/code/rotate` is desktop-only. Web `/pair` no longer navigates to companion JSON. Open PIT Desktop probes loopback and stays on the pairing page. Success deep-links to Protect.
+  3. 0G Direct (Protect signature) is split from 0G compute (provider credit) and Hyperliquid buying power. Direct CTA is Protect my strategy, not a generic pc.0g.ai dashboard. Fund link appears only when the ledger is actually short. Unread is not zero.
+  4. Security rows: READY / ACTION REQUIRED / BLOCKED / OPTIONAL with one next action and Check again. Identity is OPTIONAL.
+  5. Catalog SKUs cannot be saved as a chat inference path. GET resets a previously remembered catalog pick to host-parsed. Private book stays Direct TeeML.
+  6. Markets title answers “what can I trade now”. Layers RESEARCH / POLICY / EXECUTION / PREVIEW / BLOCKED. Default filter prefers executable books when any exist. Zero executable states the real venue minimum.
+  7. After AUTHORIZE, empty OID is failed, not complete. Venue reconcile uses open orders + user fills and never invents a fill from absence. last-order carries lifecycle.
+  8. Activity IDs copy; proofs keep Open explorer / Verify on 0G / copy root, digest, tx, job.
+- **TESTED:** `go test ./...` PIT all packages ok. sealer PASS. Desktop `npx tsc -b` green. Web `tsc -b` green. Playwright 4/4. `cargo test` allow_official_https pass. `npx tauri build` NSIS. `go test -race` needs cgo UNVERIFIED.
+- **LIVE VERIFIED (overlay D:\PIT):**
+  - Companion `/health` 0.6.0 `sign:false trade:false`. CLI `PIT 0.6.0`.
+  - Wallet `0xbdfcee82bd42fefa58ee850b3709636a8b6b0034`. Agent **PIT-4bbee556** / `0xfc64e36babe7dfe9eb779ee3a9f2362d16881d52` until 2027-02-24. Session live. Kill off. Last fill OID **529167222216** remains historical. Not reminted. Not flattened.
+  - Direct token in keychain after restart warmup. Credit 4.3946 0G. TEE 3 roles VerifyE2EE OK. Policy pin still mismatches host law — fail-closed.
+  - Watch: BTC best, layer execution-blocked, buying power $4.581269, execGate insufficient_margin. Official catalog 31, `private_book` false on catalog rows.
+  - DEMO `mode=live live=true`. Pairing code present on desktop; devices 0 until the browser pairs again after restart (in-memory devices).
+- **BLOCKED:** New MAINNET clip: venue buying power $4.58 < $10 AND pin hash mismatch. TESTNET execution UNVERIFIED. Authenticode unavailable. Chat remains host-parsed. No new OID/fill this pass.
+
+SECURITY RESULT: Chat cannot AUTHORIZE, size, or pin. Catalog listing is not an inference path. Leverage stays 1x. Withdraw/transfer remain impossible. Kill off. Agent not reminted. No flatten. No invented balances or fills.
+TX HASH / OID: BTC evidence `0xf3d7bc820154ab18198c2b26ce4f3df6748aa65f3b8b07a7336de4a1c202d65a`. ETH evidence `0x3f90c548a8f9bc04638f459cc9daba37423f04801568457191f2e04fb4090b80`. Historical Hyperliquid fill OID `529167222216` unchanged. No new order this pass.
+INSTALLER: `PIT_0.6.0_x64-setup.exe` size 17142609 SHA256 `4D180E2F9F15A8B633A6B1F0A75A2BBF28B0D9AEC78C0BBC8F773F104B7B921F`. Overlay `D:\PIT\pit.exe` SHA256 `EC8142DB35F80DB8D110E5D84F74CD3FE3EBEBEB8BEAFC8AF4A6126F2AFD6EA1` + `D:\PIT\pit-desktop.exe` SHA256 `09FDE82AD29DDC713D894641D6330106281EAAA000CD7A5714414276FADF3122` + `D:\PIT\pit-sealer.exe` SHA256 `60ECA55DB57A22EB67C557A437075C6418EE2DD65C1AF2932DE921792DB480A8`. Companion `/health` **0.6.0**, CLI `pit version` **PIT 0.6.0**.
+CLASSIFICATION:
+- Honest header / golden path / Direct vs compute CTAs: **IMPLEMENTED + LIVE VERIFIED**
+- Pairing restore (code/expiry/regenerate/connected, web not stranded): **IMPLEMENTED + AUTOMATED TESTED**; live paired-browser after restart **UNVERIFIED** (devices in memory)
+- Markets opportunity terminal: **IMPLEMENTED + LIVE VERIFIED** (0 executable, honest blocker)
+- Catalog listing never inference: **IMPLEMENTED + AUTOMATED TESTED**
+- Execution lifecycle + no invented fill: **IMPLEMENTED + AUTOMATED TESTED**; live new clip **BLOCKED BY USER/VENUE**
+- Real tiny live execution: **BLOCKED BY USER/VENUE** (margin + pin)
+PRODUCTION READY: Installed 0.6.0 is production-ready for live scan, honest setup, pairing, capital-aware ranking, catalog honesty, evidence, and fail-closed AUTHORIZE. It is **not** production-ready for a new MAINNET clip until YOU pin matching host law and the venue has >= $10 available. Do not remint. Do not flatten from chat.
+NEXT STEP: On Security, preview then pin host law. Pair the browser if you need a new Protect signature. Fund unified collateral above $10 if you want a clip. Anyone can check `pit evidence verify --root 0x9c65f36076cf2ee32c7e9a02354d1aef9ccf5f6c83289dba160b8c08710424d2`.

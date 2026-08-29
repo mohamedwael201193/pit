@@ -16,12 +16,19 @@ export type LocalStatus = {
   mode?: string;
   missionRunning?: boolean;
   missionStop?: string;
-  lastOrder?: { oid?: string; cloid?: string; hash?: string; market?: string; side?: string; sz?: number; status?: string; posted?: boolean; cancelled?: boolean; venue?: string };
+  paired?: boolean;
+  pairingDevices?: number;
+  pairingExpires?: string;
+  lastOrder?: { oid?: string; cloid?: string; hash?: string; market?: string; side?: string; sz?: number; status?: string; posted?: boolean; cancelled?: boolean; venue?: string; lifecycle?: string };
 };
 
 export type PairCode = {
   code?: string;
   expires?: string;
+  paired?: boolean;
+  devices?: number;
+  desktop?: boolean;
+  browser?: boolean;
   sign?: boolean;
   trade?: boolean;
 };
@@ -175,6 +182,16 @@ export async function pairCode(): Promise<PairCode | null> {
   const native = rejectSecrets(await nativeJson<PairCode>("local_code"));
   if (native) return native;
   return rejectSecrets(await fetchJson<PairCode>("/local/code"));
+}
+
+export async function rotatePairCode(): Promise<PairCode | null> {
+  return rejectSecrets(
+    await fetchJson<PairCode>("/local/code/rotate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: "{}",
+    }),
+  );
 }
 
 export async function doctor(): Promise<DoctorCheck[]> {

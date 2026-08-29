@@ -62,9 +62,11 @@ export function ComputeCard({
         <ExternalLink className={protectedOk ? "linkish" : "primary"} href={LINKS.app}>
           Protect my strategy
         </ExternalLink>
-        <ExternalLink className="linkish" href={LINKS.pcAdvanced}>
-          Open 0G Private Compute
-        </ExternalLink>
+        {protectedOk && !ready && !sponsor && !(credit?.detail || "").toLowerCase().includes("unread") ? (
+          <ExternalLink className="linkish" href={LINKS.pcAdvanced}>
+            Open 0G Direct funds
+          </ExternalLink>
+        ) : null}
         <button type="button" className="linkish" onClick={onCheck}>
           Check again
         </button>

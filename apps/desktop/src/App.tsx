@@ -24,13 +24,13 @@ import {
   localStatus,
   mutateChatThread,
   pairCode,
+  rotatePairCode,
   pinLocalPolicy,
   fetchPolicy,
   previewPolicy,
   fetchDemo,
   setDemoMode,
   postMission,
-  prettyCode,
   researchEvidence,
   researchStatus,
   revokeLocalSession,
@@ -367,7 +367,7 @@ export function App() {
             statusBusy = false;
           });
       }
-      if (!researchBusyRef.current && !codeBusy && !walletBoundRef.current) {
+      if (!researchBusyRef.current && !codeBusy) {
         codeBusy = true;
         pairCode()
           .then((p) => {
@@ -574,18 +574,23 @@ export function App() {
     [checks, status, companionUp, researchRoles],
   );
   const eligible = coins.filter((c) => c.eligible);
-  const walletCheck = checks.find((c) => c.name === "wallet");
   const attention = nextFix(companionUp, status, checks, items, sessionAlive, net);
   const showChat = view === "chat";
+  const protectedOk = Boolean(checks.find((c) => c.name === "direct_auth")?.ok);
+  const computeReady = Boolean(checks.find((c) => c.name === "direct_credit")?.ok);
+  const researchAllowed = protectedOk && computeReady;
+  const awaitingAuth = Boolean(preview?.eligible && pinned && sessionAlive && !researchBusy);
   const doing = researchBusy
     ? `Researching ${researchCoin}`
-    : preview?.eligible
+    : awaitingAuth
       ? "Awaiting AUTHORIZE"
       : mission.status === "ACTIVE" || status?.missionRunning || mission.running
         ? mission.mode === "guarded"
           ? "Guarded Autonomy live"
           : `Mission ${status?.mode || mission.mode}`
-        : "Idle";
+        : attention.title === "Desk is ready"
+          ? "Idle"
+          : attention.title;
 
   function finishSetup() {
     try {
@@ -616,6 +621,12 @@ export function App() {
 
   async function onCheck() {
     setChecks(await doctor());
+  }
+
+  async function onRotatePair() {
+    const p = await rotatePairCode();
+    if (p?.code) setCode(p.code);
+    if (p?.expires) setExpires(p.expires);
   }
 
   async function onSession() {
@@ -896,6 +907,7 @@ export function App() {
           { id: "ws", label: "loading secure workspace", state: companionUp ? "ok" : "wait" },
           { id: "companion", label: "starting companion", state: companionUp ? "ok" : ticks >= 8 ? "fail" : "wait" },
           { id: "wallet", label: "checking wallet binding", state: items.find((p) => p.id === "wallet")?.state === "ok" ? "ok" : "wait" },
+          { id: "protect", label: "checking Protect signature", state: checks.find((c) => c.name === "direct_auth")?.ok ? "ok" : "wait" },
           { id: "compute", label: "checking private compute", state: checks.find((c) => c.name === "direct_credit")?.ok ? "ok" : "wait" },
           { id: "policy", label: "checking policy", state: pinned ? "ok" : "wait" },
           { id: "session", label: "checking trading session", state: sessionAlive ? "ok" : "wait" },
@@ -988,9 +1000,6 @@ export function App() {
               <span className={demoReplay ? "chip fail" : "chip ok"}>{demoReplay ? "REPLAY" : "LIVE"}</span>
             </div>
             <NetworkToggle net={net} onChange={setNet} />
-            {walletCheck?.ok ? null : (
-              <p className="pair-chip">{code ? prettyCode(code) : companionUp ? "code rotating" : "starting companion"}</p>
-            )}
           </div>
         </header>
         {companionUp && status?.version && String(status.version) !== DESKTOP_VERSION ? (
@@ -1083,7 +1092,7 @@ export function App() {
                 coin: mission.mission?.best_coin || researchCoin,
                 stage: mission.stage || (researchBusy ? researchStage : ""),
                 gate: mission.block_reason,
-                awaiting: Boolean(preview?.eligible),
+                awaiting: awaitingAuth,
                 running: Boolean(mission.running || mission.mission?.running),
               }}
               island={{
@@ -1110,14 +1119,18 @@ export function App() {
               code={code}
               companionUp={companionUp}
               sessionAlive={sessionAlive}
-              computeReady={Boolean(checks.find((c) => c.name === "direct_credit")?.ok)}
-              protectedOk={Boolean(checks.find((c) => c.name === "direct_auth")?.ok)}
+              computeReady={computeReady}
+              protectedOk={protectedOk}
               policyPinned={pinned}
               hlApproved={Boolean(checks.find((c) => c.name === "hl_agent" && c.ok))}
               researchBusy={researchBusy}
               researchStage={researchStage}
               researchKind={researchKind}
-              awaitingAuth={Boolean(preview?.eligible)}
+              awaitingAuth={awaitingAuth}
+              expires={expires}
+              paired={Boolean(status?.paired)}
+              pairingDevices={status?.pairingDevices}
+              onRotatePair={() => void onRotatePair()}
               coins={coins}
               lastEvent={activity.length ? eventLine(activity[activity.length - 1]) : undefined}
               mode={status?.mode || mission.mode}
@@ -1134,7 +1147,7 @@ export function App() {
             scanned={scanned}
             execGate={summary.execGate}
             execWhy={summary.execWhy}
-            computeReady={Boolean(checks.find((c) => c.name === "direct_credit")?.ok)}
+            computeReady={researchAllowed}
             researchBusy={researchBusy}
             capitalNote={capitalNote || summary.capitalNote}
             buyingPower={buyingPower ?? Number(summary.buyingPower || 0)}
@@ -1295,6 +1308,12 @@ export function App() {
             onForget={() => {
               void forgetMemory().then(() => setMemoryEpoch((n) => n + 1));
             }}
+            code={code}
+            expires={expires}
+            companionUp={companionUp}
+            paired={Boolean(status?.paired)}
+            pairingDevices={status?.pairingDevices}
+            onRotatePair={() => void onRotatePair()}
           />
         ) : null}
             </div>

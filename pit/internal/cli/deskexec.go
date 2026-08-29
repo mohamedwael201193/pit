@@ -8,7 +8,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/mohamedwael201193/pit/internal/config"
 	pitexec "github.com/mohamedwael201193/pit/internal/exec"
+	"github.com/mohamedwael201193/pit/internal/hl"
 )
 
 type OrderResult struct {
@@ -171,7 +173,17 @@ func ExecuteDeskOrder(dir, typed, presentedHash string) OrderResult {
 	oid := pitexec.ReceiptOID(body)
 	stt := pitexec.ReceiptStatus(body)
 	if stt == "" {
-		stt = "posted"
+		stt = "submitted"
+	}
+	if oid == "" {
+		out.Error = "venue_oid_missing"
+		out.Status = "failed"
+		saveLastOrder(dir, map[string]any{
+			"ok": false, "posted": false, "oid": "", "cloid": card.Cloid, "hash": hash,
+			"market": card.Market, "side": card.Side, "sz": card.Sz, "status": "failed",
+			"lifecycle": "failed", "venue": "hyperliquid", "sign": false, "trade": false,
+		})
+		return out
 	}
 	_ = RememberPosted(dir, st.Network, live.Workspace, card.Cloid, oid)
 	out.OK = true
@@ -183,11 +195,24 @@ func ExecuteDeskOrder(dir, typed, presentedHash string) OrderResult {
 	out.Side = card.Side
 	out.Sz = card.Sz
 	out.Status = stt
+	life := "submitted"
+	switch stt {
+	case "filled":
+		life = "filled"
+	case "resting":
+		life = "resting"
+	}
 	saveLastOrder(dir, map[string]any{
 		"ok": true, "posted": true, "oid": oid, "cloid": card.Cloid, "hash": hash,
 		"market": card.Market, "side": card.Side, "sz": card.Sz, "status": stt,
-		"venue": "hyperliquid", "sign": false, "trade": false,
+		"lifecycle": life, "venue": "hyperliquid", "sign": false, "trade": false,
 	})
+	ReconcileLastOrder(dir)
+	if last := LoadLastOrder(dir); last != nil {
+		if s, ok := last["status"].(string); ok && s != "" {
+			out.Status = s
+		}
+	}
 	return out
 }
 
@@ -269,7 +294,85 @@ func ExecuteDeskCancel(dir, typed string) OrderResult {
 	out.Market = card.Market
 	saveLastOrder(dir, map[string]any{
 		"ok": true, "posted": true, "cancelled": true, "cloid": cloid, "hash": hash,
-		"market": card.Market, "status": "canceled", "sign": false, "trade": false,
+		"market": card.Market, "status": "canceled", "lifecycle": "cancelled",
+		"venue": "hyperliquid", "sign": false, "trade": false,
 	})
 	return out
+}
+
+// ReconcileLastOrder asks Hyperliquid for the real resting/fill state.
+// Absence of an open order is never treated as a fill.
+func ReconcileLastOrder(dir string) {
+	last := LoadLastOrder(dir)
+	if last == nil {
+		return
+	}
+	oid, _ := last["oid"].(string)
+	cloid, _ := last["cloid"].(string)
+	status, _ := last["status"].(string)
+	life, _ := last["lifecycle"].(string)
+	if strings.TrimSpace(oid) == "" && strings.TrimSpace(cloid) == "" {
+		if life == "" {
+			last["lifecycle"] = "failed"
+		}
+		saveLastOrder(dir, last)
+		return
+	}
+	st, err := Load(dir)
+	if err != nil || strings.TrimSpace(st.Wallet) == "" {
+		last["reconcile"] = "unbound"
+		saveLastOrder(dir, last)
+		return
+	}
+	net, nerr := config.ParseNetwork(st.Network)
+	if nerr != nil {
+		last["reconcile"] = nerr.Error()
+		saveLastOrder(dir, last)
+		return
+	}
+	c := hl.New(config.For(net))
+	openRaw, oerr := c.OpenOrders(st.Wallet)
+	if oerr != nil {
+		last["reconcile"] = "open_orders_unread"
+		if life == "" {
+			last["lifecycle"] = "submitted"
+		}
+		saveLastOrder(dir, last)
+		return
+	}
+	onBook := hl.OIDOnVenue(openRaw, oid) || hl.CloidOnVenue(openRaw, cloid)
+	if onBook {
+		last["status"] = "resting"
+		last["lifecycle"] = "resting"
+		last["reconcile"] = "open_orders"
+		saveLastOrder(dir, last)
+		return
+	}
+	fillsRaw, ferr := c.UserFills(st.Wallet)
+	if ferr != nil {
+		last["reconcile"] = "fills_unread"
+		if status == "filled" {
+			last["lifecycle"] = "filled"
+		} else if life == "" {
+			last["lifecycle"] = "submitted"
+		}
+		saveLastOrder(dir, last)
+		return
+	}
+	if hl.OIDInFills(fillsRaw, oid) {
+		last["status"] = "filled"
+		last["lifecycle"] = "reconciled"
+		last["reconcile"] = "user_fills"
+		saveLastOrder(dir, last)
+		return
+	}
+	if status == "canceled" || life == "cancelled" {
+		last["lifecycle"] = "cancelled"
+		last["reconcile"] = "not_on_book"
+		saveLastOrder(dir, last)
+		return
+	}
+	last["lifecycle"] = "submitted"
+	last["reconcile"] = "not_on_book_or_fills"
+	saveLastOrder(dir, last)
 }

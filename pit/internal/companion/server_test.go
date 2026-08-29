@@ -173,6 +173,52 @@ func TestLocalCodeDesktopOnly(t *testing.T) {
 	}
 }
 
+func TestLocalCodeRotateAndPairingState(t *testing.T) {
+	h := New(t.TempDir())
+	first, _ := h.Code()
+	req := local(httptest.NewRequest(http.MethodPost, "/local/code/rotate", nil))
+	rec := httptest.NewRecorder()
+	h.Handler().ServeHTTP(rec, req)
+	if rec.Code != 200 {
+		t.Fatal(rec.Body.String())
+	}
+	var got map[string]any
+	if err := json.Unmarshal(rec.Body.Bytes(), &got); err != nil {
+		t.Fatal(err)
+	}
+	if got["sign"] == true || got["trade"] == true {
+		t.Fatal(got)
+	}
+	next, _ := got["code"].(string)
+	if next == "" || next == first {
+		t.Fatalf("rotate %q -> %q", first, next)
+	}
+	req = local(httptest.NewRequest(http.MethodPost, "/local/code/rotate", nil))
+	req.Header.Set("Origin", "https://pit0g.vercel.app")
+	rec = httptest.NewRecorder()
+	h.Handler().ServeHTTP(rec, req)
+	if rec.Code != http.StatusForbidden {
+		t.Fatal("web must not rotate pairing code")
+	}
+}
+
+func TestCatalogListingCannotBecomeChatModel(t *testing.T) {
+	h := New(t.TempDir())
+	req := local(httptest.NewRequest(http.MethodPost, "/local/models", strings.NewReader(`{"model":"0gm-1.0-35b-a3b"}`)))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+	h.Handler().ServeHTTP(rec, req)
+	if rec.Code != 200 {
+		t.Fatal(rec.Body.String())
+	}
+	if !strings.Contains(rec.Body.String(), "catalog_listing_not_inference") {
+		t.Fatal(rec.Body.String())
+	}
+	if !strings.Contains(rec.Body.String(), `"picked":"host-parsed"`) {
+		t.Fatal(rec.Body.String())
+	}
+}
+
 func TestLocalStatusVersionNoSecret(t *testing.T) {
 	h := New(t.TempDir())
 	req := local(httptest.NewRequest(http.MethodGet, "/local/status", nil))
@@ -188,7 +234,7 @@ func TestLocalStatusVersionNoSecret(t *testing.T) {
 	if got["sign"] == true || got["trade"] == true {
 		t.Fatal(got)
 	}
-	if got["version"] != "0.5.0" {
+	if got["version"] != "0.6.0" {
 		t.Fatalf("version %v", got["version"])
 	}
 }

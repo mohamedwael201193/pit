@@ -660,6 +660,13 @@ func (h *Hub) localAuthorize(w http.ResponseWriter, r *http.Request) {
 		})
 		h.recordPostedOrder(got, "authorize", h.currentJobID())
 		h.fileOrder(got, h.currentJobID())
+		if last := cli.LoadLastOrder(h.Dir); last != nil {
+			out["lifecycle"] = last["lifecycle"]
+			out["reconcile"] = last["reconcile"]
+			if s, ok := last["status"].(string); ok && s != "" {
+				out["status"] = s
+			}
+		}
 	}
 	writeLocal(w, http.StatusOK, out)
 }

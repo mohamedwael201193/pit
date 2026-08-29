@@ -72,7 +72,7 @@ export function WatchBook({
   const [sel, setSel] = useState(coins.find((c) => c.previewReady || c.executionFeasible)?.coin || coins.find((c) => c.eligible)?.coin || coins[0]?.coin || "");
   const [q, setQ] = useState("");
   const [onlyPass, setOnlyPass] = useState(true);
-  const [onlyExec, setOnlyExec] = useState(false);
+  const [onlyExec, setOnlyExec] = useState(coins.some((c) => c.executionFeasible));
   const filtered = useMemo(() => {
     const n = q.trim().toLowerCase();
     return coins.filter((c) => {
@@ -90,10 +90,10 @@ export function WatchBook({
       <div className="page-head">
         <div>
           <p className="eyebrow">Markets</p>
-          <h1>Discovery universe</h1>
+          <h1>What can I trade now</h1>
         </div>
         <p className="fine" style={{ margin: 0 }}>
-          Live Hyperliquid books. Host ranks executable size first. Side is not decided here.
+          Live Hyperliquid books. Host ranks executable size for this account. Side is not decided here.
         </p>
       </div>
       {best ? (
@@ -105,11 +105,15 @@ export function WatchBook({
             </h2>
             <p>{best.why}</p>
             <OpportunityFacts coin={best} />
-            {execGate ? (
-              <p className="fine" role="status">
-                Execution blocked: {execGate.replaceAll("_", " ")}. {execWhy || best.execWhy} Research can still run.
+            {execN === 0 ? (
+              <p className="err" role="status">
+                Nothing is executable with this account right now. {execWhy || capitalNote || "Available margin is below the venue minimum."} Research can still run after Protect.
               </p>
-            ) : null}
+            ) : (
+              <p className="fine" role="status">
+                {execN} executable now with this buying power. Policy PASS is not a trade.
+              </p>
+            )}
             {capitalNote ? <p className="fine">{capitalNote}</p> : null}
             <p className="fine">
               {bestWhy || "Highest host rank among books this account can size. Not a model score."} · {best.venue || "hyperliquid"} · {best.provenance || "hyperliquid.info"}
@@ -163,7 +167,7 @@ export function WatchBook({
                   <strong>{c.coin}</strong>
                 </span>
                 <span className="mark-num">{compactNum(c.mark)}</span>
-                <span>{(c.layer || (c.eligible ? "policy-eligible" : "blocked")).replaceAll("-", " ")}</span>
+                <span>{layerLabel(c)}</span>
                 <span>{pctFunding(c.funding)}</span>
                 <span>{c.hostNotional ? compactUsd(c.hostNotional) : "—"}</span>
                 <span>{c.policyFit || (c.eligible ? "PASS" : "BLOCKED")}</span>
@@ -197,9 +201,21 @@ export function WatchBook({
   );
 }
 
+function layerLabel(c: MarketCoin) {
+  if (c.previewReady) return "PREVIEW READY";
+  if (c.executionFeasible) return "EXECUTION FEASIBLE";
+  if (c.policyEligible || c.eligible) return "POLICY ELIGIBLE";
+  if (c.researchEligible) return "RESEARCH ELIGIBLE";
+  return (c.layer || "EXECUTION BLOCKED").replaceAll("-", " ").toUpperCase();
+}
+
 function OpportunityFacts({ coin }: { coin: MarketCoin }) {
   return (
     <ul className="opp-facts">
+      <li>
+        Research {coin.researchEligible ? "ELIGIBLE" : "NO"} · Policy {coin.policyEligible || coin.eligible ? "ELIGIBLE" : "NO"} · Execution{" "}
+        {coin.executionFeasible ? "FEASIBLE" : "BLOCKED"} · Preview {coin.previewReady ? "READY" : "NO"}
+      </li>
       <li>Oracle {coin.oracle ? compactNum(coin.oracle) : "—"} · funding {pctFunding(coin.funding)} · OI {compactNum(coin.openInterest)} · volume {compactUsd(coin.volume)}</li>
       <li>Min notional {compactUsd(coin.minNotional || 10)} · required {compactUsd(coin.requiredMargin || 0)} · available {compactUsd(coin.availableMargin || 0)}</li>
       <li>Policy clip {compactUsd(coin.policyClip || 0)} · host-sized {coin.hostSz ? `${coin.hostSz} / ${compactUsd(coin.hostNotional || 0)}` : "unsized"}</li>

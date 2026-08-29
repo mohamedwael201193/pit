@@ -309,7 +309,7 @@ export function ResearchBoard({
           type="button"
           className="primary"
           onClick={() => onResearch(coin)}
-          disabled={researchBusy || !checks.find((c) => c.name === "direct_credit")?.ok}
+          disabled={researchBusy || !checks.find((c) => c.name === "direct_auth")?.ok || !checks.find((c) => c.name === "direct_credit")?.ok}
         >
           Research privately
         </button>

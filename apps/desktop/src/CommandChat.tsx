@@ -99,7 +99,7 @@ export function CommandChat({
       setCatalog(c.official_catalog || []);
       setCatalogNote(c.catalog_note || "");
       const host = c.other_chat.find((m) => m.model === "host-parsed");
-      const remembered = [...c.other_chat, ...c.private_verified, ...(c.official_catalog || [])].find((m) => m.model === c.picked);
+      const remembered = [...c.other_chat, ...c.private_verified].find((m) => m.model === c.picked);
       setPicked(remembered || host || c.private_verified[0] || c.models[0] || null);
     });
     return () => {
@@ -196,7 +196,7 @@ export function CommandChat({
             {modelLabel}
           </button>
           {modelOpen ? (
-            <div className="model-menu" role="listbox">
+            <div className="model-menu wide" role="listbox">
               <p className="label">Private + verified</p>
               {privateModels.length === 0 ? (
                 <p className="fine">No verified Direct SKU on this network.</p>
@@ -212,7 +212,7 @@ export function CommandChat({
               <p className="label">Official catalog (listing only)</p>
               <p className="fine">{catalogNote || "Listed SKUs are not inference paths. Private book stays Direct TeeML."}</p>
               {catalog.slice(0, 31).map((m) => (
-                <ModelRow key={m.model} m={m} picked={picked} onPick={() => { setPicked(m); setModelOpen(false); void pickChatModel(m.model || "host-parsed"); }} />
+                <ModelRow key={m.model} m={m} picked={null} onPick={() => undefined} disabled />
               ))}
               <p className="label">Unsupported for private research</p>
               {unsupported.map((m) => (

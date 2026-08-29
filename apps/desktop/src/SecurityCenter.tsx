@@ -1,4 +1,5 @@
 import { BrandMark } from "./BrandMark";
+import { PairingDock } from "./PairingDock";
 import { ComputeCard } from "./ComputeCard";
 import { ExternalLink } from "./ExternalLink";
 import { HyperliquidCard } from "./HyperliquidCard";
@@ -45,6 +46,12 @@ export function SecurityCenter({
   onRevoke,
   onKill,
   onForget,
+  code,
+  expires,
+  companionUp,
+  paired,
+  pairingDevices,
+  onRotatePair,
 }: {
   domains: SecurityDomain[];
   checks: DoctorCheck[];
@@ -73,6 +80,12 @@ export function SecurityCenter({
   onRevoke: () => void;
   onKill: (on: boolean) => void;
   onForget: () => void;
+  code?: string;
+  expires?: string;
+  companionUp?: boolean;
+  paired?: boolean;
+  pairingDevices?: number;
+  onRotatePair?: () => void;
 }) {
   const missing = items.filter((p) => p.state !== "ok");
   const wallet = status?.wallet || "";
@@ -90,16 +103,39 @@ export function SecurityCenter({
       </div>
       <p className="lead">What is ready, what is missing, and the one next action. Order and cancel only. Chat cannot authorize or pin policy.</p>
 
+      {code !== undefined ? (
+        <PairingDock
+          code={code}
+          expires={expires}
+          companionUp={Boolean(companionUp)}
+          paired={paired}
+          devices={pairingDevices}
+          onRotate={onRotatePair}
+        />
+      ) : null}
+
       <section className="ready-list" aria-label="Setup readiness">
         {items.map((p) => (
           <article key={p.id} className={`ready-item ${p.state}`}>
             <p className="label">{p.label}</p>
-            <p className={p.state === "ok" ? "ok" : "bad"}>{p.state === "ok" ? "READY" : "NEEDS ACTION"}</p>
+            <p className={p.state === "ok" ? "ok" : p.state === "optional" ? "mute" : "bad"}>
+              {p.state === "ok" ? "READY" : p.state === "optional" ? "OPTIONAL" : p.state === "fail" ? "BLOCKED" : "ACTION REQUIRED"}
+            </p>
             <p>{p.detail}</p>
             {p.id === "wallet" && p.state !== "ok" ? <p className="fine">Open Desk first-run or bind this computer.</p> : null}
             {p.id === "direct" && p.state !== "ok" ? (
+              <ExternalLink className="primary" href={LINKS.app}>
+                Protect my strategy
+              </ExternalLink>
+            ) : null}
+            {p.id === "direct_credit" && p.state !== "ok" && !(p.detail || "").toLowerCase().includes("unread") && !(p.detail || "").toLowerCase().includes("sponsor") ? (
               <ExternalLink className="primary" href={LINKS.pcAdvanced}>
-                Protect / fund 0G
+                Open 0G Direct funds
+              </ExternalLink>
+            ) : null}
+            {p.id === "pairing" && p.state !== "ok" ? (
+              <ExternalLink className="primary" href={LINKS.pair}>
+                Open pairing
               </ExternalLink>
             ) : null}
             {p.id === "session" && p.state !== "ok" ? (
