@@ -158,6 +158,7 @@ func EnableGuarded(dir, typed string, hours int, policyHash string) (Mission, er
 	p.LastResearchCoin = ""
 	p.LastNotifyCoin = ""
 	_ = Save(dir, p)
+	_ = ResetAway(dir)
 	return LoadMission(dir), nil
 }
 
@@ -210,6 +211,7 @@ func Stop(dir, why string) Mission {
 	p.AutoResearch = false
 	p.Execute = false
 	_ = Save(dir, p)
+	AppendAway(dir, AwayEvent{Kind: "rejected", Why: why, Human: HumanWhy(why)})
 	return LoadMission(dir)
 }
 
@@ -288,11 +290,31 @@ func Explain(code string) string {
 		return "This exact preview was already used. A new preview is required."
 	case "preview_before_guarded":
 		return "That preview started before Guarded Autonomy was enabled. It cannot be auto-executed."
+	case "need_pin", "unpinned":
+		return "Pin a trading policy on this computer before Guarded Autonomy."
+	case "insufficient_margin":
+		return HumanWhy("insufficient_margin")
+	case "below_min_notional":
+		return HumanWhy("below_min_notional")
+	case "asset_not_allowed":
+		return HumanWhy("asset_not_allowed")
+	case "liquidity_insufficient":
+		return HumanWhy("liquidity_insufficient")
+	case "slippage_too_high":
+		return HumanWhy("slippage_too_high")
+	case "committee_disagreement":
+		return HumanWhy("committee_disagreement")
+	case "research_stood_down":
+		return HumanWhy("research_stood_down")
+	case "TEE_VERIFY_FAIL", "tee_verify_fail":
+		return HumanWhy("TEE_VERIFY_FAIL")
+	case "no_opportunity":
+		return HumanWhy("no_opportunity")
 	default:
 		if code == "" {
 			return ""
 		}
-		return "Host gate: " + strings.ReplaceAll(code, "_", " ") + "."
+		return HumanWhy(code)
 	}
 }
 
@@ -511,6 +533,9 @@ func Public(dir string) map[string]any {
 			"policy_mutation":        false,
 			"permission_escalation":  false,
 		},
-		"note": "Guarded Autonomy executes only after ENABLE GUARDED AUTONOMY is confirmed on this computer. Chat cannot enable it. The model cannot change these limits.",
+		"away":         LoadAway(dir),
+		"why_not_code": m.BlockReason,
+		"why_not":      HumanWhy(m.BlockReason),
+		"note":         "Guarded Autonomy executes only after ENABLE GUARDED AUTONOMY is confirmed on this computer. Chat cannot enable it. The model cannot change these limits.",
 	}
 }

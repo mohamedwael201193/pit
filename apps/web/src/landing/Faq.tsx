@@ -17,7 +17,7 @@ const QUESTIONS: readonly { q: string; a: string }[] = [
   },
   {
     q: "Can PIT trade without me?",
-    a: "No. PIT may research and notify. You type AUTHORIZE on one exact preview. Duplicate clicks do not send a second order.",
+    a: "Not unless you enable Guarded Autonomy on PIT Desktop. Chat, this website, and the model cannot turn it on. Manual still requires AUTHORIZE on one exact preview. Research-only never executes. Duplicate clicks do not send a second order.",
   },
   {
     q: "What is the laboratory?",

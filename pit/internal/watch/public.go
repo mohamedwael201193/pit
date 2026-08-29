@@ -279,7 +279,7 @@ func BestExecutable(cands []Candidate, acct feasibility.Account, p policy.Policy
 		return rows[i].r > rows[j].r
 	})
 	for _, row := range rows {
-		if row.g >= 2 {
+		if row.g >= 3 {
 			return row.c, true
 		}
 	}

@@ -69,11 +69,12 @@ import { ThreadRail } from "./ThreadRail";
 import { DeskHome } from "./DeskHome";
 import { WatchBook, type MarketCoin } from "./WatchBook";
 import { ResearchBoard } from "./ResearchBoard";
+import { StrategyHealth } from "./StrategyHealth";
 import { askNotify, deskNotify } from "./notify";
 import { DESKTOP_VERSION } from "./version";
 
 type Net = "mainnet" | "testnet";
-type View = "home" | "chat" | "markets" | "research" | "portfolio" | "activity" | "automation" | "security";
+type View = "home" | "chat" | "markets" | "research" | "portfolio" | "activity" | "automation" | "health" | "security";
 
 type Coin = MarketCoin;
 
@@ -82,6 +83,7 @@ function mapView(v: string): View {
   if (v === "positions" || v === "portfolio") return "portfolio";
   if (v === "policy" || v === "account" || v === "settings") return "security";
   if (v === "automation") return "automation";
+  if (v === "health" || v === "calibration" || v === "skills") return "health";
   if (v === "preview") return "research";
   if (v === "home" || v === "chat" || v === "research" || v === "activity" || v === "security") return v;
   return "home";
@@ -125,6 +127,7 @@ const RAIL: { id: View; label: string }[] = [
   { id: "portfolio", label: "Portfolio" },
   { id: "activity", label: "Activity" },
   { id: "automation", label: "Automation" },
+  { id: "health", label: "Health" },
   { id: "security", label: "Security" },
 ];
 
@@ -163,6 +166,10 @@ export function App() {
   const [positionErr, setPositionErr] = useState("");
   const [securityDomains, setSecurityDomains] = useState<SecurityDomain[]>([]);
   const [calibCopy, setCalibCopy] = useState("NOT ENOUGH DATA");
+  const [calibN, setCalibN] = useState(0);
+  const [calibNeed, setCalibNeed] = useState(0);
+  const [calibEnough, setCalibEnough] = useState(false);
+  const [calibSkills, setCalibSkills] = useState<Array<{ id?: string; title?: string; version?: string; n?: number; copy?: string }>>([]);
   const [identityNote, setIdentityNote] = useState("Transfer of Agentic ID is not live on mainnet.");
   const [updateNote, setUpdateNote] = useState("This build is checksum-verified, not OS-signed.");
   const [restartAllowed, setRestartAllowed] = useState(true);
@@ -192,6 +199,7 @@ export function App() {
   const [memoryEpoch, setMemoryEpoch] = useState(0);
   const [summary, setSummary] = useState<AccountSummary>({});
   const [hostPolicy, setHostPolicy] = useState<HostPolicy | null>(null);
+  const [policyHash, setPolicyHash] = useState("");
   const [policyConsequences, setPolicyConsequences] = useState<string[]>([]);
   const [policyAllowed, setPolicyAllowed] = useState<string[]>([]);
   const [policyRefused, setPolicyRefused] = useState<string[]>([]);
@@ -435,6 +443,7 @@ export function App() {
           if (gone || !p.policy) return;
           setHostPolicy(p.policy);
           if (typeof p.pinned === "boolean") setPinned(p.pinned);
+          if (p.hash) setPolicyHash(p.hash);
           if (p.allowed) setPolicyAllowed(p.allowed);
           if (p.refused) setPolicyRefused(p.refused);
         });
@@ -445,7 +454,12 @@ export function App() {
           if (!gone) setSecurityDomains(d);
         });
         void fetchCalibration().then((c) => {
-          if (!gone) setCalibCopy(c.copy || "NOT ENOUGH DATA");
+          if (gone) return;
+          setCalibCopy(c.copy || "NOT ENOUGH DATA");
+          setCalibN(c.n || 0);
+          setCalibNeed(c.need || 0);
+          setCalibEnough(Boolean(c.enough));
+          setCalibSkills(c.skills || []);
         });
         void fetchIdentity().then((id) => {
           if (!gone) setIdentityNote(id.note || "Transfer of Agentic ID is not live on mainnet.");
@@ -663,6 +677,7 @@ export function App() {
     }
     setPinned(true);
     if (r.policy) setHostPolicy(r.policy);
+    if (r.hash) setPolicyHash(r.hash);
     if (r.consequences) setPolicyConsequences(r.consequences);
     setChecks(await doctor());
   }
@@ -930,6 +945,7 @@ export function App() {
           { id: "portfolio", label: "Open Portfolio", run: () => setView("portfolio") },
           { id: "activity", label: "Open Activity", run: () => setView("activity") },
           { id: "automation", label: "Open Automation", run: () => setView("automation") },
+          { id: "health", label: "Open Strategy Health", run: () => setView("health") },
           { id: "security", label: "Open Security", run: () => setView("security") },
           { id: "start", label: "Start research", run: () => void researchThis() },
           { id: "hl", label: "Open Hyperliquid", run: () => void openExternal(hyperliquidApp(net)) },
@@ -1004,6 +1020,17 @@ export function App() {
               <span className={demoReplay ? "chip fail" : "chip ok"}>{demoReplay ? "REPLAY" : "LIVE"}</span>
             </div>
             <NetworkToggle net={net} onChange={setNet} />
+            {mission.mode === "guarded" && mission.running ? (
+              <button
+                type="button"
+                className="kill-switch compact"
+                onClick={() => {
+                  void postMission({ stop: true }).then(setMission);
+                }}
+              >
+                Stop autonomy
+              </button>
+            ) : null}
           </div>
         </header>
         {companionUp && status?.version && String(status.version) !== DESKTOP_VERSION ? (
@@ -1157,6 +1184,8 @@ export function App() {
             buyingPower={buyingPower ?? Number(summary.buyingPower || 0)}
             powerSource={powerSource || summary.powerSource}
             fundHref={hyperliquidApp(net)}
+            pinned={pinned}
+            onPin={() => setView("security")}
             onResearch={(c) => void researchThis(c)}
           />
         ) : null}
@@ -1276,6 +1305,10 @@ export function App() {
           />
         ) : null}
 
+        {setupDone && view === "health" ? (
+          <StrategyHealth copy={calibCopy} n={calibN} need={calibNeed} enough={calibEnough} skills={calibSkills} />
+        ) : null}
+
         {setupDone && view === "security" ? (
           <SecurityCenter
             domains={securityDomains}
@@ -1290,6 +1323,7 @@ export function App() {
             summary={summary}
             policy={hostPolicy}
             pinned={pinned}
+            policyHash={policyHash}
             consequences={policyConsequences}
             allowed={policyAllowed}
             refused={policyRefused}

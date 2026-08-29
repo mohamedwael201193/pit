@@ -15,6 +15,7 @@ type EventRow = {
   tx_link?: string;
   digest?: string;
   link?: string;
+  autonomous?: boolean;
 };
 
 function dayLabel(ts?: number) {
@@ -164,6 +165,7 @@ export function ActivityTimeline({
                   {ev.ts ? new Date(ev.ts).toLocaleTimeString() : ""}
                 </time>
                 <strong>{humanKind(ev.kind)}</strong>
+                {ev.autonomous || ev.action === "guarded" ? <span className="auto-badge">AUTONOMOUS</span> : null}
                 {ev.market ? ` ${ev.market}` : ""} {humanStatus(ev.status)}
                 {ev.reason ? ` · ${ev.reason}` : ""}
                 <EventIds ev={ev} />

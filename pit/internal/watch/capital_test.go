@@ -39,3 +39,14 @@ func TestBestExecutableIgnoresUnsized(t *testing.T) {
 		t.Fatalf("%v %+v", ok, got)
 	}
 }
+
+func TestBestExecutableRejectsBelowMinimum(t *testing.T) {
+	p := policy.Default()
+	cands := []Candidate{
+		{Coin: "ETH", Eligible: true, Book: hl.BookSnapshot{Coin: "ETH", MarkPx: 2500, OraclePx: 2510, OpenInterest: 1e9, SzDecimals: 4}},
+	}
+	acct := feasibility.Account{BuyingPower: 9.38, PowerSource: "unified_spot"}
+	if _, ok := BestExecutable(cands, acct, p, true, true); ok {
+		t.Fatal("must not invent size below $10")
+	}
+}

@@ -548,6 +548,7 @@ export type ActivityEvent = {
 	tx_link?: string;
   digest?: string;
   link?: string;
+  autonomous?: boolean;
 };
 
 export type FiledReceipt = {
@@ -790,6 +791,17 @@ export type MissionPublic = {
   block_explain?: string;
   stage?: string;
   explain?: string;
+  why_not?: string;
+  why_not_code?: string;
+  away?: {
+    since_unix?: number;
+    detected?: number;
+    researched?: number;
+    rejected?: number;
+    traded?: number;
+    filled?: number;
+    events?: Array<{ unix?: number; kind?: string; coin?: string; why?: string; human?: string; oid?: string }>;
+  };
   elapsed_seconds?: number;
   next_scan_unix?: number;
   research_running?: boolean;
@@ -914,12 +926,22 @@ export async function fetchSecurity(): Promise<SecurityDomain[]> {
   return Array.isArray(body?.domains) ? body.domains : [];
 }
 
-export async function fetchCalibration(): Promise<{ n?: number; need?: number; copy?: string; enough?: boolean }> {
+export async function fetchCalibration(): Promise<{
+  n?: number;
+  need?: number;
+  copy?: string;
+  enough?: boolean;
+  skills?: Array<{ id?: string; title?: string; version?: string; n?: number; copy?: string }>;
+}> {
   return (
-    (await localGet<{ n?: number; need?: number; copy?: string; enough?: boolean; sign?: boolean }>(
-      "local_calibration",
-      "/local/calibration",
-    )) || { copy: "NOT ENOUGH DATA" }
+    (await localGet<{
+      n?: number;
+      need?: number;
+      copy?: string;
+      enough?: boolean;
+      skills?: Array<{ id?: string; title?: string; version?: string; n?: number; copy?: string }>;
+      sign?: boolean;
+    }>("local_calibration", "/local/calibration")) || { copy: "NOT ENOUGH DATA" }
   );
 }
 

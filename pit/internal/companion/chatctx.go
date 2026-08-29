@@ -36,6 +36,9 @@ func (h *Hub) decorateChat(parsed deskcmd.Result) deskcmd.Result {
 		if parsed.Coin == "" {
 			parsed.Coin = h.pickBestCoin()
 		}
+	case "watch.why_not":
+		parsed.Reply = h.replyWhyNotTrade()
+		parsed.Navigate = "automation"
 	case "research.start", "research.best":
 		if live := h.replyWatch(parsed); live != "" {
 			parsed.Reply = live + " " + parsed.Reply
@@ -180,6 +183,34 @@ func (h *Hub) pickBestCoin() string {
 		return best.Coin
 	}
 	return ""
+}
+
+func (h *Hub) replyWhyNotTrade() string {
+	cap := h.capitalNow()
+	pol := cli.ActivePolicy(h.Dir)
+	block, why := policy.ExecWhy(h.openPositionCount(), cap.BuyingPower, pol)
+	away := auto.LoadAway(h.Dir)
+	human := auto.HumanWhy(block)
+	if human == "" {
+		human = why
+	}
+	last := ""
+	if n := len(away.Events); n > 0 {
+		ev := away.Events[n-1]
+		if ev.Human != "" {
+			last = ev.Human
+		} else {
+			last = auto.HumanWhy(ev.Why)
+		}
+		if ev.Coin != "" {
+			last = ev.Coin + ": " + last
+		}
+	}
+	if last == "" {
+		last = "No named refusal yet this session."
+	}
+	return fmt.Sprintf("Why PIT did not trade: %s Buying power $%.2f (%s). While you were away: %d detected, %d researched, %d refused, %d autonomous trades. Latest: %s Chat cannot AUTHORIZE. PIT will not invent size.",
+		human, cap.BuyingPower, cap.PowerSource, away.Detected, away.Researched, away.Rejected, away.Traded, last)
 }
 
 func (h *Hub) replyMissionEnable() string {

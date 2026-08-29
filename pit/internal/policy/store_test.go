@@ -86,9 +86,9 @@ func TestExecWhyOpenCeiling(t *testing.T) {
 	if block != "" || why != "" {
 		t.Fatalf("%s %s", block, why)
 	}
-	block, _ = ExecWhy(0, 0, p)
-	if block != "insufficient_margin" {
-		t.Fatalf("zero power %s", block)
+	block, why = ExecWhy(0, 9.38, p)
+	if block != "insufficient_margin" || !strings.Contains(why, "$9.38") || !strings.Contains(why, "$0.62") {
+		t.Fatalf("shortfall %s %s", block, why)
 	}
 }
 

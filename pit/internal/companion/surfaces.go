@@ -21,6 +21,7 @@ import (
 	"github.com/mohamedwael201193/pit/internal/httpx"
 	"github.com/mohamedwael201193/pit/internal/policy"
 	"github.com/mohamedwael201193/pit/internal/session"
+	"github.com/mohamedwael201193/pit/internal/skills"
 	"github.com/mohamedwael201193/pit/internal/version"
 )
 
@@ -222,8 +223,14 @@ func (h *Hub) localCalibration(w http.ResponseWriter, r *http.Request) {
 		copy = "Calibration uses resolved forecasts only."
 	}
 	_ = calib.RefuseSparse(n)
+	skillRows := make([]map[string]any, 0)
+	for _, s := range skills.Registry() {
+		skillRows = append(skillRows, map[string]any{
+			"id": s.ID, "title": s.Title, "version": s.Version, "n": 0, "copy": "NOT ENOUGH DATA",
+		})
+	}
 	writeLocal(w, http.StatusOK, map[string]any{
-		"n": n, "need": need, "copy": copy, "enough": n >= need, "sign": false, "trade": false,
+		"n": n, "need": need, "copy": copy, "enough": n >= need, "skills": skillRows, "sign": false, "trade": false,
 	})
 }
 
@@ -313,13 +320,13 @@ func directDomain(auth, credit cli.Check) map[string]any {
 		return map[string]any{
 			"id": "direct", "state": "ACTION REQUIRED", "why": auth.Detail,
 			"means": "A 24-hour wallet signature on the paired browser. This is not a funding dashboard and not trading capital.",
-			"do": "Protect my strategy", "href": "https://pit0g.vercel.app/app", "hrefLabel": "Protect my strategy",
+			"do":    "Protect my strategy", "href": "https://pit0g.vercel.app/app", "hrefLabel": "Protect my strategy",
 		}
 	}
 	return map[string]any{
 		"id": "direct", "state": "READY", "why": auth.Detail,
 		"means": "Sealed-path token is on this computer. Trading credentials stay separate.",
-		"do": "", "href": "", "hrefLabel": "",
+		"do":    "", "href": "", "hrefLabel": "",
 	}
 }
 

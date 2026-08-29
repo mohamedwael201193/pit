@@ -13,9 +13,10 @@ import { openExternal } from "./open";
 
 const PROMPTS = [
   "Find the best opportunity right now.",
+  "Why didn't you trade?",
   "Why is nothing executable?",
+  "Research the best one.",
   "Show my evidence.",
-  "What is PIT doing?",
 ];
 
 export function CommandChat({
@@ -414,6 +415,17 @@ function ChatCard({
   onResearch?: (coin: string) => void;
 }) {
   if (!tool || tool === "help" || tool === "status" || tool === "greet") return null;
+  if (tool === "calibration.get") {
+    return (
+      <article className="chat-card">
+        <p className="label">Strategy Health</p>
+        <p>NOT ENOUGH DATA until enough resolved outcomes exist.</p>
+        <button type="button" className="primary" onClick={() => onNavigate("health")}>
+          Open Strategy Health
+        </button>
+      </article>
+    );
+  }
   if (tool === "setup.guide") {
     return (
       <article className="chat-card">
@@ -460,6 +472,17 @@ function ChatCard({
             Open Markets
           </button>
         )}
+      </article>
+    );
+  }
+  if (tool === "watch.why_not") {
+    return (
+      <article className="chat-card">
+        <p className="label">Why PIT did not trade</p>
+        <p>Named host refusal. PIT will not invent size or a fill.</p>
+        <button type="button" className="primary" onClick={() => onNavigate("automation")}>
+          Open Automation
+        </button>
       </article>
     );
   }

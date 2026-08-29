@@ -14,7 +14,7 @@ const BEATS = [
   },
   {
     title: "Authorized.",
-    body: "You type AUTHORIZE on the exact preview. A 24-hour agent can order or cancel. If Hyperliquid still lists it, PIT reuses the address. It cannot withdraw.",
+    body: "Manual: you type AUTHORIZE on the exact preview. Guarded Autonomy is optional and only turns on from this computer. Chat and this website cannot enable it. The agent can order or cancel. It cannot withdraw.",
   },
 ] as const;
 

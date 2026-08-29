@@ -30,6 +30,7 @@ export function PolicyEditor({
   allowed,
   refused,
   pinned,
+  policyHash,
   busy,
   clipFloor = 10,
   clipCeil = 50,
@@ -41,6 +42,7 @@ export function PolicyEditor({
   allowed?: string[];
   refused?: string[];
   pinned?: boolean;
+  policyHash?: string;
   busy?: boolean;
   clipFloor?: number;
   clipCeil?: number;
@@ -90,32 +92,37 @@ export function PolicyEditor({
         <label className="policy-cell">
           Max trade / position (USD)
           <input type="number" min={clipFloor} max={clipCeil} step={1} value={draft.maxClipUsd} onChange={(e) => set("maxClipUsd", Number(e.target.value))} />
-          <span className="fine">${clipFloor}–${clipCeil}. Venue minimum is $10.</span>
+          <span className="fine">Means: host sizes every clip to this ceiling. If hit: a larger idea is refused. PIT will not invent a smaller fill.</span>
         </label>
         <label className="policy-cell">
           Daily loss halt (USD)
           <input type="number" min={1} max={500} step={1} value={draft.dailyLossUsd} onChange={(e) => set("dailyLossUsd", Number(e.target.value))} />
+          <span className="fine">Means: realized loss ceiling for this desk. If hit: Guarded Autonomy stops. Positions are not flattened.</span>
         </label>
         <label className="policy-cell">
           Max open positions
           <input type="number" min={1} max={5} step={1} value={draft.maxOpenPositions} onChange={(e) => set("maxOpenPositions", Number(e.target.value))} />
-          <span className="fine">Raising this does not flatten existing positions.</span>
+          <span className="fine">Means: how many live positions PIT may hold. If hit: new entries are refused. Scan continues.</span>
         </label>
         <label className="policy-cell">
           Consecutive loss limit
           <input type="number" min={1} max={10} step={1} value={draft.maxConsecutiveLosses} onChange={(e) => set("maxConsecutiveLosses", Number(e.target.value))} />
+          <span className="fine">Means: losing-streak halt. If hit: autonomy stops. The model cannot raise this.</span>
         </label>
         <label className="policy-cell">
           Max slippage (bps)
           <input type="number" min={10} max={500} step={1} value={draft.maxSlippageBps} onChange={(e) => set("maxSlippageBps", Number(e.target.value))} />
+          <span className="fine">Means: estimated impact ceiling. If hit: the order is refused.</span>
         </label>
         <label className="policy-cell">
           Liquidity floor (USD)
           <input type="number" min={0} max={1000000} step={1} value={draft.minLiquidityUsd} onChange={(e) => set("minLiquidityUsd", Number(e.target.value))} />
+          <span className="fine">Means: skip thin books. If hit: the candidate is refused.</span>
         </label>
         <label className="policy-cell">
           Cooldown (seconds)
           <input type="number" min={0} max={86400} step={1} value={draft.cooldownSeconds} onChange={(e) => set("cooldownSeconds", Number(e.target.value))} />
+          <span className="fine">Means: wait between entries. If hit: PIT waits. It does not chase.</span>
         </label>
         <label className="policy-cell">
           Uncertainty ceiling
@@ -172,6 +179,17 @@ export function PolicyEditor({
           </>
         ) : null}
       </article>
+      {pinned && policyHash ? (
+        <article className="card" style={{ marginTop: 12 }}>
+          <p className="label">PINNED HOST LAW</p>
+          <p className="fine">HASH: {policyHash}</p>
+          <p className="fine">The model cannot modify it. Autonomy cannot. Chat cannot. Web cannot.</p>
+        </article>
+      ) : (
+        <p className="fine" style={{ marginTop: 12 }}>
+          LIVE PREVIEW until you pin. Pinning writes host law on this computer.
+        </p>
+      )}
       <div className="cta-row">
         <button
           type="button"

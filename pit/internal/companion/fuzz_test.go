@@ -143,6 +143,27 @@ func TestMissionCannotEnableWithoutPhrase(t *testing.T) {
 	}
 }
 
+func TestMissionEnableRefusesUnpinned(t *testing.T) {
+	h := New(t.TempDir())
+	req := local(httptest.NewRequest(http.MethodPost, "/local/init", strings.NewReader(`{"wallet":"0x1111111111111111111111111111111111111111","network":"mainnet"}`)))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+	h.Handler().ServeHTTP(rec, req)
+	if rec.Code != 200 {
+		t.Fatal(rec.Body.String())
+	}
+	req = local(httptest.NewRequest(http.MethodPost, "/local/mission", bytes.NewBufferString(`{"typed":"ENABLE GUARDED AUTONOMY","hours":8}`)))
+	req.Header.Set("Content-Type", "application/json")
+	rec = httptest.NewRecorder()
+	h.Handler().ServeHTTP(rec, req)
+	if rec.Code != 200 || !strings.Contains(rec.Body.String(), `"need_pin"`) {
+		t.Fatal(rec.Body.String())
+	}
+	if strings.Contains(rec.Body.String(), `"mode":"guarded"`) && strings.Contains(rec.Body.String(), `"status":"ACTIVE"`) {
+		t.Fatal("enabled without pin")
+	}
+}
+
 func TestMissionEnableWithPhraseIsActive(t *testing.T) {
 	h := New(t.TempDir())
 	req := local(httptest.NewRequest(http.MethodPost, "/local/mission", bytes.NewBufferString(`{"typed":"ENABLE GUARDED AUTONOMY","hours":8}`)))

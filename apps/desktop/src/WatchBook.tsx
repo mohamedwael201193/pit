@@ -56,6 +56,8 @@ export function WatchBook({
   buyingPower,
   powerSource,
   fundHref,
+  pinned,
+  onPin,
   onResearch,
 }: {
   coins: MarketCoin[];
@@ -69,21 +71,24 @@ export function WatchBook({
   buyingPower?: number;
   powerSource?: string;
   fundHref?: string;
+  pinned?: boolean;
+  onPin?: () => void;
   onResearch: (coin: string) => void;
 }) {
   const [sel, setSel] = useState(coins.find((c) => c.previewReady || c.executionFeasible)?.coin || coins.find((c) => c.eligible)?.coin || coins[0]?.coin || "");
   const [q, setQ] = useState("");
-  const [onlyPass, setOnlyPass] = useState(true);
-  const [onlyExec, setOnlyExec] = useState(coins.some((c) => c.executionFeasible));
+  const [filter, setFilter] = useState<"all" | "pass" | "exec" | "research" | "blocked">("pass");
   const filtered = useMemo(() => {
     const n = q.trim().toLowerCase();
     return coins.filter((c) => {
-      if (onlyExec && !c.executionFeasible) return false;
-      if (onlyPass && !c.eligible) return false;
+      if (filter === "exec" && !c.executionFeasible) return false;
+      if (filter === "pass" && !c.eligible) return false;
+      if (filter === "research" && !c.researchEligible) return false;
+      if (filter === "blocked" && (c.executionFeasible || c.eligible)) return false;
       if (!n) return true;
       return c.coin.toLowerCase().includes(n) || (c.why || "").toLowerCase().includes(n);
     });
-  }, [coins, q, onlyPass, onlyExec]);
+  }, [coins, q, filter]);
   const best = coins.find((c) => c.previewReady || c.executionFeasible) || coins.find((c) => c.eligible);
   const row = filtered.find((c) => c.coin === sel) || filtered[0] || best;
   const execN = coins.filter((c) => c.executionFeasible).length;
@@ -109,7 +114,7 @@ export function WatchBook({
             <OpportunityFacts coin={best} />
             {execN === 0 ? (
               <p className="err" role="status">
-                Nothing is executable with this account right now. {execWhy || capitalNote || "Available margin is below the venue minimum."} Research can still run after Protect and a matching policy pin.
+                Nothing is executable with this account right now. {execWhy || capitalNote || "Available margin is below the venue minimum."} PIT will not invent size.
               </p>
             ) : (
               <p className="fine" role="status">
@@ -122,7 +127,11 @@ export function WatchBook({
             </p>
           </div>
           <div className="cta-row">
-            {execN === 0 && fundHref ? (
+            {!pinned && onPin ? (
+              <button type="button" className="primary" onClick={onPin}>
+                Pin a trading policy
+              </button>
+            ) : execN === 0 && fundHref ? (
               <ExternalLink className="primary" href={fundHref}>
                 Fund this Hyperliquid account
               </ExternalLink>
@@ -131,7 +140,12 @@ export function WatchBook({
                 Research privately
               </button>
             )}
-            {execN === 0 ? (
+            {!pinned && execN === 0 && fundHref ? (
+              <ExternalLink className="linkish" href={fundHref}>
+                Fund this Hyperliquid account
+              </ExternalLink>
+            ) : null}
+            {!pinned || execN === 0 ? (
               <button type="button" className="linkish" disabled={researchBusy || !computeReady} onClick={() => onResearch(best.coin)}>
                 Research privately
               </button>
@@ -149,10 +163,19 @@ export function WatchBook({
           onChange={(e) => setQ(e.target.value)}
         />
         <label className="fine">
-          <input type="checkbox" checked={onlyPass} onChange={(e) => setOnlyPass(e.target.checked)} /> Policy PASS
+          <input type="radio" name="mkt-filter" checked={filter === "exec"} onChange={() => setFilter("exec")} /> Executable now
         </label>
         <label className="fine">
-          <input type="checkbox" checked={onlyExec} onChange={(e) => setOnlyExec(e.target.checked)} /> Executable now
+          <input type="radio" name="mkt-filter" checked={filter === "pass"} onChange={() => setFilter("pass")} /> Policy eligible
+        </label>
+        <label className="fine">
+          <input type="radio" name="mkt-filter" checked={filter === "research"} onChange={() => setFilter("research")} /> Researchable
+        </label>
+        <label className="fine">
+          <input type="radio" name="mkt-filter" checked={filter === "blocked"} onChange={() => setFilter("blocked")} /> Blocked
+        </label>
+        <label className="fine">
+          <input type="radio" name="mkt-filter" checked={filter === "all"} onChange={() => setFilter("all")} /> All
         </label>
         <p className="fine" style={{ margin: 0 }}>
           {scanned ? `${scanned} scanned` : `${coins.length} books`} · {coins.filter((c) => c.eligible).length} PASS · {execN} executable

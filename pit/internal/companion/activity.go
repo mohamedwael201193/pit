@@ -24,6 +24,7 @@ type activityEvent struct {
 	TxLink      string `json:"tx_link,omitempty"`
 	Digest      string `json:"digest,omitempty"`
 	Link        string `json:"link,omitempty"`
+	Autonomous  bool   `json:"autonomous,omitempty"`
 	Sign        bool   `json:"sign"`
 	Trade       bool   `json:"trade"`
 }

@@ -615,7 +615,7 @@ fn same_install(path: &Path) -> bool {
     path.parent().map(|p| p == dir).unwrap_or(false)
 }
 
-const SIDECAR_VERSION: &str = "0.6.1";
+const SIDECAR_VERSION: &str = "0.7.0";
 
 fn companion_version() -> Option<String> {
     let raw = loopback_get("/health").ok()?;

@@ -119,6 +119,9 @@ func FitBook(b hl.BookSnapshot, p policy.Policy, acct Account, sessionAlive, pin
 		why = execCapitalWhy(acct)
 	}
 	if block != "" {
+		if block == "insufficient_margin" && strings.TrimSpace(acct.Note) != "" && !strings.Contains(why, acct.Note) {
+			why = strings.TrimSpace(acct.Note) + " " + why
+		}
 		f.Layer = LayerBlocked
 		f.Gate = block
 		f.Why = why
@@ -170,10 +173,15 @@ func FitBook(b hl.BookSnapshot, p policy.Policy, acct Account, sessionAlive, pin
 }
 
 func execCapitalWhy(acct Account) string {
-	if acct.Note != "" && acct.BuyingPower+1e-9 < MinNotionalUSD {
-		return acct.Note + fmt.Sprintf(" Spot USDC %.4f. Perp equity %.4f. Withdrawable %.4f. Buying power $%.4f.", acct.SpotUSDC, acct.PerpEquity, acct.Withdrawable, acct.BuyingPower)
+	short := MinNotionalUSD - acct.BuyingPower
+	if short < 0 {
+		short = 0
 	}
-	return fmt.Sprintf("Available venue margin $%.4f is below the $%.0f Hyperliquid minimum notional. PIT will not invent size.", acct.BuyingPower, MinNotionalUSD)
+	line := fmt.Sprintf("Available venue margin is $%.2f — $%.2f short of the $%.0f Hyperliquid minimum. PIT will not invent size.", acct.BuyingPower, short, MinNotionalUSD)
+	if acct.Note != "" && acct.BuyingPower+1e-9 < MinNotionalUSD {
+		return acct.Note + " " + line
+	}
+	return line
 }
 
 func invalidation(b hl.BookSnapshot) string {

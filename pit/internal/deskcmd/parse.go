@@ -29,6 +29,12 @@ func Parse(text string) Result {
 		out.Tool = "help"
 		return out
 	}
+	if wantsWhyNotTrade(low) {
+		out.Tool = "watch.why_not"
+		out.Navigate = "automation"
+		out.Reply = "PIT did not invent a fill. Open Automation for the named refusal, or Activity for the forensic ledger."
+		return out
+	}
 	if wantsFlatten(low) {
 		out.Tool = "refuse_execute"
 		out.Navigate = "preview"
@@ -120,9 +126,9 @@ func Parse(text string) Result {
 		out.Reply = "PIT will not buy, sell, or authorize from chat. Review the exact preview on this computer, then type AUTHORIZE there."
 		return out
 	}
-	if strings.Contains(low, "learn") || strings.Contains(low, "calibration") {
+	if strings.Contains(low, "learn") || strings.Contains(low, "calibration") || strings.Contains(low, "strategy health") || strings.Contains(low, "skill performance") {
 		out.Tool = "calibration.get"
-		out.Navigate = "security"
+		out.Navigate = "health"
 		out.Reply = "Calibration stays NOT ENOUGH DATA until enough real outcomes exist. PIT will not invent a lesson."
 		return out
 	}
@@ -261,6 +267,15 @@ func Parse(text string) Result {
 	out.Tool = "help"
 	out.Reply = "Ask a specific desk question: best opportunity, scan markets, research a policy market, evidence, positions, automation, or policy. Chat cannot AUTHORIZE."
 	return out
+}
+
+func wantsWhyNotTrade(low string) bool {
+	return strings.Contains(low, "why didn't you trade") ||
+		strings.Contains(low, "why didnt you trade") ||
+		strings.Contains(low, "why didn't pit trade") ||
+		strings.Contains(low, "why didn't you execute") ||
+		strings.Contains(low, "why is nothing executable") ||
+		strings.Contains(low, "why nothing executable")
 }
 
 func wantsFlatten(low string) bool {

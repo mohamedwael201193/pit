@@ -31,6 +31,7 @@ export function SecurityCenter({
   summary,
   policy,
   pinned,
+  policyHash,
   consequences,
   allowed,
   refused,
@@ -65,6 +66,7 @@ export function SecurityCenter({
   summary?: AccountSummary;
   policy?: HostPolicy | null;
   pinned?: boolean;
+  policyHash?: string;
   consequences?: string[];
   allowed?: string[];
   refused?: string[];
@@ -193,6 +195,7 @@ export function SecurityCenter({
         allowed={allowed}
         refused={refused}
         pinned={pinned}
+        policyHash={policyHash}
         busy={busy}
         onPreview={onPolicyPreview}
         onPin={onPolicyPin}
@@ -215,7 +218,7 @@ export function SecurityCenter({
           </ExternalLink>
         ) : null}
         <p className="fine">{identityNote}</p>
-        <p className="fine">{calibCopy}</p>
+        <p className="fine">{calibCopy || "NOT ENOUGH DATA"}</p>
       </article>
 
       <details className="card">

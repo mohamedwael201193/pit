@@ -1983,3 +1983,39 @@ CLASSIFICATION:
 - Venue fund CTA: **IMPLEMENTED**; live $4.58 gate **still true**
 PRODUCTION READY: 0.6.1 is production-ready for honest setup and fail-closed research. It is **not** production-ready for a new MAINNET clip until YOU pin and the venue has >= $10.
 NEXT STEP: On Security, preview then pin host law. Fund unified collateral above $10 if you want a clip. Anyone can check `pit evidence verify --root 0x9c65f36076cf2ee32c7e9a02354d1aef9ccf5f6c83289dba160b8c08710424d2`.
+
+---
+
+## M96 — 0.7.0 Guarded Autonomy, Why-not, While-you-were-away (2026-08-29)
+
+DATE/TIME: 2026-08-29 22:40+03
+PHASE: Transform 0.6.1 into 0.7.0 Private Alpha OS with Guarded Autonomy as a first-class desktop mode. Do not flatten. Do not remint. Do not invent size. Do not enable Guarded Autonomy on the live bound account. Never send the private book to Router.
+GOAL: Host-enforced Manual / Research Only / Guarded Autonomy. Kill switch. Durable away journal. Capital-true Markets. Honest Strategy Health. Chat cannot enable autonomy. Web FAQ must not claim PIT never trades without AUTHORIZE.
+
+RESULT:
+- **IMPLEMENTED:** Version **0.7.0**. Companion `/health` and `pit version` **0.7.0**. Overlay `D:\PIT` running.
+  1. Guarded Autonomy enable is a local typed phrase. Chat returns `mission.enable_required` and navigates to Automation. POST `/local/mission` with ENABLE GUARDED AUTONOMY on the bound wallet returns `need_pin` / "Your policy changed. Re-pin it before trading." Mission stays STOPPED (`user_stop`).
+  2. Kill switch is host `Stop(..., "user_stop")`. It does not flatten OID `529167222216` and does not withdraw.
+  3. Opportunity ranking: `BestExecutable` requires RankGroup >= 3. Live Watch: buying power **$9.381269**, execGate `insufficient_margin`, copy **$9.38 — $0.62 short of the $10 Hyperliquid minimum**. PIT will not invent size.
+  4. Chat `Why didn't you trade?` returns live capital reason + away counts (0/0/0/0 this session).
+  5. `/local/calibration` returns `NOT ENOUGH DATA`, `n:0`, `enough:false`. Skills listed with N=0. No fabricated Brier/ECE.
+  6. Durable `away.json` journal + human why map. Activity events can be marked AUTONOMOUS.
+  7. Web FAQ/Story/Ledger updated so Guarded Autonomy is described as desktop-only, not "never trades without AUTHORIZE".
+- **TESTED:** `go test ./...` 40 packages PASS including `TestBestExecutableRejectsBelowMinimum`, `TestExecWhyOpenCeiling`, `TestWhyDidntYouTrade`, `TestMissionEnableRefusesUnpinned`. Desktop `tsc -b` green. Web `tsc --noEmit` green. `npx tauri build` NSIS 0.7.0.
+- **LIVE VERIFIED (this machine, companion 0.7.0):** health 0.7.0; wallet `0xbdfc…0034`; agent `PIT-4bbee556` `0xfc64e36babe7dfe9eb779ee3a9f2362d16881d52` unchanged; last order OID `529167222216` filled ETH 0.0041 unchanged; mission STOPPED; chat cannot enable; enable pin-gated; Watch $9.38 not executable; calibration empty. Chrome on **current** pit0g.vercel.app still served 0.6.1 FAQ until this deploy.
+- **UNVERIFIED:** Guarded Autonomy live order (not enabled). While-you-were-away autonomous fills (none). Autonomy restart recovery while running. Pairing after this overlay. New 0G Storage/chain proof this pass.
+- **BLOCKED:** New MAINNET clip: pin mismatch AND $9.38 < $10. No flatten. No remint.
+
+SECURITY RESULT: Model still has no authority. Chat cannot AUTHORIZE, pin, or enable Guarded Autonomy. Enable on a bound wallet requires a matching pin. Private book still Direct TeeML. Kill switch does not flatten or withdraw.
+TX HASH / OID: Historical OID `529167222216` unchanged. Evidence txs unchanged (`0xf3d7bc82…` BTC, `0x3f90c548…` ETH).
+INSTALLER: `PIT_0.7.0_x64-setup.exe` size 17153852 SHA256 `E0BB7A5199B19E079C2E56717BB50FAE2DFD0FF2A10D64D6F432B05968C20451`. Overlay `D:\PIT\pit.exe` SHA256 `1038AB7544B38C6FD95622905D5D63BAA49F327FA1BCDECD6BE32C8E6317664A` + `D:\PIT\pit-desktop.exe` SHA256 `8B1EF313D3AD3C32B0A0ADE16A02ECE2325E39A06C368591D9C048CF3E400F63`. Companion `/health` **0.7.0**.
+CLASSIFICATION:
+- Guarded Autonomy host gate + pin-gate: **IMPLEMENTED + LIVE VERIFIED refuse**; live enable **BLOCKED BY USER/VENUE (need_pin)**
+- Kill switch user_stop: **IMPLEMENTED + LIVE VERIFIED** (mission STOPPED, ETH fill untouched)
+- Why didn't you trade: **IMPLEMENTED + LIVE VERIFIED** ($9.38 / $0.62)
+- Strategy Health empty honesty: **IMPLEMENTED + LIVE VERIFIED** (NOT ENOUGH DATA)
+- Web FAQ honesty: **IMPLEMENTED + TYPECHECKED**; live Chrome after deploy **PENDING this ship**
+- Autonomous MAINNET order: **BLOCKED BY USER/VENUE**
+PRODUCTION READY: 0.7.0 is production-ready for live scan, honest capital copy, fail-closed enable, and desktop kill switch. It is **not** production-ready for a new MAINNET clip or a live autonomous fill until YOU pin matching host law and the venue has >= $10 available.
+NEXT STEP: On Security, preview then pin host law. Fund unified collateral above $10 if you want a clip. Anyone can check `pit evidence verify --root 0x9c65f36076cf2ee32c7e9a02354d1aef9ccf5f6c83289dba160b8c08710424d2`.
+

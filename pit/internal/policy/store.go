@@ -247,7 +247,11 @@ func ExecWhy(openPositions int, availableUSD float64, p Policy) (block, why stri
 		return "max_open_positions", "An open position already fills the host ceiling. Scan and private research continue. Existing positions are not flattened."
 	}
 	if availableUSD+1e-9 < ClipFloorUSD {
-		return "insufficient_margin", "Available venue margin is below the $10 Hyperliquid minimum notional. PIT will not invent size."
+		if availableUSD <= 0 {
+			return "insufficient_margin", "Available venue margin is $0.00. Hyperliquid needs at least the $10 minimum. PIT will not invent size."
+		}
+		short := ClipFloorUSD - availableUSD
+		return "insufficient_margin", fmt.Sprintf("Available venue margin is $%.2f — $%.2f short of the $10 Hyperliquid minimum. PIT will not invent size.", availableUSD, short)
 	}
 	if p.MaxClipUSD+1e-9 < ClipFloorUSD {
 		return "below_min_notional", "Policy clip is below the $10 venue minimum. Raise max trade on Security, then pin."

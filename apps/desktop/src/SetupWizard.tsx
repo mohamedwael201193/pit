@@ -107,7 +107,7 @@ export function SetupWizard({
   researchVerified: boolean;
 }) {
   const hlAgent = checks.find((c) => c.name === "hl_agent");
-  const last = 8;
+  const last = 9;
   const titles = [
     "Connect wallet",
     "Choose network",
@@ -117,6 +117,7 @@ export function SetupWizard({
     "Protect private research",
     "Private compute",
     "Set policy",
+    "Choose mode",
     "Ready to discover",
   ];
   return (
@@ -261,6 +262,26 @@ export function SetupWizard({
         </>
       ) : null}
       {step === 8 ? (
+        <>
+          <h1>Choose how PIT should work.</h1>
+          <p className="lead">You pick the mode. Chat cannot. Guarded Autonomy still requires a typed confirm on Automation.</p>
+          <div className="mode-grid">
+            <article>
+              <p className="label">Manual</p>
+              <p>Scan and research on your command. Every order waits for AUTHORIZE.</p>
+            </article>
+            <article>
+              <p className="label">Research only</p>
+              <p>Scan, research, explain. Never execute.</p>
+            </article>
+            <article>
+              <p className="label">Guarded Autonomy</p>
+              <p>Research and execute only inside pinned policy after you enable it on this computer.</p>
+            </article>
+          </div>
+        </>
+      ) : null}
+      {step === 9 ? (
         <>
           <h1>Ready to discover.</h1>
           <p className="lead">Markets is live public marks. Private research stays sealed. Authorize stays on this computer.</p>

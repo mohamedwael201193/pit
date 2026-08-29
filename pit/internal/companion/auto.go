@@ -10,8 +10,10 @@ import (
 	"github.com/mohamedwael201193/pit/internal/auto"
 	"github.com/mohamedwael201193/pit/internal/cli"
 	"github.com/mohamedwael201193/pit/internal/config"
+	"github.com/mohamedwael201193/pit/internal/feasibility"
 	"github.com/mohamedwael201193/pit/internal/hl"
 	"github.com/mohamedwael201193/pit/internal/httpx"
+	"github.com/mohamedwael201193/pit/internal/policy"
 	"github.com/mohamedwael201193/pit/internal/session"
 	"github.com/mohamedwael201193/pit/internal/watch"
 )
@@ -191,8 +193,17 @@ func (h *Hub) autoTick() {
 	if len(pool) == 0 {
 		pool = filtered
 	}
+	acct := h.capitalNow()
+	if acct.OpenPositions == 0 {
+		acct.OpenPositions = h.openPositionCount()
+	}
 	var pick *watch.Candidate
-	if best, ok := watch.BestExecutable(pool, h.capitalNow(), pol, sessOK, h.policyPinnedNow()); ok {
+	execOK := false
+	if best, ok := watch.BestExecutable(pool, acct, pol, sessOK, h.policyPinnedNow()); ok {
+		cp := best
+		pick = &cp
+		execOK = true
+	} else if best, ok := watch.Best(pool); ok {
 		cp := best
 		pick = &cp
 	}
@@ -200,12 +211,28 @@ func (h *Hub) autoTick() {
 		m.LastAction = "no_opportunity"
 		m.Stage = "empty"
 		m.BestCoin = ""
+		block, _ := policy.ExecWhy(h.openPositionCount(), acct.BuyingPower, pol)
+		if block == "" {
+			block = "no_opportunity"
+		}
+		auto.AppendAway(h.Dir, auto.AwayEvent{Kind: "rejected", Why: block})
 		_ = auto.SaveMission(h.Dir, m)
 		_ = auto.Save(h.Dir, p)
 		appendActivity(h.Dir, activityEvent{
-			WorkspaceID: workspaceID(h.Dir), Kind: "mission.empty", Action: "scan", Status: "no_opportunity", Reason: "no_opportunity",
+			WorkspaceID: workspaceID(h.Dir), Kind: "mission.empty", Action: "scan", Status: "no_opportunity", Reason: block, Autonomous: m.Mode == auto.ModeGuarded,
 		})
 		return
+	}
+	if !execOK {
+		fit := feasibility.FitBook(pick.Book, pol, acct, sessOK, h.policyPinnedNow())
+		why := fit.Gate
+		if why == "" {
+			why = "insufficient_margin"
+		}
+		auto.AppendAway(h.Dir, auto.AwayEvent{Kind: "rejected", Coin: pick.Coin, Why: why})
+		m.BlockReason = why
+	} else {
+		auto.AppendAway(h.Dir, auto.AwayEvent{Kind: "detected", Coin: pick.Coin, Why: pick.Reason})
 	}
 	m.BestCoin = pick.Coin
 	m.BestWhy = watch.WhyHuman(*pick)
@@ -239,10 +266,11 @@ func (h *Hub) autoTick() {
 		if m.Mode == auto.ModeGuarded {
 			note = "guarded_will_execute_if_eligible"
 		}
+		auto.AppendAway(h.Dir, auto.AwayEvent{Kind: "researched", Coin: pick.Coin, Why: note})
 		appendActivity(h.Dir, activityEvent{
 			WorkspaceID: workspaceID(h.Dir), Kind: "automation.prepared", Market: pick.Coin,
 			Action: "prepare", Status: "research", Reason: note,
-			Link: venueTradeLink(netName, pick.Coin),
+			Link: venueTradeLink(netName, pick.Coin), Autonomous: m.Mode == auto.ModeGuarded,
 		})
 		p.LastResearchCoin = pick.Coin
 		m.LastAction = "research:" + pick.Coin
@@ -349,9 +377,10 @@ func (h *Hub) maybeGuardedExecute(hash, coin string, started time.Time) {
 	}
 	if err := auto.AllowHostExecute(h.Dir, g); err != nil {
 		auto.RecordBlock(h.Dir, err.Error(), coin)
+		auto.AppendAway(h.Dir, auto.AwayEvent{Kind: "rejected", Coin: coin, Why: err.Error()})
 		appendActivity(h.Dir, activityEvent{
 			WorkspaceID: workspaceID(h.Dir), Kind: "mission.refused", Market: coin,
-			Action: "guarded", Status: err.Error(), PreviewHash: hash, Reason: err.Error(),
+			Action: "guarded", Status: err.Error(), PreviewHash: hash, Reason: err.Error(), Autonomous: true,
 		})
 		return
 	}
@@ -359,19 +388,21 @@ func (h *Hub) maybeGuardedExecute(hash, coin string, started time.Time) {
 	if got.Error != "" {
 		auto.RecordStage(h.Dir, "exec_failed", "exec_failed:"+got.Error, got.Error, coin)
 		auto.RecordAction(h.Dir, "exec_failed:"+got.Error, coin, hash, "", "")
+		auto.AppendAway(h.Dir, auto.AwayEvent{Kind: "rejected", Coin: coin, Why: got.Error})
 		appendActivity(h.Dir, activityEvent{
 			WorkspaceID: workspaceID(h.Dir), Kind: "order.rejected", Market: coin,
-			Action: "guarded", Status: got.Error, PreviewHash: hash, Reason: got.Error,
+			Action: "guarded", Status: got.Error, PreviewHash: hash, Reason: got.Error, Autonomous: true,
 		})
 		return
 	}
 	auto.RecordAction(h.Dir, "executed", coin, hash, got.OID, "")
 	auto.RecordStage(h.Dir, "executed", "executed", "oid:"+got.OID, coin)
+	auto.AppendAway(h.Dir, auto.AwayEvent{Kind: "traded", Coin: coin, Why: "guarded_autonomy", OID: got.OID})
 	link := venueTradeLink(workspaceNetwork(h.Dir), got.Market)
 	appendActivity(h.Dir, activityEvent{
 		WorkspaceID: workspaceID(h.Dir), Kind: "order.submitted", Market: got.Market,
 		Action: "guarded", Status: got.Status, OID: got.OID, PreviewHash: got.Hash,
-		Reason: "guarded_autonomy", Link: link,
+		Reason: "guarded_autonomy", Link: link, Autonomous: true,
 	})
 	h.recordPostedOrder(got, "guarded", h.currentJobID())
 	h.fileOrder(got, h.currentJobID())
@@ -442,7 +473,7 @@ func (h *Hub) localMission(w http.ResponseWriter, r *http.Request) {
 	if body.Stop || strings.EqualFold(strings.TrimSpace(body.Typed), auto.StopToken) {
 		m := auto.Stop(h.Dir, "user_stop")
 		appendActivity(h.Dir, activityEvent{
-			WorkspaceID: workspaceID(h.Dir), Kind: "mission.stopped", Action: "stop", Status: "user_stop", Reason: "user_stop",
+			WorkspaceID: workspaceID(h.Dir), Kind: "mission.stopped", Action: "stop", Status: "user_stop", Reason: "user_stop", Autonomous: true,
 		})
 		out := h.missionPublic()
 		out["mission"] = m
@@ -450,6 +481,14 @@ func (h *Hub) localMission(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if strings.TrimSpace(body.Typed) != "" || strings.EqualFold(body.Mode, auto.ModeGuarded) {
+		if st, lerr := cli.Load(h.Dir); lerr == nil && strings.TrimSpace(st.Wallet) != "" {
+			if err := cli.CheckPinned(h.Dir, st.WorkspaceID, cli.ActivePolicy(h.Dir)); err != nil {
+				writeLocal(w, http.StatusOK, map[string]any{
+					"ok": false, "error": "need_pin", "explain": auto.HumanWhy("need_pin"), "execute": false, "sign": false, "trade": false,
+				})
+				return
+			}
+		}
 		hash, _ := cli.ActivePolicy(h.Dir).Hash()
 		m, err := auto.EnableGuarded(h.Dir, body.Typed, body.Hours, hash)
 		if err != nil {
@@ -463,7 +502,7 @@ func (h *Hub) localMission(w http.ResponseWriter, r *http.Request) {
 		m.Assets = body.Assets
 		_ = auto.SaveMission(h.Dir, m)
 		appendActivity(h.Dir, activityEvent{
-			WorkspaceID: workspaceID(h.Dir), Kind: "mission.enabled", Action: "guarded", Status: "running", Reason: "ENABLE GUARDED AUTONOMY",
+			WorkspaceID: workspaceID(h.Dir), Kind: "mission.enabled", Action: "guarded", Status: "running", Reason: "ENABLE GUARDED AUTONOMY", Autonomous: true,
 		})
 		go h.autoTick()
 		writeLocal(w, http.StatusOK, h.missionPublic())

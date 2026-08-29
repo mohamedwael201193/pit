@@ -22,6 +22,12 @@ export function explainStopHref(code: string | null): { href: string; label: str
 
 export function explainStop(code: string | null): { title: string; body: string } | null {
   if (!code) return null;
+  if (code === "insufficient_margin") {
+    return {
+      title: "Not enough trading capital",
+      body: "Available venue margin is below the $10 Hyperliquid minimum. PIT will not invent size. 0G compute credit is a different pile of money.",
+    };
+  }
   if (code === "max_open_positions") {
     return {
       title: "Open position ceiling",

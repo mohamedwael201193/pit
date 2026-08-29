@@ -138,7 +138,7 @@ export function AutomationCenter({
     try {
       const r = await onEnable(ENABLE_TOKEN, hours);
       if (r?.error) {
-        setErr(r.error);
+        setErr(r.explain || (r.error === "need_pin" ? "Your policy changed. Re-pin it before trading." : r.error));
         setPhase("idle");
         return;
       }
@@ -166,7 +166,7 @@ export function AutomationCenter({
       <div className="page-head">
         <div>
           <p className="eyebrow">Automation</p>
-          <h1>Mission</h1>
+          <h1>{live ? "Autonomy running" : status === "STOPPED" ? "Autonomy stopped" : "Autonomy"}</h1>
         </div>
         <span className={`status-chip ${status.toLowerCase()}`}>{status}</span>
       </div>
@@ -207,14 +207,20 @@ export function AutomationCenter({
             PIT may research the best eligible book and, after host gates, execute only inside the pinned policy. Chat
             cannot AUTHORIZE. Withdraw and transfer stay impossible.
           </p>
-          {mission.block_reason ? (
+          {mission.block_reason || mission.why_not ? (
             <p className="err" role="status">
-              Execution blocked: {humanStop(mission.block_reason)}. {mission.block_explain || "The mission stays alive. Scan and research continue. Existing positions are not flattened."}
+              Why PIT did not trade: {mission.why_not || humanStop(mission.block_reason || "")}. {mission.block_explain || "The mission stays alive. Scan and research continue. Existing positions are not flattened."}
             </p>
           ) : null}
-          <button type="button" className="danger" onClick={() => void stop()} disabled={busy || phase !== "idle"}>
-            Stop autonomy
+          <button type="button" className="kill-switch" onClick={() => void stop()} disabled={busy || phase !== "idle"}>
+            Stop autonomy now
           </button>
+        </section>
+      ) : m.last_stop ? (
+        <section className="stop-banner" role="status">
+          <p className="label">AUTONOMY STOPPED</p>
+          <h2>Reason: {humanStop(m.last_stop)}</h2>
+          <p>{mission.explain || "PIT will not place further orders until you enable Guarded Autonomy again on this computer."}</p>
         </section>
       ) : (
         <section className="next-row">
@@ -251,6 +257,8 @@ export function AutomationCenter({
         </p>
       ) : null}
       {kill ? <p className="err">Kill switch is on. New orders are halted.</p> : null}
+
+      <AwayBoard away={mission.away} whyNot={mission.why_not} whyCode={mission.why_not_code || mission.block_reason} />
 
       <p className="label">Mission status</p>
       <dl className="mission-grid">
@@ -460,24 +468,103 @@ export function AutomationCenter({
 
 function humanStop(s: string) {
   if (s === "chat_stop") return "Stopped from Chat";
-  if (s === "user_stop") return "Stopped on this computer";
+  if (s === "user_stop") return "user_stop";
   if (s === "kill_switch") return "Kill switch";
   if (s === "deadline") return "Duration ended";
-  if (s === "session_expired") return "Session ended";
+  if (s === "session_expired") return "Hyperliquid session permissions no longer match this desk.";
   if (s === "max_open_positions") return "Open position ceiling";
   if (s === "daily_loss") return "Daily loss";
-  if (s === "policy_changed") return "Pinned policy changed";
+  if (s === "policy_changed" || s === "need_pin") return "Your policy changed. Re-pin it before trading.";
   if (s === "max_trades") return "Trade ceiling";
   if (s === "consecutive_loss_limit") return "Consecutive loss ceiling";
   if (s === "duplicate_preview") return "Duplicate preview";
   if (s === "preview_before_guarded") return "Preview started before enable";
+  if (s === "insufficient_margin") return "Not enough available trading capital for this market.";
+  if (s === "below_min_notional") return "This account cannot size a clip at the $10 Hyperliquid minimum.";
+  if (s === "no_opportunity") return "Nothing qualifies under your law right now.";
   return s.replaceAll("_", " ");
 }
 
 function humanStage(s: string) {
-  const t = s.replaceAll("_", " ");
-  if (!t) return "idle";
-  return t;
+  const t = String(s || "").replaceAll("_", "-");
+  if (t === "scanning" || t === "starting") return "Watching live markets";
+  if (t === "researching") return "Researching privately";
+  if (t === "waiting" || t === "waiting after research") return "Waiting for the next scan";
+  if (t === "eligible") return "Ready to trade";
+  if (t === "execution-blocked" || t === "exec blocked") return "Ready to trade — host refused";
+  if (t === "executing" || t === "executed") return "Submitting to Hyperliquid";
+  if (t === "resting") return "Resting on the venue";
+  if (t === "cooldown") return "Cooldown";
+  if (t === "stopped") return "Autonomy stopped";
+  if (t === "empty") return "Watching — nothing executable";
+  if (t === "ranked") return "Ranked a candidate";
+  if (!t) return "Idle";
+  return t.replaceAll("-", " ");
+}
+
+function AwayBoard({
+  away,
+  whyNot,
+  whyCode,
+}: {
+  away?: {
+    since_unix?: number;
+    detected?: number;
+    researched?: number;
+    rejected?: number;
+    traded?: number;
+    filled?: number;
+    events?: Array<{ unix?: number; kind?: string; coin?: string; why?: string; human?: string; oid?: string }>;
+  };
+  whyNot?: string;
+  whyCode?: string;
+}) {
+  const events = [...(away?.events || [])].reverse().slice(0, 12);
+  return (
+    <section className="away-board">
+      <p className="label">While you were away</p>
+      <h2>What PIT did without asking again</h2>
+      <p className="fine">
+        {whyNot || (whyCode ? humanStop(whyCode) : "No named refusal yet.")} Guarded Autonomy never raises your limits.
+      </p>
+      <dl className="mission-grid">
+        <div>
+          <dt>Detected</dt>
+          <dd>{away?.detected ?? 0}</dd>
+        </div>
+        <div>
+          <dt>Researched</dt>
+          <dd>{away?.researched ?? 0}</dd>
+        </div>
+        <div>
+          <dt>Refused</dt>
+          <dd>{away?.rejected ?? 0}</dd>
+        </div>
+        <div>
+          <dt>Autonomous trades</dt>
+          <dd>{away?.traded ?? 0}</dd>
+        </div>
+        <div>
+          <dt>Fills</dt>
+          <dd>{away?.filled ?? 0}</dd>
+        </div>
+      </dl>
+      {events.length === 0 ? (
+        <p className="empty">Empty is honest until this computer records a scan, research, or refusal.</p>
+      ) : (
+        <ul className="away-list">
+          {events.map((ev, i) => (
+            <li key={`${ev.unix}-${ev.kind}-${i}`}>
+              <strong>{String(ev.kind || "event").replaceAll("_", " ")}</strong>
+              {ev.coin ? ` ${ev.coin}` : ""}
+              {ev.oid ? ` · OID ${ev.oid}` : ""}
+              {ev.human || ev.why ? ` · ${ev.human || humanStop(ev.why || "")}` : ""}
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  );
 }
 
 function coinFromMarket(market?: string) {
