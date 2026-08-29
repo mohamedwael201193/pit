@@ -2002,7 +2002,7 @@ RESULT:
   6. Durable `away.json` journal + human why map. Activity events can be marked AUTONOMOUS.
   7. Web FAQ/Story/Ledger updated so Guarded Autonomy is described as desktop-only, not "never trades without AUTHORIZE".
 - **TESTED:** `go test ./...` 40 packages PASS including `TestBestExecutableRejectsBelowMinimum`, `TestExecWhyOpenCeiling`, `TestWhyDidntYouTrade`, `TestMissionEnableRefusesUnpinned`. Desktop `tsc -b` green. Web `tsc --noEmit` green. `npx tauri build` NSIS 0.7.0.
-- **LIVE VERIFIED (this machine, companion 0.7.0):** health 0.7.0; wallet `0xbdfc…0034`; agent `PIT-4bbee556` `0xfc64e36babe7dfe9eb779ee3a9f2362d16881d52` unchanged; last order OID `529167222216` filled ETH 0.0041 unchanged; mission STOPPED; chat cannot enable; enable pin-gated; Watch $9.38 not executable; calibration empty. Chrome on **current** pit0g.vercel.app still served 0.6.1 FAQ until this deploy.
+- **LIVE VERIFIED (this machine, companion 0.7.0):** health 0.7.0; wallet `0xbdfc…0034`; agent `PIT-4bbee556` `0xfc64e36babe7dfe9eb779ee3a9f2362d16881d52` unchanged; last order OID `529167222216` filled ETH 0.0041 unchanged; mission STOPPED; chat cannot enable; enable pin-gated; Watch $9.38 not executable; calibration empty. After deploy: pit-health **0.7.0**; Chrome FAQ Guarded Autonomy copy; `/pair` reports **PIT Desktop is live · 0.7.0**; `/app/start` header **Orders stay on desktop**.
 - **UNVERIFIED:** Guarded Autonomy live order (not enabled). While-you-were-away autonomous fills (none). Autonomy restart recovery while running. Pairing after this overlay. New 0G Storage/chain proof this pass.
 - **BLOCKED:** New MAINNET clip: pin mismatch AND $9.38 < $10. No flatten. No remint.
 
@@ -2014,7 +2014,7 @@ CLASSIFICATION:
 - Kill switch user_stop: **IMPLEMENTED + LIVE VERIFIED** (mission STOPPED, ETH fill untouched)
 - Why didn't you trade: **IMPLEMENTED + LIVE VERIFIED** ($9.38 / $0.62)
 - Strategy Health empty honesty: **IMPLEMENTED + LIVE VERIFIED** (NOT ENOUGH DATA)
-- Web FAQ honesty: **IMPLEMENTED + TYPECHECKED**; live Chrome after deploy **PENDING this ship**
+- Web FAQ honesty: **IMPLEMENTED + LIVE VERIFIED** (Chrome FAQ + pair 0.7.0)
 - Autonomous MAINNET order: **BLOCKED BY USER/VENUE**
 PRODUCTION READY: 0.7.0 is production-ready for live scan, honest capital copy, fail-closed enable, and desktop kill switch. It is **not** production-ready for a new MAINNET clip or a live autonomous fill until YOU pin matching host law and the venue has >= $10 available.
 NEXT STEP: On Security, preview then pin host law. Fund unified collateral above $10 if you want a clip. Anyone can check `pit evidence verify --root 0x9c65f36076cf2ee32c7e9a02354d1aef9ccf5f6c83289dba160b8c08710424d2`.
