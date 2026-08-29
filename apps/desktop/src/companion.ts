@@ -374,6 +374,7 @@ export type ChatReply = BindResult & {
   navigate?: string;
   open_url?: string;
   thread?: string;
+  hours?: number;
 };
 export type ActivityEvent = {
   ts?: number;
@@ -501,6 +502,8 @@ export type MissionState = {
   running?: boolean;
   hours?: number;
   deadline_unix?: number;
+  guarded_enabled_unix?: number;
+  guarded_until_unix?: number;
   best_coin?: string;
   best_why?: string;
   last_action?: string;
@@ -519,13 +522,20 @@ export type MissionState = {
 };
 
 export type MissionPublic = {
+  ok?: boolean;
   mission?: MissionState;
   prefs?: AutoPrefs;
   mode?: string;
   running?: boolean;
+  status?: string;
   limits?: Record<string, unknown>;
   error?: string;
   execute?: boolean;
+  now?: number;
+  remaining_seconds?: number;
+  remaining_risk_usd?: number;
+  remaining_consecutive_losses?: number;
+  policy_hash?: string;
 };
 
 export async function fetchAutomation(): Promise<AutoPrefs> {
@@ -544,8 +554,8 @@ export async function saveAutomation(prefs: AutoPrefs): Promise<AutoPrefs> {
 }
 
 export async function fetchMission(): Promise<MissionPublic> {
-  const body = await localGet<MissionPublic>("local_automation", "/local/mission");
-  return body || { mode: "manual", mission: { mode: "manual" }, execute: false };
+  const body = await fetchJson<MissionPublic>("/local/mission");
+  return body || { mode: "manual", mission: { mode: "manual" }, execute: false, status: "READY" };
 }
 
 export async function postMission(body: Record<string, unknown>): Promise<MissionPublic> {

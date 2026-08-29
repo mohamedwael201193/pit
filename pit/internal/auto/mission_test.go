@@ -96,3 +96,20 @@ func TestStopReasonDeadline(t *testing.T) {
 		t.Fatal("kill")
 	}
 }
+
+func TestLifeAndPublicStatus(t *testing.T) {
+	if Life(Mission{Mode: ModeManual}, false, 1) != "READY" {
+		t.Fatal("ready")
+	}
+	if Life(Mission{Mode: ModeGuarded, Running: true, GuardedUntilUnix: 100}, false, 1) != "ACTIVE" {
+		t.Fatal("active")
+	}
+	if Life(Mission{Mode: ModeGuarded, Running: true, GuardedUntilUnix: 10}, true, 1) != "BLOCKED" {
+		t.Fatal("blocked")
+	}
+	dir := t.TempDir()
+	p := Public(dir)
+	if p["status"] != "READY" || p["execute"] == true {
+		t.Fatalf("%+v", p)
+	}
+}

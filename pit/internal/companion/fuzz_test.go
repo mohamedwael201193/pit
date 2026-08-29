@@ -142,3 +142,27 @@ func TestMissionCannotEnableWithoutPhrase(t *testing.T) {
 		t.Fatal(rec.Body.String())
 	}
 }
+
+func TestMissionEnableWithPhraseIsActive(t *testing.T) {
+	h := New(t.TempDir())
+	req := local(httptest.NewRequest(http.MethodPost, "/local/mission", bytes.NewBufferString(`{"typed":"ENABLE GUARDED AUTONOMY","hours":8}`)))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+	h.Handler().ServeHTTP(rec, req)
+	if rec.Code != 200 {
+		t.Fatal(rec.Body.String())
+	}
+	if !strings.Contains(rec.Body.String(), `"status":"ACTIVE"`) || !strings.Contains(rec.Body.String(), `"mode":"guarded"`) {
+		t.Fatal(rec.Body.String())
+	}
+	if strings.Contains(rec.Body.String(), `"execute":true`) {
+		t.Fatal(rec.Body.String())
+	}
+	req = local(httptest.NewRequest(http.MethodPost, "/local/chat", bytes.NewBufferString(`{"text":"Enable guarded autonomy for 8 hours."}`)))
+	req.Header.Set("Content-Type", "application/json")
+	rec = httptest.NewRecorder()
+	h.Handler().ServeHTTP(rec, req)
+	if !strings.Contains(rec.Body.String(), `"hours":8`) || strings.Contains(rec.Body.String(), `"execute":true`) {
+		t.Fatal(rec.Body.String())
+	}
+}

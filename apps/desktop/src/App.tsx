@@ -68,6 +68,7 @@ import { DeskHome } from "./DeskHome";
 import { WatchBook } from "./WatchBook";
 import { ResearchBoard } from "./ResearchBoard";
 import { askNotify, deskNotify } from "./notify";
+import { DESKTOP_VERSION } from "./version";
 
 type Net = "mainnet" | "testnet";
 type View = "home" | "chat" | "markets" | "research" | "portfolio" | "activity" | "automation" | "security";
@@ -189,6 +190,8 @@ export function App() {
   const [summary, setSummary] = useState<AccountSummary>({});
   const [autoPrefs, setAutoPrefs] = useState<AutoPrefs>({ watch: true, notify: true, auto_research: false, cadence_minutes: 15, trigger: "policy_pass" });
   const [mission, setMission] = useState<MissionPublic>({ mode: "manual", mission: { mode: "manual" } });
+  const [confirmHours, setConfirmHours] = useState(8);
+  const [openConfirm, setOpenConfirm] = useState(false);
   const [bestWhy, setBestWhy] = useState("");
   const [scanned, setScanned] = useState(0);
   const fillKey = useRef("");
@@ -410,6 +413,9 @@ export function App() {
           setRestartAllowed(u.restart_allowed !== false);
           setUpdateNote(u.note || "This build is checksum-verified, not OS-signed.");
         });
+        void fetchMission().then((m) => {
+          if (!gone) setMission(m);
+        });
       }
     };
     const loop = () => {
@@ -533,8 +539,10 @@ export function App() {
     ? `Researching ${researchCoin}`
     : preview?.eligible
       ? "Awaiting AUTHORIZE"
-      : status?.missionRunning || mission.running
-        ? `Mission ${status?.mode || mission.mode}`
+      : mission.status === "ACTIVE" || status?.missionRunning || mission.running
+        ? mission.mode === "guarded"
+          ? "Guarded Autonomy live"
+          : `Mission ${status?.mode || mission.mode}`
         : "Idle";
 
   function finishSetup() {
@@ -872,7 +880,7 @@ export function App() {
       <aside className="rail">
         <div className="rail-brand">
           <div className="word">PIT.</div>
-          <p className="kicker">{status?.version || "0.3.0"} · local execution</p>
+          <p className="kicker">{status?.version || DESKTOP_VERSION} · local execution</p>
         </div>
         <nav className="rail-nav" aria-label="Desk">
           {RAIL.map((item) => (
@@ -916,17 +924,30 @@ export function App() {
             {attention.title}
           </p>
           <div className="bar-meta">
+            <div className="bar-chips" aria-label="System">
+              <span className={companionUp ? "chip ok" : "chip fail"}>Health {companionUp ? "live" : "down"}</span>
+              <span className={mission.status === "ACTIVE" || mission.running ? "chip ok" : "chip"}>
+                Autonomy {mission.mode === "guarded" && mission.running ? "live" : mission.mode === "research_only" ? "research" : "manual"}
+              </span>
+              <span className={sessionAlive ? "chip ok" : "chip fail"}>Session {sessionAlive ? "live" : "none"}</span>
+              <span className={checks.find((c) => c.name === "direct_credit")?.ok ? "chip ok" : "chip fail"}>
+                Compute {checks.find((c) => c.name === "direct_credit")?.ok ? "ready" : "action"}
+              </span>
+              <span className={status?.wallet ? "chip ok" : "chip"}>
+                Account {status?.wallet ? `${status.wallet.slice(0, 6)}…${status.wallet.slice(-4)}` : "unbound"}
+              </span>
+            </div>
             <NetworkToggle net={net} onChange={setNet} />
             {walletCheck?.ok ? null : (
               <p className="pair-chip">{code ? prettyCode(code) : companionUp ? "code rotating" : "starting companion"}</p>
             )}
           </div>
         </header>
-        {companionUp && status?.version && !String(status.version).startsWith("0.2.") ? (
+        {companionUp && status?.version && String(status.version) !== DESKTOP_VERSION ? (
           <article className="card stop" role="status">
             <p className="label">COMPANION VERSION</p>
             <p>
-              This window expects PIT 0.3.0. The local companion is {status.version}. Close PIT, install the matching
+              This window expects PIT {DESKTOP_VERSION}. The local companion is {status.version}. Close PIT, install the matching
               desktop, then launch again. A running sealed job is not cancelled by this warning.
             </p>
           </article>
@@ -1000,6 +1021,11 @@ export function App() {
                 if (v === "preview") setView("research");
                 else setView(mapView(v));
               }}
+              onConfirmAutonomy={(hours) => {
+                setConfirmHours(hours || 8);
+                setOpenConfirm(true);
+                setView("automation");
+              }}
               onResearch={(c) => void researchThis(c)}
               onOpenPreview={() => setView("research")}
               onStop={() => void onCancelResearch()}
@@ -1036,7 +1062,6 @@ export function App() {
               coins={eligible}
               lastEvent={activity.length ? eventLine(activity[activity.length - 1]) : undefined}
               mode={status?.mode || mission.mode}
-              missionStop={status?.missionStop || mission.mission?.last_stop}
               exposure={summary.totalNtlPos || summary.accountValue}
               onResearch={(c) => void researchThis(c)}
               onGo={(v) => setView(v)}
@@ -1124,14 +1149,25 @@ export function App() {
             prefs={autoPrefs}
             busy={bindBusy}
             kill={Boolean(status?.kill)}
+            openConfirm={openConfirm}
+            confirmHours={confirmHours}
+            onConfirmConsumed={() => setOpenConfirm(false)}
             onMode={(mode) => {
               void postMission({ mode }).then(setMission);
             }}
-            onEnable={(typed, hours) => {
-              void postMission({ typed, hours, mode: "guarded" }).then(setMission);
+            onEnable={async (typed, hours) => {
+              setBindBusy(true);
+              const r = await postMission({ typed, hours, mode: "guarded" });
+              setMission(r);
+              setBindBusy(false);
+              return r;
             }}
-            onStop={() => {
-              void postMission({ stop: true }).then(setMission);
+            onStop={async () => {
+              setBindBusy(true);
+              const r = await postMission({ stop: true });
+              setMission(r);
+              setBindBusy(false);
+              return r;
             }}
             onSavePrefs={(p) => {
               setAutoPrefs(p);

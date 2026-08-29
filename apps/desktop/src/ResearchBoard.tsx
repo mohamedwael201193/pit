@@ -251,6 +251,23 @@ export function ResearchBoard({
           Private committee. Host sizes. Chat cannot AUTHORIZE.
         </p>
       </div>
+      <ol className="life-strip" aria-label="Research lifecycle">
+        {[
+          ["DISCOVERED", "READING_MARKET"],
+          ["PRIVATE BOOK SEALED", "SEALING_PRIVATE_BOOK"],
+          ["RESEARCHER", "RESEARCHER"],
+          ["CHALLENGER", "CHALLENGER"],
+          ["RISK", "RISK"],
+          ["TEE VERIFICATION", "VERIFYING_TEE_SIGNATURE"],
+          ["HOST ENGINE", "DETERMINISTIC_ENGINE"],
+          ["POLICY", "POLICY"],
+          ["DECISION", "PREVIEW"],
+        ].map(([label, key]) => (
+          <li key={label} className={stageMark(key, researchStage, researchRoles) || (researchKind && key === "PREVIEW" ? "done" : "")}>
+            {label}
+          </li>
+        ))}
+      </ol>
       {snap ? (
         <div className="snap">
           <div>
@@ -349,6 +366,22 @@ export function ResearchBoard({
             </td>
             <td>{researchBusy && roleVerified(researchRoles, "risk") ? `${(researchElapsed / 1000).toFixed(1)}s` : "—"}</td>
             <td>Host sizes. Model cannot raise clip.</td>
+          </tr>
+          <tr>
+            <td>Policy</td>
+            <td className={`state ${preview ? (preview.eligible ? "success" : "blocked") : "pending"}`}>
+              {preview ? (preview.eligible ? "PASS" : "BLOCKED") : researchBusy ? "PENDING" : "PENDING"}
+            </td>
+            <td>—</td>
+            <td>Host policy. The model cannot mutate it.</td>
+          </tr>
+          <tr>
+            <td>Decision</td>
+            <td className={`state ${preview ? (preview.eligible ? "success" : "stand-down") : "pending"}`}>
+              {preview ? (preview.eligible ? "EXACT PREVIEW" : "STOOD DOWN") : "PENDING"}
+            </td>
+            <td>—</td>
+            <td>{preview?.eligible ? "Exact preview after verification." : "A stand-down is a successful research outcome."}</td>
           </tr>
         </tbody>
       </table>

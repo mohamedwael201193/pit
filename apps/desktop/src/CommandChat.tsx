@@ -9,14 +9,17 @@ import {
 } from "./companion";
 
 const PROMPTS = [
-  "Find me the best opportunity right now.",
-  "Scan everything allowed by my policy.",
-  "Research the best setup.",
-  "What is the ETH setup?",
-  "Why did you reject this trade?",
-  "Show every trade PIT made today.",
-  "Run autonomously for 24 hours.",
-  "Stop autonomous trading.",
+  "Find the best opportunity right now.",
+  "Scan the whole market under my policy.",
+  "Research the strongest setup.",
+  "Why did the committee reject it?",
+  "Why is BTC better than ETH right now?",
+  "Prepare the trade.",
+  "Enable guarded autonomy for 8 hours.",
+  "Stop autonomy.",
+  "What is PIT doing?",
+  "What did PIT trade today?",
+  "Show me the proof for that trade.",
 ];
 
 export function CommandChat({
@@ -25,12 +28,14 @@ export function CommandChat({
   onResearch,
   onOpenPreview,
   onStop,
+  onConfirmAutonomy,
   island,
 }: {
   thread: string;
   onNavigate: (view: string) => void;
   onResearch: (coin: string) => void;
   onOpenPreview: () => void;
+  onConfirmAutonomy?: (hours: number) => void;
   onStop?: () => void;
   island?: {
     busy: boolean;
@@ -121,12 +126,17 @@ export function CommandChat({
 
   function applyReply(r: ChatReply) {
     if (r.open_url) window.open(r.open_url, "_blank", "noopener,noreferrer");
+    if (r.tool === "mission.enable_required") {
+      onConfirmAutonomy?.(r.hours || 8);
+      return;
+    }
     if (r.navigate === "preview") onOpenPreview();
     else if (r.navigate) onNavigate(r.navigate);
     if (r.start_research) onResearch(r.coin || "");
   }
 
   const researchSku = privateModels[0];
+  const lastPit = lines.reduce((acc, m, i) => (m.role === "pit" ? i : acc), -1);
   const modelLabel = picked?.model === "host-parsed"
     ? `Chat · host-parsed${researchSku ? ` · Research ${researchSku.model}` : ""}`
     : picked?.private_book
@@ -193,8 +203,10 @@ export function CommandChat({
                   </button>
                 ) : null}
               </div>
-              <p style={{ margin: 0 }}>{m.text}</p>
-              {m.tool ? <ChatCard tool={m.tool} coin={m.coin} onNavigate={onNavigate} onOpenPreview={onOpenPreview} /> : null}
+              <p className="turn-body">{m.text}</p>
+              {m.tool && i === lastPit ? (
+                <ChatCard tool={m.tool} coin={m.coin} onNavigate={onNavigate} onOpenPreview={onOpenPreview} onResearch={onResearch} />
+              ) : null}
             </div>
           ))
         )}
@@ -242,7 +254,7 @@ export function CommandChat({
               e.currentTarget.form?.requestSubmit();
             }
           }}
-          placeholder="What is happening?"
+          placeholder="Ask PIT what the market is doing."
         />
         <div className="composer-row">
           <p className="fine" style={{ margin: 0 }}>
@@ -317,39 +329,31 @@ function ChatCard({
   coin,
   onNavigate,
   onOpenPreview,
+  onResearch,
 }: {
   tool?: string;
   coin?: string;
   onNavigate: (view: string) => void;
   onOpenPreview: () => void;
+  onResearch?: (coin: string) => void;
 }) {
-  if (!tool || tool === "help") return null;
-  if (tool === "status" || tool === "greet") {
-    return (
-      <article className="chat-card">
-        <p className="label">Desk</p>
-        <button type="button" className="linkish" onClick={() => onNavigate("home")}>
-          Open Desk
-        </button>
-      </article>
-    );
-  }
+  if (!tool || tool === "help" || tool === "status" || tool === "greet") return null;
   if (tool === "setup.guide") {
     return (
       <article className="chat-card">
         <p className="label">Setup</p>
-        <button type="button" className="linkish" onClick={() => onNavigate("setup")}>
-          Open setup
+        <button type="button" className="primary" onClick={() => onNavigate("setup")}>
+          Continue setup
         </button>
       </article>
     );
   }
-  if (tool === "research.start") {
+  if (tool === "research.start" || tool === "research.best") {
     return (
       <article className="chat-card">
-        <p className="label">Research</p>
-        <p>Sealed Direct pass for {coin || "ETH"}. Compute money, not trading capital.</p>
-        <button type="button" className="linkish" onClick={onOpenPreview}>
+        <p className="label">Private research</p>
+        <p>Sealed Direct pass for {coin || "the best eligible book"}. Compute money, not trading capital.</p>
+        <button type="button" className="primary" onClick={onOpenPreview}>
           Open research
         </button>
       </article>
@@ -360,7 +364,7 @@ function ChatCard({
       <article className="chat-card">
         <p className="label">Exact preview</p>
         <p>Review happens on this computer. Chat cannot AUTHORIZE.</p>
-        <button type="button" className="linkish" onClick={onOpenPreview}>
+        <button type="button" className="primary" onClick={onOpenPreview}>
           Review preview
         </button>
       </article>
@@ -369,31 +373,36 @@ function ChatCard({
   if (tool === "watch.get" || tool === "watch.best" || tool === "watch.scan" || tool === "watch.compare") {
     return (
       <article className="chat-card">
-        <p className="label">Market</p>
+        <p className="label">Opportunity</p>
         <p>Live Hyperliquid marks. Side is not decided on Markets.</p>
-        <button type="button" className="linkish" onClick={() => onNavigate("markets")}>
-          Open Markets
+        {coin && onResearch ? (
+          <button type="button" className="primary" onClick={() => onResearch(coin)}>
+            Research {coin} privately
+          </button>
+        ) : (
+          <button type="button" className="primary" onClick={() => onNavigate("markets")}>
+            Open Markets
+          </button>
+        )}
+      </article>
+    );
+  }
+  if (tool === "mission.enable_required") {
+    return (
+      <article className="chat-card">
+        <p className="label">Guarded Autonomy</p>
+        <p>Review the host limits on Automation, then confirm. Chat cannot enable it.</p>
+        <button type="button" className="primary" onClick={() => onNavigate("automation")}>
+          Review and enable
         </button>
       </article>
     );
   }
-  if (tool === "research.best") {
+  if (tool === "mission.stop" || tool === "mission.status") {
     return (
       <article className="chat-card">
-        <p className="label">Research</p>
-        <p>Sealed Direct pass on the strongest policy-eligible setup. Chat cannot AUTHORIZE.</p>
-        <button type="button" className="linkish" onClick={onOpenPreview}>
-          Open research
-        </button>
-      </article>
-    );
-  }
-  if (tool === "mission.enable_required" || tool === "mission.stop" || tool === "mission.status") {
-    return (
-      <article className="chat-card">
-        <p className="label">Automation</p>
-        <p>Guarded Autonomy is enabled only on this computer after you type ENABLE GUARDED AUTONOMY.</p>
-        <button type="button" className="linkish" onClick={() => onNavigate("automation")}>
+        <p className="label">Mission</p>
+        <button type="button" className="primary" onClick={() => onNavigate("automation")}>
           Open Automation
         </button>
       </article>
@@ -403,7 +412,7 @@ function ChatCard({
     return (
       <article className="chat-card">
         <p className="label">Portfolio</p>
-        <button type="button" className="linkish" onClick={() => onNavigate("portfolio")}>
+        <button type="button" className="primary" onClick={() => onNavigate("portfolio")}>
           Open Portfolio
         </button>
       </article>
@@ -412,8 +421,8 @@ function ChatCard({
   if (tool === "activity.list" || tool === "activity.today" || tool === "activity.proof") {
     return (
       <article className="chat-card">
-        <p className="label">Activity</p>
-        <button type="button" className="linkish" onClick={() => onNavigate("activity")}>
+        <p className="label">Evidence</p>
+        <button type="button" className="primary" onClick={() => onNavigate("activity")}>
           Open Activity
         </button>
       </article>
@@ -424,7 +433,7 @@ function ChatCard({
       <article className="chat-card">
         <p className="label">Policy</p>
         <p>Host enforced. Chat cannot mutate it.</p>
-        <button type="button" className="linkish" onClick={() => onNavigate("security")}>
+        <button type="button" className="primary" onClick={() => onNavigate("security")}>
           Open Security
         </button>
       </article>
@@ -434,7 +443,7 @@ function ChatCard({
     return (
       <article className="chat-card">
         <p className="label">Hyperliquid</p>
-        <button type="button" className="linkish" onClick={() => onNavigate("security")}>
+        <button type="button" className="primary" onClick={() => onNavigate("security")}>
           Open Security
         </button>
       </article>
@@ -443,8 +452,8 @@ function ChatCard({
   if (tool === "research.result") {
     return (
       <article className="chat-card">
-        <p className="label">Evidence</p>
-        <button type="button" className="linkish" onClick={onOpenPreview}>
+        <p className="label">Committee</p>
+        <button type="button" className="primary" onClick={onOpenPreview}>
           Open research
         </button>
       </article>

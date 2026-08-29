@@ -144,7 +144,11 @@ func TestAutonomyIntents(t *testing.T) {
 		t.Fatalf("%+v", r)
 	}
 	r = Parse("Run autonomously for 24 hours.")
-	if r.Execute || r.StartResearch || r.Tool != "mission.enable_required" || r.Navigate != "automation" {
+	if r.Execute || r.StartResearch || r.Tool != "mission.enable_required" || r.Navigate != "automation" || r.Hours != 24 {
+		t.Fatalf("%+v", r)
+	}
+	r = Parse("Enable guarded autonomy for 8 hours.")
+	if r.Execute || r.Tool != "mission.enable_required" || r.Hours != 8 || r.Navigate != "automation" {
 		t.Fatalf("%+v", r)
 	}
 	r = Parse("Stop autonomous trading.")
@@ -156,6 +160,10 @@ func TestAutonomyIntents(t *testing.T) {
 		t.Fatalf("%+v", r)
 	}
 	r = Parse("Show me the on-chain proof.")
+	if r.Execute || r.Tool != "activity.proof" {
+		t.Fatalf("%+v", r)
+	}
+	r = Parse("Show me the proof for that trade.")
 	if r.Execute || r.Tool != "activity.proof" {
 		t.Fatalf("%+v", r)
 	}

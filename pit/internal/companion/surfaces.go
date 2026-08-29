@@ -141,7 +141,7 @@ func (h *Hub) localChat(w http.ResponseWriter, r *http.Request) {
 	writeLocal(w, http.StatusOK, map[string]any{
 		"ok": true, "reply": parsed.Reply, "tool": parsed.Tool, "mutate": parsed.Mutate,
 		"execute": false, "start_research": parsed.StartResearch, "coin": parsed.Coin,
-		"navigate": parsed.Navigate, "open_url": parsed.OpenURL, "thread": thread, "sign": false, "trade": false,
+		"navigate": parsed.Navigate, "open_url": parsed.OpenURL, "thread": thread, "hours": parsed.Hours, "sign": false, "trade": false,
 	})
 }
 

@@ -15,6 +15,12 @@ export function PolicyLaw({
       hit: "A larger idea is refused.",
     },
     {
+      k: "Max position",
+      v: "$10 notional",
+      why: "Same ceiling as the clip. Guarded Autonomy cannot grow past it.",
+      hit: "A larger book is refused.",
+    },
+    {
       k: "Max leverage",
       v: pinned ? "1x" : "1x until pinned",
       why: "Session cannot change leverage. PIT cannot withdraw.",
@@ -25,6 +31,12 @@ export function PolicyLaw({
       v: "ETH BTC SOL HYPE DOGE AVAX",
       why: "Markets and research stay inside this universe unless you pin a change.",
       hit: "A coin outside the list is blocked before a sealed request starts.",
+    },
+    {
+      k: "Allowed venues",
+      v: "hyperliquid",
+      why: "PIT only reads and posts this venue.",
+      hit: "Another venue is refused.",
     },
     {
       k: "Kill switch",
@@ -45,16 +57,34 @@ export function PolicyLaw({
       hit: "Guarded Autonomy stands down until you enable it again.",
     },
     {
+      k: "Daily loss",
+      v: "$50",
+      why: "Realized loss beyond this stops the mission.",
+      hit: "Guarded Autonomy stops. Positions are not flattened.",
+    },
+    {
       k: "Withdraw / transfer",
       v: "Impossible",
       why: "The session can order and cancel only.",
       hit: "Those actions are denied at the host.",
     },
     {
+      k: "Policy mutation",
+      v: "Forbidden for the model",
+      why: "Only you pin policy on this computer.",
+      hit: "Chat and the model cannot raise clip or permissions.",
+    },
+    {
       k: "Max slippage",
       v: pinned ? "80 bps" : "80 bps until pinned",
       why: "Host rejects a book that would slip past this band.",
       hit: "The preview is not eligible.",
+    },
+    {
+      k: "Liquidity / cooldown / uncertainty / session",
+      v: "Host gated",
+      why: "Thin books, cooldown, uncertainty, and session TTL are host law.",
+      hit: "The preview or mission is refused.",
     },
   ];
   return (

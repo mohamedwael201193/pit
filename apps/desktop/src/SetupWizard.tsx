@@ -35,6 +35,25 @@ function PairingBlock({
   );
 }
 
+function StepMeta({ status, meaning, why }: { status: string; meaning: string; why: string }) {
+  return (
+    <dl className="setup-meta">
+      <div>
+        <dt>Status</dt>
+        <dd>{status}</dd>
+      </div>
+      <div>
+        <dt>What this means</dt>
+        <dd>{meaning}</dd>
+      </div>
+      <div>
+        <dt>Why it is needed</dt>
+        <dd>{why}</dd>
+      </div>
+    </dl>
+  );
+}
+
 export function SetupWizard({
   step,
   setStep,
@@ -107,6 +126,11 @@ export function SetupWizard({
       {step === 0 ? (
         <>
           <h1>Connect your wallet.</h1>
+          <StepMeta
+            status={boundWallet ? "Bound" : companionUp ? "Waiting for bind" : "Companion starting"}
+            meaning="This computer is paired to a public 0x address. The seed never enters PIT."
+            why="Every later step — session, policy, research — is bound to this wallet."
+          />
           <p className="lead">
             Pair the browser to this machine, then bind the public 0x address. {NAMED.SEED_FORBIDDEN}
           </p>

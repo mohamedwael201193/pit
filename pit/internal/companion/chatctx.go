@@ -32,6 +32,9 @@ func (h *Hub) decorateChat(parsed deskcmd.Result) deskcmd.Result {
 		parsed.Reply = h.replySession()
 	case "watch.get", "watch.best", "watch.scan", "watch.compare":
 		parsed.Reply = h.replyWatch(parsed)
+		if parsed.Coin == "" {
+			parsed.Coin = h.pickBestCoin()
+		}
 	case "research.start", "research.best":
 		if live := h.replyWatch(parsed); live != "" {
 			parsed.Reply = live + " " + parsed.Reply
@@ -141,10 +144,11 @@ func (h *Hub) replyWatch(parsed deskcmd.Result) string {
 	}
 	whyBetter := ""
 	if parsed.Tool == "watch.compare" && view.Best != nil {
-		whyBetter = " " + view.BestWhy
+		whyBetter = "\nWhy it ranks first: " + view.BestWhy
 	}
-	return fmt.Sprintf("%s mark %g (oracle %g, funding %g, open interest %.0f, day notional %g). %s Trend: %s. Host rank %d, not a model score. Policy %s. Freshness %s. Venue hyperliquid. Provenance %s.%s Side is not decided here.",
-		row.Coin, row.Mark, row.Oracle, row.Funding, row.OpenInterest, row.Volume, row.Why, row.Trend, row.Rank, fit, row.Freshness, row.Provenance, whyBetter)
+	return fmt.Sprintf("%s\nMark %s (oracle %s, funding %s, open interest %s, day notional %s).\n%s\nTrend: %s. Host rank %d, not a model score. Policy %s. Freshness %s. Venue hyperliquid. Provenance %s.\nWhy it passes policy: %s\nWhat would invalidate it: %s\nWhat research will test: %s%s\nSide is not decided here.",
+		row.Coin, watch.Price(row.Mark), watch.Price(row.Oracle), watch.FundingPct(row.Funding), watch.Compact(row.OpenInterest), watch.CompactUSD(row.Volume), row.Why, row.Trend, row.Rank, fit, row.Freshness, row.Provenance,
+		watch.WhyPolicyFrom(row.Eligible, row.Block), watch.WhatInvalidatesReason(row.Reason), watch.ResearchWillTestFrom(row.Coin, row.Eligible), whyBetter)
 }
 
 func (h *Hub) pickBestCoin() string {
@@ -168,7 +172,7 @@ func (h *Hub) pickBestCoin() string {
 }
 
 func (h *Hub) replyMissionEnable() string {
-	return "Chat cannot enable Guarded Autonomy. Open Automation, review the host limits, then type ENABLE GUARDED AUTONOMY. The model cannot change those limits."
+	return "Chat cannot enable Guarded Autonomy. Open Automation, review the host limits, then confirm ENABLE GUARDED AUTONOMY on this computer. The model cannot change those limits."
 }
 
 func (h *Hub) replyMissionStop() string {

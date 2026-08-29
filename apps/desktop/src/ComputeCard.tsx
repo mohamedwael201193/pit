@@ -12,6 +12,8 @@ export function ComputeCard({
 }) {
   const auth = checkNamed(checks, "direct_auth");
   const credit = checkNamed(checks, "direct_credit");
+  const tee = checkNamed(checks, "tee");
+  const storage = checkNamed(checks, "storage");
   const sponsor = Boolean(credit?.ok && credit.detail.toLowerCase().includes("sponsor"));
   const protectedOk = Boolean(auth?.ok);
   const ready = Boolean(credit?.ok);
@@ -24,16 +26,27 @@ export function ComputeCard({
         </p>
       </span>
       <span>
-        Model <strong>glm-5.2</strong>
+        Direct <strong>{protectedOk ? (ready ? "ready" : "protected") : "needs Protect"}</strong>
       </span>
       <span>
-        Protected <strong>{protectedOk ? "yes" : "no"}</strong>
+        Balance <strong>{credit?.detail || "unread"}</strong>
       </span>
       <span>
-        Status <strong>{ready ? "Ready" : "Needs action"}</strong>
+        Next research <strong>~3 0G</strong>
       </span>
-      <span>{credit?.detail || "Sign Protect my strategy, then fund if asked."}</span>
-      <span className="pile">Available for research · ~3 0G estimated per sealed committee · not trading capital</span>
+      <span>
+        Funding <strong>{ready ? "funded" : "needs funds"}</strong>
+      </span>
+      <span>
+        Provider <strong>Direct TeeML</strong>
+      </span>
+      <span>
+        TEE <strong>{tee?.ok ? "verified roles" : tee?.detail || "unproven this session"}</strong>
+      </span>
+      <span>
+        Storage <strong>{storage?.ok ? storage.detail : storage?.detail || "no proof until a root exists"}</strong>
+      </span>
+      <span className="pile">Available for research · not trading capital</span>
       {sponsor ? <span className="fine">Sponsored compute. Not your 0G. Never trading capital.</span> : null}
       {!protectedOk ? (
         <p className="fine" style={{ margin: 0 }}>

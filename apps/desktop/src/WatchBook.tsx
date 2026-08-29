@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { BrandMark } from "./BrandMark";
+import { compactNum, compactUsd, pctFunding } from "./format";
 
 export type MarketCoin = {
   coin: string;
@@ -66,7 +67,7 @@ export function WatchBook({
           <div>
             <p className="label">Best opportunity right now</p>
             <h2>
-              <BrandMark symbol={best.coin} /> {best.coin} · {best.mark}
+              <BrandMark symbol={best.coin} /> {best.coin} · {compactNum(best.mark)}
             </h2>
             <p>{best.why}</p>
             <p className="fine">
@@ -115,10 +116,10 @@ export function WatchBook({
                   <BrandMark symbol={c.coin} />
                   <strong>{c.coin}</strong>
                 </span>
-                <span className="mark-num">{c.mark}</span>
+                <span className="mark-num">{compactNum(c.mark)}</span>
                 <span>{c.trend || "—"}</span>
-                <span>{c.funding ?? "—"}</span>
-                <span>{c.openInterest ? Math.round(c.openInterest) : "—"}</span>
+                <span>{pctFunding(c.funding)}</span>
+                <span>{compactNum(c.openInterest)}</span>
                 <span>{c.policyFit || (c.eligible ? "PASS" : "BLOCKED")}</span>
                 <span className="why-cell">{c.why || (c.eligible ? "In policy universe." : c.block || "Outside policy.")}</span>
                 <button
@@ -137,7 +138,7 @@ export function WatchBook({
           </ul>
           {row ? (
             <p className="fine">
-              {row.coin} · freshness {row.freshness || "live"} · host rank {row.rank ?? "—"} · volume {row.volume || "—"} ·{" "}
+              {row.coin} · freshness {row.freshness || "live"} · host rank {row.rank ?? "—"} · volume {compactUsd(row.volume)} ·{" "}
               {(row.riskFlags || []).join(", ") || "no extra risk flags"} · {row.timestamp || ""}
             </p>
           ) : null}

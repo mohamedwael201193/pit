@@ -26,7 +26,10 @@ function dayLabel(ts?: number) {
 
 function humanKind(kind?: string) {
   const k = String(kind || "event");
-  if (k === "opportunity") return "Opportunity";
+  if (k.includes("mission.enabled") || k === "mission.enabled") return "Mission started";
+  if (k.includes("mission.stopped") || k === "mission.stopped") return "Mission stopped";
+  if (k.includes("autonomous") || k.includes("guarded")) return "Autonomous action";
+  if (k.includes("opportunity")) return "Opportunity found";
   if (k.includes("research.start") || k === "research_started") return "Research started";
   if (k.includes("research") && (k.includes("done") || k.includes("complete"))) return "Research completed";
   if (k.startsWith("research")) return "Research";

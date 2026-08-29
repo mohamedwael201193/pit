@@ -313,6 +313,46 @@ func RecordAction(dir, action, coin, preview, oid, stop string) {
 	_ = SaveMission(dir, m)
 }
 
+func Life(m Mission, kill bool, now int64) string {
+	if kill {
+		return "BLOCKED"
+	}
+	if m.Mode == ModeGuarded {
+		if m.GuardedUntilUnix > 0 && now >= m.GuardedUntilUnix {
+			return "STOPPED"
+		}
+		if m.DeadlineUnix > 0 && now >= m.DeadlineUnix {
+			return "STOPPED"
+		}
+		if m.Running {
+			return "ACTIVE"
+		}
+		return "STOPPED"
+	}
+	if m.Mode == ModeResearch && m.Running {
+		return "ACTIVE"
+	}
+	if m.LastStop != "" {
+		return "STOPPED"
+	}
+	return "READY"
+}
+
+func RemainingSeconds(m Mission, now int64) int64 {
+	until := m.GuardedUntilUnix
+	if until == 0 {
+		until = m.DeadlineUnix
+	}
+	if until <= 0 {
+		return 0
+	}
+	left := until - now
+	if left < 0 {
+		return 0
+	}
+	return left
+}
+
 func Public(dir string) map[string]any {
 	m := LoadMission(dir)
 	p := Load(dir)
@@ -320,14 +360,25 @@ func Public(dir string) map[string]any {
 	pol := policy.Default()
 	hash, _ := pol.Hash()
 	now := time.Now().Unix()
+	remainLosses := pol.MaxConsecutiveLosses - m.ConsecutiveLosses
+	if remainLosses < 0 {
+		remainLosses = 0
+	}
 	return map[string]any{
 		"ok": true, "mission": m, "prefs": p, "execute": false, "sign": false, "trade": false,
 		"mode": m.Mode, "running": m.Running && m.Mode != ModeManual,
-		"policy_hash": hash,
+		"status":           Life(m, pol.KillSwitch, now),
+		"policy_hash":      hash,
+		"now":              now,
+		"remaining_seconds": RemainingSeconds(m, now),
+		"remaining_consecutive_losses": remainLosses,
+		"remaining_risk_usd": pol.DailyLossUSD,
 		"limits": map[string]any{
 			"allowed_assets":         pol.AllowedAssets,
 			"allowed_venues":         pol.AllowedVenues,
 			"max_clip_usd":           pol.MaxClipUSD,
+			"max_trade_usd":          pol.MaxClipUSD,
+			"max_position_usd":       pol.MaxClipUSD,
 			"max_leverage":           pol.MaxLeverage,
 			"daily_loss_usd":         pol.DailyLossUSD,
 			"max_open_positions":     pol.MaxOpenPositions,
@@ -337,12 +388,13 @@ func Public(dir string) map[string]any {
 			"min_liquidity_usd":      pol.MinLiquidityUSD,
 			"max_uncertainty":        pol.MaxUncertainty,
 			"session_ttl_seconds":    pol.SessionTTLSeconds,
+			"session_expiry":         pol.SessionTTLSeconds,
+			"kill_switch":            pol.KillSwitch,
 			"withdraw":               false,
 			"transfer":              false,
 			"policy_mutation":        false,
 			"permission_escalation": false,
 		},
-		"now": now,
-		"note": "Guarded Autonomy executes only after ENABLE GUARDED AUTONOMY on this computer. Chat cannot enable it. The model cannot change these limits.",
+		"note": "Guarded Autonomy executes only after ENABLE GUARDED AUTONOMY is confirmed on this computer. Chat cannot enable it. The model cannot change these limits.",
 	}
 }

@@ -64,6 +64,7 @@ export function PositionsPanel({
               <th>uPnL</th>
               <th>Leverage</th>
               <th>Policy clip</th>
+              <th>Why open</th>
               <th></th>
             </tr>
           </thead>
@@ -82,6 +83,11 @@ export function PositionsPanel({
                 <td>{p.unrealizedPnl || "—"}</td>
                 <td>{p.leverage || "—"}</td>
                 <td>{p.policyClipUsd ?? "—"}</td>
+                <td>
+                  {lastOrder?.market === p.coin && lastOrder?.oid
+                    ? `PIT fill OID ${lastOrder.oid}`
+                    : "Venue position. Close needs a fresh reduce-only preview."}
+                </td>
                 <td>
                   {onReduceOnlyClose && p.coin ? (
                     <button type="button" className="linkish" disabled={closeBusy} onClick={() => onReduceOnlyClose(p.coin!)}>

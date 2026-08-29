@@ -17,6 +17,7 @@ type Result struct {
 	OpenURL       string `json:"open_url,omitempty"`
 	Sign          bool   `json:"sign"`
 	Trade         bool   `json:"trade"`
+	Hours         int    `json:"hours,omitempty"`
 }
 
 func Parse(text string) Result {
@@ -44,7 +45,8 @@ func Parse(text string) Result {
 	if wantsEnableAutonomy(low) {
 		out.Tool = "mission.enable_required"
 		out.Navigate = "automation"
-		out.Reply = "Chat cannot enable Guarded Autonomy. Open Automation, review the host limits, then type ENABLE GUARDED AUTONOMY."
+		out.Hours = parseAutonomyHours(low)
+		out.Reply = "Chat cannot enable Guarded Autonomy. Open Automation, review the host limits, then confirm ENABLE GUARDED AUTONOMY on this computer."
 		return out
 	}
 	if wantsTradesToday(low) {
@@ -352,8 +354,25 @@ func wantsStopAutonomy(low string) bool {
 func wantsEnableAutonomy(low string) bool {
 	return strings.Contains(low, "run autonom") ||
 		strings.Contains(low, "guarded autonomy") ||
+		strings.Contains(low, "enable guarded") ||
 		strings.Contains(low, "run this strategy") ||
 		(strings.Contains(low, "24 hour") && strings.Contains(low, "autonom"))
+}
+
+func parseAutonomyHours(low string) int {
+	if strings.Contains(low, "72 hour") || strings.Contains(low, "72h") {
+		return 72
+	}
+	if strings.Contains(low, "24 hour") || strings.Contains(low, "24h") {
+		return 24
+	}
+	if strings.Contains(low, "8 hour") || strings.Contains(low, "8h") {
+		return 8
+	}
+	if strings.Contains(low, "1 hour") || strings.Contains(low, "1h") {
+		return 1
+	}
+	return 8
 }
 
 func wantsTradesToday(low string) bool {
@@ -363,7 +382,7 @@ func wantsTradesToday(low string) bool {
 
 func wantsOnchainProof(low string) bool {
 	return strings.Contains(low, "on-chain") || strings.Contains(low, "onchain") ||
-		(strings.Contains(low, "proof") && (strings.Contains(low, "on-chain") || strings.Contains(low, "explorer") || strings.Contains(low, "oid")))
+		(strings.Contains(low, "proof") && (strings.Contains(low, "on-chain") || strings.Contains(low, "explorer") || strings.Contains(low, "oid") || strings.Contains(low, "trade")))
 }
 
 func wantsWhyBetter(low string) bool {
@@ -372,6 +391,7 @@ func wantsWhyBetter(low string) bool {
 
 func wantsScanAll(low string) bool {
 	return strings.Contains(low, "scan everything") || strings.Contains(low, "scan all") ||
+		strings.Contains(low, "whole market") ||
 		(strings.Contains(low, "scan") && strings.Contains(low, "policy"))
 }
 

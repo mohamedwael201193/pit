@@ -1,6 +1,7 @@
 import { BrandMark } from "./BrandMark";
 import { LINKS } from "./links";
 import { prettyCode } from "./companion";
+import { compactNum } from "./format";
 import type { NextFix } from "./nextFix";
 import type { Probe } from "./readiness";
 
@@ -37,7 +38,6 @@ export function DeskHome({
   coins,
   lastEvent,
   mode,
-  missionStop,
   exposure,
   onResearch,
   onGo,
@@ -58,7 +58,6 @@ export function DeskHome({
   coins: Coin[];
   lastEvent?: string;
   mode?: string;
-  missionStop?: string;
   exposure?: string;
   onResearch: (coin: string) => void;
   onGo: (view: "markets" | "research" | "security" | "chat" | "automation" | "portfolio") => void;
@@ -85,11 +84,11 @@ export function DeskHome({
       <dl className="metrics">
         <div>
           <dt>What PIT is doing</dt>
-          <dd>{researchBusy ? doing : awaitingAuth ? "Preview waiting" : runningCopy(mode, missionStop)}</dd>
+          <dd>{researchBusy ? doing : awaitingAuth ? "Preview waiting" : runningCopy(mode)}</dd>
         </div>
         <div>
           <dt>Best opportunity</dt>
-          <dd>{best ? `${best.coin} ${best.mark}` : "none"}</dd>
+          <dd>{best ? `${best.coin} ${compactNum(best.mark)}` : "none"}</dd>
         </div>
         <div>
           <dt>Current exposure</dt>
@@ -144,7 +143,7 @@ export function DeskHome({
             <li>
               <BrandMark symbol={best.coin} />
               <strong>{best.coin}</strong>
-              <span className="mark-num">{best.mark}</span>
+              <span className="mark-num">{compactNum(best.mark)}</span>
               <span className="fine" style={{ margin: 0 }}>
                 {best.why || best.trend || "In policy universe."}
               </span>
@@ -158,7 +157,6 @@ export function DeskHome({
         <p className="empty">No opportunities match your policy yet. Empty is honest.</p>
       )}
       {lastEvent ? <p className="fine">Recently: {lastEvent}</p> : null}
-      {missionStop ? <p className="fine">Last stop: {missionStop}</p> : null}
       {showPair ? (
         <section className="next-row">
           <div>
@@ -179,9 +177,8 @@ export function DeskHome({
   );
 }
 
-function runningCopy(mode?: string, stop?: string) {
+function runningCopy(mode?: string) {
   if (mode === "guarded") return "Guarded Autonomy is live inside your policy.";
   if (mode === "research_only") return "Research Only — scan and prepare, never execute.";
-  if (stop) return `Idle after ${stop}`;
   return "Manual. Waiting for you.";
 }
