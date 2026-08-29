@@ -40,6 +40,7 @@
     "allow-local-models",
     "allow-local-chat-threads",
     "allow-local-chat-thread",
+    "allow-open-url",
     "allow-window-min",
     "allow-window-toggle-max",
     "allow-window-close",

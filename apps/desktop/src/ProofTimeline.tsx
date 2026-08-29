@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { fetchProofs, verifyProof, type FiledReceipt, type ProofsView, type VerifiedProof } from "./companion";
+import { ExternalLink } from "./ExternalLink";
 
 function shortHash(v?: string) {
   const s = String(v || "");
@@ -189,9 +190,7 @@ export function ProofTimeline() {
                 </div>
                 <div className="proof-act">
                   {row.tx_link ? (
-                    <a href={row.tx_link} target="_blank" rel="noreferrer noopener">
-                      Chain transaction
-                    </a>
+                    <ExternalLink href={row.tx_link}>Chain transaction</ExternalLink>
                   ) : (
                     <span className="fine">{row.duplicate ? "bytes already stored" : "no transaction recorded"}</span>
                   )}

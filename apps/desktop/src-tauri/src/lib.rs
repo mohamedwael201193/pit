@@ -251,6 +251,91 @@ fn window_toggle_max(window: tauri::Window) {
 }
 
 #[tauri::command]
+fn open_url(url: String) -> Result<bool, String> {
+    let url = allowed_https(&url)?;
+    open_default_browser(&url)
+}
+
+fn allowed_https(url: &str) -> Result<String, String> {
+    let u = url.trim();
+    if u.len() > 2048 {
+        return Err("url_too_long".into());
+    }
+    if !u.starts_with("https://") {
+        return Err("https_required".into());
+    }
+    if u.bytes().any(|b| b < 0x20 || matches!(b, b'"' | b'\\' | b'<' | b'>' | b'`' | b'|')) {
+        return Err("url_denied".into());
+    }
+    let rest = &u[8..];
+    if rest.contains('@') {
+        return Err("url_denied".into());
+    }
+    let hostport = rest.split(|c| c == '/' || c == '?' || c == '#').next().unwrap_or("");
+    if hostport.contains(':') {
+        return Err("url_denied".into());
+    }
+    let host = hostport.to_ascii_lowercase();
+    const ALLOW: &[&str] = &[
+        "pit0g.vercel.app",
+        "app.hyperliquid.xyz",
+        "app.hyperliquid-testnet.xyz",
+        "pc.0g.ai",
+        "0g.ai",
+        "www.0g.ai",
+        "docs.0g.ai",
+        "chainscan.0g.ai",
+        "chainscan-galileo.0g.ai",
+        "hyperliquid.info",
+        "github.com",
+    ];
+    if !ALLOW.iter().any(|h| host == *h) {
+        return Err("host_denied".into());
+    }
+    if host == "github.com"
+        && !rest
+            .to_ascii_lowercase()
+            .starts_with("github.com/mohamedwael201193/pit")
+    {
+        return Err("host_denied".into());
+    }
+    Ok(u.to_string())
+}
+
+#[cfg(windows)]
+fn open_default_browser(url: &str) -> Result<bool, String> {
+    use std::os::windows::process::CommandExt;
+    const CREATE_NO_WINDOW: u32 = 0x0800_0000;
+    let status = Command::new("rundll32")
+        .args(["url.dll,FileProtocolHandler", url])
+        .creation_flags(CREATE_NO_WINDOW)
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .status()
+        .map_err(|e| e.to_string())?;
+    if status.success() {
+        Ok(true)
+    } else {
+        Err("open_failed".into())
+    }
+}
+
+#[cfg(not(windows))]
+fn open_default_browser(url: &str) -> Result<bool, String> {
+    let status = Command::new("xdg-open")
+        .arg(url)
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .status()
+        .map_err(|e| e.to_string())?;
+    if status.success() {
+        Ok(true)
+    } else {
+        Err("open_failed".into())
+    }
+}
+
+#[tauri::command]
 fn window_close(window: tauri::Window) {
     save_bounds(&window);
     let _ = window.close();
@@ -525,7 +610,7 @@ fn same_install(path: &Path) -> bool {
     path.parent().map(|p| p == dir).unwrap_or(false)
 }
 
-const SIDECAR_VERSION: &str = "0.2.3";
+const SIDECAR_VERSION: &str = "0.4.1";
 
 fn companion_version() -> Option<String> {
     let raw = loopback_get("/health").ok()?;
@@ -701,10 +786,33 @@ pub fn run() {
             local_explain,
             local_models,
             ensure_companion,
+            open_url,
             window_min,
             window_toggle_max,
             window_close
         ])
         .run(tauri::generate_context!())
         .expect("PIT desktop failed to start");
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn allow_official_https() {
+        assert!(allowed_https("https://app.hyperliquid.xyz/trade/BTC").is_ok());
+        assert!(allowed_https("https://app.hyperliquid-testnet.xyz/API").is_ok());
+        assert!(allowed_https("https://chainscan.0g.ai/tx/0xabc").is_ok());
+        assert!(allowed_https("https://github.com/mohamedwael201193/pit/releases/latest").is_ok());
+        assert!(allowed_https("https://pit0g.vercel.app/pair").is_ok());
+        assert!(allowed_https("https://pc.0g.ai/sdk/dashboard/funds").is_ok());
+        assert!(allowed_https("https://hyperliquid.info").is_ok());
+        assert!(allowed_https("http://app.hyperliquid.xyz").is_err());
+        assert!(allowed_https("https://evil.example").is_err());
+        assert!(allowed_https("https://github.com/other/repo").is_err());
+        assert!(allowed_https("https://user@app.hyperliquid.xyz").is_err());
+        assert!(allowed_https("https://app.hyperliquid.xyz:443/x").is_err());
+        assert!(allowed_https("javascript:alert(1)").is_err());
+    }
 }

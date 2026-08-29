@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { LINKS, hyperliquidAPI } from "./links";
+import { ExternalLink } from "./ExternalLink";
 import { NAMED } from "./namedStates";
 
 export function AuthorizeGate({
@@ -33,9 +34,9 @@ export function AuthorizeGate({
           </button>
           {agent ? <p className="fine">Agent {agent}</p> : null}
           {agentName ? <p className="fine">API wallet name {agentName}. Must be under 17 characters on Hyperliquid.</p> : null}
-          <a className="linkish" href={hyperliquidAPI(net)} target="_blank" rel="noreferrer">
+          <ExternalLink className="linkish" href={hyperliquidAPI(net)}>
             Open Hyperliquid API
-          </a>
+          </ExternalLink>
           <p className="fine">{NAMED.SESSION_EXPIRED}</p>
         </>
       ) : (
@@ -44,18 +45,16 @@ export function AuthorizeGate({
           <p>Order and cancel only. Type AUTHORIZE on the exact preview on Research. This page does not place an order.</p>
           {agent ? <p className="fine">Agent {agent}</p> : null}
           {agentName ? <p className="fine">API wallet name {agentName}. Must be under 17 characters.</p> : null}
-          <a className="linkish" href={hyperliquidAPI(net)} target="_blank" rel="noreferrer">
+          <ExternalLink className="linkish" href={hyperliquidAPI(net)}>
             Open Hyperliquid API
-          </a>
+          </ExternalLink>
           <p className="fine">{NAMED.AUTHORIZE_EXACT}</p>
         </>
       )}
       {children}
       <p className="fine">
         Direct credit lives at{" "}
-        <a href={LINKS.pcAdvanced} target="_blank" rel="noreferrer">
-          pc.0g.ai Advanced funds
-        </a>
+        <ExternalLink href={LINKS.pcAdvanced}>pc.0g.ai Advanced funds</ExternalLink>
         . That page is provider credit, not a Hyperliquid balance.
       </p>
     </div>

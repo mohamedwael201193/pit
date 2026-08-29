@@ -1,4 +1,5 @@
 import { hyperliquidAPI } from "./links";
+import { ExternalLink } from "./ExternalLink";
 import { BrandMark } from "./BrandMark";
 
 export type SecurityDomain = {
@@ -62,14 +63,14 @@ export function SecurityCenter({
                     </button>
                   ) : null}
                   {d.id === "hyperliquid" ? (
-                    <a className="linkish" href={hyperliquidAPI(net)} target="_blank" rel="noreferrer">
+                    <ExternalLink className="linkish" href={hyperliquidAPI(net)}>
                       Open official page
-                    </a>
+                    </ExternalLink>
                   ) : null}
                   {d.href ? (
-                    <a className="linkish" href={d.href} target="_blank" rel="noreferrer">
+                    <ExternalLink className="linkish" href={d.href}>
                       {d.hrefLabel || "Open official page"}
-                    </a>
+                    </ExternalLink>
                   ) : null}
                 </div>
               </td>

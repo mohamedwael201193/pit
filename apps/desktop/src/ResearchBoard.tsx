@@ -6,6 +6,7 @@ import { committeeVerified, oidBelongsToPreview, researchCardTitle } from "./hon
 import { explainStop, explainStopHref } from "./explain";
 import { researchWhyCopy } from "./researchWhy";
 import { hyperliquidAPI } from "./links";
+import { ExternalLink } from "./ExternalLink";
 import type { BindResult, DoctorCheck, LocalStatus } from "./companion";
 
 const RESEARCH_STAGES = [
@@ -392,9 +393,9 @@ export function ResearchBoard({
           <p>{explained?.body || researchNote}</p>
           {researchJobId ? <p className="fine">Job {researchJobId}</p> : null}
           {explainStopHref(whyCode) ? (
-            <a className="linkish" href={explainStopHref(whyCode)?.href} target="_blank" rel="noreferrer">
+            <ExternalLink className="linkish" href={explainStopHref(whyCode)?.href || ""}>
               {explainStopHref(whyCode)?.label}
-            </a>
+            </ExternalLink>
           ) : null}
         </section>
       ) : null}
@@ -584,9 +585,9 @@ export function PreviewContract({
         </p>
       ) : null}
       {authErr === "approveAgent_required" ? (
-        <a className="linkish" href={hyperliquidAPI(net)} target="_blank" rel="noreferrer">
+        <ExternalLink className="linkish" href={hyperliquidAPI(net)}>
           Open Hyperliquid API
-        </a>
+        </ExternalLink>
       ) : null}
     </article>
   );

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { fetchProofs, type ProofsView } from "./companion";
+import { ExternalLink } from "./ExternalLink";
 
 function shortHash(v?: string) {
   const s = String(v || "");
@@ -63,9 +64,7 @@ export function EvidenceStrip({ onOpen }: { onOpen: () => void }) {
       </div>
       <div className="evidence-act">
         {latest?.tx_link ? (
-          <a href={latest.tx_link} target="_blank" rel="noreferrer noopener">
-            Chain transaction
-          </a>
+          <ExternalLink href={latest.tx_link}>Chain transaction</ExternalLink>
         ) : null}
         <button type="button" onClick={onOpen}>
           {view.count ? `Proof trail (${view.count})` : "Proof trail"}

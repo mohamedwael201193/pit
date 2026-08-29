@@ -27,6 +27,22 @@ func TestEnableGuardedRequiresPhrase(t *testing.T) {
 	}
 }
 
+func TestGuardedRunningRecoversFromDisk(t *testing.T) {
+	dir := t.TempDir()
+	hash, _ := policy.Default().Hash()
+	if _, err := EnableGuarded(dir, EnableToken, 8, hash); err != nil {
+		t.Fatal(err)
+	}
+	got := LoadMission(dir)
+	if !got.Running || got.Mode != ModeGuarded {
+		t.Fatalf("%+v", got)
+	}
+	again := LoadMission(dir)
+	if !again.Running || again.GuardedUntilUnix != got.GuardedUntilUnix {
+		t.Fatal("lost mission")
+	}
+}
+
 func TestStopRecovers(t *testing.T) {
 	dir := t.TempDir()
 	hash, _ := policy.Default().Hash()

@@ -6,6 +6,7 @@ import { PermissionsCard } from "./Permissions";
 import { PolicyLaw } from "./PolicyLaw";
 import { SessionNote } from "./SessionNote";
 import { LINKS, hyperliquidAPI, hyperliquidApp } from "./links";
+import { ExternalLink } from "./ExternalLink";
 import { prettyCode, type DoctorCheck } from "./companion";
 import { ComputeCard } from "./ComputeCard";
 import type { Probe } from "./readiness";
@@ -135,9 +136,9 @@ export function SetupWizard({
             Pair the browser to this machine, then bind the public 0x address. {NAMED.SEED_FORBIDDEN}
           </p>
           <PairingBlock code={code} expires={expires} companionUp={companionUp} />
-          <a className="primary" href={LINKS.pair} target="_blank" rel="noreferrer">
+          <ExternalLink className="primary" href={LINKS.pair}>
             Open official page
-          </a>
+          </ExternalLink>
           <form
             className="bind-form"
             onSubmit={(e: FormEvent) => {
@@ -181,9 +182,9 @@ export function SetupWizard({
         <>
           <h1>Connect Hyperliquid.</h1>
           <p className="lead">Open the official app for this network. PIT still cannot withdraw.</p>
-          <a className="primary" href={hyperliquidApp(net)} target="_blank" rel="noreferrer">
+          <ExternalLink className="primary" href={hyperliquidApp(net)}>
             Open official page
-          </a>
+          </ExternalLink>
           <button type="button" className="linkish" onClick={onCheck}>
             Check again
           </button>
@@ -221,9 +222,9 @@ export function SetupWizard({
           {agentName ? <p>Name {agentName}</p> : null}
           {agent ? <p>PIT Agent {agent}</p> : null}
           <p>{hlAgent?.ok ? "Your trading account is ready." : hlAgent?.detail || "Waiting for Hyperliquid approval."}</p>
-          <a className="primary" href={hyperliquidAPI(net)} target="_blank" rel="noreferrer">
+          <ExternalLink className="primary" href={hyperliquidAPI(net)}>
             Open official page
-          </a>
+          </ExternalLink>
           <button type="button" className="linkish" onClick={onCheck}>
             Check again
           </button>
@@ -237,9 +238,9 @@ export function SetupWizard({
             receives it.
           </p>
           <p>{checks.find((c) => c.name === "direct_auth")?.ok ? "Protected on this computer." : "Waiting for the wallet signature."}</p>
-          <a className="primary" href={LINKS.app} target="_blank" rel="noreferrer">
+          <ExternalLink className="primary" href={LINKS.app}>
             Open official page
-          </a>
+          </ExternalLink>
           <button type="button" className="linkish" onClick={onCheck}>
             Check again
           </button>

@@ -1,4 +1,5 @@
 import type { PathStep } from "./setupPath";
+import { ExternalLink } from "./ExternalLink";
 
 export function WelcomePath({
   steps,
@@ -21,9 +22,9 @@ export function WelcomePath({
               <p>{s.why}</p>
               <div className="cta-row">
                 {s.href ? (
-                  <a className="linkish" href={s.href} target="_blank" rel="noreferrer">
+                  <ExternalLink className="linkish" href={s.href}>
                     {s.hrefLabel || "Open"}
-                  </a>
+                  </ExternalLink>
                 ) : null}
                 {s.go && onGo ? (
                   <button type="button" className="linkish" onClick={() => onGo(s.go!)}>

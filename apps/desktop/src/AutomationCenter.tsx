@@ -3,6 +3,7 @@ import { BrandMark } from "./BrandMark";
 import { elapsedLabel, nextScanLabel, remainLabel } from "./format";
 import { Select } from "./Select";
 import { explorerAddress, explorerTx, hyperliquidAPI, hyperliquidApp, hyperliquidTrade, LINKS } from "./links";
+import { ExternalLink } from "./ExternalLink";
 import type { AutoPrefs, MissionPublic } from "./companion";
 
 const ENABLE_TOKEN = "ENABLE GUARDED AUTONOMY";
@@ -277,9 +278,9 @@ export function AutomationCenter({
           <dt>Current opportunity</dt>
           <dd>
             {m.best_coin ? (
-              <a className="asset" href={hyperliquidTrade(net || "mainnet", m.best_coin)} target="_blank" rel="noreferrer">
+              <ExternalLink className="asset" href={hyperliquidTrade(net || "mainnet", m.best_coin)}>
                 <BrandMark symbol={m.best_coin} /> {m.best_coin}
-              </a>
+              </ExternalLink>
             ) : (
               "none"
             )}
@@ -330,41 +331,41 @@ export function AutomationCenter({
 
       <p className="label">Official links</p>
       <div className="mission-links">
-        <a className="linkish" href={hyperliquidApp(net || "mainnet")} target="_blank" rel="noreferrer">
+        <ExternalLink className="linkish" href={hyperliquidApp(net || "mainnet")}>
           Hyperliquid
-        </a>
-        <a className="linkish" href={hyperliquidAPI(net || "mainnet")} target="_blank" rel="noreferrer">
+        </ExternalLink>
+        <ExternalLink className="linkish" href={hyperliquidAPI(net || "mainnet")}>
           Hyperliquid API
-        </a>
+        </ExternalLink>
         {m.best_coin ? (
-          <a className="linkish" href={hyperliquidTrade(net || "mainnet", m.best_coin)} target="_blank" rel="noreferrer">
+          <ExternalLink className="linkish" href={hyperliquidTrade(net || "mainnet", m.best_coin)}>
             {m.best_coin} book
-          </a>
+          </ExternalLink>
         ) : null}
         {wallet ? (
-          <a className="linkish" href={explorerAddress(wallet, net || "mainnet")} target="_blank" rel="noreferrer">
+          <ExternalLink className="linkish" href={explorerAddress(wallet, net || "mainnet")}>
             0G explorer
-          </a>
+          </ExternalLink>
         ) : (
-          <a className="linkish" href={LINKS.explorer} target="_blank" rel="noreferrer">
+          <ExternalLink className="linkish" href={LINKS.explorer}>
             0G explorer
-          </a>
+          </ExternalLink>
         )}
-        <a className="linkish" href={LINKS.og} target="_blank" rel="noreferrer">
+        <ExternalLink className="linkish" href={LINKS.og}>
           0G
-        </a>
-        <a className="linkish" href={LINKS.pcAdvanced} target="_blank" rel="noreferrer">
+        </ExternalLink>
+        <ExternalLink className="linkish" href={LINKS.pcAdvanced}>
           Private compute
-        </a>
+        </ExternalLink>
         {oid ? (
-          <a className="linkish" href={hyperliquidTrade(net || "mainnet", coinFromMarket(mission.last_order?.market || m.best_coin))} target="_blank" rel="noreferrer">
+          <ExternalLink className="linkish" href={hyperliquidTrade(net || "mainnet", coinFromMarket(mission.last_order?.market || m.best_coin))}>
             OID {oid}
-          </a>
+          </ExternalLink>
         ) : null}
         {proofHash ? (
-          <a className="linkish" href={explorerTx(proofHash, net || "mainnet")} target="_blank" rel="noreferrer">
+          <ExternalLink className="linkish" href={explorerTx(proofHash, net || "mainnet")}>
             Storage proof
-          </a>
+          </ExternalLink>
         ) : null}
         {onOpenHistory ? (
           <button type="button" className="linkish" onClick={onOpenHistory}>

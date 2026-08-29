@@ -7,6 +7,8 @@ import {
   type ChatReply,
   type DirectModel,
 } from "./companion";
+import { ExternalLink } from "./ExternalLink";
+import { openExternal } from "./open";
 
 const PROMPTS = [
   "Find the best opportunity right now.",
@@ -29,6 +31,7 @@ export function CommandChat({
   onOpenPreview,
   onStop,
   onConfirmAutonomy,
+  live,
   island,
 }: {
   thread: string;
@@ -37,6 +40,13 @@ export function CommandChat({
   onOpenPreview: () => void;
   onConfirmAutonomy?: (hours: number) => void;
   onStop?: () => void;
+  live?: {
+    coin?: string;
+    stage?: string;
+    gate?: string;
+    awaiting?: boolean;
+    running?: boolean;
+  };
   island?: {
     busy: boolean;
     coin: string;
@@ -125,7 +135,7 @@ export function CommandChat({
   }
 
   function applyReply(r: ChatReply) {
-    if (r.open_url) window.open(r.open_url, "_blank", "noopener,noreferrer");
+    if (r.open_url) void openExternal(r.open_url);
     if (r.tool === "mission.enable_required") {
       onConfirmAutonomy?.(r.hours || 8);
       return;
@@ -180,6 +190,28 @@ export function CommandChat({
         </div>
       </div>
       <div className="transcript" role="log">
+        {live ? (
+          <article className="chat-live" aria-label="Live desk state">
+            <p className="label">Live</p>
+            <p>
+              {live.running ? "Guarded Autonomy on" : "Manual"} · {live.coin || "no opportunity"} ·{" "}
+              {(live.stage || "idle").replaceAll("_", " ")}
+              {live.gate ? ` · gate ${live.gate.replaceAll("_", " ")}` : ""}
+              {live.awaiting ? " · awaiting AUTHORIZE" : ""}
+            </p>
+            <div className="cta-row">
+              <button type="button" className="linkish" onClick={() => onNavigate("markets")}>
+                Opportunity
+              </button>
+              <button type="button" className="linkish" onClick={onOpenPreview}>
+                Research
+              </button>
+              <button type="button" className="linkish" onClick={() => onNavigate("activity")}>
+                Proof
+              </button>
+            </div>
+          </article>
+        ) : null}
         {lines.length === 0 ? (
           <div className="chat-empty">
             <p>Ask the live desk. Answers come from this computer, not a canned script.</p>
@@ -203,7 +235,9 @@ export function CommandChat({
                   </button>
                 ) : null}
               </div>
-              <p className="turn-body">{m.text}</p>
+              <p className="turn-body">
+                <LinkedText text={m.text || ""} />
+              </p>
               {m.tool && i === lastPit ? (
                 <ChatCard tool={m.tool} coin={m.coin} onNavigate={onNavigate} onOpenPreview={onOpenPreview} onResearch={onResearch} />
               ) : null}
@@ -288,6 +322,23 @@ export function CommandChat({
         </div>
       </form>
     </section>
+  );
+}
+
+function LinkedText({ text }: { text: string }) {
+  const parts = String(text || "").split(/(https:\/\/[^\s<>"'()]+)/g);
+  return (
+    <>
+      {parts.map((p, i) =>
+        p.startsWith("https://") ? (
+          <ExternalLink key={`${p}-${i}`} href={p}>
+            {p}
+          </ExternalLink>
+        ) : (
+          <span key={i}>{p}</span>
+        ),
+      )}
+    </>
   );
 }
 

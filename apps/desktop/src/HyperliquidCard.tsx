@@ -1,4 +1,5 @@
 import { LINKS, hyperliquidAPI, hyperliquidApp } from "./links";
+import { ExternalLink } from "./ExternalLink";
 import { BrandMark } from "./BrandMark";
 
 export function HyperliquidCard({
@@ -71,15 +72,15 @@ export function HyperliquidCard({
       {approvedDetail ? <p className="fine">{approvedDetail}</p> : null}
       <p className="fine">Account is your wallet. PIT Agent can order and cancel only. Trading capital is not private compute.</p>
       <div className="cta-row">
-        <a className="primary" href={hyperliquidApp(net)} target="_blank" rel="noreferrer">
+        <ExternalLink className="primary" href={hyperliquidApp(net)}>
           Connect Hyperliquid
-        </a>
-        <a className="linkish" href={hyperliquidAPI(net)} target="_blank" rel="noreferrer">
+        </ExternalLink>
+        <ExternalLink className="linkish" href={hyperliquidAPI(net)}>
           Open Hyperliquid API
-        </a>
-        <a className="linkish" href={hyperliquidAPI(net)} target="_blank" rel="noreferrer">
+        </ExternalLink>
+        <ExternalLink className="linkish" href={hyperliquidAPI(net)}>
           Approve PIT
-        </a>
+        </ExternalLink>
         {!agent || !sessionAlive ? (
           <button type="button" className="linkish" onClick={onCreateSession} disabled={busy}>
             Create secure session
@@ -96,9 +97,7 @@ export function HyperliquidCard({
       </div>
       <p className="fine">
         Compute money lives at{" "}
-        <a href={LINKS.pcAdvanced} target="_blank" rel="noreferrer">
-          0G Private Compute
-        </a>
+        <ExternalLink href={LINKS.pcAdvanced}>0G Private Compute</ExternalLink>
         . That is not Hyperliquid.
       </p>
     </section>

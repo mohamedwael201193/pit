@@ -1,6 +1,7 @@
 import { BrandMark } from "./BrandMark";
 import { EvidenceStrip } from "./EvidenceStrip";
 import { LINKS } from "./links";
+import { ExternalLink } from "./ExternalLink";
 import { prettyCode } from "./companion";
 import { compactNum } from "./format";
 import type { NextFix } from "./nextFix";
@@ -35,6 +36,8 @@ export function DeskHome({
   policyPinned,
   hlApproved,
   researchBusy,
+  researchStage,
+  researchKind,
   awaitingAuth,
   coins,
   lastEvent,
@@ -55,6 +58,8 @@ export function DeskHome({
   policyPinned: boolean;
   hlApproved: boolean;
   researchBusy?: boolean;
+  researchStage?: string;
+  researchKind?: string;
   awaitingAuth?: boolean;
   coins: Coin[];
   lastEvent?: string;
@@ -82,6 +87,24 @@ export function DeskHome({
         <Chip ok={hlApproved} label="Hyperliquid" value={hlApproved ? "approved" : "needs approval"} />
         <Chip ok={policyPinned} label="Policy" value={policyPinned ? "pinned" : "unpinned"} />
       </div>
+      <ol className="workflow" aria-label="Desk workflow">
+        <li className={best ? "on" : ""}>
+          <span>Discover</span>
+          <strong>{best ? best.coin : "none"}</strong>
+        </li>
+        <li className={researchBusy || researchKind ? "on" : ""}>
+          <span>Research</span>
+          <strong>{researchBusy ? (researchStage || "running").replaceAll("_", " ") : researchKind ? researchKind.replaceAll("_", " ") : "idle"}</strong>
+        </li>
+        <li className={awaitingAuth ? "on" : ""}>
+          <span>Decision</span>
+          <strong>{awaitingAuth ? "awaiting AUTHORIZE" : "none"}</strong>
+        </li>
+        <li>
+          <span>Proof</span>
+          <strong>0G trail</strong>
+        </li>
+      </ol>
       <dl className="metrics">
         <div>
           <dt>What PIT is doing</dt>
@@ -131,9 +154,9 @@ export function DeskHome({
             Automation
           </button>
           {attention.href ? (
-            <a className="linkish" href={attention.href} target="_blank" rel="noreferrer">
+            <ExternalLink className="linkish" href={attention.href}>
               {attention.hrefLabel || "Open official page"}
-            </a>
+            </ExternalLink>
           ) : null}
         </div>
       </section>
@@ -170,9 +193,9 @@ export function DeskHome({
               The website never receives a session key.
             </p>
           </div>
-          <a className="primary" href={LINKS.pair} target="_blank" rel="noreferrer">
+          <ExternalLink className="primary" href={LINKS.pair}>
             Open pairing
-          </a>
+          </ExternalLink>
         </section>
       ) : null}
     </main>

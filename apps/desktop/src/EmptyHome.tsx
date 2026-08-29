@@ -1,4 +1,5 @@
 import { AttentionLine } from "./AttentionLine";
+import { ExternalLink } from "./ExternalLink";
 import type { NextFix } from "./nextFix";
 
 export function EmptyHome({
@@ -18,9 +19,9 @@ export function EmptyHome({
       <p className="fine">{next.fix}</p>
       <div className="cta-row">
         {next.href ? (
-          <a className="linkish" href={next.href} target="_blank" rel="noreferrer">
+          <ExternalLink className="linkish" href={next.href}>
             {next.hrefLabel || "Open"}
-          </a>
+          </ExternalLink>
         ) : null}
         {next.go && onGo ? (
           <button type="button" className="linkish" onClick={() => onGo(next.go!)}>

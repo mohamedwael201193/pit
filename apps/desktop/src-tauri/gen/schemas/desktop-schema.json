@@ -387,6 +387,12 @@
           "markdownDescription": "Read public Hyperliquid marks from the local companion. Never a secret."
         },
         {
+          "description": "Open an allowlisted HTTPS URL in the Windows default browser. Never a secret.",
+          "type": "string",
+          "const": "allow-open-url",
+          "markdownDescription": "Open an allowlisted HTTPS URL in the Windows default browser. Never a secret."
+        },
+        {
           "description": "Close the PIT window.",
           "type": "string",
           "const": "allow-window-close",

@@ -20,6 +20,7 @@ type OrderResult struct {
 	Market string  `json:"market,omitempty"`
 	Side   string  `json:"side,omitempty"`
 	Sz     float64 `json:"sz,omitempty"`
+	Status string  `json:"status,omitempty"`
 	Agent  string  `json:"agent,omitempty"`
 	Error  string  `json:"error,omitempty"`
 	Sign   bool    `json:"sign"`
@@ -176,6 +177,7 @@ func ExecuteDeskOrder(dir, typed, presentedHash string) OrderResult {
 	out.Market = card.Market
 	out.Side = card.Side
 	out.Sz = card.Sz
+	out.Status = stt
 	saveLastOrder(dir, map[string]any{
 		"ok": true, "posted": true, "oid": oid, "cloid": card.Cloid, "hash": hash,
 		"market": card.Market, "side": card.Side, "sz": card.Sz, "status": stt,

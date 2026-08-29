@@ -1,4 +1,5 @@
 import { LINKS } from "./links";
+import { ExternalLink } from "./ExternalLink";
 import type { DoctorCheck } from "./companion";
 import { checkNamed } from "./companion";
 import { BrandMark } from "./BrandMark";
@@ -58,12 +59,12 @@ export function ComputeCard({
         </p>
       ) : null}
       <div className="cta-row" style={{ marginTop: 0 }}>
-        <a className={protectedOk ? "linkish" : "primary"} href={LINKS.app} target="_blank" rel="noreferrer">
+        <ExternalLink className={protectedOk ? "linkish" : "primary"} href={LINKS.app}>
           Protect my strategy
-        </a>
-        <a className="linkish" href={LINKS.pcAdvanced} target="_blank" rel="noreferrer">
+        </ExternalLink>
+        <ExternalLink className="linkish" href={LINKS.pcAdvanced}>
           Open 0G Private Compute
-        </a>
+        </ExternalLink>
         <button type="button" className="linkish" onClick={onCheck}>
           Check again
         </button>

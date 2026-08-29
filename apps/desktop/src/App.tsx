@@ -51,6 +51,8 @@ import {
   type VenuePosition,
 } from "./companion";
 import { LINKS, explorerAddress, hyperliquidAPI, hyperliquidApp } from "./links";
+import { ExternalLink } from "./ExternalLink";
+import { openExternal, useNativeExternalLinks } from "./open";
 import { nextFix } from "./nextFix";
 import { probes } from "./readiness";
 import { committeeVerified } from "./honesty";
@@ -128,6 +130,7 @@ const RAIL: { id: View; label: string }[] = [
 ];
 
 export function App() {
+  useNativeExternalLinks();
   const [view, setView] = useState<View>("home");
   const [net, setNet] = useState<Net>("mainnet");
   const [sessionAlive, setSessionAlive] = useState(false);
@@ -296,6 +299,24 @@ export function App() {
       gone = true;
     };
   }, [techOpen]);
+
+  useEffect(() => {
+    let gone = false;
+    const tick = () => {
+      void fetchActivity().then((ev) => {
+        if (!gone) setActivity(ev);
+      });
+      void fetchMission().then((m) => {
+        if (!gone) setMission(m);
+      });
+    };
+    tick();
+    const id = window.setInterval(tick, 3000);
+    return () => {
+      gone = true;
+      window.clearInterval(id);
+    };
+  }, []);
 
   useEffect(() => {
     let gone = false;
@@ -868,9 +889,9 @@ export function App() {
           { id: "automation", label: "Open Automation", run: () => setView("automation") },
           { id: "security", label: "Open Security", run: () => setView("security") },
           { id: "start", label: "Start research", run: () => void researchThis("ETH") },
-          { id: "hl", label: "Open Hyperliquid", run: () => window.open(hyperliquidApp(net), "_blank", "noopener,noreferrer") },
-          { id: "hlapi", label: "Open Hyperliquid API", run: () => window.open(hyperliquidAPI(net), "_blank", "noopener,noreferrer") },
-          { id: "og", label: "Open 0G Private Compute", run: () => window.open(LINKS.pcAdvanced, "_blank", "noopener,noreferrer") },
+          { id: "hl", label: "Open Hyperliquid", run: () => void openExternal(hyperliquidApp(net)) },
+          { id: "hlapi", label: "Open Hyperliquid API", run: () => void openExternal(hyperliquidAPI(net)) },
+          { id: "og", label: "Open 0G Private Compute", run: () => void openExternal(LINKS.pcAdvanced) },
           { id: "check", label: "Check system", run: () => void onCheck() },
           { id: "preview", label: "Show current preview", run: () => setView("research") },
           { id: "connecttest", label: "Prepare connection-test preview", run: () => void onConnectionPreview() },
@@ -1030,6 +1051,13 @@ export function App() {
               onResearch={(c) => void researchThis(c)}
               onOpenPreview={() => setView("research")}
               onStop={() => void onCancelResearch()}
+              live={{
+                coin: mission.mission?.best_coin || researchCoin,
+                stage: mission.stage || (researchBusy ? researchStage : ""),
+                gate: mission.block_reason,
+                awaiting: Boolean(preview?.eligible),
+                running: Boolean(mission.running || mission.mission?.running),
+              }}
               island={{
                 busy: researchBusy,
                 coin: researchCoin,
@@ -1059,6 +1087,8 @@ export function App() {
               policyPinned={pinned}
               hlApproved={Boolean(checks.find((c) => c.name === "hl_agent" && c.ok))}
               researchBusy={researchBusy}
+              researchStage={researchStage}
+              researchKind={researchKind}
               awaitingAuth={Boolean(preview?.eligible)}
               coins={eligible}
               lastEvent={activity.length ? eventLine(activity[activity.length - 1]) : undefined}
@@ -1093,6 +1123,7 @@ export function App() {
               summary={summary}
               onReduceOnlyClose={(c) => void onReduceOnlyClose(c)}
               closeBusy={bindBusy}
+              net={net}
             />
           </main>
         ) : null}
@@ -1218,9 +1249,9 @@ export function App() {
               <p>Session {sessionAlive ? "Active" : "none"}{status?.sessionExpires ? ` until ${new Date(status.sessionExpires).toISOString().replace(".000Z", "Z")}` : ""}</p>
               {status?.workspace ? <p>Desk ID {status.workspace}</p> : null}
               {status?.wallet ? (
-                <a className="linkish" href={explorerAddress(status.wallet)} target="_blank" rel="noreferrer">
+                <ExternalLink className="linkish" href={explorerAddress(status.wallet)}>
                   View on explorer
-                </a>
+                </ExternalLink>
               ) : null}
               <p className="fine">{identityNote}</p>
               <p className="fine">{calibCopy}</p>
@@ -1243,9 +1274,9 @@ export function App() {
               <button type="button" className="linkish" onClick={() => void onRevoke()} disabled={bindBusy || !sessionAlive}>
                 Revoke local session
               </button>
-              <a className="linkish" href={hyperliquidAPI(net)} target="_blank" rel="noreferrer">
+              <ExternalLink className="linkish" href={hyperliquidAPI(net)}>
                 Open Hyperliquid
-              </a>
+              </ExternalLink>
             </article>
             <NetworkToggle net={net} onChange={setNet} />
             <NetworkBanner net={net} />

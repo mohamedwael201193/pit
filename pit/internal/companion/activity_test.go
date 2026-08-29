@@ -6,6 +6,15 @@ import (
 	"testing"
 )
 
+func TestActivityStoresLink(t *testing.T) {
+	dir := t.TempDir()
+	appendActivity(dir, activityEvent{Kind: "opportunity", Market: "BTC", Link: "https://app.hyperliquid.xyz/trade/BTC"})
+	got := readActivity(dir, 10)
+	if len(got) != 1 || got[0].Link != "https://app.hyperliquid.xyz/trade/BTC" {
+		t.Fatalf("%+v", got)
+	}
+}
+
 func TestActivityDoesNotStoreSecrets(t *testing.T) {
 	dir := t.TempDir()
 	appendActivity(dir, activityEvent{Kind: "research.started", Market: "ETH", JobID: "j1", Action: "research"})

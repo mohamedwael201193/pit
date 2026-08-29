@@ -9,22 +9,23 @@ import (
 )
 
 type activityEvent struct {
-	TS           int64  `json:"ts"`
-	WorkspaceID  string `json:"workspace_id,omitempty"`
-	Kind         string `json:"kind"`
-	Market       string `json:"market,omitempty"`
-	Action       string `json:"action,omitempty"`
-	Status       string `json:"status,omitempty"`
-	JobID        string `json:"job_id,omitempty"`
-	PreviewHash  string `json:"preview_hash,omitempty"`
-	OID          string `json:"oid,omitempty"`
-	Reason       string `json:"reason,omitempty"`
-	Root         string `json:"root,omitempty"`
-	Tx           string `json:"tx,omitempty"`
-	TxLink       string `json:"tx_link,omitempty"`
-	Digest       string `json:"digest,omitempty"`
-	Sign         bool   `json:"sign"`
-	Trade        bool   `json:"trade"`
+	TS          int64  `json:"ts"`
+	WorkspaceID string `json:"workspace_id,omitempty"`
+	Kind        string `json:"kind"`
+	Market      string `json:"market,omitempty"`
+	Action      string `json:"action,omitempty"`
+	Status      string `json:"status,omitempty"`
+	JobID       string `json:"job_id,omitempty"`
+	PreviewHash string `json:"preview_hash,omitempty"`
+	OID         string `json:"oid,omitempty"`
+	Reason      string `json:"reason,omitempty"`
+	Root        string `json:"root,omitempty"`
+	Tx          string `json:"tx,omitempty"`
+	TxLink      string `json:"tx_link,omitempty"`
+	Digest      string `json:"digest,omitempty"`
+	Link        string `json:"link,omitempty"`
+	Sign        bool   `json:"sign"`
+	Trade       bool   `json:"trade"`
 }
 
 func activityPath(dir string) string {

@@ -1,4 +1,6 @@
 import { BrandMark } from "./BrandMark";
+import { ExternalLink } from "./ExternalLink";
+import { hyperliquidTrade } from "./links";
 
 export type VenuePosition = {
   coin?: string;
@@ -21,6 +23,7 @@ export function PositionsPanel({
   summary,
   onReduceOnlyClose,
   closeBusy,
+  net,
 }: {
   account?: string;
   positions: VenuePosition[];
@@ -29,6 +32,7 @@ export function PositionsPanel({
   summary?: { accountValue?: string; withdrawable?: string; totalNtlPos?: string };
   onReduceOnlyClose?: (coin: string) => void;
   closeBusy?: boolean;
+  net?: string;
 }) {
   return (
     <section>
@@ -102,8 +106,15 @@ export function PositionsPanel({
       ) : null}
       {lastOrder?.oid ? (
         <p className="fine">
-          Last PIT order {lastOrder.market} {lastOrder.side} {lastOrder.sz} · {lastOrder.status} · OID {lastOrder.oid}. Flatten only
-          with a reduce-only close that YOU authorize.
+          Last PIT order {lastOrder.market} {lastOrder.side} {lastOrder.sz} · {lastOrder.status} ·{" "}
+          {net ? (
+            <ExternalLink href={hyperliquidTrade(net, String(lastOrder.market || "").split(":").pop())}>
+              OID {lastOrder.oid}
+            </ExternalLink>
+          ) : (
+            <>OID {lastOrder.oid}</>
+          )}
+          . Flatten only with a reduce-only close that YOU authorize.
         </p>
       ) : (
         <p className="fine">No PIT order on this machine yet.</p>

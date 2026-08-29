@@ -125,7 +125,7 @@ func (h *Hub) fileAsync(r receipt.Receipt, market, jobID, oid string) {
 			WorkspaceID: r.Workspace, Kind: "evidence.filed", Market: market,
 			Action: "evidence", Status: r.Kind, JobID: jobID, OID: oid,
 			PreviewHash: r.PreviewHash, Root: filed.Root, Tx: filed.Tx,
-			TxLink: filed.TxLink, Digest: filed.Digest,
+			TxLink: filed.TxLink, Digest: filed.Digest, Link: filed.TxLink,
 		})
 	}()
 }
@@ -169,7 +169,10 @@ func (h *Hub) fileOrder(got cli.OrderResult, jobID string) {
 	r.PolicyHash = policyHash()
 	r.OID = got.OID
 	r.Cloid = got.Cloid
-	r.OrderStatus = "resting_or_filled"
+	r.OrderStatus = strings.TrimSpace(got.Status)
+	if r.OrderStatus == "" {
+		r.OrderStatus = "posted"
+	}
 	r.JobID = jobID
 	h.fileAsync(r, got.Market, jobID, got.OID)
 }
@@ -241,7 +244,7 @@ func (h *Hub) localProofVerify(w http.ResponseWriter, r *http.Request) {
 		appendActivity(h.Dir, activityEvent{
 			WorkspaceID: workspaceID(h.Dir), Kind: "evidence.verified",
 			Action: "verify", Status: got.Kind, Root: got.Root, Tx: got.Tx,
-			TxLink: got.TxLink, Digest: got.Recomputed,
+			TxLink: got.TxLink, Digest: got.Recomputed, Link: got.TxLink,
 		})
 	}
 	writeLocal(w, http.StatusOK, shaped)

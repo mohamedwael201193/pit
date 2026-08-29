@@ -1,3 +1,5 @@
+import { ExternalLink } from "./ExternalLink";
+
 type EventRow = {
   ts?: number;
   kind?: string;
@@ -12,6 +14,7 @@ type EventRow = {
   tx?: string;
   tx_link?: string;
   digest?: string;
+  link?: string;
 };
 
 function dayLabel(ts?: number) {
@@ -30,32 +33,34 @@ function dayLabel(ts?: number) {
 
 function humanKind(kind?: string) {
   const k = String(kind || "event");
-  if (k.includes("mission.enabled") || k === "mission.enabled") return "Mission started";
-  if (k.includes("mission.stopped") || k === "mission.stopped") return "Mission stopped";
+  if (k === "mission.enabled") return "Mission started";
+  if (k === "mission.stopped") return "Mission stopped";
   if (k.includes("mission.scanned")) return "Universe scanned";
   if (k.includes("mission.exec_blocked") || k.includes("mission.refused")) return "Execution blocked";
   if (k.includes("mission.empty")) return "No opportunity";
   if (k.includes("mission.scan_failed")) return "Scan failed";
-  if (k.includes("autonomous") || k.includes("guarded")) return "Autonomous action";
   if (k.includes("opportunity")) return "Opportunity found";
-  if (k.includes("research.start") || k === "research_started") return "Research started";
-  if (k.includes("research") && (k.includes("done") || k.includes("complete"))) return "Research completed";
-  if (k.startsWith("research")) return "Research";
-  if (k.includes("committee")) return "Committee";
-  if (k.includes("preview")) return "Preview";
-  if (k.includes("author")) return "Approval";
-  if (k.includes("fill")) return "Fill";
-  if (k.includes("cancel")) return "Cancel";
-  if (k.includes("order")) return "Order";
-  if (k.includes("policy")) return "Policy";
-  if (k.includes("session")) return "Session";
+  if (k === "research.started") return "Research started";
+  if (k === "research.verified") return "Research verified";
+  if (k === "research.stood_down") return "Research stood down";
+  if (k === "research.canceled") return "Research canceled";
+  if (k === "research.failed") return "Research failed";
+  if (k === "committee.verified") return "Committee verified";
+  if (k === "preview.ready") return "Exact preview ready";
+  if (k === "approval.accepted") return "Authorization accepted";
+  if (k === "approval.rejected") return "Authorization refused";
+  if (k === "order.submitted") return "Order submitted";
+  if (k === "order.filled") return "Fill";
+  if (k === "order.resting") return "Order resting";
+  if (k === "order.canceled") return "Order canceled";
+  if (k === "order.rejected") return "Order rejected";
+  if (k === "position.updated") return "Position";
   if (k === "evidence.filed") return "Evidence published";
   if (k === "evidence.verified") return "Evidence verified";
   if (k === "evidence.failed" || k === "evidence.unavailable") return "Evidence not published";
-  if (k.includes("receipt") || k.includes("proof")) return "Proof";
-  if (k.includes("position")) return "Position";
-  if (k.includes("mission")) return "Mission";
+  if (k.startsWith("research")) return "Research";
   if (k.includes("automation")) return "Prepared";
+  if (k.includes("mission")) return "Mission";
   return k.replaceAll(".", " ");
 }
 
@@ -63,9 +68,34 @@ function humanStatus(status?: string) {
   const s = String(status || "");
   if (s === "READY_ELIGIBLE") return "eligible preview";
   if (s === "READY_STOOD_DOWN") return "stood down";
-  if (s === "filled") return "filled (historical, not a new preview)";
+  if (s === "awaiting_AUTHORIZE") return "awaiting AUTHORIZE";
+  if (s === "filled") return "filled";
+  if (s === "resting") return "resting";
   if (s === "COMMITTEE_INCOMPLETE") return "incomplete";
   return s.replaceAll("_", " ");
+}
+
+function short(v?: string, n = 10) {
+  const s = String(v || "");
+  if (s.length <= n + 4) return s;
+  return `${s.slice(0, n)}…`;
+}
+
+function EventIds({ ev }: { ev: EventRow }) {
+  const href = ev.tx_link || ev.link;
+  return (
+    <span className="timeline-ids">
+      {ev.job_id ? <span title={ev.job_id}>job {short(ev.job_id, 8)}</span> : null}
+      {ev.oid ? <span title={ev.oid}>OID {ev.oid}</span> : null}
+      {ev.preview_hash ? <span title={ev.preview_hash}>preview {short(ev.preview_hash)}</span> : null}
+      {ev.root ? <span title={ev.root}>root {short(ev.root)}</span> : null}
+      {ev.digest ? <span title={ev.digest}>digest {short(ev.digest)}</span> : null}
+      {ev.tx && !ev.tx_link ? <span title={ev.tx}>tx {short(ev.tx)}</span> : null}
+      {href ? (
+        <ExternalLink href={href}>{ev.tx_link ? "chain tx" : "open"}</ExternalLink>
+      ) : null}
+    </span>
+  );
 }
 
 export function ActivityTimeline({
@@ -77,14 +107,15 @@ export function ActivityTimeline({
   lastOid?: string;
   lastOrder?: { oid?: string; status?: string; market?: string; side?: string; sz?: number };
 }) {
+  const newestFirst = [...events].reverse();
   const grouped = new Map<string, EventRow[]>();
-  for (const ev of events) {
+  for (const ev of newestFirst) {
     const k = dayLabel(ev.ts);
     grouped.set(k, [...(grouped.get(k) || []), ev]);
   }
   return (
     <section>
-      <p className="fine">Historical fills live here. They never appear inside a new exact preview.</p>
+      <p className="fine">Every row is a host record from this computer. Historical fills never appear inside a new exact preview.</p>
       {events.length === 0 && !lastOid ? (
         <p className="empty">Empty is honest until this machine records a research, preview, or order.</p>
       ) : null}
@@ -93,23 +124,14 @@ export function ActivityTimeline({
           <p className="label">{day}</p>
           <ul className="timeline">
             {rows.map((ev, i) => (
-              <li key={`${ev.ts}-${i}`}>
-                <time>{ev.ts ? new Date(ev.ts).toLocaleTimeString() : ""}</time>
+              <li key={`${ev.ts}-${ev.kind}-${i}`}>
+                <time dateTime={ev.ts ? new Date(ev.ts).toISOString() : undefined}>
+                  {ev.ts ? new Date(ev.ts).toLocaleTimeString() : ""}
+                </time>
                 <strong>{humanKind(ev.kind)}</strong>
                 {ev.market ? ` ${ev.market}` : ""} {humanStatus(ev.status)}
-                {ev.job_id ? ` · job ${ev.job_id.slice(0, 8)}` : ""}
-                {ev.oid ? ` · OID ${ev.oid}` : ""}
                 {ev.reason ? ` · ${ev.reason}` : ""}
-                {ev.preview_hash ? ` · preview ${ev.preview_hash.slice(0, 10)}` : ""}
-                {ev.root ? ` · root ${ev.root.slice(0, 10)}` : ""}
-                {ev.tx_link ? (
-                  <>
-                    {" · "}
-                    <a href={ev.tx_link} target="_blank" rel="noreferrer noopener">
-                      chain tx
-                    </a>
-                  </>
-                ) : null}
+                <EventIds ev={ev} />
               </li>
             ))}
           </ul>

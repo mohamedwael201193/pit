@@ -212,6 +212,7 @@ func (h *Hub) autoTick() {
 		appendActivity(h.Dir, activityEvent{
 			WorkspaceID: workspaceID(h.Dir), Kind: "opportunity", Market: pick.Coin,
 			Action: "discover", Status: "ready", Reason: pick.Reason,
+			Link: venueTradeLink(netName, pick.Coin),
 		})
 		p.LastNotifyCoin = pick.Coin
 	}
@@ -234,6 +235,7 @@ func (h *Hub) autoTick() {
 		appendActivity(h.Dir, activityEvent{
 			WorkspaceID: workspaceID(h.Dir), Kind: "automation.prepared", Market: pick.Coin,
 			Action: "prepare", Status: "research", Reason: note,
+			Link: venueTradeLink(netName, pick.Coin),
 		})
 		p.LastResearchCoin = pick.Coin
 		m.LastAction = "research:" + pick.Coin
@@ -358,11 +360,13 @@ func (h *Hub) maybeGuardedExecute(hash, coin string, started time.Time) {
 	}
 	auto.RecordAction(h.Dir, "executed", coin, hash, got.OID, "")
 	auto.RecordStage(h.Dir, "executed", "executed", "oid:"+got.OID, coin)
+	link := venueTradeLink(workspaceNetwork(h.Dir), got.Market)
 	appendActivity(h.Dir, activityEvent{
 		WorkspaceID: workspaceID(h.Dir), Kind: "order.submitted", Market: got.Market,
-		Action: "guarded", Status: "submitted", OID: got.OID, PreviewHash: got.Hash,
-		Reason: "guarded_autonomy",
+		Action: "guarded", Status: got.Status, OID: got.OID, PreviewHash: got.Hash,
+		Reason: "guarded_autonomy", Link: link,
 	})
+	h.recordPostedOrder(got, "guarded", h.currentJobID())
 	h.fileOrder(got, h.currentJobID())
 }
 

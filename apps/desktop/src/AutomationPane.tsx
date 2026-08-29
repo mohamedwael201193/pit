@@ -1,4 +1,5 @@
 import { LINKS } from "./links";
+import { ExternalLink } from "./ExternalLink";
 
 export type AutoPrefs = {
   watch?: boolean;
@@ -76,9 +77,7 @@ export function AutomationPane({
       </label>
       <p className="fine">
         Markets follow pinned policy unless you restrict them later. Compute money is not trading capital.{" "}
-        <a href={LINKS.pcAdvanced} target="_blank" rel="noreferrer">
-          Open 0G Private Compute
-        </a>
+        <ExternalLink href={LINKS.pcAdvanced}>Open 0G Private Compute</ExternalLink>
       </p>
     </article>
   );

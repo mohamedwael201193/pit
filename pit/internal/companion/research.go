@@ -510,10 +510,24 @@ func (h *Hub) execResearch(coin string) {
 	if kind == TermReadyStoodDown {
 		evKind = "research.stood_down"
 	}
+	book := venueTradeLink(workspaceNetwork(h.Dir), h.job.coin)
 	appendActivity(h.Dir, activityEvent{
 		WorkspaceID: workspaceID(h.Dir), Kind: evKind, Market: h.job.coin,
-		Action: "research", Status: kind, JobID: h.job.ID, PreviewHash: h.job.previewHash, Reason: h.job.deny,
+		Action: "research", Status: kind, JobID: h.job.ID, PreviewHash: h.job.previewHash, Reason: h.job.deny, Link: book,
 	})
+	if namedRolesVerified(h.job.roles) {
+		appendActivity(h.Dir, activityEvent{
+			WorkspaceID: workspaceID(h.Dir), Kind: "committee.verified", Market: h.job.coin,
+			Action: "committee", Status: kind, JobID: h.job.ID, PreviewHash: h.job.previewHash,
+			Reason: committeeReason(h.job.roles), Link: book,
+		})
+	}
+	if h.job.eligible && h.job.previewHash != "" {
+		appendActivity(h.Dir, activityEvent{
+			WorkspaceID: workspaceID(h.Dir), Kind: "preview.ready", Market: h.job.coin,
+			Action: "preview", Status: "awaiting_AUTHORIZE", JobID: h.job.ID, PreviewHash: h.job.previewHash, Link: book,
+		})
+	}
 	auto.RecordStage(h.Dir, "researched", "research_done:"+kind, kind, h.job.coin)
 	model, provider := researchModels()
 	h.fileResearch(h.job.ID, h.job.coin, kind, h.job.deny, h.job.previewHash, h.job.roles, model, provider)
@@ -601,7 +615,7 @@ func (h *Hub) localAuthorize(w http.ResponseWriter, r *http.Request) {
 	out := map[string]any{
 		"ok": got.OK, "posted": got.Posted, "oid": got.OID, "cloid": got.Cloid,
 		"hash": got.Hash, "market": got.Market, "side": got.Side, "sz": got.Sz,
-		"agent": got.Agent, "sign": false, "trade": false, "order": true, "cancel": true,
+		"status": got.Status, "agent": got.Agent, "sign": false, "trade": false, "order": true, "cancel": true,
 	}
 	if got.Error != "" {
 		out["ok"] = false
@@ -612,9 +626,16 @@ func (h *Hub) localAuthorize(w http.ResponseWriter, r *http.Request) {
 		})
 	} else {
 		appendActivity(h.Dir, activityEvent{
-			WorkspaceID: workspaceID(h.Dir), Kind: "order.submitted", Market: got.Market,
-			Action: "authorize", Status: "submitted", OID: got.OID, PreviewHash: got.Hash,
+			WorkspaceID: workspaceID(h.Dir), Kind: "approval.accepted", Market: got.Market,
+			Action: "authorize", Status: "accepted", OID: got.OID, PreviewHash: got.Hash,
+			Link: venueTradeLink(workspaceNetwork(h.Dir), got.Market),
 		})
+		appendActivity(h.Dir, activityEvent{
+			WorkspaceID: workspaceID(h.Dir), Kind: "order.submitted", Market: got.Market,
+			Action: "authorize", Status: got.Status, OID: got.OID, PreviewHash: got.Hash,
+			Link: venueTradeLink(workspaceNetwork(h.Dir), got.Market),
+		})
+		h.recordPostedOrder(got, "authorize", h.currentJobID())
 		h.fileOrder(got, h.currentJobID())
 	}
 	writeLocal(w, http.StatusOK, out)

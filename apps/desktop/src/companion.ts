@@ -388,8 +388,9 @@ export type ActivityEvent = {
   reason?: string;
   root?: string;
   tx?: string;
-  tx_link?: string;
+	tx_link?: string;
   digest?: string;
+  link?: string;
 };
 
 export type FiledReceipt = {

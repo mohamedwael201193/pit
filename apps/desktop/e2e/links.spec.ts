@@ -1,4 +1,5 @@
 import { LINKS, explorerAddress, explorerTx, hyperliquidAPI, hyperliquidApp, hyperliquidTrade } from "../src/links";
+import { isAllowedHttps } from "../src/allowedUrl";
 
 export function assertOfficialLinks() {
   if (LINKS.pair !== "https://pit0g.vercel.app/pair") throw new Error("pair");
@@ -18,4 +19,12 @@ export function assertOfficialLinks() {
   if (hyperliquidTrade("mainnet", "BTC") !== "https://app.hyperliquid.xyz/trade/BTC") throw new Error("hl trade");
   if (!explorerAddress("0xabc").startsWith("https://chainscan.0g.ai/address/")) throw new Error("explorer addr");
   if (!explorerTx("0xabc", "mainnet").startsWith("https://chainscan.0g.ai/tx/")) throw new Error("explorer tx");
+  if (!isAllowedHttps(LINKS.pair)) throw new Error("allow pair");
+  if (!isAllowedHttps(LINKS.pcAdvanced)) throw new Error("allow pc");
+  if (!isAllowedHttps(hyperliquidTrade("mainnet", "ETH"))) throw new Error("allow trade");
+  if (!isAllowedHttps("https://chainscan.0g.ai/tx/0xabc")) throw new Error("allow tx");
+  if (!isAllowedHttps(LINKS.releases)) throw new Error("allow releases");
+  if (isAllowedHttps("http://app.hyperliquid.xyz")) throw new Error("http denied");
+  if (isAllowedHttps("https://evil.example")) throw new Error("host denied");
+  if (isAllowedHttps("https://github.com/other/repo")) throw new Error("github denied");
 }
