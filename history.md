@@ -2091,5 +2091,22 @@ CLASSIFICATION:
 PRODUCTION READY: 0.7.2 is production-ready for honest per-market mins and universe continuation. It is **not** production-ready for a new MAINNET clip until YOU pin and the venue has enough to meet the candidate's rounded min.
 NEXT STEP: On Security, preview then pin host law. Fund unified collateral above the specific market min if you want a clip.
 
+---
+
+## M99 — Public Watch is a compact policy feed (2026-08-30)
+
+DATE/TIME: 2026-08-30 02:12+03
+PHASE: 0.7.2 follow-up. Do not flatten OID 529167222216. Do not remint. Do not enable Guarded Autonomy. Do not auto-pin.
+GOAL: [PIT UX live demo audit](d12538be-80fa-4b8f-90ed-7b5b69be10f3) still saw six identical web Watch cards. Compact them. Architecture P0s from [PIT architecture security audit](df9947a4-b22f-4dc7-976c-b14135555da8) were already in 0.7.2 (per-asset min, skip stood-down BTC, no duplicate guarded POST).
+RESULT:
+- **IMPLEMENTED:** `apps/web` Watch is one table: asset, mark, policy-eligible, why. One footer: this site cannot size or AUTHORIZE. Header copy is scanned books + policy-pass count, not six identical AUTHORIZE walls. Public `/watch` JSON `copy` field is unchanged (SDK contract).
+- **TESTED:** `go test ./internal/watch/...` and web `tsc --noEmit` after this change.
+- **LIVE VERIFIED:** after Vercel deploy, Chrome `/app` Watch.
+- **UNVERIFIED / BLOCKED:** unchanged from M98.
+
+SECURITY RESULT: Web still cannot authorize, pin, or enable autonomy.
+TX HASH / OID: Historical OID `529167222216` unchanged.
+
+
 
 
