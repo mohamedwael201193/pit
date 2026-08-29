@@ -2037,7 +2037,7 @@ RESULT:
   6. Expired preview cannot be authorized. Research button explains pin vs compute. Automation exec gate uses venue `insufficient_margin`, not “clear”.
   7. Web `/app` no longer pretends Protect is the only next step. `/pair` when desktop is live promotes Pair, not Download.
 - **TESTED:** `go test ./...` PASS including `TestSizerDoesNotPadAboveRequested`, `TestClipForAccountRefusesBelowFloor`, `TestExecuteGuardedNeedsEnable`, `TestWebOriginCannotPostMission`. Desktop `tsc -b` green. Web `tsc --noEmit` green. NSIS 0.7.1.
-- **LIVE VERIFIED:** Overlay companion 0.7.1. Wallet/agent/OID `529167222216` unchanged. Chat policy not-pinned + $9.38 gate. Positions buying power 9.3813 vs perp 0.0.
+- **LIVE VERIFIED:** Overlay companion 0.7.1. Wallet/agent/OID `529167222216` unchanged. Chat policy not-pinned + $9.38 gate. Positions buying power 9.3813 vs perp 0.0. After deploy: pit-health **0.7.1**; Chrome `/pair` **PIT Desktop is live · 0.7.1** with primary Pair; `/app` H1 **Inspect on the web. Pin and AUTHORIZE stay on desktop.**; FAQ **Can PIT trade without me?** Guarded Autonomy desktop-only; GitHub release **v0.7.1** installer SHA256 `3B5CBE3B1ADA0DF971056AED8D04AB94A9A624CC321E53F44F3F978023650A01`.
 - **UNVERIFIED:** Guarded live order (not enabled). Restart retry of a running guarded mission. Full pair ceremony.
 - **BLOCKED:** New MAINNET clip: pin mismatch AND $9.38 < $10.
 
