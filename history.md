@@ -2068,15 +2068,22 @@ RESULT:
   3. Stand-down (`no_side` / challenger / risk) skips that coin for 10 minutes and clears `LastResearchCoin` so the next tick researches ETH/SOL/HYPE. Mission `search_note`: "BTC: no side survived challenge. PIT is checking the next eligible market (ETH)."
   4. Markets is a compact opportunity feed. Research treats stand-down as a successful no-trade. Automation shows search_note. Desk hero shows this-account vs this-market min.
 - **TESTED:** `go test ./...` PASS including `TestNextCandidateSkipsStoodDownBTC`, `TestSizerBTCTenClipCannotMeetRoundedMin`, `TestCoarseTickRaisesFloor`, `TestStandDownDoesNotLatch`. Desktop `tsc -b` green. Web `tsc --noEmit` green. NSIS 0.7.2.
-- **LIVE VERIFIED:** Overlay companion 0.7.2. Wallet/agent/OID `529167222216` unchanged. Watch scanned **232**, **best HYPE** (not BTC), buying power **9.381269**, all policy books execution-blocked with per-asset mins. Mission STOPPED `user_stop`. Chrome pair page against this machine: **PIT Desktop is live · 0.7.2**.
-COMMIT: `2f10310bad73bef3a4d0259780081781c67c4a4b`
-- **UNVERIFIED:** Guarded live order. Full pair ceremony. Crash-restart of a running guarded mission.
-- **BLOCKED:** New MAINNET clip: pin mismatch AND $9.38 below every policy book's rounded min.
+- **LIVE VERIFIED:** Overlay companion 0.7.2. Wallet `0xbdfcee…0034`, agent PIT-4bbee556 / `0xfc64e36babe7dfe9eb779ee3a9f2362d16881d52`, OID `529167222216` filled ETH 0.0041 unchanged. Watch scanned **232**, **best HYPE** (not BTC; BTC is 5th), buying power **$9.38**, HYPE min **$10.02**, BTC min **$10.17**, SOL min **$10.55**. Mission STOPPED `user_stop`, mode manual. Chrome production:
+  - `pit0g.vercel.app/pair` → “PIT Desktop is live on this computer · 0.7.2”
+  - FAQ “Can PIT trade without me?” → chat/website/model cannot enable Guarded Autonomy
+  - `/app` bound wallet `0xBDfCeE…0034`, MAINNET, Protect CTA, Watch cards cannot trade, confidence NOT ENOUGH DATA
+  - Render `pit-health.onrender.com/health` version **0.7.2**
+  - GitHub release `v0.7.2` installer size 17180941 digest `20c49486…` after a wrong 14.1 MB asset was replaced
+- **UNVERIFIED:** Guarded live order. Full pair ceremony this session. Crash-restart of a running guarded mission. Live committee stand-down skip cycle.
+- **BLOCKED:** New MAINNET clip: pin mismatch AND $9.38 below every policy book's rounded min. Guarded Autonomy not enabled (deliberate).
 
 SECURITY RESULT: Chat/web still cannot enable. Model still cannot size. Skip journal is host-local.
 TX HASH / OID: Historical OID `529167222216` unchanged.
-COMMIT: feat `2f10310bad73bef3a4d0259780081781c67c4a4b` (2026-08-30 01:50:35 +0300).
+COMMIT: feat `2f10310bad73bef3a4d0259780081781c67c4a4b` (2026-08-30 01:50:35 +0300). Journal `08789a65a7eff6a5e0b6f216d1858169da4b38a9`. HEAD `bcaf9fcdc4f061ac9f85268bdb0ed7bbf0070075`. TAG `v0.7.2` at `08789a6`.
 INSTALLER: `PIT_0.7.2_x64-setup.exe` size 17180941 SHA256 `20C49486993B055A94A0B3531A71ECAC6FC102E49455FE3E47B8FC11FA8FC617`. Overlay `D:\PIT\pit.exe` SHA256 `C0F1555AE5C037D2A0BDA10BFB81F664CFF670BD39E0E79033EB5EC85295174F` + `D:\PIT\pit-desktop.exe` SHA256 `70500B3635ABBE083658EC601332180070A58CAF146C6993F36F3D6575EA0BEF`.
+RELEASE: https://github.com/mohamedwael201193/pit/releases/tag/v0.7.2
+WEB: https://pit0g.vercel.app
+HEALTH: https://pit-health.onrender.com/health `0.7.2`
 CLASSIFICATION:
 - Continue past blocked/stood-down BTC: **IMPLEMENTED + LIVE VERIFIED** (best is HYPE; BTC is not first)
 - Per-market venue min: **IMPLEMENTED + LIVE VERIFIED**
