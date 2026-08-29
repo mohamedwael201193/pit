@@ -2068,7 +2068,8 @@ RESULT:
   3. Stand-down (`no_side` / challenger / risk) skips that coin for 10 minutes and clears `LastResearchCoin` so the next tick researches ETH/SOL/HYPE. Mission `search_note`: "BTC: no side survived challenge. PIT is checking the next eligible market (ETH)."
   4. Markets is a compact opportunity feed. Research treats stand-down as a successful no-trade. Automation shows search_note. Desk hero shows this-account vs this-market min.
 - **TESTED:** `go test ./...` PASS including `TestNextCandidateSkipsStoodDownBTC`, `TestSizerBTCTenClipCannotMeetRoundedMin`, `TestCoarseTickRaisesFloor`, `TestStandDownDoesNotLatch`. Desktop `tsc -b` green. Web `tsc --noEmit` green. NSIS 0.7.2.
-- **LIVE VERIFIED:** Overlay companion 0.7.2. Wallet/agent/OID `529167222216` unchanged. Watch scanned **232**, **best HYPE** (not BTC), buying power **9.381269**, all policy books execution-blocked with per-asset mins. Mission STOPPED `user_stop`.
+- **LIVE VERIFIED:** Overlay companion 0.7.2. Wallet/agent/OID `529167222216` unchanged. Watch scanned **232**, **best HYPE** (not BTC), buying power **9.381269**, all policy books execution-blocked with per-asset mins. Mission STOPPED `user_stop`. Chrome pair page against this machine: **PIT Desktop is live · 0.7.2**.
+COMMIT: `2f10310bad73bef3a4d0259780081781c67c4a4b`
 - **UNVERIFIED:** Guarded live order. Full pair ceremony. Crash-restart of a running guarded mission.
 - **BLOCKED:** New MAINNET clip: pin mismatch AND $9.38 below every policy book's rounded min.
 
