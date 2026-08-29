@@ -2028,7 +2028,7 @@ PHASE: Close remaining P0s from the repo/architecture auditor and the UX/demo au
 GOAL: Host-execute is not typed AUTHORIZE. Research/POST refuse below $10. Pin honesty uses disk draft vs pin hash. Portfolio and chat stop claiming $0 equity / pinned law.
 
 RESULT:
-- **IMPLEMENTED:** Version **0.7.1**. Companion `/health` **0.7.1**.
+- **IMPLEMENTED:** Version **0.7.1**. Commit `a64903b20c63c52c1d87ab4ea9c60be42e5caaab`. Companion `/health` **0.7.1**.
   1. `ExecuteGuardedDeskOrder` does not accept or inject `AUTHORIZE`. Manual `ExecuteDeskOrder` still requires the token. Receipts record `path=guarded|authorize`.
   2. `ClipForAccount` + sizer refuse padding a $9.38 balance up to $10. `BindResearchPreview` sizes from live buying power or denies `insufficient_margin` / `venue_unread`.
   3. Failed research no longer latches `LastResearchCoin`. Restart may retry host-execute once for an unused eligible preview; never if last-order already has that hash+OID.
