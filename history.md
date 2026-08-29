@@ -1993,7 +1993,7 @@ PHASE: Transform 0.6.1 into 0.7.0 Private Alpha OS with Guarded Autonomy as a fi
 GOAL: Host-enforced Manual / Research Only / Guarded Autonomy. Kill switch. Durable away journal. Capital-true Markets. Honest Strategy Health. Chat cannot enable autonomy. Web FAQ must not claim PIT never trades without AUTHORIZE.
 
 RESULT:
-- **IMPLEMENTED:** Version **0.7.0**. Companion `/health` and `pit version` **0.7.0**. Overlay `D:\PIT` running.
+- **IMPLEMENTED:** Version **0.7.0**. Commit `57b13ef7441ceb50cb316e470baa5493cdad1ca0`. Companion `/health` and `pit version` **0.7.0**. Overlay `D:\PIT` running.
   1. Guarded Autonomy enable is a local typed phrase. Chat returns `mission.enable_required` and navigates to Automation. POST `/local/mission` with ENABLE GUARDED AUTONOMY on the bound wallet returns `need_pin` / "Your policy changed. Re-pin it before trading." Mission stays STOPPED (`user_stop`).
   2. Kill switch is host `Stop(..., "user_stop")`. It does not flatten OID `529167222216` and does not withdraw.
   3. Opportunity ranking: `BestExecutable` requires RankGroup >= 3. Live Watch: buying power **$9.381269**, execGate `insufficient_margin`, copy **$9.38 — $0.62 short of the $10 Hyperliquid minimum**. PIT will not invent size.
