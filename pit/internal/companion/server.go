@@ -124,6 +124,8 @@ func (h *Hub) Handler() http.Handler {
 	mux.HandleFunc("/local/authorize", h.localAuthorize)
 	mux.HandleFunc("/local/cancel", h.localCancelOrder)
 	mux.HandleFunc("/local/activity", h.localActivity)
+	mux.HandleFunc("/local/proofs", h.localProofs)
+	mux.HandleFunc("/local/proofs/verify", h.localProofVerify)
 	mux.HandleFunc("/local/positions", h.localPositions)
 	mux.HandleFunc("/local/chat", h.localChat)
 	mux.HandleFunc("/local/chat/log", h.localChatLog)

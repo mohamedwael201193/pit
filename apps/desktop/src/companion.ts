@@ -386,6 +386,80 @@ export type ActivityEvent = {
   preview_hash?: string;
   oid?: string;
   reason?: string;
+  root?: string;
+  tx?: string;
+  tx_link?: string;
+  digest?: string;
+};
+
+export type FiledReceipt = {
+  kind?: string;
+  digest?: string;
+  root?: string;
+  tx?: string;
+  tx_link?: string;
+  network?: string;
+  chain_id?: number;
+  bytes?: number;
+  market?: string;
+  verdict?: string;
+  oid?: string;
+  job_id?: string;
+  side?: string;
+  size?: number;
+  preview_hash?: string;
+  filed_at?: string;
+  duplicate?: boolean;
+};
+
+export type ProofsView = {
+  ready?: boolean;
+  blocked?: string;
+  indexer?: string;
+  explorer?: string;
+  network?: string;
+  chain_id?: number;
+  receipts?: FiledReceipt[];
+  count?: number;
+};
+
+export type StorageNode = {
+  node?: string;
+  finalized?: boolean;
+  size?: number;
+  seq?: number;
+  error?: string;
+};
+
+export type VerifiedProof = {
+  ok?: boolean;
+  root?: string;
+  digest?: string;
+  recomputed?: string;
+  digest_match?: boolean;
+  proof_validated?: boolean;
+  public_safe?: boolean;
+  roles_verified?: boolean;
+  nodes?: StorageNode[];
+  finalized_nodes?: number;
+  tx?: string;
+  tx_link?: string;
+  anchor_bound?: boolean;
+  anchor?: {
+    tx?: string;
+    root?: string;
+    success?: boolean;
+    root_in_logs?: boolean;
+    flow?: string;
+    flow_match?: boolean;
+    block_number?: string;
+    from?: string;
+    error?: string;
+  };
+  kind?: string;
+  checked_at?: string;
+  failure?: string;
+  error?: string;
 };
 export type SecurityDomain = {
   id?: string;
@@ -588,6 +662,20 @@ export async function postMission(body: Record<string, unknown>): Promise<Missio
 export async function fetchActivity(): Promise<ActivityEvent[]> {
   const body = await localGet<{ events?: ActivityEvent[]; sign?: boolean }>("local_activity", "/local/activity");
   return Array.isArray(body?.events) ? body.events : [];
+}
+
+export async function fetchProofs(): Promise<ProofsView> {
+  const body = await fetchJson<ProofsView>("/local/proofs");
+  return body || { ready: false, blocked: "companion_http", receipts: [] };
+}
+
+export async function verifyProof(root: string): Promise<VerifiedProof> {
+  const body = await fetchJson<VerifiedProof>("/local/proofs/verify", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ root }),
+  });
+  return body || { ok: false, error: "companion_http" };
 }
 
 export type AccountSummary = {

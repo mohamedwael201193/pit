@@ -185,6 +185,8 @@ func main() {
 		cmdVerify(rest[1:])
 	case "proof":
 		cmdProof(rest[1:])
+	case "evidence":
+		cmdEvidence(rest[1:])
 	case "doctor", "security":
 		cmdDoctor()
 	case "mcp":

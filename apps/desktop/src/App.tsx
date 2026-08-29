@@ -57,6 +57,7 @@ import { committeeVerified } from "./honesty";
 import { AutomationCenter } from "./AutomationCenter";
 import { CommandChat } from "./CommandChat";
 import { ActivityTimeline } from "./ActivityTimeline";
+import { ProofTimeline } from "./ProofTimeline";
 import { PositionsPanel } from "./PositionsPanel";
 import { SecurityCenter } from "./SecurityCenter";
 import { SetupWizard } from "./SetupWizard";
@@ -1139,6 +1140,7 @@ export function App() {
             <p className="eyebrow">Activity</p>
             <h1>Evidence trail</h1>
             <p className="lead">Market scan, research, committee, policy, preview hash, execution, OID, fill, receipt. Historical fills never appear inside a new preview.</p>
+            <ProofTimeline />
             <ActivityTimeline events={activity} lastOid={lastOid} lastOrder={status?.lastOrder} />
           </main>
         ) : null}

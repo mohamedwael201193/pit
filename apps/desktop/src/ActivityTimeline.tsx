@@ -8,6 +8,10 @@ type EventRow = {
   preview_hash?: string;
   oid?: string;
   reason?: string;
+  root?: string;
+  tx?: string;
+  tx_link?: string;
+  digest?: string;
 };
 
 function dayLabel(ts?: number) {
@@ -45,6 +49,9 @@ function humanKind(kind?: string) {
   if (k.includes("order")) return "Order";
   if (k.includes("policy")) return "Policy";
   if (k.includes("session")) return "Session";
+  if (k === "evidence.filed") return "Evidence published";
+  if (k === "evidence.verified") return "Evidence verified";
+  if (k === "evidence.failed" || k === "evidence.unavailable") return "Evidence not published";
   if (k.includes("receipt") || k.includes("proof")) return "Proof";
   if (k.includes("position")) return "Position";
   if (k.includes("mission")) return "Mission";
@@ -94,6 +101,15 @@ export function ActivityTimeline({
                 {ev.oid ? ` · OID ${ev.oid}` : ""}
                 {ev.reason ? ` · ${ev.reason}` : ""}
                 {ev.preview_hash ? ` · preview ${ev.preview_hash.slice(0, 10)}` : ""}
+                {ev.root ? ` · root ${ev.root.slice(0, 10)}` : ""}
+                {ev.tx_link ? (
+                  <>
+                    {" · "}
+                    <a href={ev.tx_link} target="_blank" rel="noreferrer noopener">
+                      chain tx
+                    </a>
+                  </>
+                ) : null}
               </li>
             ))}
           </ul>

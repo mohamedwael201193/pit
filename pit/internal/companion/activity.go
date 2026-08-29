@@ -19,6 +19,10 @@ type activityEvent struct {
 	PreviewHash  string `json:"preview_hash,omitempty"`
 	OID          string `json:"oid,omitempty"`
 	Reason       string `json:"reason,omitempty"`
+	Root         string `json:"root,omitempty"`
+	Tx           string `json:"tx,omitempty"`
+	TxLink       string `json:"tx_link,omitempty"`
+	Digest       string `json:"digest,omitempty"`
 	Sign         bool   `json:"sign"`
 	Trade        bool   `json:"trade"`
 }

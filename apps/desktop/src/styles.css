@@ -875,6 +875,96 @@ button.on, .cta-row .on, .beats .on, .nav button.on, .row .on, button.linkish.on
 .evidence-list dt { font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--mute); }
 .evidence-list dd { margin: 2px 0 10px; font-size: 13px; }
 
+.evidence-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin: 14px 0 0;
+  padding: 10px 0 0;
+  border-top: 1px solid var(--line);
+}
+.evidence-lede { min-width: 0; }
+.evidence-lede p { margin: 2px 0 0; font-size: 12px; color: var(--cream); }
+.evidence-act { display: flex; align-items: center; gap: 14px; white-space: nowrap; }
+.evidence-act a { font-size: 12px; }
+.evidence-act button {
+  background: transparent;
+  border: 1px solid var(--line);
+  color: var(--cream);
+  font-size: 12px;
+  padding: 5px 12px;
+  cursor: pointer;
+}
+.evidence-act button:hover { border-color: var(--coral); color: var(--coral); }
+.evidence-act button:active { transform: translateY(1px); }
+@media (max-width: 900px) {
+  .evidence-strip { flex-direction: column; align-items: flex-start; }
+}
+
+.proofs { min-width: 0; }
+.proof-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+.proof-head h2 { font-size: 20px; margin: 2px 0 6px; letter-spacing: -0.02em; }
+.proof-head .fine { max-width: 68ch; }
+.proof-net { color: var(--mute); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; white-space: nowrap; }
+.proof-blocked {
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  border-left: 2px solid var(--coral);
+  background: var(--panel);
+  font-size: 12px;
+  color: var(--cream);
+}
+.proof-list { list-style: none; padding: 0; margin: 14px 0 0; }
+.proof-list > li { border-top: 1px solid var(--line); padding: 12px 0; }
+.proof-row { display: grid; grid-template-columns: 190px minmax(0, 1fr) auto; gap: 18px; align-items: start; }
+.proof-when time { display: block; font-size: 11px; color: var(--mute); font-variant-numeric: tabular-nums; }
+.proof-when strong { font-size: 13px; font-weight: 600; }
+.proof-what p { margin: 0 0 3px; font-size: 13px; }
+.proof-root { color: var(--mute); font-size: 11px; }
+.proof-act { display: flex; align-items: center; gap: 12px; white-space: nowrap; }
+.proof-act a { font-size: 12px; text-decoration: none; border-bottom: 1px solid var(--hair); padding-bottom: 1px; }
+.proof-act a:hover { color: #fff; border-bottom-color: var(--coral); }
+.proof-verify {
+  background: transparent;
+  color: var(--cream);
+  border: 1px solid var(--hair);
+  border-radius: 4px;
+  padding: 6px 12px;
+  font-size: 12px;
+  transition: transform 0.12s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.12s ease;
+}
+.proof-verify:hover:not(:disabled) { border-color: var(--coral); }
+.proof-verify:active:not(:disabled) { transform: translateY(-1px); }
+.proof-verify:disabled { color: var(--mute); cursor: default; }
+.proof-progress { margin: 10px 0 0; max-width: 72ch; }
+.proof-report { margin: 12px 0 0; padding-left: 12px; border-left: 1px solid var(--line); }
+.proof-checks { list-style: none; padding: 0; margin: 0; }
+.proof-checks li { display: grid; grid-template-columns: 34px minmax(0, 1fr) auto; gap: 10px; padding: 5px 0; font-size: 12px; }
+.proof-check-mark { font-family: ui-monospace, monospace; font-size: 10px; letter-spacing: 0.1em; }
+.proof-checks .pass .proof-check-mark { color: var(--ok); }
+.proof-checks .fail .proof-check-mark { color: var(--coral); }
+.proof-check-note { color: var(--mute); font-size: 11px; }
+.proof-nodes { list-style: none; padding: 0; margin: 6px 0 0; font-size: 11px; }
+.proof-nodes li { display: flex; justify-content: space-between; gap: 12px; padding: 3px 0; color: var(--mute); }
+.proof-nodes .pass span:last-child { color: var(--ok); }
+.proof-nodes .fail span:last-child { color: var(--coral); }
+.proof-pass { margin: 10px 0 0; font-size: 12px; color: var(--ok); }
+.proof-failure { margin: 10px 0 0; font-size: 12px; color: var(--coral); }
+.proof-skeleton { list-style: none; padding: 0; margin: 14px 0 0; }
+.proof-skeleton li { height: 58px; border-top: 1px solid var(--line); background: linear-gradient(90deg, var(--panel), var(--lift), var(--panel)); background-size: 200% 100%; }
+@media (prefers-reduced-motion: no-preference) {
+  .proof-skeleton li { animation: proof-shimmer 1.4s linear infinite; }
+}
+@keyframes proof-shimmer {
+  from { background-position: 200% 0; }
+  to { background-position: -200% 0; }
+}
+@media (max-width: 900px) {
+  .proof-row { grid-template-columns: 1fr; gap: 8px; }
+  .proof-act { flex-wrap: wrap; white-space: normal; }
+}
+
 .boot {
   position: fixed;
   inset: 0;

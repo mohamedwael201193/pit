@@ -363,6 +363,7 @@ func (h *Hub) maybeGuardedExecute(hash, coin string, started time.Time) {
 		Action: "guarded", Status: "submitted", OID: got.OID, PreviewHash: got.Hash,
 		Reason: "guarded_autonomy",
 	})
+	h.fileOrder(got, h.currentJobID())
 }
 
 func (h *Hub) localAutomation(w http.ResponseWriter, r *http.Request) {

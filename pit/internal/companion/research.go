@@ -387,6 +387,12 @@ func (h *Hub) snapshotResearch() map[string]any {
 	return body
 }
 
+func (h *Hub) currentJobID() string {
+	h.researchMu.Lock()
+	defer h.researchMu.Unlock()
+	return h.job.ID
+}
+
 func workspaceID(dir string) string {
 	st, err := cli.Load(dir)
 	if err != nil {
@@ -509,6 +515,8 @@ func (h *Hub) execResearch(coin string) {
 		Action: "research", Status: kind, JobID: h.job.ID, PreviewHash: h.job.previewHash, Reason: h.job.deny,
 	})
 	auto.RecordStage(h.Dir, "researched", "research_done:"+kind, kind, h.job.coin)
+	model, provider := researchModels()
+	h.fileResearch(h.job.ID, h.job.coin, kind, h.job.deny, h.job.previewHash, h.job.roles, model, provider)
 	if h.job.eligible && h.job.previewHash != "" {
 		hash := h.job.previewHash
 		coin := h.job.coin
@@ -607,6 +615,7 @@ func (h *Hub) localAuthorize(w http.ResponseWriter, r *http.Request) {
 			WorkspaceID: workspaceID(h.Dir), Kind: "order.submitted", Market: got.Market,
 			Action: "authorize", Status: "submitted", OID: got.OID, PreviewHash: got.Hash,
 		})
+		h.fileOrder(got, h.currentJobID())
 	}
 	writeLocal(w, http.StatusOK, out)
 }

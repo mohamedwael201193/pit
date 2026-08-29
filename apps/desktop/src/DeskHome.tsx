@@ -1,4 +1,5 @@
 import { BrandMark } from "./BrandMark";
+import { EvidenceStrip } from "./EvidenceStrip";
 import { LINKS } from "./links";
 import { prettyCode } from "./companion";
 import { compactNum } from "./format";
@@ -60,7 +61,7 @@ export function DeskHome({
   mode?: string;
   exposure?: string;
   onResearch: (coin: string) => void;
-  onGo: (view: "markets" | "research" | "security" | "chat" | "automation" | "portfolio") => void;
+  onGo: (view: "markets" | "research" | "security" | "chat" | "automation" | "portfolio" | "activity") => void;
 }) {
   const showPair = items.find((p) => p.id === "wallet")?.state !== "ok";
   const best = coins.find((c) => c.eligible);
@@ -156,6 +157,7 @@ export function DeskHome({
       ) : (
         <p className="empty">No opportunities match your policy yet. Empty is honest.</p>
       )}
+      <EvidenceStrip onOpen={() => onGo("activity")} />
       {lastEvent ? <p className="fine">Recently: {lastEvent}</p> : null}
       {showPair ? (
         <section className="next-row">
