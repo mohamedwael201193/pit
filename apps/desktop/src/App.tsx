@@ -1173,6 +1173,9 @@ export function App() {
               setAutoPrefs(p);
               void saveAutomation(p).then(setAutoPrefs);
             }}
+            onOpenHistory={() => setView("activity")}
+            net={net}
+            wallet={status?.wallet}
           />
         ) : null}
 

@@ -12,37 +12,44 @@ import (
 )
 
 const (
-	ModeManual    = "manual"
-	ModeResearch  = "research_only"
-	ModeGuarded   = "guarded"
-	EnableToken   = "ENABLE GUARDED AUTONOMY"
-	StopToken     = "STOP AUTONOMY"
+	ModeManual   = "manual"
+	ModeResearch = "research_only"
+	ModeGuarded  = "guarded"
+	EnableToken  = "ENABLE GUARDED AUTONOMY"
+	StopToken    = "STOP AUTONOMY"
 )
 
 type Mission struct {
-	Mode               string  `json:"mode"`
-	Running            bool    `json:"running"`
-	Hours              int     `json:"hours,omitempty"`
-	DeadlineUnix       int64   `json:"deadline_unix,omitempty"`
-	GuardedEnabledUnix int64   `json:"guarded_enabled_unix,omitempty"`
-	GuardedUntilUnix   int64   `json:"guarded_until_unix,omitempty"`
-	PolicyHash         string  `json:"policy_hash,omitempty"`
-	MaxTrades          int     `json:"max_trades,omitempty"`
-	StopLossUSD        float64 `json:"stop_loss_usd,omitempty"`
-	MinLiquidityUSD    float64 `json:"min_liquidity_usd,omitempty"`
-	PauseUncertain     bool    `json:"pause_uncertain,omitempty"`
+	Mode               string   `json:"mode"`
+	Running            bool     `json:"running"`
+	Hours              int      `json:"hours,omitempty"`
+	DeadlineUnix       int64    `json:"deadline_unix,omitempty"`
+	GuardedEnabledUnix int64    `json:"guarded_enabled_unix,omitempty"`
+	GuardedUntilUnix   int64    `json:"guarded_until_unix,omitempty"`
+	PolicyHash         string   `json:"policy_hash,omitempty"`
+	MaxTrades          int      `json:"max_trades,omitempty"`
+	StopLossUSD        float64  `json:"stop_loss_usd,omitempty"`
+	MinLiquidityUSD    float64  `json:"min_liquidity_usd,omitempty"`
+	PauseUncertain     bool     `json:"pause_uncertain,omitempty"`
 	Assets             []string `json:"assets,omitempty"`
-	TradesToday        int     `json:"trades_today"`
-	TradesDay          string  `json:"trades_day,omitempty"`
-	ConsecutiveLosses int     `json:"consecutive_losses"`
-	LastAction         string  `json:"last_action,omitempty"`
-	LastStop           string  `json:"last_stop,omitempty"`
-	LastPreviewHash    string  `json:"last_preview_hash,omitempty"`
-	LastOID            string  `json:"last_oid,omitempty"`
-	BestCoin           string  `json:"best_coin,omitempty"`
-	BestWhy            string  `json:"best_why,omitempty"`
-	NextScanUnix       int64   `json:"next_scan_unix,omitempty"`
-	CurrentPosition    string  `json:"current_position,omitempty"`
+	TradesToday        int      `json:"trades_today"`
+	TradesDay          string   `json:"trades_day,omitempty"`
+	ConsecutiveLosses  int      `json:"consecutive_losses"`
+	LastAction         string   `json:"last_action,omitempty"`
+	LastStop           string   `json:"last_stop,omitempty"`
+	LastPreviewHash    string   `json:"last_preview_hash,omitempty"`
+	LastOID            string   `json:"last_oid,omitempty"`
+	BestCoin           string   `json:"best_coin,omitempty"`
+	BestWhy            string   `json:"best_why,omitempty"`
+	NextScanUnix       int64    `json:"next_scan_unix,omitempty"`
+	CurrentPosition    string   `json:"current_position,omitempty"`
+	Stage              string   `json:"stage,omitempty"`
+	BlockReason        string   `json:"block_reason,omitempty"`
+	ScanCount          int      `json:"scan_count,omitempty"`
+	Scanned            int      `json:"scanned,omitempty"`
+	Eligible           int      `json:"eligible,omitempty"`
+	LastResult         string   `json:"last_result,omitempty"`
+	OpenPositions      int      `json:"open_positions,omitempty"`
 }
 
 func DefaultMission() Mission {
@@ -133,7 +140,12 @@ func EnableGuarded(dir, typed string, hours int, policyHash string) (Mission, er
 	m.GuardedUntilUnix = m.DeadlineUnix
 	m.PolicyHash = policyHash
 	m.LastStop = ""
+	m.BlockReason = ""
 	m.LastAction = "guarded_enabled"
+	m.Stage = "starting"
+	m.NextScanUnix = now
+	m.ScanCount = 0
+	m.LastResult = ""
 	if err := SaveMission(dir, m); err != nil {
 		return m, err
 	}
@@ -142,6 +154,9 @@ func EnableGuarded(dir, typed string, hours int, policyHash string) (Mission, er
 	p.Notify = true
 	p.AutoResearch = true
 	p.Execute = false
+	p.LastScanUnix = 0
+	p.LastResearchCoin = ""
+	p.LastNotifyCoin = ""
 	_ = Save(dir, p)
 	return LoadMission(dir), nil
 }
@@ -188,6 +203,8 @@ func Stop(dir, why string) Mission {
 	m.GuardedUntilUnix = 0
 	m.LastStop = why
 	m.LastAction = "stopped:" + why
+	m.Stage = "stopped"
+	m.BlockReason = ""
 	_ = SaveMission(dir, m)
 	p := Load(dir)
 	p.AutoResearch = false
@@ -197,6 +214,11 @@ func Stop(dir, why string) Mission {
 }
 
 func StopReason(m Mission, now int64, kill bool, sessionAlive bool, openPositions int, realizedPnL float64, pol policy.Policy) string {
+	return MissionHaltReason(m, now, kill, sessionAlive, realizedPnL, pol)
+}
+
+// MissionHaltReason ends Guarded Autonomy. A full book (max_open_positions) must not halt scan/research.
+func MissionHaltReason(m Mission, now int64, kill bool, sessionAlive bool, realizedPnL float64, pol policy.Policy) string {
 	if m.Mode != ModeGuarded {
 		if m.Mode == ModeResearch {
 			return ""
@@ -228,13 +250,50 @@ func StopReason(m Mission, now int64, kill bool, sessionAlive bool, openPosition
 	if pol.DailyLossUSD > 0 && realizedPnL <= -pol.DailyLossUSD {
 		return "daily_loss"
 	}
-	if pol.MaxOpenPositions > 0 && openPositions >= pol.MaxOpenPositions {
-		return "max_open_positions"
-	}
 	if pol.MaxConsecutiveLosses > 0 && m.ConsecutiveLosses >= pol.MaxConsecutiveLosses {
 		return "consecutive_loss_limit"
 	}
 	return ""
+}
+
+// ExecBlockReason refuses a new order while the mission stays alive.
+func ExecBlockReason(openPositions int, pol policy.Policy) string {
+	if pol.MaxOpenPositions > 0 && openPositions >= pol.MaxOpenPositions {
+		return "max_open_positions"
+	}
+	return ""
+}
+
+func Explain(code string) string {
+	switch code {
+	case "max_open_positions":
+		return "A new order is refused because an open position already fills the host ceiling. Scan and private research continue. Existing positions are not flattened."
+	case "kill_switch":
+		return "Kill switch is on. Guarded Autonomy halted. No order was placed."
+	case "session_expired":
+		return "The scoped Hyperliquid session is not alive. Guarded Autonomy halted. No order was placed."
+	case "deadline":
+		return "The confirmed duration ended. Guarded Autonomy halted."
+	case "policy_changed":
+		return "Pinned policy hash changed. Guarded Autonomy halted until you enable it again."
+	case "max_trades":
+		return "Today's trade ceiling was reached. Guarded Autonomy halted."
+	case "daily_loss":
+		return "Daily loss ceiling was reached. Guarded Autonomy halted. Positions were not flattened."
+	case "consecutive_loss_limit":
+		return "Consecutive-loss ceiling was reached. Guarded Autonomy halted."
+	case "user_stop", "chat_stop":
+		return "You stopped Guarded Autonomy. PIT will not place further orders until you enable it again."
+	case "duplicate_preview":
+		return "This exact preview was already used. A new preview is required."
+	case "preview_before_guarded":
+		return "That preview started before Guarded Autonomy was enabled. It cannot be auto-executed."
+	default:
+		if code == "" {
+			return ""
+		}
+		return "Host gate: " + strings.ReplaceAll(code, "_", " ") + "."
+	}
 }
 
 type ExecGate struct {
@@ -257,7 +316,10 @@ func AllowHostExecute(dir string, g ExecGate) error {
 	if g.Now == 0 {
 		g.Now = time.Now().Unix()
 	}
-	if why := StopReason(m, g.Now, g.Kill, g.SessionOK, g.OpenCount, g.RealizedPnL, g.Policy); why != "" && why != "manual" {
+	if why := MissionHaltReason(m, g.Now, g.Kill, g.SessionOK, g.RealizedPnL, g.Policy); why != "" && why != "manual" {
+		return fmt.Errorf("%s", why)
+	}
+	if why := ExecBlockReason(g.OpenCount, g.Policy); why != "" {
 		return fmt.Errorf("%s", why)
 	}
 	if m.GuardedEnabledUnix > 0 && g.StartedUnix > 0 && g.StartedUnix < m.GuardedEnabledUnix {
@@ -292,6 +354,36 @@ func AllowHostExecute(dir string, g ExecGate) error {
 	return nil
 }
 
+func RecordBlock(dir, reason, coin string) {
+	m := LoadMission(dir)
+	m.BlockReason = reason
+	if m.Stage != "researching" && m.Stage != "scanning" && m.Stage != "ranked" {
+		m.Stage = "exec_blocked"
+	}
+	m.LastAction = "exec_blocked:" + reason
+	if coin != "" {
+		m.BestCoin = coin
+	}
+	_ = SaveMission(dir, m)
+}
+
+func RecordStage(dir, stage, action, result, coin string) {
+	m := LoadMission(dir)
+	if stage != "" {
+		m.Stage = stage
+	}
+	if action != "" {
+		m.LastAction = action
+	}
+	if result != "" {
+		m.LastResult = result
+	}
+	if coin != "" {
+		m.BestCoin = coin
+	}
+	_ = SaveMission(dir, m)
+}
+
 func RecordAction(dir, action, coin, preview, oid, stop string) {
 	m := LoadMission(dir)
 	if action != "" {
@@ -306,9 +398,16 @@ func RecordAction(dir, action, coin, preview, oid, stop string) {
 	if oid != "" {
 		m.LastOID = oid
 		m.TradesToday++
+		m.Stage = "executed"
+		m.LastResult = "oid:" + oid
 	}
 	if stop != "" {
-		m.LastStop = stop
+		switch stop {
+		case "max_open_positions", "duplicate_preview", "preview_before_guarded":
+			m.BlockReason = stop
+		default:
+			m.LastStop = stop
+		}
 	}
 	_ = SaveMission(dir, m)
 }
@@ -364,15 +463,32 @@ func Public(dir string) map[string]any {
 	if remainLosses < 0 {
 		remainLosses = 0
 	}
+	elapsed := int64(0)
+	if m.GuardedEnabledUnix > 0 {
+		elapsed = now - m.GuardedEnabledUnix
+		if elapsed < 0 {
+			elapsed = 0
+		}
+	}
+	view := m
+	if view.Running && view.NextScanUnix > 0 && view.NextScanUnix < now {
+		view.NextScanUnix = now
+	}
 	return map[string]any{
-		"ok": true, "mission": m, "prefs": p, "execute": false, "sign": false, "trade": false,
-		"mode": m.Mode, "running": m.Running && m.Mode != ModeManual,
-		"status":           Life(m, pol.KillSwitch, now),
-		"policy_hash":      hash,
-		"now":              now,
-		"remaining_seconds": RemainingSeconds(m, now),
+		"ok": true, "mission": view, "prefs": p, "execute": false, "sign": false, "trade": false,
+		"mode": view.Mode, "running": view.Running && view.Mode != ModeManual,
+		"status":                       Life(view, pol.KillSwitch, now),
+		"policy_hash":                  hash,
+		"now":                          now,
+		"elapsed_seconds":              elapsed,
+		"next_scan_unix":               view.NextScanUnix,
+		"remaining_seconds":            RemainingSeconds(m, now),
 		"remaining_consecutive_losses": remainLosses,
-		"remaining_risk_usd": pol.DailyLossUSD,
+		"remaining_risk_usd":           pol.DailyLossUSD,
+		"block_reason":                 m.BlockReason,
+		"stage":                        view.Stage,
+		"explain":                      Explain(m.LastStop),
+		"block_explain":                Explain(m.BlockReason),
 		"limits": map[string]any{
 			"allowed_assets":         pol.AllowedAssets,
 			"allowed_venues":         pol.AllowedVenues,
@@ -391,9 +507,9 @@ func Public(dir string) map[string]any {
 			"session_expiry":         pol.SessionTTLSeconds,
 			"kill_switch":            pol.KillSwitch,
 			"withdraw":               false,
-			"transfer":              false,
+			"transfer":               false,
 			"policy_mutation":        false,
-			"permission_escalation": false,
+			"permission_escalation":  false,
 		},
 		"note": "Guarded Autonomy executes only after ENABLE GUARDED AUTONOMY is confirmed on this computer. Chat cannot enable it. The model cannot change these limits.",
 	}

@@ -34,3 +34,24 @@ export function remainLabel(deadlineUnix?: number, nowUnix?: number): string {
   if (h > 0) return `${h}h ${m}m`;
   return `${m}m`;
 }
+
+export function elapsedLabel(startUnix?: number, nowUnix?: number): string {
+  const now = nowUnix && nowUnix > 0 ? nowUnix : Math.floor(Date.now() / 1000);
+  const start = startUnix || 0;
+  if (start <= 0) return "—";
+  const s = Math.max(0, now - start);
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const sec = s % 60;
+  if (h > 0) return `${h}h ${m}m`;
+  if (m > 0) return `${m}m ${sec}s`;
+  return `${sec}s`;
+}
+
+export function nextScanLabel(nextUnix?: number, nowUnix?: number): string {
+  const now = nowUnix && nowUnix > 0 ? nowUnix : Math.floor(Date.now() / 1000);
+  const next = nextUnix || 0;
+  if (next <= 0) return "due now";
+  if (next <= now) return "due now";
+  return new Date(next * 1000).toLocaleTimeString();
+}

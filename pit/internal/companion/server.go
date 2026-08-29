@@ -42,6 +42,7 @@ type Hub struct {
 
 	researchMu sync.Mutex
 	job        researchJob
+	autoMu     sync.Mutex
 }
 
 func ListenAddr() (string, error) {

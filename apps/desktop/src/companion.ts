@@ -519,6 +519,13 @@ export type MissionState = {
   min_liquidity_usd?: number;
   pause_uncertain?: boolean;
   assets?: string[];
+  stage?: string;
+  block_reason?: string;
+  scan_count?: number;
+  scanned?: number;
+  eligible?: number;
+  last_result?: string;
+  open_positions?: number;
 };
 
 export type MissionPublic = {
@@ -536,6 +543,17 @@ export type MissionPublic = {
   remaining_risk_usd?: number;
   remaining_consecutive_losses?: number;
   policy_hash?: string;
+  block_reason?: string;
+  block_explain?: string;
+  stage?: string;
+  explain?: string;
+  elapsed_seconds?: number;
+  next_scan_unix?: number;
+  research_running?: boolean;
+  research_stage?: string;
+  research_coin?: string;
+  research_job_id?: string;
+  last_order?: { oid?: string; status?: string; market?: string; side?: string; sz?: number; hash?: string };
 };
 
 export async function fetchAutomation(): Promise<AutoPrefs> {

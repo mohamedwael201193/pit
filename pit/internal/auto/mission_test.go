@@ -97,6 +97,33 @@ func TestStopReasonDeadline(t *testing.T) {
 	}
 }
 
+func TestHaltVsExecBlock(t *testing.T) {
+	m := Mission{Mode: ModeGuarded, Running: true, GuardedUntilUnix: 4_000_000_000}
+	pol := policy.Default()
+	if MissionHaltReason(m, 10, false, true, 0, pol) != "" {
+		t.Fatal("halt")
+	}
+	if ExecBlockReason(1, pol) != "max_open_positions" {
+		t.Fatal("block")
+	}
+	if StopReason(m, 10, false, true, 1, 0, pol) != "" {
+		t.Fatal("open positions must not halt the mission")
+	}
+	dir := t.TempDir()
+	hash, _ := pol.Hash()
+	if _, err := EnableGuarded(dir, EnableToken, 8, hash); err != nil {
+		t.Fatal(err)
+	}
+	got := LoadMission(dir)
+	if got.Stage != "starting" || got.NextScanUnix == 0 {
+		t.Fatalf("%+v", got)
+	}
+	p := Load(dir)
+	if p.LastScanUnix != 0 || p.LastResearchCoin != "" {
+		t.Fatalf("%+v", p)
+	}
+}
+
 func TestLifeAndPublicStatus(t *testing.T) {
 	if Life(Mission{Mode: ModeManual}, false, 1) != "READY" {
 		t.Fatal("ready")
@@ -111,5 +138,24 @@ func TestLifeAndPublicStatus(t *testing.T) {
 	p := Public(dir)
 	if p["status"] != "READY" || p["execute"] == true {
 		t.Fatalf("%+v", p)
+	}
+}
+
+func TestRecordBlockDoesNotHalt(t *testing.T) {
+	dir := t.TempDir()
+	hash, _ := policy.Default().Hash()
+	if _, err := EnableGuarded(dir, EnableToken, 8, hash); err != nil {
+		t.Fatal(err)
+	}
+	RecordBlock(dir, "max_open_positions", "BTC")
+	m := LoadMission(dir)
+	if !m.Running || m.Mode != ModeGuarded || m.LastStop != "" {
+		t.Fatalf("%+v", m)
+	}
+	if Life(m, false, m.GuardedUntilUnix-1) != "ACTIVE" {
+		t.Fatal(Life(m, false, m.GuardedUntilUnix-1))
+	}
+	if Explain("max_open_positions") == "" {
+		t.Fatal("explain")
 	}
 }

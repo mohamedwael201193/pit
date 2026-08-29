@@ -18,7 +18,11 @@ import (
 )
 
 func (h *Hub) autoLoop() {
-	t := time.NewTicker(30 * time.Second)
+	m := auto.LoadMission(h.Dir)
+	if m.Running && (m.Mode == auto.ModeGuarded || m.Mode == auto.ModeResearch) {
+		h.autoTick()
+	}
+	t := time.NewTicker(10 * time.Second)
 	defer t.Stop()
 	for range t.C {
 		h.autoTick()
@@ -26,13 +30,13 @@ func (h *Hub) autoLoop() {
 }
 
 func (h *Hub) autoTick() {
+	h.autoMu.Lock()
+	defer h.autoMu.Unlock()
 	p := auto.Load(h.Dir)
 	m := auto.LoadMission(h.Dir)
 	if m.Mode == auto.ModeResearch || m.Mode == auto.ModeGuarded {
 		p.Watch = true
-		if m.Mode == auto.ModeResearch || m.Mode == auto.ModeGuarded {
-			p.AutoResearch = true
-		}
+		p.AutoResearch = true
 	}
 	if !p.Watch && m.Mode == auto.ModeManual {
 		return
@@ -41,42 +45,93 @@ func (h *Hub) autoTick() {
 	st, err := cli.Load(h.Dir)
 	netName := "mainnet"
 	kill := false
-	if err == nil {
-		if strings.TrimSpace(st.Network) != "" {
-			netName = st.Network
+	if err != nil || strings.TrimSpace(st.Wallet) == "" {
+		if m.Mode == auto.ModeGuarded && m.Running {
+			m.Stage = "waiting"
+			m.LastAction = "waiting_bind"
+			_ = auto.SaveMission(h.Dir, m)
 		}
-		kill = st.Kill
+		return
 	}
+	if strings.TrimSpace(st.Network) != "" {
+		netName = st.Network
+	}
+	kill = st.Kill
 	sessOK := false
 	if sf, serr := cli.LoadSession(h.Dir); serr == nil {
 		sessOK = session.Alive(sf.Meta().Session(), time.Now().UnixMilli()) && !kill
 	}
 	openN := h.openPositionCount()
 	pol := policy.Default()
-	if why := auto.StopReason(m, now, kill, sessOK, openN, 0, pol); why != "" && m.Mode == auto.ModeGuarded {
+	m.OpenPositions = openN
+	m.CurrentPosition = h.positionSummary()
+	if why := auto.MissionHaltReason(m, now, kill, sessOK, 0, pol); why != "" && m.Mode == auto.ModeGuarded {
 		auto.Stop(h.Dir, why)
 		appendActivity(h.Dir, activityEvent{
 			WorkspaceID: workspaceID(h.Dir), Kind: "mission.stopped", Action: "stop", Status: why, Reason: why,
 		})
 		return
 	}
-	if p.LastScanUnix != 0 && now-p.LastScanUnix < int64(p.CadenceMinutes)*60 {
+	if why := auto.ExecBlockReason(openN, pol); why != "" && m.Mode == auto.ModeGuarded {
+		if m.BlockReason != why {
+			appendActivity(h.Dir, activityEvent{
+				WorkspaceID: workspaceID(h.Dir), Kind: "mission.exec_blocked", Action: "gate", Status: why, Reason: why,
+			})
+		}
+		auto.RecordBlock(h.Dir, why, m.BestCoin)
+		m = auto.LoadMission(h.Dir)
+	} else if m.Mode == auto.ModeGuarded && m.BlockReason != "" {
+		m.BlockReason = ""
+		_ = auto.SaveMission(h.Dir, m)
+	}
+	h.syncMissionResearch(&m)
+	cadence := int64(p.CadenceMinutes) * 60
+	if cadence < 60 {
+		cadence = 60
+	}
+	due := p.LastScanUnix == 0 || now-p.LastScanUnix >= cadence || (m.GuardedEnabledUnix > 0 && p.LastScanUnix < m.GuardedEnabledUnix)
+	if !due {
+		if m.NextScanUnix <= now {
+			m.NextScanUnix = p.LastScanUnix + cadence
+			if m.NextScanUnix <= now {
+				m.NextScanUnix = now + cadence
+			}
+		}
+		if m.Stage == "" || m.Stage == "starting" || m.Stage == "guarded_enabled" {
+			m.Stage = "waiting"
+			m.LastAction = "waiting_cadence"
+		}
+		_ = auto.SaveMission(h.Dir, m)
+		_ = auto.Save(h.Dir, p)
 		return
 	}
 	net, nerr := config.ParseNetwork(netName)
 	if nerr != nil {
-		auto.RecordAction(h.Dir, "scan_failed", "", "", "", "market_unavailable")
+		m.Stage = "scan_failed"
+		m.LastAction = "scan_failed"
+		m.LastResult = "market_unavailable"
+		_ = auto.SaveMission(h.Dir, m)
+		appendActivity(h.Dir, activityEvent{
+			WorkspaceID: workspaceID(h.Dir), Kind: "mission.scan_failed", Action: "scan", Status: "market_unavailable", Reason: "market_unavailable",
+		})
 		return
 	}
-	cands, lerr := watch.Live(hl.New(config.For(net)), watch.PolicyForWatch())
+	m.Stage = "scanning"
+	m.LastAction = "scanning"
+	_ = auto.SaveMission(h.Dir, m)
+	cands, lerr := watch.LiveUniverse(hl.New(config.For(net)), watch.PolicyForWatch())
 	p.LastScanUnix = now
-	m = auto.LoadMission(h.Dir)
-	m.NextScanUnix = now + int64(p.CadenceMinutes)*60
+	m.NextScanUnix = now + cadence
+	m.ScanCount++
 	if lerr != nil {
 		m.LastAction = "scan_failed"
-		m.LastStop = "market_unavailable"
+		m.LastResult = lerr.Error()
+		m.Stage = "scan_failed"
 		_ = auto.SaveMission(h.Dir, m)
 		_ = auto.Save(h.Dir, p)
+		appendActivity(h.Dir, activityEvent{
+			WorkspaceID: workspaceID(h.Dir), Kind: "mission.scan_failed", Action: "scan", Status: "market_unavailable", Reason: "market_unavailable",
+		})
 		return
 	}
 	filtered := cands
@@ -106,8 +161,23 @@ func (h *Hub) autoTick() {
 		}
 		filtered = next
 	}
+	eligibleN := 0
+	for _, c := range filtered {
+		if c.Eligible {
+			eligibleN++
+		}
+	}
+	m.Scanned = len(cands)
+	m.Eligible = eligibleN
+	m.LastResult = "scanned " + strconv.Itoa(len(cands)) + ", " + strconv.Itoa(eligibleN) + " pass policy"
+	appendActivity(h.Dir, activityEvent{
+		WorkspaceID: workspaceID(h.Dir), Kind: "mission.scanned", Action: "scan", Status: "ok", Reason: m.LastResult,
+	})
 	var pick *watch.Candidate
 	for i := range filtered {
+		if !filtered[i].Eligible {
+			continue
+		}
 		if m.MinLiquidityUSD > 0 && filtered[i].Book.OpenInterest < m.MinLiquidityUSD {
 			continue
 		}
@@ -121,13 +191,19 @@ func (h *Hub) autoTick() {
 	}
 	if pick == nil {
 		m.LastAction = "no_opportunity"
+		m.Stage = "empty"
+		m.BestCoin = ""
 		_ = auto.SaveMission(h.Dir, m)
 		_ = auto.Save(h.Dir, p)
+		appendActivity(h.Dir, activityEvent{
+			WorkspaceID: workspaceID(h.Dir), Kind: "mission.empty", Action: "scan", Status: "no_opportunity", Reason: "no_opportunity",
+		})
 		return
 	}
 	m.BestCoin = pick.Coin
 	m.BestWhy = watch.WhyHuman(*pick)
-	m.LastAction = "scanned:" + pick.Coin
+	m.LastAction = "ranked:" + pick.Coin
+	m.Stage = "ranked"
 	view := watch.Public([]watch.Candidate{*pick}, netName)
 	if view.BestWhy != "" {
 		m.BestWhy = view.BestWhy
@@ -140,29 +216,80 @@ func (h *Hub) autoTick() {
 		p.LastNotifyCoin = pick.Coin
 	}
 	wantResearch := p.AutoResearch || m.Mode == auto.ModeResearch || m.Mode == auto.ModeGuarded
+	h.researchMu.Lock()
+	running := h.job.running
+	h.researchMu.Unlock()
+	if running {
+		m.Stage = "researching"
+		m.LastAction = "research_running"
+		_ = auto.SaveMission(h.Dir, m)
+		_ = auto.Save(h.Dir, p)
+		return
+	}
 	if wantResearch && p.LastResearchCoin != pick.Coin {
-		h.researchMu.Lock()
-		running := h.job.running
-		h.researchMu.Unlock()
-		if !running {
-			p.LastResearchCoin = pick.Coin
-			note := "automation_stops_at_human_approval"
-			if m.Mode == auto.ModeGuarded {
-				note = "guarded_will_execute_if_eligible"
-			}
-			appendActivity(h.Dir, activityEvent{
-				WorkspaceID: workspaceID(h.Dir), Kind: "automation.prepared", Market: pick.Coin,
-				Action: "prepare", Status: "research", Reason: note,
-			})
-			m.LastAction = "research:" + pick.Coin
-			_ = auto.SaveMission(h.Dir, m)
-			_ = auto.Save(h.Dir, p)
-			h.beginResearch(pick.Coin)
-			return
+		note := "automation_stops_at_human_approval"
+		if m.Mode == auto.ModeGuarded {
+			note = "guarded_will_execute_if_eligible"
+		}
+		appendActivity(h.Dir, activityEvent{
+			WorkspaceID: workspaceID(h.Dir), Kind: "automation.prepared", Market: pick.Coin,
+			Action: "prepare", Status: "research", Reason: note,
+		})
+		p.LastResearchCoin = pick.Coin
+		m.LastAction = "research:" + pick.Coin
+		m.Stage = "researching"
+		_ = auto.SaveMission(h.Dir, m)
+		_ = auto.Save(h.Dir, p)
+		h.beginResearch(pick.Coin)
+		return
+	}
+	if wantResearch && p.LastResearchCoin == pick.Coin {
+		m.LastAction = "waiting_after_research:" + pick.Coin
+		if m.BlockReason != "" {
+			m.Stage = "exec_blocked"
+		} else {
+			m.Stage = "waiting"
 		}
 	}
 	_ = auto.SaveMission(h.Dir, m)
 	_ = auto.Save(h.Dir, p)
+}
+
+func (h *Hub) syncMissionResearch(m *auto.Mission) {
+	h.researchMu.Lock()
+	defer h.researchMu.Unlock()
+	if !h.job.running {
+		return
+	}
+	m.Stage = "researching"
+	m.LastAction = "research:" + h.job.coin
+	if h.job.coin != "" {
+		m.BestCoin = h.job.coin
+	}
+}
+
+func (h *Hub) positionSummary() string {
+	st, err := cli.Load(h.Dir)
+	if err != nil || strings.TrimSpace(st.Wallet) == "" {
+		return ""
+	}
+	net, nerr := config.ParseNetwork(st.Network)
+	if nerr != nil {
+		return ""
+	}
+	rows, _, perr := hl.New(config.For(net)).Clearinghouse(st.Wallet)
+	if perr != nil {
+		return ""
+	}
+	parts := make([]string, 0, len(rows))
+	for _, row := range rows {
+		sz := strings.TrimSpace(row.Sz)
+		if sz == "" || sz == "0" {
+			continue
+		}
+		parts = append(parts, strings.ToUpper(row.Coin)+" "+sz)
+	}
+	return strings.Join(parts, ", ")
 }
 
 func (h *Hub) openPositionCount() int {
@@ -212,7 +339,7 @@ func (h *Hub) maybeGuardedExecute(hash, coin string, started time.Time) {
 		Coin:        coin,
 	}
 	if err := auto.AllowHostExecute(h.Dir, g); err != nil {
-		auto.RecordAction(h.Dir, "refused:"+err.Error(), coin, hash, "", err.Error())
+		auto.RecordBlock(h.Dir, err.Error(), coin)
 		appendActivity(h.Dir, activityEvent{
 			WorkspaceID: workspaceID(h.Dir), Kind: "mission.refused", Market: coin,
 			Action: "guarded", Status: err.Error(), PreviewHash: hash, Reason: err.Error(),
@@ -221,7 +348,8 @@ func (h *Hub) maybeGuardedExecute(hash, coin string, started time.Time) {
 	}
 	got := cli.ExecuteDeskOrder(h.Dir, cli.ConfirmToken, hash)
 	if got.Error != "" {
-		auto.RecordAction(h.Dir, "exec_failed:"+got.Error, coin, hash, "", got.Error)
+		auto.RecordStage(h.Dir, "exec_failed", "exec_failed:"+got.Error, got.Error, coin)
+		auto.RecordAction(h.Dir, "exec_failed:"+got.Error, coin, hash, "", "")
 		appendActivity(h.Dir, activityEvent{
 			WorkspaceID: workspaceID(h.Dir), Kind: "order.rejected", Market: coin,
 			Action: "guarded", Status: got.Error, PreviewHash: hash, Reason: got.Error,
@@ -229,6 +357,7 @@ func (h *Hub) maybeGuardedExecute(hash, coin string, started time.Time) {
 		return
 	}
 	auto.RecordAction(h.Dir, "executed", coin, hash, got.OID, "")
+	auto.RecordStage(h.Dir, "executed", "executed", "oid:"+got.OID, coin)
 	appendActivity(h.Dir, activityEvent{
 		WorkspaceID: workspaceID(h.Dir), Kind: "order.submitted", Market: got.Market,
 		Action: "guarded", Status: "submitted", OID: got.OID, PreviewHash: got.Hash,
@@ -280,7 +409,7 @@ func (h *Hub) localMission(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "origin_denied", http.StatusForbidden)
 			return
 		}
-		writeLocal(w, http.StatusOK, auto.Public(h.Dir))
+		writeLocal(w, http.StatusOK, h.missionPublic())
 		return
 	}
 	if !desktopOnly(w, r) {
@@ -295,7 +424,7 @@ func (h *Hub) localMission(w http.ResponseWriter, r *http.Request) {
 		MinLiquidityUSD float64  `json:"min_liquidity_usd"`
 		PauseUncertain  bool     `json:"pause_uncertain"`
 		Assets          []string `json:"assets"`
-		Stop            bool    `json:"stop"`
+		Stop            bool     `json:"stop"`
 	}
 	_ = json.NewDecoder(r.Body).Decode(&body)
 	if body.Stop || strings.EqualFold(strings.TrimSpace(body.Typed), auto.StopToken) {
@@ -303,7 +432,7 @@ func (h *Hub) localMission(w http.ResponseWriter, r *http.Request) {
 		appendActivity(h.Dir, activityEvent{
 			WorkspaceID: workspaceID(h.Dir), Kind: "mission.stopped", Action: "stop", Status: "user_stop", Reason: "user_stop",
 		})
-		out := auto.Public(h.Dir)
+		out := h.missionPublic()
 		out["mission"] = m
 		writeLocal(w, http.StatusOK, out)
 		return
@@ -324,7 +453,8 @@ func (h *Hub) localMission(w http.ResponseWriter, r *http.Request) {
 		appendActivity(h.Dir, activityEvent{
 			WorkspaceID: workspaceID(h.Dir), Kind: "mission.enabled", Action: "guarded", Status: "running", Reason: "ENABLE GUARDED AUTONOMY",
 		})
-		writeLocal(w, http.StatusOK, auto.Public(h.Dir))
+		go h.autoTick()
+		writeLocal(w, http.StatusOK, h.missionPublic())
 		return
 	}
 	if body.Mode != "" {
@@ -339,7 +469,7 @@ func (h *Hub) localMission(w http.ResponseWriter, r *http.Request) {
 		m.PauseUncertain = body.PauseUncertain
 		m.Assets = body.Assets
 		_ = auto.SaveMission(h.Dir, m)
-		writeLocal(w, http.StatusOK, auto.Public(h.Dir))
+		writeLocal(w, http.StatusOK, h.missionPublic())
 		return
 	}
 	m := auto.LoadMission(h.Dir)
@@ -349,5 +479,19 @@ func (h *Hub) localMission(w http.ResponseWriter, r *http.Request) {
 	m.PauseUncertain = body.PauseUncertain
 	m.Assets = body.Assets
 	_ = auto.SaveMission(h.Dir, m)
-	writeLocal(w, http.StatusOK, auto.Public(h.Dir))
+	writeLocal(w, http.StatusOK, h.missionPublic())
+}
+
+func (h *Hub) missionPublic() map[string]any {
+	out := auto.Public(h.Dir)
+	h.researchMu.Lock()
+	out["research_running"] = h.job.running
+	out["research_stage"] = h.job.stage
+	out["research_coin"] = h.job.coin
+	out["research_job_id"] = h.job.ID
+	h.researchMu.Unlock()
+	if last := cli.LoadLastOrder(h.Dir); last != nil {
+		out["last_order"] = last
+	}
+	return out
 }

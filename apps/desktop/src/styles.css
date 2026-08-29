@@ -436,6 +436,15 @@ a { color: var(--cream); }
   margin: 8px 0 16px;
 }
 .live-banner h2 { margin: 4px 0 8px; }
+.mission-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  margin: 0 0 16px;
+}
+.mission-links .linkish {
+  font-size: 12px;
+}
 .danger {
   background: transparent;
   border: 1px solid var(--coral);

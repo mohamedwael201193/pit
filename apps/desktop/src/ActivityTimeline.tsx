@@ -28,6 +28,10 @@ function humanKind(kind?: string) {
   const k = String(kind || "event");
   if (k.includes("mission.enabled") || k === "mission.enabled") return "Mission started";
   if (k.includes("mission.stopped") || k === "mission.stopped") return "Mission stopped";
+  if (k.includes("mission.scanned")) return "Universe scanned";
+  if (k.includes("mission.exec_blocked") || k.includes("mission.refused")) return "Execution blocked";
+  if (k.includes("mission.empty")) return "No opportunity";
+  if (k.includes("mission.scan_failed")) return "Scan failed";
   if (k.includes("autonomous") || k.includes("guarded")) return "Autonomous action";
   if (k.includes("opportunity")) return "Opportunity found";
   if (k.includes("research.start") || k === "research_started") return "Research started";
@@ -89,6 +93,7 @@ export function ActivityTimeline({
                 {ev.job_id ? ` · job ${ev.job_id.slice(0, 8)}` : ""}
                 {ev.oid ? ` · OID ${ev.oid}` : ""}
                 {ev.reason ? ` · ${ev.reason}` : ""}
+                {ev.preview_hash ? ` · preview ${ev.preview_hash.slice(0, 10)}` : ""}
               </li>
             ))}
           </ul>

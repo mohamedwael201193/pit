@@ -2,16 +2,24 @@ export const LINKS = {
   pair: "https://pit0g.vercel.app/pair",
   app: "https://pit0g.vercel.app/app",
   pcAdvanced: "https://pc.0g.ai/sdk/dashboard/funds",
+  og: "https://0g.ai",
   hl: "https://app.hyperliquid.xyz",
   hlTestnet: "https://app.hyperliquid-testnet.xyz",
   hlAPI: "https://app.hyperliquid.xyz/API",
   hlAPITestnet: "https://app.hyperliquid-testnet.xyz/API",
   releases: "https://github.com/mohamedwael201193/pit/releases/latest",
   explorer: "https://chainscan.0g.ai",
+  explorerTestnet: "https://chainscan-galileo.0g.ai",
 } as const;
 
-export function explorerAddress(addr: string) {
-  return `${LINKS.explorer}/address/${addr}`;
+export function explorerAddress(addr: string, net = "mainnet") {
+  const base = net === "testnet" ? LINKS.explorerTestnet : LINKS.explorer;
+  return `${base}/address/${addr}`;
+}
+
+export function explorerTx(hash: string, net = "mainnet") {
+  const base = net === "testnet" ? LINKS.explorerTestnet : LINKS.explorer;
+  return `${base}/tx/${hash}`;
 }
 
 export function hyperliquidAPI(net: string) {
@@ -20,4 +28,10 @@ export function hyperliquidAPI(net: string) {
 
 export function hyperliquidApp(net: string) {
   return net === "testnet" ? LINKS.hlTestnet : LINKS.hl;
+}
+
+export function hyperliquidTrade(net: string, coin?: string) {
+  const base = hyperliquidApp(net);
+  const c = String(coin || "").trim();
+  return c ? `${base}/trade/${c}` : base;
 }

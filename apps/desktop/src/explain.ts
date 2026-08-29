@@ -19,6 +19,24 @@ export function explainStopHref(code: string | null): { href: string; label: str
 
 export function explainStop(code: string | null): { title: string; body: string } | null {
   if (!code) return null;
+  if (code === "max_open_positions") {
+    return {
+      title: "Open position ceiling",
+      body: "A new order is refused because an open position already fills the host ceiling. Scan and private research continue. Existing positions are not flattened.",
+    };
+  }
+  if (code === "session_expired") {
+    return {
+      title: "Session ended",
+      body: "The scoped Hyperliquid session is not alive. Guarded Autonomy halted. No order was placed.",
+    };
+  }
+  if (code === "deadline") {
+    return {
+      title: "Duration ended",
+      body: "The confirmed Guarded Autonomy duration ended. No further orders will be placed until you enable it again.",
+    };
+  }
   if (code === "direct_token_required" || code === "sealer_not_wired") {
     return {
       title: "Private research is not armed",

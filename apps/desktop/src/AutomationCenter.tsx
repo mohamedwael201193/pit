@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { BrandMark } from "./BrandMark";
-import { remainLabel } from "./format";
+import { elapsedLabel, nextScanLabel, remainLabel } from "./format";
 import { Select } from "./Select";
+import { explorerAddress, explorerTx, hyperliquidAPI, hyperliquidApp, hyperliquidTrade, LINKS } from "./links";
 import type { AutoPrefs, MissionPublic } from "./companion";
 
 const ENABLE_TOKEN = "ENABLE GUARDED AUTONOMY";
@@ -50,19 +51,15 @@ function lifeOf(args: {
   kill?: boolean;
   phase: Phase;
   error?: string;
-  mode: string;
-  running: boolean;
   host?: string;
 }): string {
   if (args.phase === "enabling") return "ENABLING";
   if (args.phase === "stopping") return "STOPPING";
   if (args.error) return "FAILED";
+  if (args.host === "ACTIVE") return "ACTIVE";
+  if (args.host === "BLOCKED") return "BLOCKED";
+  if (args.host === "STOPPED" || args.host === "FAILED") return args.host;
   if (args.kill) return "BLOCKED";
-  if (args.host === "ACTIVE" || (args.mode === "guarded" && args.running) || (args.mode === "research_only" && args.running)) {
-    return args.host === "BLOCKED" ? "BLOCKED" : "ACTIVE";
-  }
-  if (args.host === "STOPPED" || args.host === "FAILED" || args.host === "BLOCKED") return args.host;
-  if (args.mode === "guarded" && !args.running) return "STOPPED";
   return args.host || "READY";
 }
 
@@ -78,6 +75,9 @@ export function AutomationCenter({
   onStop,
   onSavePrefs,
   onConfirmConsumed,
+  onOpenHistory,
+  net,
+  wallet,
 }: {
   mission: MissionPublic;
   prefs: AutoPrefs;
@@ -90,6 +90,9 @@ export function AutomationCenter({
   onStop: () => Promise<unknown> | void;
   onSavePrefs: (p: AutoPrefs) => void;
   onConfirmConsumed?: () => void;
+  onOpenHistory?: () => void;
+  net?: string;
+  wallet?: string;
 }) {
   const [hours, setHours] = useState(confirmHours || 8);
   const [confirm, setConfirm] = useState(false);
@@ -115,18 +118,18 @@ export function AutomationCenter({
   const m = mission.mission || {};
   const mode = mission.mode || m.mode || "manual";
   const limits = mission.limits || {};
-  const running = Boolean(mission.running || (m.running && mode !== "manual"));
+  const running = Boolean(mission.status === "ACTIVE" && (mode === "guarded" || mode === "research_only"));
   const status = lifeOf({
     kill,
     phase,
     error: err || mission.error,
-    mode,
-    running,
     host: mission.status,
   });
   const live = status === "ACTIVE" && mode === "guarded";
   const deadline = m.guarded_until_unix || m.deadline_unix;
   const remain = remainLabel(deadline, mission.now || now);
+  const oid = String(m.last_oid || mission.last_order?.oid || "").trim();
+  const proofHash = "";
 
   async function enable() {
     setPhase("enabling");
@@ -203,6 +206,11 @@ export function AutomationCenter({
             PIT may research the best eligible book and, after host gates, execute only inside the pinned policy. Chat
             cannot AUTHORIZE. Withdraw and transfer stay impossible.
           </p>
+          {mission.block_reason ? (
+            <p className="err" role="status">
+              Execution blocked: {humanStop(mission.block_reason)}. {mission.block_explain || "The mission stays alive. Scan and research continue. Existing positions are not flattened."}
+            </p>
+          ) : null}
           <button type="button" className="danger" onClick={() => void stop()} disabled={busy || phase !== "idle"}>
             Stop autonomy
           </button>
@@ -246,8 +254,16 @@ export function AutomationCenter({
       <p className="label">Mission status</p>
       <dl className="mission-grid">
         <div>
+          <dt>Stage</dt>
+          <dd>{humanStage(mission.stage || m.stage || (mission.research_running ? "researching" : status))}</dd>
+        </div>
+        <div>
           <dt>Running</dt>
           <dd>{status}</dd>
+        </div>
+        <div>
+          <dt>Elapsed</dt>
+          <dd>{elapsedLabel(m.guarded_enabled_unix, mission.now || now)}</dd>
         </div>
         <div>
           <dt>Started</dt>
@@ -255,15 +271,15 @@ export function AutomationCenter({
         </div>
         <div>
           <dt>Next scan</dt>
-          <dd>{m.next_scan_unix ? new Date(m.next_scan_unix * 1000).toLocaleTimeString() : "on cadence"}</dd>
+          <dd>{nextScanLabel(mission.next_scan_unix || m.next_scan_unix, mission.now || now)}</dd>
         </div>
         <div>
           <dt>Current opportunity</dt>
           <dd>
             {m.best_coin ? (
-              <span className="asset">
+              <a className="asset" href={hyperliquidTrade(net || "mainnet", m.best_coin)} target="_blank" rel="noreferrer">
                 <BrandMark symbol={m.best_coin} /> {m.best_coin}
-              </span>
+              </a>
             ) : (
               "none"
             )}
@@ -274,12 +290,23 @@ export function AutomationCenter({
           <dd>{m.last_action || "none"}</dd>
         </div>
         <div>
+          <dt>Result</dt>
+          <dd>{m.last_result || mission.research_stage || "—"}</dd>
+        </div>
+        <div>
+          <dt>Universe</dt>
+          <dd>
+            {m.scanned || 0} scanned · {m.eligible || 0} pass policy
+            {m.scan_count ? ` · ${m.scan_count} ticks` : ""}
+          </dd>
+        </div>
+        <div>
           <dt>Trades today</dt>
           <dd>{m.trades_today || 0}</dd>
         </div>
         <div>
           <dt>Current exposure</dt>
-          <dd>{m.current_position || "venue"}</dd>
+          <dd>{m.current_position || (m.open_positions ? `${m.open_positions} open` : "none")}</dd>
         </div>
         <div>
           <dt>P&L</dt>
@@ -290,11 +317,61 @@ export function AutomationCenter({
           <dd>${String(mission.remaining_risk_usd ?? limits.daily_loss_usd ?? 50)} daily · {String(mission.remaining_consecutive_losses ?? limits.max_consecutive_losses ?? 3)} losses left</dd>
         </div>
         <div>
-          <dt>Stop conditions</dt>
-          <dd>{m.last_stop ? humanStop(m.last_stop) : "deadline, kill, session, policy, open positions, daily loss"}</dd>
+          <dt>Stop reason</dt>
+          <dd>{m.last_stop ? humanStop(m.last_stop) : live ? "none — halt only on deadline, kill, session, policy, max trades, daily loss, consecutive losses" : "deadline, kill, session, policy, max trades, daily loss, consecutive losses"}</dd>
+        </div>
+        <div>
+          <dt>Exec gate</dt>
+          <dd>{mission.block_reason ? humanStop(mission.block_reason) : "clear"}</dd>
         </div>
       </dl>
+      {mission.explain && m.last_stop ? <p className="fine">{mission.explain}</p> : null}
       {m.best_why ? <p className="fine">Why it acted: {m.best_why}</p> : null}
+
+      <p className="label">Official links</p>
+      <div className="mission-links">
+        <a className="linkish" href={hyperliquidApp(net || "mainnet")} target="_blank" rel="noreferrer">
+          Hyperliquid
+        </a>
+        <a className="linkish" href={hyperliquidAPI(net || "mainnet")} target="_blank" rel="noreferrer">
+          Hyperliquid API
+        </a>
+        {m.best_coin ? (
+          <a className="linkish" href={hyperliquidTrade(net || "mainnet", m.best_coin)} target="_blank" rel="noreferrer">
+            {m.best_coin} book
+          </a>
+        ) : null}
+        {wallet ? (
+          <a className="linkish" href={explorerAddress(wallet, net || "mainnet")} target="_blank" rel="noreferrer">
+            0G explorer
+          </a>
+        ) : (
+          <a className="linkish" href={LINKS.explorer} target="_blank" rel="noreferrer">
+            0G explorer
+          </a>
+        )}
+        <a className="linkish" href={LINKS.og} target="_blank" rel="noreferrer">
+          0G
+        </a>
+        <a className="linkish" href={LINKS.pcAdvanced} target="_blank" rel="noreferrer">
+          Private compute
+        </a>
+        {oid ? (
+          <a className="linkish" href={hyperliquidTrade(net || "mainnet", coinFromMarket(mission.last_order?.market || m.best_coin))} target="_blank" rel="noreferrer">
+            OID {oid}
+          </a>
+        ) : null}
+        {proofHash ? (
+          <a className="linkish" href={explorerTx(proofHash, net || "mainnet")} target="_blank" rel="noreferrer">
+            Storage proof
+          </a>
+        ) : null}
+        {onOpenHistory ? (
+          <button type="button" className="linkish" onClick={onOpenHistory}>
+            Mission history
+          </button>
+        ) : null}
+      </div>
 
       <p className="label">Policy — immutable by the model</p>
       <div className="policy-grid">
@@ -388,5 +465,22 @@ function humanStop(s: string) {
   if (s === "session_expired") return "Session ended";
   if (s === "max_open_positions") return "Open position ceiling";
   if (s === "daily_loss") return "Daily loss";
+  if (s === "policy_changed") return "Pinned policy changed";
+  if (s === "max_trades") return "Trade ceiling";
+  if (s === "consecutive_loss_limit") return "Consecutive loss ceiling";
+  if (s === "duplicate_preview") return "Duplicate preview";
+  if (s === "preview_before_guarded") return "Preview started before enable";
   return s.replaceAll("_", " ");
+}
+
+function humanStage(s: string) {
+  const t = s.replaceAll("_", " ");
+  if (!t) return "idle";
+  return t;
+}
+
+function coinFromMarket(market?: string) {
+  const m = String(market || "");
+  const parts = m.split(":");
+  return parts[parts.length - 1] || m;
 }

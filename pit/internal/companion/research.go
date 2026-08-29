@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/mohamedwael201193/pit/internal/auto"
 	"github.com/mohamedwael201193/pit/internal/cli"
 	"github.com/mohamedwael201193/pit/internal/httpx"
 )
@@ -466,6 +467,7 @@ func (h *Hub) execResearch(coin string) {
 			WorkspaceID: workspaceID(h.Dir), Kind: "research.canceled", Market: h.job.coin,
 			Action: "research", Status: TermCanceledByUser, JobID: h.job.ID, Reason: TermCanceledByUser,
 		})
+		auto.RecordStage(h.Dir, "research_canceled", "research_canceled", TermCanceledByUser, h.job.coin)
 		return
 	}
 	h.job.note = rep.Note
@@ -487,6 +489,7 @@ func (h *Hub) execResearch(coin string) {
 			WorkspaceID: workspaceID(h.Dir), Kind: "research.failed", Market: h.job.coin,
 			Action: "research", Status: h.job.err, JobID: h.job.ID, Reason: h.job.err,
 		})
+		auto.RecordStage(h.Dir, "research_failed", "research_failed:"+h.job.err, h.job.err, h.job.coin)
 		return
 	}
 	h.job.err = ""
@@ -505,6 +508,7 @@ func (h *Hub) execResearch(coin string) {
 		WorkspaceID: workspaceID(h.Dir), Kind: evKind, Market: h.job.coin,
 		Action: "research", Status: kind, JobID: h.job.ID, PreviewHash: h.job.previewHash, Reason: h.job.deny,
 	})
+	auto.RecordStage(h.Dir, "researched", "research_done:"+kind, kind, h.job.coin)
 	if h.job.eligible && h.job.previewHash != "" {
 		hash := h.job.previewHash
 		coin := h.job.coin
