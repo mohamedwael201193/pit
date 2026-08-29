@@ -18,6 +18,19 @@ func TestCloidOnVenue(t *testing.T) {
 	}
 }
 
+func TestOIDForCloidDoesNotInvent(t *testing.T) {
+	raw := json.RawMessage(`[{"coin":"ETH","oid":529167222216,"cloid":"0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"},{"coin":"BTC","oid":1,"cloid":"0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"}]`)
+	if OIDForCloid(raw, "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb") != "1" {
+		t.Fatal("cloid miss")
+	}
+	if OIDForCloid(raw, "0xcccccccccccccccccccccccccccccccc") != "" {
+		t.Fatal("must not invent oid")
+	}
+	if OIDForCloid(raw, "") != "" {
+		t.Fatal("empty cloid")
+	}
+}
+
 func TestOIDOnVenueAndFills(t *testing.T) {
 	raw := json.RawMessage(`[{"coin":"ETH","oid":529167222216,"cloid":"0x11111111111111111111111111111111"}]`)
 	if !OIDOnVenue(raw, "529167222216") {

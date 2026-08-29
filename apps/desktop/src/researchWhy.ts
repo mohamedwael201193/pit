@@ -41,7 +41,7 @@ export function researchWhyCopy(input: {
   const accepted = verified && input.eligible && !stood && !blocked;
   const found = input.snap?.why || input.note || (input.coin ? `Public ${input.coin} book under policy.` : "No completed pass yet.");
   let change = "Protect private compute, pin policy, and run a sealed pass on an eligible market.";
-  if (stood) change = "A different thesis, market, or time. Host will not invent a side.";
+  if (stood) change = "Checking the next eligible book, a different thesis, or more venue margin. Host will not invent a side.";
   if (blocked) change = "Pin a policy that allows this market, or pick a coin that already passes.";
   if (input.stop === "DIRECT_CREDIT_INSUFFICIENT") change = "Fund Direct with the same wallet. That is compute money, not trading capital.";
   if (input.stop === "DIRECT_PROVIDER_TIMEOUT") change = "Retry when the private provider answers. A timeout is not a TEE failure.";

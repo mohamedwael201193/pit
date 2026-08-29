@@ -8,9 +8,10 @@ import (
 	"github.com/mohamedwael201193/pit/internal/engine"
 	"github.com/mohamedwael201193/pit/internal/hl"
 	"github.com/mohamedwael201193/pit/internal/policy"
+	"github.com/mohamedwael201193/pit/internal/venue"
 )
 
-const MinNotionalUSD = 10.0
+const MinNotionalUSD = venue.HyperliquidPerpFloorUSD
 
 const (
 	LayerResearch = "research-eligible"
@@ -87,9 +88,10 @@ func policyScan(p policy.Policy, b hl.BookSnapshot) error {
 
 func FitBook(b hl.BookSnapshot, p policy.Policy, acct Account, sessionAlive, pinned bool) Fit {
 	p = policy.Clamp(p)
+	minN := venue.PerpMinNotionalUSD(b.MarkPx, b.SzDecimals)
 	f := Fit{
 		Coin:              strings.ToUpper(strings.TrimSpace(b.Coin)),
-		MinNotionalUSD:    MinNotionalUSD,
+		MinNotionalUSD:    minN,
 		AvailableMargin:   acct.BuyingPower,
 		PolicyClip:        p.MaxClipUSD,
 		SzDecimals:        b.SzDecimals,
@@ -114,13 +116,16 @@ func FitBook(b hl.BookSnapshot, p policy.Policy, acct Account, sessionAlive, pin
 	f.PolicyEligible = true
 
 	block, why := policy.ExecWhy(acct.OpenPositions, acct.BuyingPower, p)
-	if block == "" && acct.BuyingPower+1e-9 < MinNotionalUSD {
+	if block == "" && acct.BuyingPower+1e-9 < minN {
 		block = "insufficient_margin"
-		why = execCapitalWhy(acct)
+		why = venue.WhyThisMarket(f.Coin, acct.BuyingPower, minN)
 	}
 	if block != "" {
-		if block == "insufficient_margin" && strings.TrimSpace(acct.Note) != "" && !strings.Contains(why, acct.Note) {
-			why = strings.TrimSpace(acct.Note) + " " + why
+		if block == "insufficient_margin" {
+			why = venue.WhyThisMarket(f.Coin, acct.BuyingPower, minN)
+			if strings.TrimSpace(acct.Note) != "" && !strings.Contains(why, acct.Note) {
+				why = strings.TrimSpace(acct.Note) + " " + why
+			}
 		}
 		f.Layer = LayerBlocked
 		f.Gate = block
@@ -135,7 +140,8 @@ func FitBook(b hl.BookSnapshot, p policy.Policy, acct Account, sessionAlive, pin
 	}
 	sized, err := engine.SizeOrder(engine.SizerInput{
 		MarkPx: b.MarkPx, SzDecimals: b.SzDecimals, MaxClipUSD: p.MaxClipUSD, RequestedUSD: usd,
-		Side: "buy", Coin: f.Coin, AllowedCoins: p.AllowedAssets, MaxLeverage: 1, RequestedLev: 1,
+		MinNotionalUSD: minN,
+		Side:           "buy", Coin: f.Coin, AllowedCoins: p.AllowedAssets, MaxLeverage: 1, RequestedLev: 1,
 		Venue: "hyperliquid", AllowedVenue: "hyperliquid",
 	})
 	if err != nil {
@@ -151,8 +157,8 @@ func FitBook(b hl.BookSnapshot, p policy.Policy, acct Account, sessionAlive, pin
 	f.ExecutionFeasible = true
 	f.Layer = LayerExec
 	f.WhyExecutable = fmt.Sprintf(
-		"Executable for this user: host-sized notional $%.2f uses $%.2f available (%s), above the $%.0f Hyperliquid minimum, inside the $%.0f policy clip. Side is still not decided here.",
-		sized.NotionalUSD, acct.BuyingPower, acct.PowerSource, MinNotionalUSD, p.MaxClipUSD,
+		"Executable for this user: host-sized notional $%.2f uses $%.2f available (%s), above this market's $%.2f Hyperliquid minimum, inside the $%.0f policy clip. Side is still not decided here.",
+		sized.NotionalUSD, acct.BuyingPower, acct.PowerSource, minN, p.MaxClipUSD,
 	)
 	if !pinned {
 		f.Gate = "policy_unpinned"
@@ -170,18 +176,6 @@ func FitBook(b hl.BookSnapshot, p policy.Policy, acct Account, sessionAlive, pin
 	f.Layer = LayerPreview
 	f.Why = f.WhyExecutable
 	return f
-}
-
-func execCapitalWhy(acct Account) string {
-	short := MinNotionalUSD - acct.BuyingPower
-	if short < 0 {
-		short = 0
-	}
-	line := fmt.Sprintf("Available venue margin is $%.2f — $%.2f short of the $%.0f Hyperliquid minimum. PIT will not invent size.", acct.BuyingPower, short, MinNotionalUSD)
-	if acct.Note != "" && acct.BuyingPower+1e-9 < MinNotionalUSD {
-		return acct.Note + " " + line
-	}
-	return line
 }
 
 func invalidation(b hl.BookSnapshot) string {

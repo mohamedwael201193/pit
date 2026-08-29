@@ -56,19 +56,25 @@ func Trend(b hl.BookSnapshot) string {
 }
 
 // Rank is a host ranking of venue facts already on the book. It is not AI.
+// It is not "BTC first". Gap, funding magnitude, volume, and open interest all score.
 func Rank(c Candidate) int {
-	score := 10
+	score := 12
 	if c.Book.OraclePx > 0 {
-		gap := (c.Book.OraclePx - c.Book.MarkPx) / c.Book.OraclePx
-		if gap > 0 {
-			score += int(math.Min(gap*400, 50))
-		}
+		gap := math.Abs(c.Book.MarkPx-c.Book.OraclePx) / c.Book.OraclePx
+		score += int(math.Min(gap*250, 28))
 	}
-	if c.Book.Funding != 0 {
-		score += 15
+	af := math.Abs(c.Book.Funding)
+	if af >= 0.00005 {
+		score += int(math.Min(af*18000, 12))
 	}
-	if c.Book.OpenInterest > 0 {
-		score += 5
+	if c.Book.DayNtlVlm > 1 {
+		score += int(math.Min(math.Log10(c.Book.DayNtlVlm)*3.5, 22))
+	}
+	if c.Book.OpenInterest > 1 {
+		score += int(math.Min(math.Log10(c.Book.OpenInterest)*2.5, 16))
+	}
+	if !c.Eligible {
+		score = score / 4
 	}
 	if score > 100 {
 		score = 100

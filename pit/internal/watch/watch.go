@@ -82,10 +82,20 @@ func Scan(books []hl.BookSnapshot, p policy.Policy) ([]Candidate, error) {
 }
 
 func Best(cands []Candidate) (Candidate, bool) {
+	return BestExcept(cands, nil)
+}
+
+func BestExcept(cands []Candidate, skip map[string]string) (Candidate, bool) {
 	for _, c := range cands {
-		if c.Eligible {
-			return c, true
+		if !c.Eligible {
+			continue
 		}
+		if skip != nil {
+			if _, hit := skip[strings.ToUpper(c.Coin)]; hit {
+				continue
+			}
+		}
+		return c, true
 	}
 	return Candidate{}, false
 }

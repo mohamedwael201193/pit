@@ -48,6 +48,33 @@ function limitRows(limits: Record<string, unknown>): { k: string; v: string }[] 
   ];
 }
 
+function envelopeGroups(limits: Record<string, unknown>) {
+  const rows = limitRows(limits);
+  const pick = (keys: string[]) => rows.filter((r) => keys.includes(r.k));
+  return {
+    size: pick(["Allowed assets", "Allowed venues", "Max trade", "Max position", "Max leverage"]),
+    risk: pick(["Daily loss", "Consecutive loss limit", "Max open positions", "Slippage", "Liquidity", "Cooldown", "Uncertainty threshold"]),
+    halt: pick(["Session expiry", "Kill switch"]),
+    forbidden: pick(["Withdraw", "Transfer", "Policy mutation"]),
+  };
+}
+
+function EnvelopeGroup({ title, rows }: { title: string; rows: { k: string; v: string }[] }) {
+  return (
+    <div className="envelope-group">
+      <p className="label">{title}</p>
+      <dl>
+        {rows.map((row) => (
+          <div key={row.k}>
+            <dt>{row.k}</dt>
+            <dd>{row.v}</dd>
+          </div>
+        ))}
+      </dl>
+    </div>
+  );
+}
+
 function lifeOf(args: {
   kill?: boolean;
   phase: Phase;
@@ -165,18 +192,40 @@ export function AutomationCenter({
     }
   }
 
+  const env = envelopeGroups(limits);
+  const gateLine = mission.block_reason
+    ? humanStop(mission.block_reason)
+    : mission.why_not
+      ? mission.why_not
+      : execGate
+        ? `${humanStop(execGate)}${execWhy ? ` — ${execWhy}` : ""}`
+        : "clear";
+
   return (
     <main className="page dense mission-page">
       <div className="page-head">
         <div>
           <p className="eyebrow">Automation</p>
-          <h1>{live ? "Autonomy running" : status === "STOPPED" ? "Autonomy stopped" : "Autonomy"}</h1>
+          <h1>{live ? "Autonomy running" : status === "STOPPED" ? "Autonomy stopped" : "Host-enforced modes"}</h1>
         </div>
-        <span className={`status-chip ${status.toLowerCase()}`}>{status}</span>
+        <div className="halt-rail">
+          <span className={`status-chip ${status.toLowerCase()}`}>{status}</span>
+          <button
+            type="button"
+            className="kill-switch compact"
+            onClick={() => void stop()}
+            disabled={busy || phase !== "idle" || (mode === "manual" && !live)}
+          >
+            {live ? "Stop autonomy now" : "Kill switch"}
+          </button>
+        </div>
       </div>
-      <p className="lead">
-        Host-enforced. The model cannot change these limits. Chat cannot enable Guarded Autonomy.
-      </p>
+      <p className="lead">Host-enforced. The model cannot change these limits. Chat cannot enable Guarded Autonomy or AUTHORIZE.</p>
+      {mission.search_note || m.search_note || m.last_result ? (
+        <p className="search-note" role="status">
+          {mission.search_note || m.search_note || m.last_result}
+        </p>
+      ) : null}
 
       <p className="label">Mode</p>
       <div className="mode-grid">
@@ -216,43 +265,19 @@ export function AutomationCenter({
               Why PIT did not trade: {mission.why_not || humanStop(mission.block_reason || "")}. {mission.block_explain || "The mission stays alive. Scan and research continue. Existing positions are not flattened."}
             </p>
           ) : null}
-          <button type="button" className="kill-switch" onClick={() => void stop()} disabled={busy || phase !== "idle"}>
-            Stop autonomy now
-          </button>
         </section>
       ) : m.last_stop ? (
         <section className="stop-banner" role="status">
-          <p className="label">AUTONOMY STOPPED</p>
-          <h2>Reason: {humanStop(m.last_stop)}</h2>
+          <p className="label">Autonomy stopped</p>
+          <h2>{humanStop(m.last_stop)}</h2>
           <p>{mission.explain || "PIT will not place further orders until you enable Guarded Autonomy again on this computer."}</p>
         </section>
       ) : (
-        <section className="next-row">
-          <div>
-            <p className="label">{status}</p>
-            <h2>{mode === "research_only" ? "Research Only" : mode === "guarded" ? "Guarded Autonomy" : "Manual"}</h2>
-            <p className="fine">
-              Confirm Guarded Autonomy on this computer after you review the limits. The enable phrase is sent by this
-              window, not by chat.
-            </p>
-          </div>
-          <div className="cta-row">
-            <button
-              type="button"
-              className="primary"
-              disabled={busy || phase !== "idle" || kill}
-              onClick={() => {
-                setConfirm(true);
-                setReviewed(false);
-              }}
-            >
-              Enable Guarded Autonomy
-            </button>
-            <button type="button" className="danger" onClick={() => void stop()} disabled={busy || phase !== "idle" || mode === "manual"}>
-              Stop autonomy
-            </button>
-          </div>
-        </section>
+        <p className="fine">
+          {mode === "research_only"
+            ? "Research Only is selected. Confirm Guarded Autonomy only after you review the envelope. Chat cannot send the enable phrase."
+            : "Manual is selected. Confirm Guarded Autonomy on this computer after you review the envelope. Chat cannot enable it."}
+        </p>
       )}
 
       {err || mission.error ? (
@@ -264,158 +289,128 @@ export function AutomationCenter({
 
       <AwayBoard away={mission.away} whyNot={mission.why_not} whyCode={mission.why_not_code || mission.block_reason} />
 
-      <p className="label">Mission status</p>
-      <dl className="mission-grid">
-        <div>
-          <dt>Stage</dt>
-          <dd>{humanStage(mission.stage || m.stage || (mission.research_running ? "researching" : status))}</dd>
-        </div>
-        <div>
-          <dt>Running</dt>
-          <dd>{status}</dd>
-        </div>
-        <div>
-          <dt>Elapsed</dt>
-          <dd>{elapsedLabel(m.guarded_enabled_unix, mission.now || now)}</dd>
-        </div>
-        <div>
-          <dt>Started</dt>
-          <dd>{m.guarded_enabled_unix ? new Date(m.guarded_enabled_unix * 1000).toLocaleString() : "—"}</dd>
-        </div>
-        <div>
-          <dt>Next scan</dt>
-          <dd>{nextScanLabel(mission.next_scan_unix || m.next_scan_unix, mission.now || now)}</dd>
-        </div>
-        <div>
-          <dt>Current opportunity</dt>
-          <dd>
-            {m.best_coin ? (
-              <ExternalLink className="asset" href={hyperliquidTrade(net || "mainnet", m.best_coin)}>
-                <BrandMark symbol={m.best_coin} /> {m.best_coin}
-              </ExternalLink>
-            ) : (
-              "none"
-            )}
-          </dd>
-        </div>
-        <div>
-          <dt>Current action</dt>
-          <dd>{m.last_action || "none"}</dd>
-        </div>
-        <div>
-          <dt>Result</dt>
-          <dd>{m.last_result || mission.research_stage || "—"}</dd>
-        </div>
-        <div>
-          <dt>Universe</dt>
-          <dd>
-            {m.scanned || 0} scanned · {m.eligible || 0} pass policy
-            {m.scan_count ? ` · ${m.scan_count} ticks` : ""}
-          </dd>
-        </div>
-        <div>
-          <dt>Trades today</dt>
-          <dd>{m.trades_today || 0}</dd>
-        </div>
-        <div>
-          <dt>Current exposure</dt>
-          <dd>{m.current_position || (m.open_positions ? `${m.open_positions} open` : "none")}</dd>
-        </div>
-        <div>
-          <dt>P&L</dt>
-          <dd>Venue account</dd>
-        </div>
-        <div>
-          <dt>Remaining risk budget</dt>
-          <dd>${String(mission.remaining_risk_usd ?? limits.daily_loss_usd ?? 50)} daily · {String(mission.remaining_consecutive_losses ?? limits.max_consecutive_losses ?? 3)} losses left</dd>
-        </div>
-        <div>
-          <dt>Stop reason</dt>
-          <dd>{m.last_stop ? humanStop(m.last_stop) : live ? "none — halt only on deadline, kill, session, policy, max trades, daily loss, consecutive losses" : "deadline, kill, session, policy, max trades, daily loss, consecutive losses"}</dd>
-        </div>
-        <div>
-          <dt>Exec gate</dt>
-          <dd>
-            {mission.block_reason
-              ? humanStop(mission.block_reason)
-              : mission.why_not
-                ? mission.why_not
-                : execGate
-                  ? `${humanStop(execGate)}${execWhy ? ` — ${execWhy}` : ""}`
-                  : "clear"}
-          </dd>
-        </div>
-      </dl>
-      {mission.explain && m.last_stop ? <p className="fine">{mission.explain}</p> : null}
-      {m.best_why ? <p className="fine">Why it acted: {m.best_why}</p> : null}
-
-      <p className="label">Official links</p>
-      <div className="mission-links">
-        <ExternalLink className="linkish" href={hyperliquidApp(net || "mainnet")}>
-          Hyperliquid
-        </ExternalLink>
-        <ExternalLink className="linkish" href={hyperliquidAPI(net || "mainnet")}>
-          Hyperliquid API
-        </ExternalLink>
-        {m.best_coin ? (
-          <ExternalLink className="linkish" href={hyperliquidTrade(net || "mainnet", m.best_coin)}>
-            {m.best_coin} book
-          </ExternalLink>
-        ) : null}
-        {wallet ? (
-          <ExternalLink className="linkish" href={explorerAddress(wallet, net || "mainnet")}>
-            0G explorer
-          </ExternalLink>
-        ) : (
-          <ExternalLink className="linkish" href={LINKS.explorer}>
-            0G explorer
-          </ExternalLink>
-        )}
-        <ExternalLink className="linkish" href={LINKS.og}>
-          0G
-        </ExternalLink>
-        <ExternalLink className="linkish" href={LINKS.pcAdvanced}>
-          Private compute
-        </ExternalLink>
-        {oid ? (
-          <ExternalLink className="linkish" href={hyperliquidTrade(net || "mainnet", coinFromMarket(mission.last_order?.market || m.best_coin))}>
-            OID {oid}
-          </ExternalLink>
-        ) : null}
-        {proofHash ? (
-          <ExternalLink className="linkish" href={explorerTx(proofHash, net || "mainnet")}>
-            Storage proof
-          </ExternalLink>
-        ) : null}
-        {onOpenHistory ? (
-          <button type="button" className="linkish" onClick={onOpenHistory}>
-            Mission history
-          </button>
-        ) : null}
-      </div>
-
-      <p className="label">Policy — immutable by the model</p>
-      <div className="policy-grid">
-        {limitRows(limits).map((row) => (
-          <div className="policy-cell" key={row.k}>
-            <p className="label">{row.k}</p>
-            <strong>{row.v}</strong>
+      <section className="envelope">
+        <p className="label">Host envelope</p>
+        <p className="fine">Immutable by the model. Chat cannot raise clip, leverage, or permissions.</p>
+        <ul className="envelope-chips">
+          {env.size.slice(2, 5).map((row) => (
+            <li key={row.k}>
+              <span>{row.k}</span>
+              <strong>{row.v}</strong>
+            </li>
+          ))}
+          <li>
+            <span>Kill switch</span>
+            <strong>{kill || limits.kill_switch ? "On" : "Off"}</strong>
+          </li>
+        </ul>
+        <details>
+          <summary>Size, risk, universe, forbidden</summary>
+          <div className="envelope-groups">
+            <EnvelopeGroup title="Size" rows={env.size} />
+            <EnvelopeGroup title="Risk" rows={env.risk} />
+            <EnvelopeGroup title="Session" rows={env.halt} />
+            <EnvelopeGroup title="Forbidden" rows={env.forbidden} />
           </div>
-        ))}
-      </div>
-      <p className="host-enforced">The model can never modify these.</p>
-
-      <section className="cadence-row">
-        <Select
-          id="scan-cadence"
-          label="Scan cadence"
-          value={String(prefs.cadence_minutes || 15)}
-          disabled={busy}
-          options={CADENCE}
-          onChange={(v) => onSavePrefs({ ...prefs, cadence_minutes: Number(v) })}
-        />
-        <p className="fine">Compute money is not trading capital. Best eligible books move into Research automatically in Research Only and Guarded Autonomy.</p>
+          <p className="host-enforced">The model can never modify these.</p>
+        </details>
+        <div className="cadence-row">
+          <Select
+            id="scan-cadence"
+            label="Scan cadence"
+            value={String(prefs.cadence_minutes || 15)}
+            disabled={busy}
+            options={CADENCE}
+            onChange={(v) => onSavePrefs({ ...prefs, cadence_minutes: Number(v) })}
+          />
+          <p className="fine">Compute money is not trading capital. Best eligible books move into Research automatically in Research Only and Guarded Autonomy.</p>
+        </div>
       </section>
+
+      <details className="card">
+        <summary>Mission internals</summary>
+        <dl className="mission-grid">
+          <div>
+            <dt>Stage</dt>
+            <dd>{humanStage(mission.stage || m.stage || (mission.research_running ? "researching" : status))}</dd>
+          </div>
+          <div>
+            <dt>Next scan</dt>
+            <dd>{nextScanLabel(mission.next_scan_unix || m.next_scan_unix, mission.now || now)}</dd>
+          </div>
+          <div>
+            <dt>Elapsed</dt>
+            <dd>{elapsedLabel(m.guarded_enabled_unix, mission.now || now)}</dd>
+          </div>
+          <div>
+            <dt>Universe</dt>
+            <dd>
+              {m.scanned || 0} scanned · {m.eligible || 0} pass policy
+              {m.scan_count ? ` · ${m.scan_count} ticks` : ""}
+            </dd>
+          </div>
+          <div>
+            <dt>Current book</dt>
+            <dd>
+              {m.best_coin ? (
+                <ExternalLink className="asset" href={hyperliquidTrade(net || "mainnet", m.best_coin)}>
+                  <BrandMark symbol={m.best_coin} size={14} /> {m.best_coin}
+                </ExternalLink>
+              ) : (
+                "none"
+              )}
+            </dd>
+          </div>
+          <div>
+            <dt>Exec gate</dt>
+            <dd>{gateLine}</dd>
+          </div>
+          <div>
+            <dt>Trades today</dt>
+            <dd>{m.trades_today || 0}</dd>
+          </div>
+          <div>
+            <dt>Risk left</dt>
+            <dd>
+              ${String(mission.remaining_risk_usd ?? limits.daily_loss_usd ?? 50)} daily ·{" "}
+              {String(mission.remaining_consecutive_losses ?? limits.max_consecutive_losses ?? 3)} losses
+            </dd>
+          </div>
+        </dl>
+        {m.best_why ? <p className="fine">Why it acted: {m.best_why}</p> : null}
+        <div className="mission-links">
+          <ExternalLink className="linkish" href={hyperliquidApp(net || "mainnet")}>
+            Hyperliquid
+          </ExternalLink>
+          <ExternalLink className="linkish" href={hyperliquidAPI(net || "mainnet")}>
+            Hyperliquid API
+          </ExternalLink>
+          {wallet ? (
+            <ExternalLink className="linkish" href={explorerAddress(wallet, net || "mainnet")}>
+              0G explorer
+            </ExternalLink>
+          ) : (
+            <ExternalLink className="linkish" href={LINKS.explorer}>
+              0G explorer
+            </ExternalLink>
+          )}
+          {oid ? (
+            <ExternalLink className="linkish" href={hyperliquidTrade(net || "mainnet", coinFromMarket(mission.last_order?.market || m.best_coin))}>
+              OID {oid}
+            </ExternalLink>
+          ) : null}
+          {proofHash ? (
+            <ExternalLink className="linkish" href={explorerTx(proofHash, net || "mainnet")}>
+              Storage proof
+            </ExternalLink>
+          ) : null}
+          {onOpenHistory ? (
+            <button type="button" className="linkish" onClick={onOpenHistory}>
+              Mission history
+            </button>
+          ) : null}
+        </div>
+      </details>
 
       {confirm ? (
         <div className="overlay" role="dialog" aria-modal="true" aria-labelledby="enable-title">
@@ -509,6 +504,7 @@ function humanStage(s: string) {
   if (t === "cooldown") return "Cooldown";
   if (t === "stopped") return "Autonomy stopped";
   if (t === "empty") return "Watching — nothing executable";
+  if (t === "searching") return "Checking the next market";
   if (t === "ranked") return "Ranked a candidate";
   if (!t) return "Idle";
   return t.replaceAll("-", " ");

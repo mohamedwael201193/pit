@@ -771,6 +771,7 @@ export type MissionState = {
   eligible?: number;
   last_result?: string;
   open_positions?: number;
+  search_note?: string;
 };
 
 export type MissionPublic = {
@@ -809,6 +810,8 @@ export type MissionPublic = {
   research_stage?: string;
   research_coin?: string;
   research_job_id?: string;
+  search_note?: string;
+  skip_coins?: Record<string, string>;
   last_order?: { oid?: string; status?: string; market?: string; side?: string; sz?: number; hash?: string };
 };
 

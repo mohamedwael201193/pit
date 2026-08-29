@@ -135,7 +135,7 @@ function namedRoleLabel(st: string, stop: string | null, kind: string) {
   ) {
     return "TEE FAILURE";
   }
-  if (st === "stand-down") return "STOOD DOWN";
+  if (st === "stand-down") return "NO-TRADE";
   if (st === "success") return "VERIFIED";
   if (st === "running") return "RUNNING";
   if (st === "failure") return "TEE FAILURE";
@@ -145,7 +145,9 @@ function namedRoleLabel(st: string, stop: string | null, kind: string) {
 function roleReason(roles: ResearchRole[], name: string) {
   const row = roles.find((r) => String(r.role || "").toLowerCase() === name);
   if (!row) return "Waiting.";
-  if (row.kill || row.survives === false) return row.proposed_side ? `Stood down after ${row.proposed_side}` : "Stood down.";
+  if (row.kill || row.survives === false) {
+    return row.proposed_side ? `Successful no-trade after ${row.proposed_side}. Checking next.` : "Successful no-trade. Checking next.";
+  }
   if (String(row.verify_e2ee || "").toUpperCase() === "OK") return row.proposed_side ? `Proposed ${row.proposed_side}` : "Verified.";
   return "Not finished.";
 }
@@ -229,6 +231,11 @@ export function ResearchBoard({
   const verified = committeeVerified(researchRoles);
   const snap = (coins || []).find((c) => c.coin === coin) || eligible.find((c) => c.coin === coin);
   const title = researchCardTitle(researchKind || researchStop, verified);
+  const stood =
+    researchKind === "READY_STOOD_DOWN" ||
+    researchStop === "READY_STOOD_DOWN" ||
+    preview?.deny === "no_side" ||
+    Boolean(preview && !preview.eligible);
   const whyRows = !researchBusy
     ? researchWhyCopy({
         coin: coin || eligible[0]?.coin || "",
@@ -241,8 +248,19 @@ export function ResearchBoard({
         snap: snap,
       })
     : [];
+  const steps: [string, string][] = [
+    ["Discovered", "READING_MARKET"],
+    ["Sealed", "SEALING_PRIVATE_BOOK"],
+    ["Researcher", "RESEARCHER"],
+    ["Challenger", "CHALLENGER"],
+    ["Risk", "RISK"],
+    ["TEE", "VERIFYING_TEE_SIGNATURE"],
+    ["Engine", "DETERMINISTIC_ENGINE"],
+    ["Policy", "POLICY"],
+    ["Decision", "PREVIEW"],
+  ];
   return (
-    <main className="page dense">
+    <main className="page dense research-board">
       <div className="page-head">
         <div>
           <p className="eyebrow">Research</p>
@@ -252,19 +270,15 @@ export function ResearchBoard({
           Private committee. Host sizes. Chat cannot AUTHORIZE.
         </p>
       </div>
+      {researchKind === "READY_STOOD_DOWN" && !researchBusy ? (
+        <p className="search-note" role="status">
+          {coin ? `${coin}: no trade survived challenge.` : "No trade survived challenge."} PIT treats that as a valid outcome and continues searching the rest of the universe.
+        </p>
+      ) : null}
       <ol className="life-strip" aria-label="Research lifecycle">
-        {[
-          ["DISCOVERED", "READING_MARKET"],
-          ["PRIVATE BOOK SEALED", "SEALING_PRIVATE_BOOK"],
-          ["RESEARCHER", "RESEARCHER"],
-          ["CHALLENGER", "CHALLENGER"],
-          ["RISK", "RISK"],
-          ["TEE VERIFICATION", "VERIFYING_TEE_SIGNATURE"],
-          ["HOST ENGINE", "DETERMINISTIC_ENGINE"],
-          ["POLICY", "POLICY"],
-          ["DECISION", "PREVIEW"],
-        ].map(([label, key]) => (
+        {steps.map(([label, key], i) => (
           <li key={label} className={stageMark(key, researchStage, researchRoles) || (researchKind && key === "PREVIEW" ? "done" : "")}>
+            <span className="step-n">{i + 1}</span>
             {label}
           </li>
         ))}
@@ -319,7 +333,10 @@ export function ResearchBoard({
           </button>
         ) : null}
       </div>
-      <ComputeCard checks={checks} onCheck={onCheck} />
+      <details className="card compute-disclosure">
+        <summary>Private compute</summary>
+        <ComputeCard checks={checks} onCheck={onCheck} />
+      </details>
       <p className="label" style={{ marginTop: 12 }}>
         Committee
       </p>
@@ -329,72 +346,58 @@ export function ResearchBoard({
           {shown.replaceAll("_", " ")} · {(researchElapsed / 1000).toFixed(1)}s elapsed. Live Direct round-trip, not a timer.
         </p>
       ) : null}
-      <table className="desk-table">
-        <thead>
-          <tr>
-            <th>Role</th>
-            <th>Status</th>
-            <th>Duration</th>
-            <th>Reason</th>
-          </tr>
-        </thead>
-        <tbody>
-          {(["researcher", "challenger", "risk"] as const).map((name) => {
-            const st = roleState(researchRoles, name, researchStage);
-            const row = researchRoles.find((r) => String(r.role || "").toLowerCase() === name);
-            const ms = row?.elapsed_ms || (researchBusy && st === "running" ? researchElapsed : 0);
-            return (
-              <tr key={name}>
-                <td>{name}</td>
-                <td className={`state ${st}`}>{namedRoleLabel(st, researchStop, researchKind)}</td>
-                <td>{ms ? `${(ms / 1000).toFixed(1)}s` : "—"}</td>
-                <td>{roleReason(researchRoles, name)}</td>
-              </tr>
-            );
-          })}
-          <tr>
-            <td>TEE</td>
-            <td className={`state ${teeState(researchRoles, researchBusy, researchStop)}`}>
-              {namedRoleLabel(teeState(researchRoles, researchBusy, researchStop), researchStop, researchKind)}
-            </td>
-            <td>{researchBusy ? `${(researchElapsed / 1000).toFixed(1)}s` : "—"}</td>
-            <td>Direct TeeML. Recovered signer must equal on-chain teeSigner.</td>
-          </tr>
-          <tr>
-            <td>Engine</td>
-            <td className={`state ${engineState(researchStage, researchRoles, researchBusy)}`}>
-              {namedRoleLabel(engineState(researchStage, researchRoles, researchBusy), researchStop, researchKind)}
-            </td>
-            <td>{researchBusy && roleVerified(researchRoles, "risk") ? `${(researchElapsed / 1000).toFixed(1)}s` : "—"}</td>
-            <td>Host sizes. Model cannot raise clip.</td>
-          </tr>
-          <tr>
-            <td>Policy</td>
-            <td className={`state ${preview ? (preview.eligible ? "success" : "blocked") : "pending"}`}>
-              {preview ? (preview.eligible ? "PASS" : "BLOCKED") : researchBusy ? "PENDING" : "PENDING"}
-            </td>
-            <td>—</td>
-            <td>Host policy. The model cannot mutate it.</td>
-          </tr>
-          <tr>
-            <td>Decision</td>
-            <td className={`state ${preview ? (preview.eligible ? "success" : "stand-down") : "pending"}`}>
-              {preview ? (preview.eligible ? "EXACT PREVIEW" : "STOOD DOWN") : "PENDING"}
-            </td>
-            <td>—</td>
-            <td>{preview?.eligible ? "Exact preview after verification." : "A stand-down is a successful research outcome."}</td>
-          </tr>
-          {preview?.skillIds && preview.skillIds.length > 0 ? (
-            <tr>
-              <td>Skills</td>
-              <td className="state success">HOST</td>
-              <td>—</td>
-              <td>{preview.skillIds.join(" · ")}. Host-only. The model does not invent candle math.</td>
-            </tr>
-          ) : null}
-        </tbody>
-      </table>
-      {!researchBusy && (explained || researchKind) ? (
+      <div className="committee roles-3" aria-label="Researcher, challenger, risk">
+        {(["researcher", "challenger", "risk"] as const).map((name) => {
+          const st = roleState(researchRoles, name, researchStage);
+          const row = researchRoles.find((r) => String(r.role || "").toLowerCase() === name);
+          const ms = row?.elapsed_ms || (researchBusy && st === "running" ? researchElapsed : 0);
+          return (
+            <article key={name} className={`role-card ${st}`}>
+              <p className="label">{name}</p>
+              <p className="state">{namedRoleLabel(st, researchStop, researchKind)}</p>
+              <p>{roleReason(researchRoles, name)}</p>
+              <p className="fine">{ms ? `${(ms / 1000).toFixed(1)}s` : "Waiting"}</p>
+            </article>
+          );
+        })}
+      </div>
+      <dl className="support-strip" aria-label="Host gates">
+        <div>
+          <dt>TEE</dt>
+          <dd className={`state ${teeState(researchRoles, researchBusy, researchStop)}`}>
+            {namedRoleLabel(teeState(researchRoles, researchBusy, researchStop), researchStop, researchKind)}
+          </dd>
+        </div>
+        <div>
+          <dt>Engine</dt>
+          <dd className={`state ${engineState(researchStage, researchRoles, researchBusy)}`}>
+            {namedRoleLabel(engineState(researchStage, researchRoles, researchBusy), researchStop, researchKind)}
+          </dd>
+        </div>
+        <div>
+          <dt>Policy</dt>
+          <dd className={`state ${preview ? (preview.eligible ? "success" : "blocked") : "pending"}`}>
+            {preview ? (preview.eligible ? "PASS" : "BLOCKED") : "PENDING"}
+          </dd>
+        </div>
+        <div>
+          <dt>Decision</dt>
+          <dd className={`state ${preview ? (preview.eligible ? "success" : "stand-down") : "pending"}`}>
+            {preview ? (preview.eligible ? "EXACT PREVIEW" : "NO-TRADE") : "PENDING"}
+          </dd>
+        </div>
+      </dl>
+      {!researchBusy && stood ? (
+        <section className="stand-success" role="status">
+          <p className="label">Successful no-trade</p>
+          <h2>Committee stood down. Checking next.</h2>
+          <p>
+            A verified stand-down is the result, not a crash. Host did not size a clip. Markets stay live. Chat cannot AUTHORIZE.
+          </p>
+          {researchJobId ? <p className="fine">Job {researchJobId}</p> : null}
+        </section>
+      ) : null}
+      {!researchBusy && !stood && (explained || researchKind) ? (
         <section className="why-banner" role="status">
           <p className="label">{title}</p>
           <h2>{explained?.title || title}</h2>
@@ -407,15 +410,32 @@ export function ResearchBoard({
           ) : null}
         </section>
       ) : null}
+      {preview?.skillIds && preview.skillIds.length > 0 ? (
+        <p className="fine">Host skills {preview.skillIds.join(" · ")}. The model does not invent candle math.</p>
+      ) : null}
       {!researchBusy && whyRows.length ? (
-        <section className="why-list" aria-label="Why">
-          {whyRows.map((row) => (
-            <div key={row.q}>
-              <p className="label">{row.q}</p>
-              <p>{row.a}</p>
-            </div>
-          ))}
-        </section>
+        stood ? (
+          <details className="card">
+            <summary>Why the committee stood down</summary>
+            <section className="why-list" aria-label="Why">
+              {whyRows.map((row) => (
+                <div key={row.q}>
+                  <p className="label">{row.q}</p>
+                  <p>{row.a}</p>
+                </div>
+              ))}
+            </section>
+          </details>
+        ) : (
+          <section className="why-list" aria-label="Why">
+            {whyRows.map((row) => (
+              <div key={row.q}>
+                <p className="label">{row.q}</p>
+                <p>{row.a}</p>
+              </div>
+            ))}
+          </section>
+        )
       ) : null}
       {!researchBusy && preview ? (
         <PreviewContract
@@ -485,8 +505,8 @@ export function PreviewContract({
         <p className="label">Exact preview</p>
         <p>
           {preview.deny === "no_side"
-            ? "Committee stood down. The committee did not propose a side. This is a verified result, not a crash. No order was placed."
-            : `Host did not size a trade (${preview.deny || "no_side"}). The model cannot raise clip. No order was placed.`}
+            ? "Successful no-trade. The committee did not propose a side. This is a verified result, not a crash. Checking next. No order was placed."
+            : `Host did not size a trade (${preview.deny || "no_side"}). The model cannot raise clip. Checking next. No order was placed.`}
         </p>
       </article>
     );

@@ -176,10 +176,8 @@ func (h *Hub) pickBestCoin() string {
 	if lerr != nil {
 		return ""
 	}
-	if best, ok := watch.BestExecutable(cands, h.capitalNow(), pol, h.sessionAliveNow(), h.policyPinnedNow()); ok {
-		return best.Coin
-	}
-	if best, ok := watch.Best(cands); ok {
+	skip := auto.Load(h.Dir).SkipSet(time.Now().Unix())
+	if best, _, ok := watch.NextCandidate(cands, h.capitalNow(), pol, h.sessionAliveNow(), h.policyPinnedNow(), skip); ok {
 		return best.Coin
 	}
 	return ""
@@ -295,7 +293,14 @@ func (h *Hub) replyResearch(fallback string) string {
 	}
 	roles := roleLine(h.job.roles)
 	if h.job.deny != "" {
-		return fmt.Sprintf("Committee stood down (%s). %s One verified role is never a committee result. No order was placed. Open Research for the named reason.", h.job.deny, roles)
+		kind := TerminalKind(false, h.job.err, h.job.deny, namedRolesVerified(h.job.roles), h.job.eligible, h.job.roles)
+		if kind == TermReadyStoodDown {
+			return fmt.Sprintf("Committee stood down (%s). That is a verified no-trade, not a crash. %s PIT will check the next eligible market. No order was placed. Chat cannot AUTHORIZE.", h.job.deny, roles)
+		}
+		if kind == TermMarketDenied {
+			return fmt.Sprintf("This market is not sizeable (%s). %s PIT will not invent size. Chat cannot AUTHORIZE.", h.job.deny, roles)
+		}
+		return fmt.Sprintf("Committee result: %s (%s). %s One verified role is never a committee result. No order was placed. Open Research.", kind, h.job.deny, roles)
 	}
 	if h.job.eligible && h.job.previewHash != "" {
 		return "Exact preview is on Research. " + roles + " Chat cannot AUTHORIZE it. Type AUTHORIZE only on that card."

@@ -9,16 +9,17 @@ import (
 )
 
 type Prefs struct {
-	Watch            bool     `json:"watch"`
-	AutoResearch     bool     `json:"auto_research"`
-	Notify           bool     `json:"notify"`
-	CadenceMinutes   int      `json:"cadence_minutes"`
-	Trigger          string   `json:"trigger"`
-	Markets          []string `json:"markets"`
-	LastScanUnix     int64    `json:"last_scan_unix"`
-	LastResearchCoin string   `json:"last_research_coin"`
-	LastNotifyCoin   string   `json:"last_notify_coin"`
-	Execute          bool     `json:"execute,omitempty"`
+	Watch            bool           `json:"watch"`
+	AutoResearch     bool           `json:"auto_research"`
+	Notify           bool           `json:"notify"`
+	CadenceMinutes   int            `json:"cadence_minutes"`
+	Trigger          string         `json:"trigger"`
+	Markets          []string       `json:"markets"`
+	LastScanUnix     int64          `json:"last_scan_unix"`
+	LastResearchCoin string         `json:"last_research_coin"`
+	LastNotifyCoin   string         `json:"last_notify_coin"`
+	Skips            []ResearchSkip `json:"skips,omitempty"`
+	Execute          bool           `json:"execute,omitempty"`
 }
 
 func Default() Prefs {

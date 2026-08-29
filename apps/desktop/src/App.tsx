@@ -1166,6 +1166,12 @@ export function App() {
               lastEvent={activity.length ? eventLine(activity[activity.length - 1]) : undefined}
               mode={status?.mode || mission.mode}
               exposure={summary.totalNtlPos || summary.accountValue}
+              buyingPower={buyingPower ?? Number(summary.buyingPower || 0)}
+              execWhy={summary.execWhy}
+              execGate={summary.execGate}
+              capitalNote={capitalNote || summary.capitalNote}
+              powerSource={powerSource || summary.powerSource}
+              fundHref={hyperliquidApp(net)}
               onResearch={(c) => void researchThis(c)}
               onGo={(v) => setView(v)}
             />

@@ -60,16 +60,35 @@ func TestEvaluateDoesNotTreatSubstring(t *testing.T) {
 	}
 }
 
-func TestSizerBTCMeetsVenueMin(t *testing.T) {
-	got, err := SizeOrder(SizerInput{
+func TestCoarseTickCannotPad(t *testing.T) {
+	_, err := SizeOrder(SizerInput{
+		MarkPx: 50, SzDecimals: 0, MaxClipUSD: 40, RequestedUSD: 40,
+		Side: "buy", Coin: "AAA", AllowedCoins: []string{"AAA"},
+		Venue: "hyperliquid", AllowedVenue: "hyperliquid",
+	})
+	if err == nil || err.Error() != "below_min_notional" {
+		t.Fatalf("got %v", err)
+	}
+}
+
+func TestSizerBTCTenClipCannotMeetRoundedMin(t *testing.T) {
+	_, err := SizeOrder(SizerInput{
 		MarkPx: 80000, SzDecimals: 5, MaxClipUSD: 10, RequestedUSD: 10,
+		Side: "buy", Coin: "BTC", AllowedCoins: []string{"BTC"},
+		Venue: "hyperliquid", AllowedVenue: "hyperliquid",
+	})
+	if err == nil || err.Error() != "below_min_notional" {
+		t.Fatalf("a $10 clip cannot meet BTC's rounded $10.40 min, got %v", err)
+	}
+	got, err := SizeOrder(SizerInput{
+		MarkPx: 80000, SzDecimals: 5, MaxClipUSD: 11, RequestedUSD: 11,
 		Side: "buy", Coin: "BTC", AllowedCoins: []string{"BTC"},
 		Venue: "hyperliquid", AllowedVenue: "hyperliquid",
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got.NotionalUSD+1e-9 < 10 {
+	if got.NotionalUSD+1e-9 < 10.39 {
 		t.Fatalf("%v", got)
 	}
 }
@@ -106,6 +125,17 @@ func TestPreviewBindIgnoresModel(t *testing.T) {
 		t.Fatal("replay")
 	}
 	_ = math.NaN()
+}
+
+func TestEffectiveMinNotionalPerAsset(t *testing.T) {
+	eth := minNotionalFor(SizerInput{MarkPx: 2500, SzDecimals: 4})
+	if eth < 9.99 || eth > 10.01 {
+		t.Fatalf("eth %v", eth)
+	}
+	btc := minNotionalFor(SizerInput{MarkPx: 80000, SzDecimals: 5})
+	if btc < 10.39 || btc > 10.41 {
+		t.Fatalf("btc %v", btc)
+	}
 }
 
 func TestSizerDoesNotPadAboveRequested(t *testing.T) {

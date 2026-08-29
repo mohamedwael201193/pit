@@ -86,77 +86,93 @@ export function PolicyEditor({
 
   return (
     <section className="policy-editor">
-      <p className="label">Policy</p>
-      <p className="fine">You edit. You pin. The model cannot. Leverage is locked at 1x. Withdraw stays impossible.</p>
-      <div className="policy-grid">
-        <label className="policy-cell">
-          Max trade / position (USD)
-          <input type="number" min={clipFloor} max={clipCeil} step={1} value={draft.maxClipUsd} onChange={(e) => set("maxClipUsd", Number(e.target.value))} />
-          <span className="fine">Means: host sizes every clip to this ceiling. If hit: a larger idea is refused. PIT will not invent a smaller fill.</span>
-        </label>
-        <label className="policy-cell">
-          Daily loss halt (USD)
-          <input type="number" min={1} max={500} step={1} value={draft.dailyLossUsd} onChange={(e) => set("dailyLossUsd", Number(e.target.value))} />
-          <span className="fine">Means: realized loss ceiling for this desk. If hit: Guarded Autonomy stops. Positions are not flattened.</span>
-        </label>
-        <label className="policy-cell">
-          Max open positions
-          <input type="number" min={1} max={5} step={1} value={draft.maxOpenPositions} onChange={(e) => set("maxOpenPositions", Number(e.target.value))} />
-          <span className="fine">Means: how many live positions PIT may hold. If hit: new entries are refused. Scan continues.</span>
-        </label>
-        <label className="policy-cell">
-          Consecutive loss limit
-          <input type="number" min={1} max={10} step={1} value={draft.maxConsecutiveLosses} onChange={(e) => set("maxConsecutiveLosses", Number(e.target.value))} />
-          <span className="fine">Means: losing-streak halt. If hit: autonomy stops. The model cannot raise this.</span>
-        </label>
-        <label className="policy-cell">
-          Max slippage (bps)
-          <input type="number" min={10} max={500} step={1} value={draft.maxSlippageBps} onChange={(e) => set("maxSlippageBps", Number(e.target.value))} />
-          <span className="fine">Means: estimated impact ceiling. If hit: the order is refused.</span>
-        </label>
-        <label className="policy-cell">
-          Liquidity floor (USD)
-          <input type="number" min={0} max={1000000} step={1} value={draft.minLiquidityUsd} onChange={(e) => set("minLiquidityUsd", Number(e.target.value))} />
-          <span className="fine">Means: skip thin books. If hit: the candidate is refused.</span>
-        </label>
-        <label className="policy-cell">
-          Cooldown (seconds)
-          <input type="number" min={0} max={86400} step={1} value={draft.cooldownSeconds} onChange={(e) => set("cooldownSeconds", Number(e.target.value))} />
-          <span className="fine">Means: wait between entries. If hit: PIT waits. It does not chase.</span>
-        </label>
-        <label className="policy-cell">
-          Uncertainty ceiling
-          <input type="number" min={0} max={1} step={0.05} value={draft.maxUncertainty} onChange={(e) => set("maxUncertainty", Number(e.target.value))} />
-        </label>
-        <label className="policy-cell">
-          Session TTL (seconds)
-          <input type="number" min={300} max={86400} step={60} value={draft.sessionTtlSeconds} onChange={(e) => set("sessionTtlSeconds", Number(e.target.value))} />
-        </label>
-        <div className="policy-cell">
-          Max leverage
-          <strong>1x</strong>
-          <span className="fine">Locked. Session cannot change venue leverage.</span>
+      <p className="label">Policy studio</p>
+      <p className="fine">You edit. You pin. The model cannot. Leverage is locked at 1x. Withdraw stays impossible. Chat cannot pin.</p>
+      <div className="policy-cat">
+        <p className="label">Size</p>
+        <div className="policy-grid">
+          <label className="policy-cell">
+            Max trade / position (USD)
+            <input type="number" min={clipFloor} max={clipCeil} step={1} value={draft.maxClipUsd} onChange={(e) => set("maxClipUsd", Number(e.target.value))} />
+            <span className="fine">Host sizes every clip to this ceiling. If hit: a larger idea is refused. PIT will not invent a smaller fill.</span>
+          </label>
+          <div className="policy-cell">
+            Max leverage
+            <strong>1x</strong>
+            <span className="fine">Locked. Session cannot change venue leverage.</span>
+          </div>
+          <div className="policy-cell">
+            Venue
+            <strong>hyperliquid</strong>
+            <span className="fine">Perps only. Spot is not a PIT market type.</span>
+          </div>
         </div>
-        <div className="policy-cell">
-          Venue
-          <strong>hyperliquid</strong>
-          <span className="fine">Perps only. Spot is not a PIT market type.</span>
+      </div>
+      <div className="policy-cat">
+        <p className="label">Risk</p>
+        <div className="policy-grid">
+          <label className="policy-cell">
+            Daily loss halt (USD)
+            <input type="number" min={1} max={500} step={1} value={draft.dailyLossUsd} onChange={(e) => set("dailyLossUsd", Number(e.target.value))} />
+            <span className="fine">Realized loss ceiling. If hit: Guarded Autonomy stops. Positions are not flattened.</span>
+          </label>
+          <label className="policy-cell">
+            Max open positions
+            <input type="number" min={1} max={5} step={1} value={draft.maxOpenPositions} onChange={(e) => set("maxOpenPositions", Number(e.target.value))} />
+            <span className="fine">How many live positions PIT may hold. If hit: new entries are refused.</span>
+          </label>
+          <label className="policy-cell">
+            Consecutive loss limit
+            <input type="number" min={1} max={10} step={1} value={draft.maxConsecutiveLosses} onChange={(e) => set("maxConsecutiveLosses", Number(e.target.value))} />
+            <span className="fine">Losing-streak halt. The model cannot raise this.</span>
+          </label>
+          <label className="policy-cell">
+            Max slippage (bps)
+            <input type="number" min={10} max={500} step={1} value={draft.maxSlippageBps} onChange={(e) => set("maxSlippageBps", Number(e.target.value))} />
+            <span className="fine">Estimated impact ceiling. If hit: the order is refused.</span>
+          </label>
+          <label className="policy-cell">
+            Liquidity floor (USD)
+            <input type="number" min={0} max={1000000} step={1} value={draft.minLiquidityUsd} onChange={(e) => set("minLiquidityUsd", Number(e.target.value))} />
+            <span className="fine">Skip thin books. If hit: the candidate is refused.</span>
+          </label>
         </div>
-        <label className="policy-cell">
-          <input type="checkbox" checked={draft.killSwitch} onChange={(e) => set("killSwitch", e.target.checked)} /> Kill switch
-          <span className="fine">Halts new orders. Does not flatten.</span>
-        </label>
       </div>
-      <p className="fine" style={{ marginTop: 12 }}>
-        Allowed assets
-      </p>
-      <div className="cta-row">
-        {ASSETS.map((a) => (
-          <button key={a} type="button" className={draft.allowedAssets.includes(a) ? "on" : "linkish"} onClick={() => toggleAsset(a)}>
-            {a}
-          </button>
-        ))}
+      <div className="policy-cat">
+        <p className="label">Universe</p>
+        <p className="fine" style={{ marginTop: 0 }}>
+          Allowed assets
+        </p>
+        <div className="cta-row">
+          {ASSETS.map((a) => (
+            <button key={a} type="button" className={draft.allowedAssets.includes(a) ? "on" : "linkish"} onClick={() => toggleAsset(a)}>
+              {a}
+            </button>
+          ))}
+        </div>
       </div>
+      <details className="policy-cat">
+        <summary>Session and halt</summary>
+        <div className="policy-grid">
+          <label className="policy-cell">
+            Cooldown (seconds)
+            <input type="number" min={0} max={86400} step={1} value={draft.cooldownSeconds} onChange={(e) => set("cooldownSeconds", Number(e.target.value))} />
+            <span className="fine">Wait between entries. PIT does not chase.</span>
+          </label>
+          <label className="policy-cell">
+            Uncertainty ceiling
+            <input type="number" min={0} max={1} step={0.05} value={draft.maxUncertainty} onChange={(e) => set("maxUncertainty", Number(e.target.value))} />
+          </label>
+          <label className="policy-cell">
+            Session TTL (seconds)
+            <input type="number" min={300} max={86400} step={60} value={draft.sessionTtlSeconds} onChange={(e) => set("sessionTtlSeconds", Number(e.target.value))} />
+          </label>
+          <label className="policy-cell">
+            <input type="checkbox" checked={draft.killSwitch} onChange={(e) => set("killSwitch", e.target.checked)} /> Kill switch
+            <span className="fine">Halts new orders. Does not flatten.</span>
+          </label>
+        </div>
+      </details>
       <article className="card" style={{ marginTop: 12 }}>
         <p className="label">If you pin this</p>
         {note.map((line) => (

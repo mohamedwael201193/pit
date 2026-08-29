@@ -55,3 +55,61 @@ export function nextScanLabel(nextUnix?: number, nowUnix?: number): string {
   if (next <= now) return "due now";
   return new Date(next * 1000).toLocaleTimeString();
 }
+
+export function powerSourceLabel(src?: string) {
+  if (!src) return "";
+  return src.replaceAll("_", " ");
+}
+
+export function accountSizeGate(have?: number, min = 10, executable = 0) {
+  const h = typeof have === "number" && Number.isFinite(have) ? have : 0;
+  const m = min > 0 ? min : 10;
+  const shortfall = Math.max(0, Number((m - h).toFixed(2)));
+  const canOpen = executable > 0 && h >= m;
+  if (canOpen) {
+    return {
+      have: h,
+      min: m,
+      shortfall: 0,
+      canOpen: true as const,
+      headline: `${executable} book${executable === 1 ? "" : "s"} can open`,
+      detail: `This account has ${compactUsd(h)}. Hyperliquid's open minimum is ${compactUsd(m)}. Host sized executable books without inventing size.`,
+    };
+  }
+  return {
+    have: h,
+    min: m,
+    shortfall,
+    canOpen: false as const,
+    headline: "Nothing can open yet",
+    detail: `Hyperliquid needs ${compactUsd(m)} to open a position. This account has ${compactUsd(h)}${shortfall > 0 ? ` — ${compactUsd(shortfall)} short of that floor` : ""}. PIT will not invent size.`,
+  };
+}
+
+export function marketSizeGate(coin: string, have?: number, min?: number, feasible?: boolean) {
+  const m = min && min > 0 ? min : 10;
+  const h = typeof have === "number" && Number.isFinite(have) ? have : 0;
+  const shortfall = Math.max(0, Number((m - h).toFixed(2)));
+  if (feasible) {
+    return {
+      chip: "Can open",
+      detail: `${coin} can be sized with ${compactUsd(h)} against a ${compactUsd(m)} floor.`,
+    };
+  }
+  if (h > 0 && h < m) {
+    return {
+      chip: `${compactUsd(shortfall)} short`,
+      detail: `${coin} needs ${compactUsd(m)} to open on Hyperliquid. This account has ${compactUsd(h)} — ${compactUsd(shortfall)} short. PIT will not invent size.`,
+    };
+  }
+  if (h <= 0) {
+    return {
+      chip: "No margin",
+      detail: `No available venue margin. ${coin} still needs ${compactUsd(m)} to open. PIT will not invent size.`,
+    };
+  }
+  return {
+    chip: "Blocked",
+    detail: `${coin} is not executable for this account right now. PIT will not invent size.`,
+  };
+}

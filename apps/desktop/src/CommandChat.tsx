@@ -175,10 +175,15 @@ export function CommandChat({
       <div className="command-head">
         <div>
           <p className="label">Chat</p>
+          <div className="honesty-row">
+            <span className="honesty-chip">Host-parsed</span>
+            <span className="honesty-chip">Cannot AUTHORIZE</span>
+            <span className="honesty-chip">Cannot pin</span>
+          </div>
           <p className="fine">
             {picked?.private_book
-              ? `${picked.model} is the sealed research SKU. This thread stays host-parsed. Chat cannot AUTHORIZE or pin policy.`
-              : "Host-parsed on this computer. Live desk state is below. Chat cannot AUTHORIZE or pin policy."}
+              ? `${picked.model} is the sealed research SKU. This thread stays host-parsed on this computer.`
+              : "Desk chat is host-parsed on this computer. It is not a sealed model stream."}
           </p>
         </div>
         <div className="model-pick">
@@ -200,10 +205,13 @@ export function CommandChat({
                 <ModelRow key={m.model} m={m} picked={picked} onPick={() => { setPicked(m); setModelOpen(false); void pickChatModel(m.model || "host-parsed"); }} />
               ))}
               <p className="label">Official catalog (listing only)</p>
-              <p className="fine">{catalogNote || "Listed SKUs are not inference paths. Private book stays Direct TeeML."}</p>
-              {catalog.slice(0, 31).map((m) => (
-                <ModelRow key={m.model} m={m} picked={null} onPick={() => undefined} disabled />
-              ))}
+              <details className="catalog-disclosure">
+                <summary>Show listings — not used for chat or private research</summary>
+                <p className="fine">{catalogNote || "Listed SKUs are not inference paths. Private book stays Direct TeeML."}</p>
+                {catalog.slice(0, 31).map((m) => (
+                  <ModelRow key={m.model} m={m} picked={null} onPick={() => undefined} disabled />
+                ))}
+              </details>
               <p className="label">Unsupported for private research</p>
               {unsupported.map((m) => (
                 <ModelRow key={m.model} m={m} picked={picked} onPick={() => { setPicked(m); setModelOpen(false); }} disabled />
@@ -240,7 +248,7 @@ export function CommandChat({
         ) : null}
         {lines.length === 0 ? (
           <div className="chat-empty">
-            <p>Ask the live desk. Answers come from this computer, not a canned script.</p>
+            <p>Ask this computer. Answers are host-parsed desk state, not a sealed model stream.</p>
             <div className="prompt-chips">
               {PROMPTS.map((p) => (
                 <button key={p} type="button" className="chip-btn" onClick={() => void ask(p)}>
@@ -314,7 +322,7 @@ export function CommandChat({
               e.currentTarget.form?.requestSubmit();
             }
           }}
-          placeholder="Ask PIT what the market is doing."
+          placeholder="Ask this computer — host-parsed, not a sealed stream."
         />
         <div className="composer-row">
           <p className="fine" style={{ margin: 0 }}>

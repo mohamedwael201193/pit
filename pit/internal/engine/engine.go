@@ -8,20 +8,34 @@ import (
 	"math"
 	"strings"
 	"time"
+
+	"github.com/mohamedwael201193/pit/internal/venue"
 )
 
+// VenueMinNotionalUSD is Hyperliquid's protocol floor for perp orders.
+const VenueMinNotionalUSD = venue.HyperliquidPerpFloorUSD
+
 type SizerInput struct {
-	MarkPx       float64
-	SzDecimals   int
-	MaxClipUSD   float64
-	RequestedUSD float64
-	Side         string
-	Coin         string
-	AllowedCoins []string
-	MaxLeverage  int
-	RequestedLev int
-	Venue        string
-	AllowedVenue string
+	MarkPx         float64
+	SzDecimals     int
+	MaxClipUSD     float64
+	RequestedUSD   float64
+	MinNotionalUSD float64
+	Side           string
+	Coin           string
+	AllowedCoins   []string
+	MaxLeverage    int
+	RequestedLev   int
+	Venue          string
+	AllowedVenue   string
+}
+
+func minNotionalFor(in SizerInput) float64 {
+	got := venue.PerpMinNotionalUSD(in.MarkPx, in.SzDecimals)
+	if in.MinNotionalUSD > got {
+		return in.MinNotionalUSD
+	}
+	return got
 }
 
 type SizedOrder struct {
@@ -69,22 +83,25 @@ func SizeOrder(in SizerInput) (SizedOrder, error) {
 	}
 	pow := math.Pow(10, float64(in.SzDecimals))
 	sz := math.Floor((usd/in.MarkPx)*pow) / pow
+	minN := minNotionalFor(in)
 	if sz <= 0 {
+		if cap+1e-9 < minN {
+			return SizedOrder{}, fmt.Errorf("below_min_notional")
+		}
 		return SizedOrder{}, fmt.Errorf("size_rounds_to_zero")
 	}
 	notional := sz * in.MarkPx
-	if notional+1e-9 < 10 {
-		if cap+1e-9 < 10 {
+	if notional+1e-9 < minN {
+		if cap+1e-9 < minN {
 			return SizedOrder{}, fmt.Errorf("below_min_notional")
 		}
-		sz = math.Ceil((10.0/in.MarkPx)*pow) / pow
+		sz = math.Ceil((minN/in.MarkPx)*pow) / pow
 		notional = sz * in.MarkPx
-		tick := in.MarkPx / pow
-		if notional+1e-9 < 10 || notional > cap+tick+1e-9 {
+		if notional+1e-9 < minN || notional > cap+1e-9 {
 			return SizedOrder{}, fmt.Errorf("below_min_notional")
 		}
 	}
-	if notional > cap+in.MarkPx/pow+1e-9 {
+	if notional > cap+1e-9 {
 		return SizedOrder{}, fmt.Errorf("notional_exceeds_clip")
 	}
 	return SizedOrder{Coin: coin, Side: side, Sz: sz, NotionalUSD: notional}, nil

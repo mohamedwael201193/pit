@@ -407,15 +407,25 @@ func (h *Hub) snapshotResearch() map[string]any {
 	return body
 }
 
-func (h *Hub) rememberResearchOutcome(coin, jobErr, deny string) {
+func (h *Hub) rememberResearchOutcome(coin, jobErr, deny string, eligible bool) {
 	p := auto.Load(h.Dir)
-	fail := strings.TrimSpace(jobErr) != "" || deny == "insufficient_margin" || deny == "policy_changed" || deny == "session_expired" || deny == "venue_unread"
-	if fail {
-		p.LastResearchCoin = ""
-	} else if strings.TrimSpace(coin) != "" {
-		p.LastResearchCoin = coin
+	kind, hold, latch := auto.ClassifyResearchSkip(jobErr, deny, eligible)
+	if latch {
+		if strings.TrimSpace(coin) != "" {
+			p.LastResearchCoin = coin
+		}
+		_ = auto.Save(h.Dir, p)
+		return
 	}
+	p.LastResearchCoin = ""
+	p.LastScanUnix = 0
+	p.RememberSkip(coin, deny, kind, hold)
 	_ = auto.Save(h.Dir, p)
+	m := auto.LoadMission(h.Dir)
+	m.SearchNote = auto.SearchNote(coin, kind, "")
+	m.LastResult = m.SearchNote
+	m.Stage = "searching"
+	_ = auto.SaveMission(h.Dir, m)
 }
 
 func (h *Hub) currentJobID() string {
@@ -492,7 +502,13 @@ func (h *Hub) beginResearch(coin string) {
 func (h *Hub) execResearch(coin string) {
 	rep, err := cli.RunWorkspaceResearchStage(h.Dir, coin, h.setStage, h.cancelled)
 	h.researchMu.Lock()
-	defer h.researchMu.Unlock()
+	continueNext := false
+	defer func() {
+		h.researchMu.Unlock()
+		if continueNext {
+			go h.autoTick()
+		}
+	}()
 	h.job.running = false
 	h.job.done = true
 	h.bumpLocked()
@@ -530,7 +546,8 @@ func (h *Hub) execResearch(coin string) {
 			Action: "research", Status: h.job.err, JobID: h.job.ID, Reason: h.job.err,
 		})
 		auto.RecordStage(h.Dir, "research_failed", "research_failed:"+h.job.err, h.job.err, h.job.coin)
-		h.rememberResearchOutcome(h.job.coin, h.job.err, h.job.deny)
+		h.rememberResearchOutcome(h.job.coin, h.job.err, h.job.deny, false)
+		continueNext = true
 		return
 	}
 	h.job.err = ""
@@ -588,7 +605,7 @@ func (h *Hub) execResearch(coin string) {
 		})
 	}
 	auto.RecordStage(h.Dir, "researched", "research_done:"+kind, kind, h.job.coin)
-	h.rememberResearchOutcome(h.job.coin, h.job.err, h.job.deny)
+	h.rememberResearchOutcome(h.job.coin, h.job.err, h.job.deny, h.job.eligible)
 	model, provider := researchModels()
 	h.fileResearch(h.job.ID, h.job.coin, kind, h.job.deny, h.job.previewHash, h.job.roles, model, provider)
 	if h.job.eligible && h.job.previewHash != "" {
@@ -596,7 +613,9 @@ func (h *Hub) execResearch(coin string) {
 		coin := h.job.coin
 		started := h.job.started
 		go h.maybeGuardedExecute(hash, coin, started)
+		return
 	}
+	continueNext = true
 }
 
 func (h *Hub) localResearchStart(w http.ResponseWriter, r *http.Request) {

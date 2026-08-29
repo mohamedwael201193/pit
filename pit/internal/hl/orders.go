@@ -70,6 +70,23 @@ func oidField(v any) string {
 	}
 }
 
+func OIDForCloid(raw json.RawMessage, cloid string) string {
+	want := strings.ToLower(strings.TrimSpace(cloid))
+	if want == "" {
+		return ""
+	}
+	for _, r := range decodeRows(raw) {
+		got := strings.ToLower(strings.TrimSpace(fmt.Sprint(r["cloid"])))
+		if got == "" {
+			got = strings.ToLower(strings.TrimSpace(fmt.Sprint(r["c"])))
+		}
+		if got == want {
+			return oidField(r["oid"])
+		}
+	}
+	return ""
+}
+
 func OIDOnVenue(raw json.RawMessage, oid string) bool {
 	want := strings.TrimSpace(oid)
 	if want == "" {

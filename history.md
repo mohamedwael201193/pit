@@ -2053,4 +2053,34 @@ CLASSIFICATION:
 PRODUCTION READY: 0.7.1 is production-ready for honest pin/capital copy and fail-closed host-execute. It is **not** production-ready for a new MAINNET clip until YOU pin and the venue has >= $10.
 NEXT STEP: On Security, preview then pin host law. Fund unified collateral above $10 if you want a clip.
 
+---
+
+## M98 — Opportunity engine continues past BTC; per-market venue min (2026-08-30)
+
+DATE/TIME: 2026-08-30 01:50+03
+PHASE: 0.7.2. Do not flatten OID 529167222216. Do not remint PIT-4bbee556. Do not invent size. Do not enable Guarded Autonomy. Do not auto-pin.
+GOAL: Stop the BTC dead-end. Per-asset Hyperliquid min notional (szDecimals rounding). Stand-down is a successful no-trade that continues the universe. Compact Markets/Desk/Research/Automation copy.
+
+RESULT:
+- **IMPLEMENTED:** Version **0.7.2**. Companion `/health` **0.7.2**.
+  1. `watch.NextCandidate` skips stood-down / already-researched coins. A $10 policy clip cannot size BTC at ~80k (rounded min ~$10.16+). Rank no longer auto-firsts BTC.
+  2. `venue.PerpMinNotionalUSD` is documented $10 floor rounded up to szDecimals. Live Watch: HYPE min $10.01, ETH $10.05, BTC $10.16, SOL $10.53. Copy names the asset and this account's $9.38.
+  3. Stand-down (`no_side` / challenger / risk) skips that coin for 10 minutes and clears `LastResearchCoin` so the next tick researches ETH/SOL/HYPE. Mission `search_note`: "BTC: no side survived challenge. PIT is checking the next eligible market (ETH)."
+  4. Markets is a compact opportunity feed. Research treats stand-down as a successful no-trade. Automation shows search_note. Desk hero shows this-account vs this-market min.
+- **TESTED:** `go test ./...` PASS including `TestNextCandidateSkipsStoodDownBTC`, `TestSizerBTCTenClipCannotMeetRoundedMin`, `TestCoarseTickRaisesFloor`, `TestStandDownDoesNotLatch`. Desktop `tsc -b` green. Web `tsc --noEmit` green. NSIS 0.7.2.
+- **LIVE VERIFIED:** Overlay companion 0.7.2. Wallet/agent/OID `529167222216` unchanged. Watch scanned **232**, **best HYPE** (not BTC), buying power **9.381269**, all policy books execution-blocked with per-asset mins. Mission STOPPED `user_stop`.
+- **UNVERIFIED:** Guarded live order. Full pair ceremony. Crash-restart of a running guarded mission.
+- **BLOCKED:** New MAINNET clip: pin mismatch AND $9.38 below every policy book's rounded min.
+
+SECURITY RESULT: Chat/web still cannot enable. Model still cannot size. Skip journal is host-local.
+TX HASH / OID: Historical OID `529167222216` unchanged.
+INSTALLER: `PIT_0.7.2_x64-setup.exe` size 17180941 SHA256 `20C49486993B055A94A0B3531A71ECAC6FC102E49455FE3E47B8FC11FA8FC617`. Overlay `D:\PIT\pit.exe` SHA256 `C0F1555AE5C037D2A0BDA10BFB81F664CFF670BD39E0E79033EB5EC85295174F` + `D:\PIT\pit-desktop.exe` SHA256 `70500B3635ABBE083658EC601332180070A58CAF146C6993F36F3D6575EA0BEF`.
+CLASSIFICATION:
+- Continue past blocked/stood-down BTC: **IMPLEMENTED + LIVE VERIFIED** (best is HYPE; BTC is not first)
+- Per-market venue min: **IMPLEMENTED + LIVE VERIFIED**
+- Stand-down continue: **IMPLEMENTED + AUTOMATED TESTED**; live committee stand-down cycle **UNVERIFIED**
+PRODUCTION READY: 0.7.2 is production-ready for honest per-market mins and universe continuation. It is **not** production-ready for a new MAINNET clip until YOU pin and the venue has enough to meet the candidate's rounded min.
+NEXT STEP: On Security, preview then pin host law. Fund unified collateral above the specific market min if you want a clip.
+
+
 

@@ -1,6 +1,9 @@
 package companion
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func TestNamedRolesVerifiedRequiresThree(t *testing.T) {
 	one := []map[string]any{{"role": "researcher", "verify_e2ee": "OK"}}
@@ -20,6 +23,49 @@ func TestNamedRolesVerifiedRequiresThree(t *testing.T) {
 	}
 	if TerminalKind(false, "", "", true, true, three) != TermReadyEligible {
 		t.Fatal(TerminalKind(false, "", "", true, true, three))
+	}
+}
+
+func TestGuardedAlreadyAttemptedSameHash(t *testing.T) {
+	if guardedAlreadyAttempted(nil, "0xabc") {
+		t.Fatal("nil")
+	}
+	if !guardedAlreadyAttempted(map[string]any{"hash": "0xabc", "oid": "", "posted": false}, "0xabc") {
+		t.Fatal("same hash with missing oid must not retry POST")
+	}
+	if guardedAlreadyAttempted(map[string]any{"hash": "0xdef"}, "0xabc") {
+		t.Fatal("other hash")
+	}
+}
+
+func TestReplyResearchStandDownIsSuccessfulNoTrade(t *testing.T) {
+	h := &Hub{Dir: t.TempDir()}
+	h.job.deny = "no_side"
+	h.job.eligible = false
+	h.job.roles = []map[string]any{
+		{"role": "researcher", "verify_e2ee": "OK"},
+		{"role": "challenger", "verify_e2ee": "OK"},
+		{"role": "risk", "verify_e2ee": "OK"},
+	}
+	got := h.replyResearch("")
+	if !strings.Contains(got, "verified no-trade") || !strings.Contains(got, "next eligible") {
+		t.Fatal(got)
+	}
+	if strings.Contains(got, `"execute":true`) {
+		t.Fatal(got)
+	}
+}
+
+func TestReplyResearchBelowMinIsNotStandDown(t *testing.T) {
+	h := &Hub{Dir: t.TempDir()}
+	h.job.deny = "below_min_notional"
+	h.job.eligible = false
+	got := h.replyResearch("")
+	if strings.Contains(got, "Committee stood down") {
+		t.Fatal(got)
+	}
+	if !strings.Contains(got, "not sizeable") {
+		t.Fatal(got)
 	}
 }
 

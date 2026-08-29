@@ -57,6 +57,18 @@ func TestKillSwitchBlocksExec(t *testing.T) {
 	}
 }
 
+func TestFitWhyNamesThisMarket(t *testing.T) {
+	p := policy.Default()
+	acct := Account{BuyingPower: 9.38, PowerSource: "unified_spot"}
+	got := FitBook(btcBook(), p, acct, true, true)
+	if got.ExecutionFeasible {
+		t.Fatal("must not execute")
+	}
+	if !strings.Contains(got.Why, "BTC") || !strings.Contains(got.Why, "9.38") {
+		t.Fatalf("%s", got.Why)
+	}
+}
+
 func TestMinNotionalBlocksTinyPower(t *testing.T) {
 	p := policy.Default()
 	acct := Account{BuyingPower: 9.99, PowerSource: "perp_withdrawable"}
@@ -94,6 +106,36 @@ func TestAssetOutsidePolicyIsResearchOnly(t *testing.T) {
 	got := FitBook(btcBook(), p, acct, true, true)
 	if got.PolicyEligible || !got.ResearchEligible {
 		t.Fatalf("%+v", got)
+	}
+}
+
+func TestFitPerAssetMinBTCExceedsETH(t *testing.T) {
+	p := policy.Default()
+	p.MaxClipUSD = 12
+	acct := Account{BuyingPower: 10.20, PowerSource: "unified_spot"}
+	btc := FitBook(hl.BookSnapshot{Coin: "BTC", MarkPx: 110000, OraclePx: 110100, SzDecimals: 5}, p, acct, true, true)
+	eth := FitBook(ethBook(), p, acct, true, true)
+	if btc.ExecutionFeasible {
+		t.Fatalf("BTC min ~$11 must not be executable at $10.20: %+v", btc)
+	}
+	if btc.MinNotionalUSD < 10.99 {
+		t.Fatalf("btc min %v", btc.MinNotionalUSD)
+	}
+	if !eth.ExecutionFeasible || eth.MinNotionalUSD > 10.01 {
+		t.Fatalf("eth %+v", eth)
+	}
+}
+
+func TestFitDefaultClipCannotSizeBTC(t *testing.T) {
+	p := policy.Default()
+	acct := Account{BuyingPower: 40, PowerSource: "perp_withdrawable"}
+	btc := FitBook(btcBook(), p, acct, true, true)
+	eth := FitBook(ethBook(), p, acct, true, true)
+	if btc.ExecutionFeasible {
+		t.Fatalf("$10 policy clip cannot meet BTC rounded min: %+v", btc)
+	}
+	if !eth.ExecutionFeasible {
+		t.Fatalf("eth %+v", eth)
 	}
 }
 

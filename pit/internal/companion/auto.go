@@ -3,6 +3,7 @@ package companion
 import (
 	"encoding/json"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -90,6 +91,7 @@ func (h *Hub) autoTick() {
 	if cadence < 60 {
 		cadence = 60
 	}
+	p.PruneSkips(now)
 	due := p.LastScanUnix == 0 || now-p.LastScanUnix >= cadence || (m.GuardedEnabledUnix > 0 && p.LastScanUnix < m.GuardedEnabledUnix)
 	if !due {
 		if m.NextScanUnix <= now {
@@ -197,15 +199,32 @@ func (h *Hub) autoTick() {
 	if acct.OpenPositions == 0 {
 		acct.OpenPositions = h.openPositionCount()
 	}
+	skip := p.SkipSet(now)
 	var pick *watch.Candidate
 	execOK := false
-	if best, ok := watch.BestExecutable(pool, acct, pol, sessOK, h.policyPinnedNow()); ok {
-		cp := best
-		pick = &cp
-		execOK = true
-	} else if best, ok := watch.Best(pool); ok {
-		cp := best
-		pick = &cp
+	if m.Mode == auto.ModeGuarded {
+		if best, ok := watch.BestExecutableExcept(pool, acct, pol, sessOK, h.policyPinnedNow(), skip); ok {
+			cp := best
+			pick = &cp
+			execOK = true
+		}
+	} else {
+		for range 8 {
+			best, exe, ok := watch.NextCandidate(pool, acct, pol, sessOK, h.policyPinnedNow(), skip)
+			if !ok {
+				break
+			}
+			if strings.EqualFold(p.LastResearchCoin, best.Coin) && !exe {
+				p.RememberSkip(best.Coin, auto.SkipResearched, auto.SkipResearched, 2*time.Minute)
+				p.LastResearchCoin = ""
+				skip = p.SkipSet(time.Now().Unix())
+				continue
+			}
+			cp := best
+			pick = &cp
+			execOK = exe
+			break
+		}
 	}
 	if pick == nil {
 		m.LastAction = "no_opportunity"
@@ -215,6 +234,12 @@ func (h *Hub) autoTick() {
 		if block == "" {
 			block = "no_opportunity"
 		}
+		if last := p.LatestSkip(); last.Coin != "" {
+			m.SearchNote = auto.SearchNote(last.Coin, last.Kind, "")
+			m.LastResult = m.SearchNote
+		} else {
+			m.SearchNote = ""
+		}
 		auto.AppendAway(h.Dir, auto.AwayEvent{Kind: "rejected", Why: block})
 		_ = auto.SaveMission(h.Dir, m)
 		_ = auto.Save(h.Dir, p)
@@ -222,6 +247,12 @@ func (h *Hub) autoTick() {
 			WorkspaceID: workspaceID(h.Dir), Kind: "mission.empty", Action: "scan", Status: "no_opportunity", Reason: block, Autonomous: m.Mode == auto.ModeGuarded,
 		})
 		return
+	}
+	if last := p.LatestSkip(); last.Coin != "" && !strings.EqualFold(last.Coin, pick.Coin) {
+		m.SearchNote = auto.SearchNote(last.Coin, last.Kind, pick.Coin)
+		m.LastResult = m.SearchNote
+	} else if execOK {
+		m.SearchNote = ""
 	}
 	if !execOK {
 		fit := feasibility.FitBook(pick.Book, pol, acct, sessOK, h.policyPinnedNow())
@@ -233,6 +264,7 @@ func (h *Hub) autoTick() {
 		m.BlockReason = why
 	} else {
 		auto.AppendAway(h.Dir, auto.AwayEvent{Kind: "detected", Coin: pick.Coin, Why: pick.Reason})
+		m.BlockReason = ""
 	}
 	m.BestCoin = pick.Coin
 	m.BestWhy = watch.WhyHuman(*pick)
@@ -279,13 +311,9 @@ func (h *Hub) autoTick() {
 		h.beginResearch(pick.Coin)
 		return
 	}
-	if wantResearch && p.LastResearchCoin == pick.Coin {
+	if wantResearch && p.LastResearchCoin == pick.Coin && execOK {
 		m.LastAction = "waiting_after_research:" + pick.Coin
-		if m.BlockReason != "" {
-			m.Stage = "execution-blocked"
-		} else {
-			m.Stage = "eligible"
-		}
+		m.Stage = "eligible"
 	}
 	_ = auto.SaveMission(h.Dir, m)
 	_ = auto.Save(h.Dir, p)
@@ -417,19 +445,68 @@ func (h *Hub) recoverGuardedExecute() {
 	coin := h.job.coin
 	started := h.job.started
 	eligible := h.job.eligible && strings.TrimSpace(hash) != ""
+	expired := previewExpiredMap(h.job.preview, time.Now().UnixMilli())
 	h.researchMu.Unlock()
-	if !eligible {
+	if !eligible || expired {
 		return
 	}
 	last := cli.LoadLastOrder(h.Dir)
-	if last != nil {
-		oid, _ := last["oid"].(string)
-		ph, _ := last["hash"].(string)
-		if strings.TrimSpace(oid) != "" && ph == hash {
-			return
-		}
+	if guardedAlreadyAttempted(last, hash) {
+		h.recoverOIDFromVenue(last)
+		return
 	}
 	h.maybeGuardedExecute(hash, coin, started)
+}
+
+func guardedAlreadyAttempted(last map[string]any, hash string) bool {
+	if last == nil || strings.TrimSpace(hash) == "" {
+		return false
+	}
+	ph, _ := last["hash"].(string)
+	return ph == hash
+}
+
+func (h *Hub) recoverOIDFromVenue(last map[string]any) {
+	if last == nil {
+		return
+	}
+	if oid, _ := last["oid"].(string); strings.TrimSpace(oid) != "" {
+		return
+	}
+	cloid, _ := last["cloid"].(string)
+	if strings.TrimSpace(cloid) == "" {
+		return
+	}
+	st, err := cli.Load(h.Dir)
+	if err != nil || strings.TrimSpace(st.Wallet) == "" {
+		return
+	}
+	net, nerr := config.ParseNetwork(st.Network)
+	if nerr != nil {
+		return
+	}
+	c := hl.New(config.For(net))
+	openRaw, oerr := c.OpenOrders(st.Wallet)
+	if oerr != nil {
+		return
+	}
+	oid := hl.OIDForCloid(openRaw, cloid)
+	if oid == "" {
+		fillsRaw, ferr := c.UserFills(st.Wallet)
+		if ferr != nil {
+			return
+		}
+		oid = hl.OIDForCloid(fillsRaw, cloid)
+	}
+	if strings.TrimSpace(oid) == "" {
+		return
+	}
+	last["oid"] = oid
+	raw, err := json.MarshalIndent(last, "", "  ")
+	if err != nil || strings.Contains(strings.ToLower(string(raw)), "app-sk-") {
+		return
+	}
+	_ = os.WriteFile(cli.LastOrderPath(h.Dir), raw, 0o600)
 }
 
 func (h *Hub) localAutomation(w http.ResponseWriter, r *http.Request) {
@@ -462,6 +539,7 @@ func (h *Hub) localAutomation(w http.ResponseWriter, r *http.Request) {
 	body.LastScanUnix = cur.LastScanUnix
 	body.LastNotifyCoin = cur.LastNotifyCoin
 	body.LastResearchCoin = cur.LastResearchCoin
+	body.Skips = cur.Skips
 	if err := auto.Save(h.Dir, body); err != nil {
 		writeLocal(w, http.StatusOK, map[string]any{"ok": false, "error": err.Error(), "execute": false, "sign": false, "trade": false})
 		return

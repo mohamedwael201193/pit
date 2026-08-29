@@ -2,7 +2,7 @@ import { BrandMark } from "./BrandMark";
 import { EvidenceStrip } from "./EvidenceStrip";
 import { PairingDock } from "./PairingDock";
 import { ExternalLink } from "./ExternalLink";
-import { compactNum } from "./format";
+import { accountSizeGate, compactNum, compactUsd } from "./format";
 import type { NextFix } from "./nextFix";
 import type { Probe } from "./readiness";
 
@@ -15,6 +15,7 @@ type Coin = {
   executionFeasible?: boolean;
   previewReady?: boolean;
   rankGroup?: number;
+  minNotional?: number;
 };
 
 function Chip({ ok, label, value }: { ok: boolean; label: string; value: string }) {
@@ -49,6 +50,12 @@ export function DeskHome({
   lastEvent,
   mode,
   exposure,
+  buyingPower,
+  execWhy,
+  execGate,
+  capitalNote,
+  powerSource,
+  fundHref,
   onResearch,
   onGo,
 }: {
@@ -75,6 +82,12 @@ export function DeskHome({
   lastEvent?: string;
   mode?: string;
   exposure?: string;
+  buyingPower?: number;
+  execWhy?: string;
+  execGate?: string;
+  capitalNote?: string;
+  powerSource?: string;
+  fundHref?: string;
   onResearch: (coin: string) => void;
   onGo: (view: "markets" | "research" | "security" | "chat" | "automation" | "portfolio" | "activity") => void;
 }) {
@@ -83,18 +96,14 @@ export function DeskHome({
     coins.find((c) => c.previewReady) ||
     coins.find((c) => c.executionFeasible) ||
     coins.find((c) => c.eligible);
+  const ranked = coins.filter((c) => c.eligible).slice(0, 6);
   const liveBook = policyPinned && Boolean(coins.find((c) => c.executionFeasible) || coins.find((c) => c.previewReady));
   const sealedNow = policyPinned && Boolean(researchBusy);
   const modeLabel = mode === "guarded" ? "Guarded Autonomy" : mode === "research_only" ? "Research Only" : "Manual";
-  return (
-    <main className="page dense desk-home">
-      <div className="page-head">
-        <div>
-          <p className="eyebrow">Desk</p>
-          <h1>{researchBusy ? doing : awaitingAuth ? "Waiting for you" : ready ? "Ready to discover" : attention.title}</h1>
-        </div>
-      </div>
-      <p className="lead">{doing}</p>
+  const venueMin = coins.find((c) => c.minNotional && c.minNotional > 0)?.minNotional || 10;
+  const execN = coins.filter((c) => c.executionFeasible).length;
+  const gate = accountSizeGate(buyingPower, venueMin, execN);
+  const path = (
       <ol className="demo-path" aria-label="New user path">
         <li className={items.find((p) => p.id === "wallet")?.state === "ok" ? "on" : ""}>
           <button type="button" className="linkish" onClick={() => onGo("security")}>
@@ -137,6 +146,76 @@ export function DeskHome({
           </button>
         </li>
       </ol>
+  );
+
+  return (
+    <main className="page dense desk-home">
+      <section className="desk-hero">
+        <div>
+          <p className="eyebrow">Desk</p>
+          <h1>{researchBusy ? doing : awaitingAuth ? "Waiting for you" : ready ? "Watching the live book" : attention.title}</h1>
+          <p className="lead">{doing}</p>
+          <p className="capital-line" role="status">
+            This account {compactUsd(gate.have)} · this market min {compactUsd(gate.min)}
+            {gate.canOpen ? "" : ` · ${compactUsd(gate.shortfall)} short`}
+            {powerSource ? ` · ${powerSource.replaceAll("_", " ")}` : ""}
+            {execGate ? ` · ${execGate.replaceAll("_", " ")}` : ""}
+          </p>
+          <p>{execWhy || capitalNote || gate.detail}</p>
+          {!gate.canOpen && fundHref ? (
+            <p className="fine">
+              <ExternalLink className="linkish" href={fundHref}>
+                Fund this Hyperliquid account
+              </ExternalLink>
+            </p>
+          ) : null}
+        </div>
+        <section className="next-row hero-next">
+          <div>
+            <p className="label">Needs you</p>
+            <h2>{attention.title}</h2>
+            <p className="fine" style={{ margin: 0 }}>
+              {attention.why}
+            </p>
+          </div>
+          <div className="cta-row">
+            {ready && !researchBusy && !awaitingAuth ? (
+              <button type="button" className="primary" onClick={() => onGo("markets")}>
+                Open Markets
+              </button>
+            ) : null}
+            {awaitingAuth ? (
+              <button type="button" className="primary" onClick={() => onGo("research")}>
+                Open preview
+              </button>
+            ) : null}
+            {researchBusy ? (
+              <button type="button" className="primary" onClick={() => onGo("research")}>
+                Open Research
+              </button>
+            ) : null}
+            <button type="button" className="linkish" onClick={() => onGo("chat")}>
+              Ask PIT
+            </button>
+            <button type="button" className="linkish" onClick={() => onGo("automation")}>
+              Automation
+            </button>
+            {attention.href ? (
+              <ExternalLink className="linkish" href={attention.href}>
+                {attention.hrefLabel || "Open official page"}
+              </ExternalLink>
+            ) : null}
+          </div>
+        </section>
+      </section>
+      {ready ? (
+        <details className="card">
+          <summary>Setup path</summary>
+          {path}
+        </details>
+      ) : (
+        path
+      )}
       <div className="chip-row" aria-label="Readiness">
         <Chip ok={protectedOk} label="Research" value={protectedOk ? "protected" : "needs protect"} />
         <Chip ok={computeReady} label="Compute" value={computeReady ? "funded" : "needs funds"} />
@@ -168,8 +247,8 @@ export function DeskHome({
           <dd>{researchBusy ? doing : awaitingAuth ? "Preview waiting" : runningCopy(mode)}</dd>
         </div>
         <div>
-          <dt>Best opportunity</dt>
-          <dd>{best ? `${best.coin} ${compactNum(best.mark)}` : "none"}</dd>
+          <dt>Ranked books</dt>
+          <dd>{ranked.length ? `${ranked.length} policy eligible` : "none"}</dd>
         </div>
         <div>
           <dt>Current exposure</dt>
@@ -180,58 +259,23 @@ export function DeskHome({
           <dd>{modeLabel}</dd>
         </div>
       </dl>
-      <section className="next-row">
-        <div>
-          <p className="label">Needs you</p>
-          <h2>{attention.title}</h2>
-          <p className="fine" style={{ margin: 0 }}>
-            {attention.why}
-          </p>
-        </div>
-        <div className="cta-row">
-          {ready && !researchBusy && !awaitingAuth ? (
-            <button type="button" className="primary" onClick={() => onGo("markets")}>
-              Open Markets
-            </button>
-          ) : null}
-          {awaitingAuth ? (
-            <button type="button" className="primary" onClick={() => onGo("research")}>
-              Open preview
-            </button>
-          ) : null}
-          {researchBusy ? (
-            <button type="button" className="primary" onClick={() => onGo("research")}>
-              Open Research
-            </button>
-          ) : null}
-          <button type="button" className="linkish" onClick={() => onGo("chat")}>
-            Ask PIT
-          </button>
-          <button type="button" className="linkish" onClick={() => onGo("automation")}>
-            Automation
-          </button>
-          {attention.href ? (
-            <ExternalLink className="linkish" href={attention.href}>
-              {attention.hrefLabel || "Open official page"}
-            </ExternalLink>
-          ) : null}
-        </div>
-      </section>
-      {best ? (
+      {ranked.length ? (
         <section>
-          <p className="label">Best opportunity</p>
-          <ul className="desk-ops">
-            <li>
-              <BrandMark symbol={best.coin} />
-              <strong>{best.coin}</strong>
-              <span className="mark-num">{compactNum(best.mark)}</span>
-              <span className="fine" style={{ margin: 0 }}>
-                {best.why || best.trend || "In policy universe."}
-              </span>
-              <button type="button" className="primary" disabled={researchBusy || !protectedOk || !computeReady || !policyPinned} onClick={() => onResearch(best.coin)}>
-                Research privately
-              </button>
-            </li>
+          <p className="label">Policy-eligible books</p>
+          <ul className="book-grid desk-books">
+            {ranked.map((c) => (
+              <li key={c.coin}>
+                <button type="button" className="book-tile" onClick={() => onGo("markets")}>
+                  <span className="tile-head">
+                    <BrandMark symbol={c.coin} size={16} />
+                    <strong>{c.coin}</strong>
+                    <span className={`layer-chip ${c.executionFeasible ? "ok" : "pass"}`}>{c.executionFeasible ? "Can open" : "Policy"}</span>
+                  </span>
+                  <span className="tile-mark">{compactNum(c.mark)}</span>
+                  <span className="tile-meta">{c.why || c.trend || "In policy universe."}</span>
+                </button>
+              </li>
+            ))}
           </ul>
         </section>
       ) : (

@@ -49,6 +49,7 @@ type Mission struct {
 	Scanned            int      `json:"scanned,omitempty"`
 	Eligible           int      `json:"eligible,omitempty"`
 	LastResult         string   `json:"last_result,omitempty"`
+	SearchNote         string   `json:"search_note,omitempty"`
 	OpenPositions      int      `json:"open_positions,omitempty"`
 }
 
@@ -157,6 +158,7 @@ func EnableGuarded(dir, typed string, hours int, policyHash string) (Mission, er
 	p.LastScanUnix = 0
 	p.LastResearchCoin = ""
 	p.LastNotifyCoin = ""
+	p.Skips = nil
 	_ = Save(dir, p)
 	_ = ResetAway(dir)
 	return LoadMission(dir), nil
@@ -536,6 +538,8 @@ func Public(dir string) map[string]any {
 		"away":         LoadAway(dir),
 		"why_not_code": m.BlockReason,
 		"why_not":      HumanWhy(m.BlockReason),
+		"search_note":  m.SearchNote,
+		"skip_coins":   Load(dir).SkipSet(now),
 		"note":         "Guarded Autonomy executes only after ENABLE GUARDED AUTONOMY is confirmed on this computer. Chat cannot enable it. The model cannot change these limits.",
 	}
 }

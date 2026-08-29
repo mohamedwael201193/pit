@@ -201,8 +201,8 @@ export function SecurityCenter({
         onPin={onPolicyPin}
       />
 
-      <article className="card">
-        <p className="label">This workspace</p>
+      <details className="card">
+        <summary>Workspace identity</summary>
         <p>Wallet {wallet || "unbound"}</p>
         <p>Network {net === "mainnet" ? "MAINNET" : "TESTNET"}</p>
         <p>PIT Agent {status?.agentName || "none"}</p>
@@ -219,7 +219,7 @@ export function SecurityCenter({
         ) : null}
         <p className="fine">{identityNote}</p>
         <p className="fine">{calibCopy || "NOT ENOUGH DATA"}</p>
-      </article>
+      </details>
 
       <details className="card">
         <summary>Official domains</summary>

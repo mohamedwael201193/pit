@@ -2,6 +2,7 @@ package watch
 
 import (
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/mohamedwael201193/pit/internal/feasibility"
@@ -214,10 +215,7 @@ func ApplyCapital(view PublicView, acct feasibility.Account, p policy.Policy, se
 		}
 	}
 	sort.SliceStable(view.Coins, func(i, j int) bool {
-		if view.Coins[i].RankGroup != view.Coins[j].RankGroup {
-			return view.Coins[i].RankGroup > view.Coins[j].RankGroup
-		}
-		return view.Coins[i].Rank > view.Coins[j].Rank
+		return execLess(view.Coins[i], view.Coins[j])
 	})
 	view.PreviewReadyN = previewN
 	view.ExecFeasibleN = execN
@@ -261,20 +259,73 @@ func ApplyCapital(view PublicView, acct feasibility.Account, p policy.Policy, se
 	return view
 }
 
+func assetIndex(coin string) int {
+	u := strings.ToUpper(strings.TrimSpace(coin))
+	for i, a := range policy.HostAssets {
+		if a == u {
+			return i
+		}
+	}
+	return len(policy.HostAssets)
+}
+
+func execLess(a, b PublicCoin) bool {
+	if a.RankGroup != b.RankGroup {
+		return a.RankGroup > b.RankGroup
+	}
+	if a.MinNotional != b.MinNotional {
+		if a.MinNotional <= 0 {
+			return false
+		}
+		if b.MinNotional <= 0 {
+			return true
+		}
+		return a.MinNotional < b.MinNotional
+	}
+	ai, bi := assetIndex(a.Coin), assetIndex(b.Coin)
+	if ai != bi {
+		return ai < bi
+	}
+	return a.Rank > b.Rank
+}
+
 func BestExecutable(cands []Candidate, acct feasibility.Account, p policy.Policy, sessionAlive, pinned bool) (Candidate, bool) {
+	return BestExecutableExcept(cands, acct, p, sessionAlive, pinned, nil)
+}
+
+func BestExecutableExcept(cands []Candidate, acct feasibility.Account, p policy.Policy, sessionAlive, pinned bool, skip map[string]string) (Candidate, bool) {
 	type scored struct {
-		c Candidate
-		g int
-		r int
+		c   Candidate
+		g   int
+		r   int
+		min float64
+		idx int
 	}
 	rows := make([]scored, 0, len(cands))
 	for _, c := range cands {
+		if skip != nil {
+			if _, hit := skip[strings.ToUpper(c.Coin)]; hit {
+				continue
+			}
+		}
 		f := feasibility.FitBook(c.Book, p, acct, sessionAlive, pinned)
-		rows = append(rows, scored{c: c, g: feasibility.RankGroup(f), r: Rank(c)})
+		rows = append(rows, scored{c: c, g: feasibility.RankGroup(f), r: Rank(c), min: f.MinNotionalUSD, idx: assetIndex(c.Coin)})
 	}
 	sort.SliceStable(rows, func(i, j int) bool {
 		if rows[i].g != rows[j].g {
 			return rows[i].g > rows[j].g
+		}
+		if rows[i].min != rows[j].min {
+			if rows[i].min <= 0 {
+				return false
+			}
+			if rows[j].min <= 0 {
+				return true
+			}
+			return rows[i].min < rows[j].min
+		}
+		if rows[i].idx != rows[j].idx {
+			return rows[i].idx < rows[j].idx
 		}
 		return rows[i].r > rows[j].r
 	})
@@ -284,4 +335,14 @@ func BestExecutable(cands []Candidate, acct feasibility.Account, p policy.Policy
 		}
 	}
 	return Candidate{}, false
+}
+
+func NextCandidate(cands []Candidate, acct feasibility.Account, p policy.Policy, sessionAlive, pinned bool, skip map[string]string) (Candidate, bool, bool) {
+	if best, ok := BestExecutableExcept(cands, acct, p, sessionAlive, pinned, skip); ok {
+		return best, true, true
+	}
+	if best, ok := BestExcept(cands, skip); ok {
+		return best, false, true
+	}
+	return Candidate{}, false, false
 }
