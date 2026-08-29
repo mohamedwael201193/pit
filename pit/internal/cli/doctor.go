@@ -312,7 +312,7 @@ func checkPolicy(dir string) Check {
 	if err != nil {
 		return Check{Name: "policy", Detail: "unbound"}
 	}
-	p := policy.Load(dir, st.WorkspaceID)
+	p := policy.Peek(dir)
 	if err := CheckPinned(dir, st.WorkspaceID, p); err != nil {
 		return Check{Name: "policy", Detail: "Pin does not match host law. Open Security, preview, then pin on this computer. Chat cannot do this."}
 	}

@@ -2019,3 +2019,38 @@ CLASSIFICATION:
 PRODUCTION READY: 0.7.0 is production-ready for live scan, honest capital copy, fail-closed enable, and desktop kill switch. It is **not** production-ready for a new MAINNET clip or a live autonomous fill until YOU pin matching host law and the venue has >= $10 available.
 NEXT STEP: On Security, preview then pin host law. Fund unified collateral above $10 if you want a clip. Anyone can check `pit evidence verify --root 0x9c65f36076cf2ee32c7e9a02354d1aef9ccf5f6c83289dba160b8c08710424d2`.
 
+---
+
+## M97 — Auditor P0 follow-up 0.7.1 (2026-08-29)
+
+DATE/TIME: 2026-08-29 23:05+03
+PHASE: Close remaining P0s from the repo/architecture auditor and the UX/demo auditor after 0.7.0. Do not flatten. Do not remint. Do not invent size. Do not enable Guarded Autonomy. Do not auto-pin.
+GOAL: Host-execute is not typed AUTHORIZE. Research/POST refuse below $10. Pin honesty uses disk draft vs pin hash. Portfolio and chat stop claiming $0 equity / pinned law.
+
+RESULT:
+- **IMPLEMENTED:** Version **0.7.1**. Companion `/health` **0.7.1**.
+  1. `ExecuteGuardedDeskOrder` does not accept or inject `AUTHORIZE`. Manual `ExecuteDeskOrder` still requires the token. Receipts record `path=guarded|authorize`.
+  2. `ClipForAccount` + sizer refuse padding a $9.38 balance up to $10. `BindResearchPreview` sizes from live buying power or denies `insufficient_margin` / `venue_unread`.
+  3. Failed research no longer latches `LastResearchCoin`. Restart may retry host-execute once for an unused eligible preview; never if last-order already has that hash+OID.
+  4. Policy public/doctor/enable pin-check against `Peek` (disk draft). Live: `pinned false`, disk hash `384bfd62…`, pin `c2de5175…`. Chat: **Policy is drafted, not pinned** plus the $9.38 / $0.62 gate.
+  5. Positions summary: buying power **9.3813**, spot **9.3813**, perp account value **0.0**, execGate `insufficient_margin`. Desktop Portfolio labels trading equity vs perp account value.
+  6. Expired preview cannot be authorized. Research button explains pin vs compute. Automation exec gate uses venue `insufficient_margin`, not “clear”.
+  7. Web `/app` no longer pretends Protect is the only next step. `/pair` when desktop is live promotes Pair, not Download.
+- **TESTED:** `go test ./...` PASS including `TestSizerDoesNotPadAboveRequested`, `TestClipForAccountRefusesBelowFloor`, `TestExecuteGuardedNeedsEnable`, `TestWebOriginCannotPostMission`. Desktop `tsc -b` green. Web `tsc --noEmit` green. NSIS 0.7.1.
+- **LIVE VERIFIED:** Overlay companion 0.7.1. Wallet/agent/OID `529167222216` unchanged. Chat policy not-pinned + $9.38 gate. Positions buying power 9.3813 vs perp 0.0.
+- **UNVERIFIED:** Guarded live order (not enabled). Restart retry of a running guarded mission. Full pair ceremony.
+- **BLOCKED:** New MAINNET clip: pin mismatch AND $9.38 < $10.
+
+SECURITY RESULT: Chat/web still cannot enable. Host-execute is a distinct path. Enable pin-check uses disk draft, not a silent Default that could match an old pin.
+TX HASH / OID: Historical OID `529167222216` unchanged.
+INSTALLER: `PIT_0.7.1_x64-setup.exe` size 17163170 SHA256 `3B5CBE3B1ADA0DF971056AED8D04AB94A9A624CC321E53F44F3F978023650A01`. Overlay `D:\PIT\pit.exe` SHA256 `41CA6EB8D89CA37A82884F226AD8B92A4B5EDD43F8F86B5C0D811E1F7A5701D1` + `D:\PIT\pit-desktop.exe` SHA256 `F21FF5B78F4E5FC8FC2A758778F586D968B5A9AF7B443A8F58F1B7A0912D259E`. Companion `/health` **0.7.1**.
+CLASSIFICATION:
+- Host-execute ≠ typed AUTHORIZE: **IMPLEMENTED + AUTOMATED TESTED**; live guarded post **NOT RUN**
+- Capital-true size / no pad: **IMPLEMENTED + AUTOMATED TESTED**; live clip **BLOCKED** ($9.38)
+- Pin honesty: **IMPLEMENTED + LIVE VERIFIED**
+- Portfolio trading equity: **IMPLEMENTED + LIVE VERIFIED** (API); desktop UI **OVERLAID**
+- Stale preview AUTHORIZE: **IMPLEMENTED**; live expired card **UNVERIFIED in UI click**
+PRODUCTION READY: 0.7.1 is production-ready for honest pin/capital copy and fail-closed host-execute. It is **not** production-ready for a new MAINNET clip until YOU pin and the venue has >= $10.
+NEXT STEP: On Security, preview then pin host law. Fund unified collateral above $10 if you want a clip.
+
+

@@ -130,6 +130,22 @@ func fmtString(v any) string {
 	return s
 }
 
+func previewExpiredMap(p map[string]any, nowMs int64) bool {
+	if p == nil {
+		return false
+	}
+	var exp int64
+	switch v := p["expiryUnixMs"].(type) {
+	case float64:
+		exp = int64(v)
+	case int64:
+		exp = v
+	case json.Number:
+		exp, _ = v.Int64()
+	}
+	return exp > 0 && nowMs > exp
+}
+
 func (h *Hub) loadJobLocked() {
 	raw, err := os.ReadFile(jobFile(h.Dir))
 	if err != nil || strings.Contains(strings.ToLower(string(raw)), "app-sk-") {
@@ -384,7 +400,22 @@ func (h *Hub) snapshotResearch() map[string]any {
 			body["eligible"] = rep.Eligible
 		}
 	}
+	body["preview_expired"] = previewExpiredMap(h.job.preview, now.UnixMilli())
+	if pv, ok := body["preview"].(map[string]any); ok && !body["preview_expired"].(bool) {
+		body["preview_expired"] = previewExpiredMap(pv, now.UnixMilli())
+	}
 	return body
+}
+
+func (h *Hub) rememberResearchOutcome(coin, jobErr, deny string) {
+	p := auto.Load(h.Dir)
+	fail := strings.TrimSpace(jobErr) != "" || deny == "insufficient_margin" || deny == "policy_changed" || deny == "session_expired" || deny == "venue_unread"
+	if fail {
+		p.LastResearchCoin = ""
+	} else if strings.TrimSpace(coin) != "" {
+		p.LastResearchCoin = coin
+	}
+	_ = auto.Save(h.Dir, p)
 }
 
 func (h *Hub) currentJobID() string {
@@ -499,6 +530,7 @@ func (h *Hub) execResearch(coin string) {
 			Action: "research", Status: h.job.err, JobID: h.job.ID, Reason: h.job.err,
 		})
 		auto.RecordStage(h.Dir, "research_failed", "research_failed:"+h.job.err, h.job.err, h.job.coin)
+		h.rememberResearchOutcome(h.job.coin, h.job.err, h.job.deny)
 		return
 	}
 	h.job.err = ""
@@ -546,12 +578,17 @@ func (h *Hub) execResearch(coin string) {
 		})
 	}
 	if h.job.eligible && h.job.previewHash != "" {
+		previewStatus := "awaiting_AUTHORIZE"
+		if m := auto.LoadMission(h.Dir); m.Running && m.Mode == auto.ModeGuarded {
+			previewStatus = "host_may_execute"
+		}
 		appendActivity(h.Dir, activityEvent{
 			WorkspaceID: workspaceID(h.Dir), Kind: "preview.ready", Market: h.job.coin,
-			Action: "preview", Status: "awaiting_AUTHORIZE", JobID: h.job.ID, PreviewHash: h.job.previewHash, Link: book,
+			Action: "preview", Status: previewStatus, JobID: h.job.ID, PreviewHash: h.job.previewHash, Link: book,
 		})
 	}
 	auto.RecordStage(h.Dir, "researched", "research_done:"+kind, kind, h.job.coin)
+	h.rememberResearchOutcome(h.job.coin, h.job.err, h.job.deny)
 	model, provider := researchModels()
 	h.fileResearch(h.job.ID, h.job.coin, kind, h.job.deny, h.job.previewHash, h.job.roles, model, provider)
 	if h.job.eligible && h.job.previewHash != "" {

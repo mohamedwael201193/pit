@@ -107,3 +107,14 @@ func TestPreviewBindIgnoresModel(t *testing.T) {
 	}
 	_ = math.NaN()
 }
+
+func TestSizerDoesNotPadAboveRequested(t *testing.T) {
+	_, err := SizeOrder(SizerInput{
+		MarkPx: 2500, SzDecimals: 4, MaxClipUSD: 10, RequestedUSD: 9.38,
+		Side: "buy", Coin: "ETH", AllowedCoins: []string{"ETH"}, MaxLeverage: 1, RequestedLev: 1,
+		Venue: "hyperliquid", AllowedVenue: "hyperliquid",
+	})
+	if err == nil || err.Error() != "below_min_notional" {
+		t.Fatalf("padded %v", err)
+	}
+}

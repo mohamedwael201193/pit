@@ -60,6 +60,10 @@ func TestSaveLoadRoundTripAndTamper(t *testing.T) {
 	if tampered.MaxClipUSD != Default().MaxClipUSD {
 		t.Fatalf("tamper must fail closed, got %+v", tampered)
 	}
+	draft := Peek(dir)
+	if draft.MaxClipUSD != ClipCeilUSD && draft.MaxClipUSD != 40 {
+		t.Fatalf("peek must show disk draft %+v", draft)
+	}
 }
 
 func TestChatCannotRaiseClipViaClamp(t *testing.T) {

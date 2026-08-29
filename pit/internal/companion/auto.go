@@ -272,7 +272,6 @@ func (h *Hub) autoTick() {
 			Action: "prepare", Status: "research", Reason: note,
 			Link: venueTradeLink(netName, pick.Coin), Autonomous: m.Mode == auto.ModeGuarded,
 		})
-		p.LastResearchCoin = pick.Coin
 		m.LastAction = "research:" + pick.Coin
 		m.Stage = "researching"
 		_ = auto.SaveMission(h.Dir, m)
@@ -384,7 +383,7 @@ func (h *Hub) maybeGuardedExecute(hash, coin string, started time.Time) {
 		})
 		return
 	}
-	got := cli.ExecuteDeskOrder(h.Dir, cli.ConfirmToken, hash)
+	got := cli.ExecuteGuardedDeskOrder(h.Dir, hash)
 	if got.Error != "" {
 		auto.RecordStage(h.Dir, "exec_failed", "exec_failed:"+got.Error, got.Error, coin)
 		auto.RecordAction(h.Dir, "exec_failed:"+got.Error, coin, hash, "", "")
@@ -406,6 +405,31 @@ func (h *Hub) maybeGuardedExecute(hash, coin string, started time.Time) {
 	})
 	h.recordPostedOrder(got, "guarded", h.currentJobID())
 	h.fileOrder(got, h.currentJobID())
+}
+
+func (h *Hub) recoverGuardedExecute() {
+	m := auto.LoadMission(h.Dir)
+	if !m.Running || m.Mode != auto.ModeGuarded {
+		return
+	}
+	h.researchMu.Lock()
+	hash := h.job.previewHash
+	coin := h.job.coin
+	started := h.job.started
+	eligible := h.job.eligible && strings.TrimSpace(hash) != ""
+	h.researchMu.Unlock()
+	if !eligible {
+		return
+	}
+	last := cli.LoadLastOrder(h.Dir)
+	if last != nil {
+		oid, _ := last["oid"].(string)
+		ph, _ := last["hash"].(string)
+		if strings.TrimSpace(oid) != "" && ph == hash {
+			return
+		}
+	}
+	h.maybeGuardedExecute(hash, coin, started)
 }
 
 func (h *Hub) localAutomation(w http.ResponseWriter, r *http.Request) {
@@ -482,14 +506,14 @@ func (h *Hub) localMission(w http.ResponseWriter, r *http.Request) {
 	}
 	if strings.TrimSpace(body.Typed) != "" || strings.EqualFold(body.Mode, auto.ModeGuarded) {
 		if st, lerr := cli.Load(h.Dir); lerr == nil && strings.TrimSpace(st.Wallet) != "" {
-			if err := cli.CheckPinned(h.Dir, st.WorkspaceID, cli.ActivePolicy(h.Dir)); err != nil {
+			if err := cli.CheckPinned(h.Dir, st.WorkspaceID, policy.Peek(h.Dir)); err != nil {
 				writeLocal(w, http.StatusOK, map[string]any{
 					"ok": false, "error": "need_pin", "explain": auto.HumanWhy("need_pin"), "execute": false, "sign": false, "trade": false,
 				})
 				return
 			}
 		}
-		hash, _ := cli.ActivePolicy(h.Dir).Hash()
+		hash, _ := policy.Peek(h.Dir).Hash()
 		m, err := auto.EnableGuarded(h.Dir, body.Typed, body.Hours, hash)
 		if err != nil {
 			writeLocal(w, http.StatusOK, map[string]any{"ok": false, "error": err.Error(), "execute": false, "sign": false, "trade": false})

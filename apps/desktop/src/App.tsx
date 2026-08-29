@@ -596,8 +596,8 @@ export function App() {
   const showChat = view === "chat";
   const protectedOk = Boolean(checks.find((c) => c.name === "direct_auth")?.ok);
   const computeReady = Boolean(checks.find((c) => c.name === "direct_credit")?.ok);
-  const researchAllowed = protectedOk && computeReady && pinned;
-  const awaitingAuth = Boolean(preview?.eligible && pinned && sessionAlive && !researchBusy);
+  const previewExpired = Boolean(preview?.expiryUnixMs && preview.expiryUnixMs < Date.now());
+  const awaitingAuth = Boolean(preview?.eligible && pinned && sessionAlive && !researchBusy && !previewExpired);
   const doing = researchBusy
     ? `Researching ${researchCoin}`
     : awaitingAuth
@@ -1178,7 +1178,7 @@ export function App() {
             scanned={scanned}
             execGate={summary.execGate}
             execWhy={summary.execWhy}
-            computeReady={researchAllowed}
+            computeReady={protectedOk && computeReady}
             researchBusy={researchBusy}
             capitalNote={capitalNote || summary.capitalNote}
             buyingPower={buyingPower ?? Number(summary.buyingPower || 0)}
@@ -1302,6 +1302,8 @@ export function App() {
             onOpenHistory={() => setView("activity")}
             net={net}
             wallet={status?.wallet}
+            execGate={summary.execGate}
+            execWhy={summary.execWhy}
           />
         ) : null}
 
@@ -1319,7 +1321,7 @@ export function App() {
             agent={agent}
             sessionAlive={sessionAlive}
             approved={Boolean(checks.find((c) => c.name === "hl_agent" && c.ok))}
-            tradingCapital={summary.accountValue}
+            tradingCapital={summary.buyingPower || summary.spotUsdc || summary.accountValue}
             summary={summary}
             policy={hostPolicy}
             pinned={pinned}

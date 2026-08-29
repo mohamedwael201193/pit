@@ -83,8 +83,8 @@ export function DeskHome({
     coins.find((c) => c.previewReady) ||
     coins.find((c) => c.executionFeasible) ||
     coins.find((c) => c.eligible);
-  const liveBook = Boolean(coins.find((c) => c.executionFeasible) || coins.find((c) => c.previewReady));
-  const sealedNow = Boolean(researchBusy);
+  const liveBook = policyPinned && Boolean(coins.find((c) => c.executionFeasible) || coins.find((c) => c.previewReady));
+  const sealedNow = policyPinned && Boolean(researchBusy);
   const modeLabel = mode === "guarded" ? "Guarded Autonomy" : mode === "research_only" ? "Research Only" : "Manual";
   return (
     <main className="page dense desk-home">
@@ -118,7 +118,7 @@ export function DeskHome({
         </li>
         <li className={policyPinned ? "on" : ""}>
           <button type="button" className="linkish" onClick={() => onGo("security")}>
-            5. Pin policy
+            5. Pin policy{policyPinned ? "" : " — draft only until you pin"}
           </button>
         </li>
         <li className={liveBook ? "on" : ""}>
@@ -145,11 +145,11 @@ export function DeskHome({
         <Chip ok={policyPinned} label="Policy" value={policyPinned ? "pinned" : "unpinned"} />
       </div>
       <ol className="workflow" aria-label="Desk workflow">
-        <li className={best ? "on" : ""}>
+        <li className={best && policyPinned ? "on" : ""}>
           <span>Discover</span>
-          <strong>{best ? best.coin : "none"}</strong>
+          <strong>{best && policyPinned ? best.coin : "none"}</strong>
         </li>
-        <li className={researchBusy || researchKind ? "on" : ""}>
+        <li className={researchBusy || (researchKind && policyPinned) ? "on" : ""}>
           <span>Research</span>
           <strong>{researchBusy ? (researchStage || "running").replaceAll("_", " ") : researchKind ? researchKind.replaceAll("_", " ") : "idle"}</strong>
         </li>

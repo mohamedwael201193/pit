@@ -12,7 +12,24 @@ import (
 	"github.com/mohamedwael201193/pit/internal/session"
 )
 
+func ClipForAccount(pol policy.Policy, availableUSD float64) (float64, error) {
+	clip := pol.MaxClipUSD
+	if availableUSD >= 0 {
+		if availableUSD+1e-9 < policy.ClipFloorUSD {
+			return 0, fmt.Errorf("insufficient_margin")
+		}
+		if availableUSD < clip {
+			clip = availableUSD
+		}
+	}
+	return clip, nil
+}
+
 func HostPreview(coin, side, forecastID string, book hl.BookSnapshot, pol policy.Policy, sess session.Session, now time.Time, cloid string, nonce int64) (engine.Preview, error) {
+	return HostPreviewForAccount(coin, side, forecastID, book, pol, sess, now, cloid, nonce, -1)
+}
+
+func HostPreviewForAccount(coin, side, forecastID string, book hl.BookSnapshot, pol policy.Policy, sess session.Session, now time.Time, cloid string, nonce int64, availableUSD float64) (engine.Preview, error) {
 	if strings.TrimSpace(forecastID) == "" {
 		return engine.Preview{}, fmt.Errorf("forecast_required")
 	}
@@ -22,11 +39,15 @@ func HostPreview(coin, side, forecastID string, book hl.BookSnapshot, pol policy
 	if err := hl.MarkFinite(book); err != nil {
 		return engine.Preview{}, err
 	}
+	clip, err := ClipForAccount(pol, availableUSD)
+	if err != nil {
+		return engine.Preview{}, err
+	}
 	sized, err := engine.SizeOrder(engine.SizerInput{
 		MarkPx:       book.MarkPx,
 		SzDecimals:   book.SzDecimals,
 		MaxClipUSD:   pol.MaxClipUSD,
-		RequestedUSD: pol.MaxClipUSD,
+		RequestedUSD: clip,
 		Side:         side,
 		Coin:         coin,
 		AllowedCoins: pol.AllowedAssets,

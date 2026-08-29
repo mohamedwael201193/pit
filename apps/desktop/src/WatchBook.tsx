@@ -45,6 +45,16 @@ export type MarketCoin = {
   skillIds?: string[];
 };
 
+function researchTitle(pinned?: boolean, computeReady?: boolean) {
+  if (!pinned) {
+    return "Research privately — blocked: policy is not pinned. Protect and compute are not the issue if they are ready. Pin on Security.";
+  }
+  if (!computeReady) {
+    return "Research privately — blocked: Protect or private compute is not ready.";
+  }
+  return "Start sealed private research for this book.";
+}
+
 export function WatchBook({
   coins,
   bestWhy,
@@ -136,7 +146,13 @@ export function WatchBook({
                 Fund this Hyperliquid account
               </ExternalLink>
             ) : (
-              <button type="button" className="primary" disabled={researchBusy || !computeReady} onClick={() => onResearch(best.coin)}>
+              <button
+                type="button"
+                className="primary"
+                disabled={researchBusy || !computeReady || !pinned}
+                title={researchTitle(pinned, computeReady)}
+                onClick={() => onResearch(best.coin)}
+              >
                 Research privately
               </button>
             )}
@@ -146,7 +162,13 @@ export function WatchBook({
               </ExternalLink>
             ) : null}
             {!pinned || execN === 0 ? (
-              <button type="button" className="linkish" disabled={researchBusy || !computeReady} onClick={() => onResearch(best.coin)}>
+              <button
+                type="button"
+                className="linkish"
+                disabled={researchBusy || !computeReady || !pinned}
+                title={researchTitle(pinned, computeReady)}
+                onClick={() => onResearch(best.coin)}
+              >
                 Research privately
               </button>
             ) : null}
@@ -213,7 +235,8 @@ export function WatchBook({
                 <button
                   type="button"
                   className="linkish"
-                  disabled={researchBusy || !c.eligible || !computeReady}
+                  disabled={researchBusy || !c.eligible || !computeReady || !pinned}
+                  title={researchTitle(pinned, computeReady)}
                   onClick={(e) => {
                     e.stopPropagation();
                     onResearch(c.coin);

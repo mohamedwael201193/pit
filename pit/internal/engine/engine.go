@@ -63,6 +63,10 @@ func SizeOrder(in SizerInput) (SizedOrder, error) {
 	if usd > in.MaxClipUSD {
 		usd = in.MaxClipUSD
 	}
+	cap := in.MaxClipUSD
+	if in.RequestedUSD > 0 && in.RequestedUSD < cap {
+		cap = in.RequestedUSD
+	}
 	pow := math.Pow(10, float64(in.SzDecimals))
 	sz := math.Floor((usd/in.MarkPx)*pow) / pow
 	if sz <= 0 {
@@ -70,17 +74,17 @@ func SizeOrder(in SizerInput) (SizedOrder, error) {
 	}
 	notional := sz * in.MarkPx
 	if notional+1e-9 < 10 {
-		if in.MaxClipUSD+1e-9 < 10 {
+		if cap+1e-9 < 10 {
 			return SizedOrder{}, fmt.Errorf("below_min_notional")
 		}
 		sz = math.Ceil((10.0/in.MarkPx)*pow) / pow
 		notional = sz * in.MarkPx
 		tick := in.MarkPx / pow
-		if notional+1e-9 < 10 || notional > in.MaxClipUSD+tick+1e-9 {
+		if notional+1e-9 < 10 || notional > cap+tick+1e-9 {
 			return SizedOrder{}, fmt.Errorf("below_min_notional")
 		}
 	}
-	if notional > in.MaxClipUSD+in.MarkPx/pow+1e-9 {
+	if notional > cap+in.MarkPx/pow+1e-9 {
 		return SizedOrder{}, fmt.Errorf("notional_exceeds_clip")
 	}
 	return SizedOrder{Coin: coin, Side: side, Sz: sz, NotionalUSD: notional}, nil

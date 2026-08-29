@@ -158,7 +158,7 @@ func (h *Hub) replyWatch(parsed deskcmd.Result) string {
 	}
 	return fmt.Sprintf("%s\nMark %s (oracle %s, funding %s, open interest %s, day notional %s).\n%s\nTrend: %s. Host rank %d, not a model score. Policy %s. Layer %s. Freshness %s. Venue hyperliquid. Provenance %s.\nWhy it passes policy: %s\nRequired margin $%.2f · available $%.2f · host-sized $%.2f · min $%.0f.\nWhy it is executable for this user: %s\nWhat would invalidate it: %s\nWhat research will test: %s%s\nSide is not decided here. Chat cannot AUTHORIZE.",
 		row.Coin, watch.Price(row.Mark), watch.Price(row.Oracle), watch.FundingPct(row.Funding), watch.Compact(row.OpenInterest), watch.CompactUSD(row.Volume), row.Why, row.Trend, row.Rank, fit, row.Layer, row.Freshness, row.Provenance,
-		watch.WhyPolicyFrom(row.Eligible, row.Block), row.RequiredMargin, row.AvailableMargin, row.HostNotional, row.MinNotional, execLine, watch.WhatInvalidatesReason(row.Reason), watch.ResearchWillTestFrom(row.Coin, row.Eligible), whyBetter)
+		watch.WhyPolicyFrom(row.Eligible, row.Block, h.policyPinnedNow()), row.RequiredMargin, row.AvailableMargin, row.HostNotional, row.MinNotional, execLine, watch.WhatInvalidatesReason(row.Reason), watch.ResearchWillTestFrom(row.Coin, row.Eligible), whyBetter)
 }
 
 func (h *Hub) pickBestCoin() string {
@@ -232,7 +232,7 @@ func (h *Hub) replyMissionStatus() string {
 }
 
 func (h *Hub) replyPolicy() string {
-	p := cli.ActivePolicy(h.Dir)
+	p := policy.Peek(h.Dir)
 	open := h.openPositionCount()
 	avail := h.availableUSD()
 	cap := h.capitalNow()
@@ -241,12 +241,16 @@ func (h *Hub) replyPolicy() string {
 	if block != "" {
 		gate = "Execution blocked: " + strings.ReplaceAll(block, "_", " ") + ". " + why
 	}
+	pin := "Policy is drafted, not pinned. Markets PASS is the default universe — not locked host law. Pin on Security. Chat cannot pin."
+	if h.policyPinnedNow() {
+		pin = "Host law is pinned on this computer."
+	}
 	spot := ""
 	if cap.SpotUSDC > 0 {
 		spot = fmt.Sprintf(" Spot USDC %.4f (%s).", cap.SpotUSDC, cap.PowerSource)
 	}
-	return fmt.Sprintf("Host policy on this computer: max trade $%.0f, leverage 1x, assets %s, venue hyperliquid, max open %d, daily loss $%.0f, slippage %d bps, cooldown %ds, uncertainty %.2f, session TTL %ds. Chat cannot pin or mutate this. Open Security to edit and pin. %s%s",
-		p.MaxClipUSD, strings.Join(p.AllowedAssets, " "), p.MaxOpenPositions, p.DailyLossUSD, p.MaxSlippageBps, p.CooldownSeconds, p.MaxUncertainty, p.SessionTTLSeconds, gate, spot)
+	return fmt.Sprintf("%s Host policy on this computer: max trade $%.0f, leverage 1x, assets %s, venue hyperliquid, max open %d, daily loss $%.0f, slippage %d bps, cooldown %ds, uncertainty %.2f, session TTL %ds. Chat cannot pin or mutate this. Open Security to edit and pin. %s%s",
+		pin, p.MaxClipUSD, strings.Join(p.AllowedAssets, " "), p.MaxOpenPositions, p.DailyLossUSD, p.MaxSlippageBps, p.CooldownSeconds, p.MaxUncertainty, p.SessionTTLSeconds, gate, spot)
 }
 
 func (h *Hub) replyPositions() string {
@@ -273,7 +277,8 @@ func (h *Hub) replyPositions() string {
 		if s, ok := last["oid"].(string); ok && s != "" {
 			oid = " Last fill OID " + s + " is historical, not a new preview."
 		}
-		return "No open positions on the trading account. Equity " + acct.AccountValue + "." + spotNote + oid
+		cap := h.capitalNow()
+		return fmt.Sprintf("No open positions on the trading account. Trading equity $%.2f (%s). Perp account value %s.%s%s", cap.BuyingPower, cap.PowerSource, acct.AccountValue, spotNote, oid)
 	}
 	parts := make([]string, 0, len(rows))
 	for _, p := range rows {

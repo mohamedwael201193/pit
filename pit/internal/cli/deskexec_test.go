@@ -1,6 +1,10 @@
 package cli
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/mohamedwael201193/pit/internal/policy"
+)
 
 func TestConfirmDeskAuthorize(t *testing.T) {
 	if err := ConfirmDeskAuthorize("yes", true); err == nil {
@@ -11,6 +15,24 @@ func TestConfirmDeskAuthorize(t *testing.T) {
 	}
 	if err := ConfirmDeskAuthorize("AUTHORIZE", true); err != nil {
 		t.Fatal(err)
+	}
+}
+
+func TestClipForAccountRefusesBelowFloor(t *testing.T) {
+	_, err := ClipForAccount(policy.Default(), 9.38)
+	if err == nil || err.Error() != "insufficient_margin" {
+		t.Fatalf("%v", err)
+	}
+	got, err := ClipForAccount(policy.Default(), 40)
+	if err != nil || got != 10 {
+		t.Fatalf("%v %v", got, err)
+	}
+}
+
+func TestExecuteGuardedNeedsEnable(t *testing.T) {
+	got := ExecuteGuardedDeskOrder(t.TempDir(), "")
+	if got.OK || got.Error != "need_guarded_enable" {
+		t.Fatalf("%+v", got)
 	}
 }
 

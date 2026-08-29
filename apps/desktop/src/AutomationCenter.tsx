@@ -79,6 +79,8 @@ export function AutomationCenter({
   onOpenHistory,
   net,
   wallet,
+  execGate,
+  execWhy,
 }: {
   mission: MissionPublic;
   prefs: AutoPrefs;
@@ -94,6 +96,8 @@ export function AutomationCenter({
   onOpenHistory?: () => void;
   net?: string;
   wallet?: string;
+  execGate?: string;
+  execWhy?: string;
 }) {
   const [hours, setHours] = useState(confirmHours || 8);
   const [confirm, setConfirm] = useState(false);
@@ -331,7 +335,15 @@ export function AutomationCenter({
         </div>
         <div>
           <dt>Exec gate</dt>
-          <dd>{mission.block_reason ? humanStop(mission.block_reason) : "clear"}</dd>
+          <dd>
+            {mission.block_reason
+              ? humanStop(mission.block_reason)
+              : mission.why_not
+                ? mission.why_not
+                : execGate
+                  ? `${humanStop(execGate)}${execWhy ? ` — ${execWhy}` : ""}`
+                  : "clear"}
+          </dd>
         </div>
       </dl>
       {mission.explain && m.last_stop ? <p className="fine">{mission.explain}</p> : null}

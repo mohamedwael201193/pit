@@ -22,8 +22,8 @@ export function Home() {
   return (
     <div className="mx-auto flex max-w-[80rem] flex-col gap-10">
       <PageHead
-        title="Protect private research"
-        lede="This browser can pair, sign Protect, and show public books. Authorize and session keys stay on PIT Desktop."
+        title="Inspect on the web. Pin and AUTHORIZE stay on desktop."
+        lede="This browser can pair, sign Protect, and show public books. It cannot pin policy, enable Guarded Autonomy, or hold a session key."
       />
 
       <Bezel>

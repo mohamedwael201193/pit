@@ -7,10 +7,13 @@ func WhyInteresting(c Candidate) string {
 }
 
 func WhyPolicy(c Candidate) string {
-	return WhyPolicyFrom(c.Eligible, c.Block)
+	return WhyPolicyFrom(c.Eligible, c.Block, true)
 }
 
-func WhyPolicyFrom(eligible bool, block string) string {
+func WhyPolicyFrom(eligible bool, block string, pinned bool) string {
+	if eligible && !pinned {
+		return "This coin is in the draft universe — not pinned host law. Pin on Security. Chat cannot pin."
+	}
 	if eligible {
 		return "Asset, venue, clip, leverage, and market type are inside the pinned host policy."
 	}

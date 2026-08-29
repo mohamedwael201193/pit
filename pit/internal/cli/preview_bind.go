@@ -21,8 +21,24 @@ func BindResearchPreview(dir, coin string, snap hl.BookSnapshot, pol policy.Poli
 		rep.Preview = map[string]any{"eligible": false, "deny": "session_expired"}
 		return rep
 	}
+	available := -1.0
+	if _, power, capErr := LiveAccount(st); capErr == nil {
+		available = power
+	} else {
+		rep.Deny = "venue_unread"
+		rep.Eligible = false
+		rep.Preview = map[string]any{"eligible": false, "deny": "venue_unread"}
+		return rep
+	}
+	clip, clipErr := ClipForAccount(pol, available)
+	if clipErr != nil {
+		rep.Deny = clipErr.Error()
+		rep.Eligible = false
+		rep.Preview = map[string]any{"eligible": false, "deny": clipErr.Error()}
+		return rep
+	}
 	got := engine.EvaluateCommittee(
-		snap.MarkPx, snap.SzDecimals, pol.MaxClipUSD, pol.MaxClipUSD, "", coin, pol.AllowedAssets,
+		snap.MarkPx, snap.SzDecimals, pol.MaxClipUSD, clip, "", coin, pol.AllowedAssets,
 		1, pol.MaxLeverage, pol.KillSwitch || st.Kill, rep.Researcher, rep.Challenger, rep.Risk,
 	)
 	if !got.Eligible || got.Size == nil {
@@ -43,7 +59,7 @@ func BindResearchPreview(dir, coin string, snap hl.BookSnapshot, pol policy.Poli
 		rep.Eligible = false
 		return rep
 	}
-	p, err := HostPreview(coin, got.Size.Side, forecast, snap, pol, live, time.Now().UTC(), cloid, time.Now().UnixMilli())
+	p, err := HostPreviewForAccount(coin, got.Size.Side, forecast, snap, pol, live, time.Now().UTC(), cloid, time.Now().UnixMilli(), available)
 	if err != nil {
 		rep.Deny = err.Error()
 		rep.Eligible = false

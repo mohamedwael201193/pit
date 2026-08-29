@@ -17,13 +17,15 @@ import (
 )
 
 func (h *Hub) policyPublic(consequences []string) map[string]any {
-	p := cli.ActivePolicy(h.Dir)
+	p := policy.Peek(h.Dir)
 	hash, _ := p.Hash()
 	pinned := false
 	workspace := ""
+	pin := ""
 	if st, err := cli.Load(h.Dir); err == nil {
 		workspace = st.WorkspaceID
 		pinned = cli.CheckPinned(h.Dir, st.WorkspaceID, p) == nil
+		pin, _ = policy.ReadPin(h.Dir, st.WorkspaceID)
 	}
 	cards := policy.Cards(p)
 	rows := make([]map[string]any, 0, len(cards))
@@ -35,7 +37,7 @@ func (h *Hub) policyPublic(consequences []string) map[string]any {
 	}
 	allow, refuse := policy.AllowedRefused(p)
 	return map[string]any{
-		"ok": true, "pinned": pinned, "hash": hash, "version": p.Version, "workspace": workspace,
+		"ok": true, "pinned": pinned, "hash": hash, "pinHash": pin, "version": p.Version, "workspace": workspace,
 		"policy": p, "cards": rows, "consequences": consequences,
 		"allowed": allow, "refused": refuse,
 		"assets": policy.HostAssets, "clipFloor": policy.ClipFloorUSD, "clipCeil": policy.ClipCeilUSD,
@@ -62,7 +64,7 @@ func (h *Hub) policyPinnedNow() bool {
 	if err != nil {
 		return false
 	}
-	return cli.CheckPinned(h.Dir, st.WorkspaceID, cli.ActivePolicy(h.Dir)) == nil
+	return cli.CheckPinned(h.Dir, st.WorkspaceID, policy.Peek(h.Dir)) == nil
 }
 
 func (h *Hub) capitalNow() feasibility.Account {
@@ -126,7 +128,11 @@ func (h *Hub) opportunityConsequences(draft policy.Policy) []string {
 		research = research[:12]
 	}
 	if len(exec) == 0 {
-		lines = append(lines, "No current live book is execution-feasible under this draft and this account. Research can still run. PIT will not invent size.")
+		if !h.policyPinnedNow() {
+			lines = append(lines, "No current live book is execution-feasible under this draft and this account. Research will not spend 0G until you pin host law. PIT will not invent size.")
+		} else {
+			lines = append(lines, "No current live book is execution-feasible under this draft and this account. PIT will not invent size.")
+		}
 	} else {
 		lines = append(lines, "Would become executable with this account: "+strings.Join(exec, ", ")+".")
 	}

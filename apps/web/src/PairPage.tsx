@@ -103,19 +103,39 @@ export function PairPage() {
             {desk}
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
-            <a
-              className="rounded-full bg-[#d82f2f] px-6 py-3 font-semibold text-[#f0e7d4]"
-              href="https://github.com/mohamedwael201193/pit/releases/latest"
-            >
-              Download PIT
-            </a>
-            <button
-              type="button"
-              className="rounded-full border border-[rgb(240_231_212/0.35)] px-6 py-3 font-semibold text-[#f0e7d4]"
-              onClick={() => void probeDesktop()}
-            >
-              Open PIT Desktop
-            </button>
+            {deskOk ? (
+              <>
+                <button
+                  type="button"
+                  className="rounded-full bg-[#d82f2f] px-6 py-3 font-semibold text-[#f0e7d4]"
+                  onClick={() => document.querySelector<HTMLInputElement>('input[aria-label="pairing code"]')?.focus()}
+                >
+                  Pair this browser
+                </button>
+                <a
+                  className="rounded-full border border-[rgb(240_231_212/0.35)] px-6 py-3 font-semibold text-[#f0e7d4]"
+                  href="https://github.com/mohamedwael201193/pit/releases/latest"
+                >
+                  Download PIT
+                </a>
+              </>
+            ) : (
+              <>
+                <a
+                  className="rounded-full bg-[#d82f2f] px-6 py-3 font-semibold text-[#f0e7d4]"
+                  href="https://github.com/mohamedwael201193/pit/releases/latest"
+                >
+                  Download PIT
+                </a>
+                <button
+                  type="button"
+                  className="rounded-full border border-[rgb(240_231_212/0.35)] px-6 py-3 font-semibold text-[#f0e7d4]"
+                  onClick={() => void probeDesktop()}
+                >
+                  Open PIT Desktop
+                </button>
+              </>
+            )}
           </div>
           <label className="mt-10 block">
             <span className="text-[0.75rem] tracking-[0.12em] text-[rgb(240_231_212/0.5)]">ONE-TIME CODE</span>

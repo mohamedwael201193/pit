@@ -74,6 +74,18 @@ func TestChatGreetingIsNotCannedHelp(t *testing.T) {
 	}
 }
 
+func TestWebOriginCannotPostMission(t *testing.T) {
+	h := New(t.TempDir())
+	req := local(httptest.NewRequest(http.MethodPost, "/local/mission", bytes.NewBufferString(`{"typed":"ENABLE GUARDED AUTONOMY","hours":8}`)))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Origin", "https://pit0g.vercel.app")
+	rec := httptest.NewRecorder()
+	h.Handler().ServeHTTP(rec, req)
+	if rec.Code != http.StatusForbidden {
+		t.Fatalf("web enable %d %s", rec.Code, rec.Body.String())
+	}
+}
+
 func TestChatCannotExecuteDecorated(t *testing.T) {
 	h := New(t.TempDir())
 	req := local(httptest.NewRequest(http.MethodPost, "/local/chat", bytes.NewBufferString(`{"text":"Why can't PIT execute this?"}`)))

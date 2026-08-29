@@ -8,9 +8,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/mohamedwael201193/pit/internal/auto"
 	"github.com/mohamedwael201193/pit/internal/config"
 	pitexec "github.com/mohamedwael201193/pit/internal/exec"
 	"github.com/mohamedwael201193/pit/internal/hl"
+	"github.com/mohamedwael201193/pit/internal/policy"
+	"github.com/mohamedwael201193/pit/internal/session"
 )
 
 type OrderResult struct {
@@ -101,6 +104,31 @@ func ExecuteDeskOrder(dir, typed, presentedHash string) OrderResult {
 		out.Error = err.Error()
 		return out
 	}
+	return postDeskOrder(dir, st, live, presentedHash, "authorize")
+}
+
+func ExecuteGuardedDeskOrder(dir, presentedHash string) OrderResult {
+	out := OrderResult{Sign: false, Trade: false, Order: true, Cancel: true}
+	m := auto.LoadMission(dir)
+	if !m.Running || m.Mode != auto.ModeGuarded {
+		out.Error = "need_guarded_enable"
+		return out
+	}
+	st, err := Load(dir)
+	if err != nil {
+		out.Error = "unbound"
+		return out
+	}
+	live, err := LiveFromDisk(dir, st.Kill, time.Now().UnixMilli())
+	if err != nil {
+		out.Error = "session_expired"
+		return out
+	}
+	return postDeskOrder(dir, st, live, presentedHash, "guarded")
+}
+
+func postDeskOrder(dir string, st DiskState, live session.Session, presentedHash, path string) OrderResult {
+	out := OrderResult{Sign: false, Trade: false, Order: true, Cancel: true}
 	card, hash, err := LoadPreview(dir)
 	if err != nil {
 		out.Error = "preview_required"
@@ -110,9 +138,18 @@ func ExecuteDeskOrder(dir, typed, presentedHash string) OrderResult {
 		out.Error = "preview_hash_mismatch"
 		return out
 	}
-	p := ActivePolicy(dir)
+	p := policy.Peek(dir)
 	if err := CheckPinned(dir, st.WorkspaceID, p); err != nil {
 		out.Error = err.Error()
+		return out
+	}
+	open, power, capErr := LiveAccount(st)
+	if capErr != nil {
+		out.Error = "venue_unread"
+		return out
+	}
+	if block, _ := policy.ExecWhy(open, power, p); block != "" {
+		out.Error = block
 		return out
 	}
 	if card.WorkspaceID != live.Workspace || card.SessionID != live.ID {
@@ -181,7 +218,7 @@ func ExecuteDeskOrder(dir, typed, presentedHash string) OrderResult {
 		saveLastOrder(dir, map[string]any{
 			"ok": false, "posted": false, "oid": "", "cloid": card.Cloid, "hash": hash,
 			"market": card.Market, "side": card.Side, "sz": card.Sz, "status": "failed",
-			"lifecycle": "failed", "venue": "hyperliquid", "sign": false, "trade": false,
+			"lifecycle": "failed", "venue": "hyperliquid", "path": path, "sign": false, "trade": false,
 		})
 		return out
 	}
@@ -205,7 +242,7 @@ func ExecuteDeskOrder(dir, typed, presentedHash string) OrderResult {
 	saveLastOrder(dir, map[string]any{
 		"ok": true, "posted": true, "oid": oid, "cloid": card.Cloid, "hash": hash,
 		"market": card.Market, "side": card.Side, "sz": card.Sz, "status": stt,
-		"lifecycle": life, "venue": "hyperliquid", "sign": false, "trade": false,
+		"lifecycle": life, "venue": "hyperliquid", "path": path, "sign": false, "trade": false,
 	})
 	ReconcileLastOrder(dir)
 	if last := LoadLastOrder(dir); last != nil {

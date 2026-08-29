@@ -491,6 +491,18 @@ export function PreviewContract({
       </article>
     );
   }
+  const expired = Boolean(preview.expiryUnixMs && preview.expiryUnixMs < Date.now());
+  if (expired) {
+    return (
+      <article className="contract">
+        <p className="label">Expired preview</p>
+        <p>
+          This preview expired. It cannot be authorized. Run research again after the account can size at least the $10
+          Hyperliquid minimum — or stand down. PIT will not invent size.
+        </p>
+      </article>
+    );
+  }
   return (
     <article className="contract">
       <p className="label">Exact preview</p>

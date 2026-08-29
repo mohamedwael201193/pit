@@ -29,29 +29,39 @@ export function PositionsPanel({
   positions: VenuePosition[];
   error?: string;
   lastOrder?: { oid?: string; status?: string; market?: string; side?: string; sz?: number };
-  summary?: { accountValue?: string; withdrawable?: string; totalNtlPos?: string; spotUsdc?: string; execGate?: string; execWhy?: string };
+  summary?: {
+    accountValue?: string;
+    withdrawable?: string;
+    totalNtlPos?: string;
+    spotUsdc?: string;
+    buyingPower?: string;
+    powerSource?: string;
+    execGate?: string;
+    execWhy?: string;
+  };
   onReduceOnlyClose?: (coin: string) => void;
   closeBusy?: boolean;
   net?: string;
 }) {
+  const tradePile = summary?.buyingPower || summary?.spotUsdc || summary?.accountValue;
   return (
     <section>
       <dl className="metrics">
         <div>
-          <dt>Equity</dt>
-          <dd>{summary?.accountValue || "—"}</dd>
+          <dt>Trading equity</dt>
+          <dd>{tradePile ? `$${tradePile}` : "—"}</dd>
         </div>
         <div>
-          <dt>Available margin</dt>
-          <dd>{summary?.withdrawable || "—"}</dd>
+          <dt>Available to trade</dt>
+          <dd>{summary?.buyingPower ? `$${summary.buyingPower}` : summary?.spotUsdc ? `$${summary.spotUsdc}` : "—"}</dd>
         </div>
         <div>
           <dt>Spot USDC</dt>
           <dd>{summary?.spotUsdc || "—"}</dd>
         </div>
         <div>
-          <dt>Exposure</dt>
-          <dd>{summary?.totalNtlPos || "—"}</dd>
+          <dt>Perp account value</dt>
+          <dd>{summary?.accountValue || "—"}</dd>
         </div>
       </dl>
       {summary?.execWhy ? (
@@ -61,7 +71,9 @@ export function PositionsPanel({
         </p>
       ) : null}
       <p className="fine">
-        Trading account {account || "unbound"} (master, not the PIT agent). Venue withdrawable is not a PIT withdraw.
+        Trading account {account || "unbound"} (master, not the PIT agent). Unified accounts show trading equity from
+        spot USDC, not perp account value. Venue withdrawable is not a PIT withdraw
+        {summary?.powerSource ? ` · ${summary.powerSource.replaceAll("_", " ")}` : ""}.
       </p>
       {error === "HYPERLIQUID_OUTAGE" ? <p role="status">Hyperliquid did not answer. PIT will not invent a book.</p> : null}
       {error === "WRONG_ACCOUNT_QUERY" ? <p>No positions on this Hyperliquid account.</p> : null}

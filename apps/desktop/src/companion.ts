@@ -101,6 +101,7 @@ export type BindResult = {
     skillIds?: string[];
   };
   preview_hash?: string;
+  preview_expired?: boolean;
   deny?: string;
   eligible?: boolean;
   oid?: string;
