@@ -134,9 +134,11 @@ function TopBar({ address, onSignOut }: { address?: string; onSignOut: () => voi
           <Link to="/" className="lg:hidden" aria-label="PIT home">
             <PitMark />
           </Link>
-          <span className="truncate text-[0.9375rem] font-bold text-[var(--guide-cream)]">No session yet</span>
+          <span className="truncate text-[0.9375rem] font-bold text-[var(--guide-cream)]">
+            {address ? "Orders stay on desktop" : "No session yet"}
+          </span>
           <span className="hidden font-mono text-[0.8125rem] text-[rgb(240_231_212/0.45)] sm:inline">
-            start on desktop
+            {address ? "this browser cannot authorize" : "start on desktop"}
           </span>
         </div>
         <div className="flex items-center gap-2">

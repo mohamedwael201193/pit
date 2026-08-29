@@ -140,15 +140,15 @@ func ResolveWorkspaceAuth(dir string) (compute.AuthFile, compute.DirectMeta, err
 	if userErr == nil && probe.EnoughForCommittee() {
 		return userFile, userMeta, nil
 	}
-	if sponsor, err := compute.LoadSponsorAuthFile(); err == nil {
-		tok, _, perr := compute.ParseBearer(sponsor.Authorization)
-		meta := compute.DirectMeta{Provider: sponsor.Provider, Model: sponsor.Model, Source: "sponsor"}
-		if perr == nil {
-			meta = compute.PublicMeta(sku, tok, "sponsor")
-		}
-		return sponsor, meta, nil
-	}
 	if userErr == nil {
+		if sponsor, err := compute.LoadSponsorAuthFile(); err == nil {
+			tok, _, perr := compute.ParseBearer(sponsor.Authorization)
+			meta := compute.DirectMeta{Provider: sponsor.Provider, Model: sponsor.Model, Source: "sponsor"}
+			if perr == nil {
+				meta = compute.PublicMeta(sku, tok, "sponsor")
+			}
+			return sponsor, meta, nil
+		}
 		return userFile, userMeta, nil
 	}
 	op, err := compute.LoadEnvAuthFile()
@@ -212,6 +212,13 @@ func RunWorkspaceResearchStage(dir, coin string, stage compute.StageFn, stop fun
 	if err != nil {
 		return compute.AskReport{}, err
 	}
+	p := ActivePolicy(dir)
+	if err := CheckPinned(dir, st.WorkspaceID, p); err != nil {
+		return compute.AskReport{}, fmt.Errorf("policy_changed")
+	}
+	if p.KillSwitch {
+		return compute.AskReport{}, fmt.Errorf("kill_switch")
+	}
 	auth, meta, err := ResolveWorkspaceAuth(dir)
 	if err != nil {
 		return compute.AskReport{}, err
@@ -226,11 +233,6 @@ func RunWorkspaceResearchStage(dir, coin string, stage compute.StageFn, stop fun
 		if probe.Present && !probe.EnoughForCommittee() {
 			return compute.AskReport{}, fmt.Errorf("direct_ledger")
 		}
-	}
-	p := ActivePolicy(dir)
-	_ = CheckPinned(dir, st.WorkspaceID, p)
-	if p.KillSwitch {
-		return compute.AskReport{}, fmt.Errorf("kill_switch")
 	}
 	hash, err := p.Hash()
 	if err != nil {

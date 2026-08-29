@@ -1952,3 +1952,34 @@ CLASSIFICATION:
 - Real tiny live execution: **BLOCKED BY USER/VENUE** (margin + pin)
 PRODUCTION READY: Installed 0.6.0 is production-ready for live scan, honest setup, pairing, capital-aware ranking, catalog honesty, evidence, and fail-closed AUTHORIZE. It is **not** production-ready for a new MAINNET clip until YOU pin matching host law and the venue has >= $10 available. Do not remint. Do not flatten from chat.
 NEXT STEP: On Security, preview then pin host law. Pair the browser if you need a new Protect signature. Fund unified collateral above $10 if you want a clip. Anyone can check `pit evidence verify --root 0x9c65f36076cf2ee32c7e9a02354d1aef9ccf5f6c83289dba160b8c08710424d2`.
+
+---
+
+## M95 — Auditor follow-up: pin-gated research, honest web Watch, capital CTA 0.6.1 (2026-08-29)
+
+DATE/TIME: 2026-08-29 21:15+03
+PHASE: Apply remaining P0s from the repo auditor and UX/demo QA auditor after 0.6.0. Do not flatten. Do not remint. Do not invent fills or TEE. Never send the private book to Router.
+GOAL: Sealed research cannot spend 0G against an unpinned/mismatched policy. Sponsor cannot replace Protect. nextFix names the $10 venue floor. Web Watch shows PASS only. Docs match the shipped version.
+
+RESULT:
+- **IMPLEMENTED:** Version **0.6.1**. Companion `/health` and `pit version` **0.6.1**.
+  1. `RunWorkspaceResearchStage` fail-closes with `policy_changed` before Direct auth when the pin does not match host law. Chat still cannot pin.
+  2. Sponsor compute is used only when this wallet already has Protect. A missing token is `direct_token_required`, not a silent sponsor identity.
+  3. After pin+Protect, nextFix is **Fund this Hyperliquid account** when buying power is below $10 / `insufficient_margin`. Markets primary CTA is that fund link. Research is secondary.
+  4. Web `/app` header is **Orders stay on desktop** when a wallet is connected. Home title is Protect, not a fake missing session. Watch lists at most 6 policy-PASS books. Policy page is read-only, not a brochure of live numbers.
+  5. Research card title for a complete committee is **RESEARCH COMPLETE**, not a verified trade. Historical last-order OID is labeled when exposure is empty.
+  6. README / implementation plan / flagship file no longer claim installer 0.2.0, 373 tests, or “UI not started”.
+- **TESTED:** `go test` cli/companion/version/compute PASS including `TestResearchRefusesUnpinned` and `TestSponsorDoesNotReplaceMissingProtect`. Desktop `tsc` green. Web `tsc` green. Playwright pair spec 1/1. `npx tauri build` NSIS 0.6.1.
+- **LIVE VERIFIED:** Overlay companion 0.6.1. Wallet and agent unchanged. Buying power still $4.58. Pin still mismatched — research now refuses until YOU pin. Direct credit still 4.3946 0G.
+- **BLOCKED:** New MAINNET clip: pin mismatch AND $4.58 < $10. No flatten. No remint.
+
+SECURITY RESULT: Private book still Direct TeeML. Sponsor cannot skip Protect. Research cannot spend 0G on an unsigned policy.
+TX HASH / OID: Historical OID `529167222216` unchanged. Evidence txs unchanged.
+INSTALLER: `PIT_0.6.1_x64-setup.exe` size 17140359 SHA256 `0908611240B60F5BDBC23C6A4486E0002BA659094DC0568B2F9D35A5A2470A0E`. Overlay `D:\PIT\pit.exe` SHA256 `547A2805CE5924E2C94CFDD4CD93807700363191507EA706A06EEE7DEDB6BCA5` + `D:\PIT\pit-desktop.exe` SHA256 `C2347AA19D14432C1B4599C973404AD1F61B55D1EDB2135C8860BDE431472634`. Companion `/health` **0.6.1**.
+CLASSIFICATION:
+- Pin-gated sealed research: **IMPLEMENTED + AUTOMATED TESTED**
+- Sponsor isolation vs Protect: **IMPLEMENTED + AUTOMATED TESTED**
+- Web Watch dump / No session yet: **IMPLEMENTED + TYPECHECKED**; live Chrome after deploy **UNVERIFIED this pass**
+- Venue fund CTA: **IMPLEMENTED**; live $4.58 gate **still true**
+PRODUCTION READY: 0.6.1 is production-ready for honest setup and fail-closed research. It is **not** production-ready for a new MAINNET clip until YOU pin and the venue has >= $10.
+NEXT STEP: On Security, preview then pin host law. Fund unified collateral above $10 if you want a clip. Anyone can check `pit evidence verify --root 0x9c65f36076cf2ee32c7e9a02354d1aef9ccf5f6c83289dba160b8c08710424d2`.

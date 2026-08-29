@@ -96,7 +96,7 @@ func TestOneRoleNeverVerify(t *testing.T) {
 	if !strings.Contains(body, "COMMITTEE_INCOMPLETE") {
 		t.Fatal(body)
 	}
-	if strings.Contains(body, `"card_title":"RESEARCH VERIFIED"`) {
+	if strings.Contains(body, `"card_title":"RESEARCH COMPLETE"`) {
 		t.Fatal(body)
 	}
 }

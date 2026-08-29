@@ -63,7 +63,7 @@ func classifyResearch(code string) string {
 		return "TEE_SIGNER_MISMATCH"
 	case "bad_role", "duplicate_role":
 		return "RESEARCHER_FAILED"
-	case "asset_not_allowed", "kill_switch":
+	case "asset_not_allowed", "kill_switch", "policy_changed":
 		return "POLICY_REJECTED"
 	case "committee_incomplete":
 		return "COMMITTEE_INCOMPLETE"

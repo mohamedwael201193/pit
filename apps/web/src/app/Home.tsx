@@ -22,8 +22,8 @@ export function Home() {
   return (
     <div className="mx-auto flex max-w-[80rem] flex-col gap-10">
       <PageHead
-        title="You do not have a session yet"
-        lede="Watch is live public books. Authorize stays on the machine."
+        title="Protect private research"
+        lede="This browser can pair, sign Protect, and show public books. Authorize and session keys stay on PIT Desktop."
       />
 
       <Bezel>

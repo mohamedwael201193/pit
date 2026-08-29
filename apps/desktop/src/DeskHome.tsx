@@ -228,7 +228,7 @@ export function DeskHome({
               <span className="fine" style={{ margin: 0 }}>
                 {best.why || best.trend || "In policy universe."}
               </span>
-              <button type="button" className="primary" disabled={researchBusy || !protectedOk || !computeReady} onClick={() => onResearch(best.coin)}>
+              <button type="button" className="primary" disabled={researchBusy || !protectedOk || !computeReady || !policyPinned} onClick={() => onResearch(best.coin)}>
                 Research privately
               </button>
             </li>

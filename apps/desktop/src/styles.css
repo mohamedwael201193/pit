@@ -674,7 +674,7 @@ select {
 .inspect h2 { font-size: 16px; margin: 4px 0 8px; }
 .market-head, .market-rows li {
   display: grid;
-  grid-template-columns: 88px 88px 72px 80px 80px 64px 88px auto;
+  grid-template-columns: 72px 72px 88px 72px 64px 56px minmax(160px, 1fr) 120px;
   gap: 8px;
   align-items: center;
 }

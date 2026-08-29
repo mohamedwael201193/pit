@@ -1,4 +1,4 @@
-import { LINKS, hyperliquidAPI } from "./links";
+import { LINKS, hyperliquidAPI, hyperliquidApp } from "./links";
 import type { DoctorCheck, LocalStatus } from "./companion";
 import { checkNamed } from "./companion";
 import type { Probe } from "./readiness";
@@ -20,6 +20,7 @@ export function nextFix(
   items: Probe[],
   sessionAlive: boolean,
   net: string,
+  capital?: { buyingPower?: number; execGate?: string; execWhy?: string },
 ): NextFix {
   if (!companionUp) {
     return {
@@ -121,6 +122,19 @@ export function nextFix(
       fix: "Open Research and run a live sealed request. Waiting is honest until that happens.",
       go: "research",
       goLabel: "Open Research",
+    };
+  }
+  const power = capital?.buyingPower;
+  const gate = String(capital?.execGate || "");
+  if (gate === "insufficient_margin" || (typeof power === "number" && power > 0 && power < 10)) {
+    return {
+      title: "Fund this Hyperliquid account",
+      why: `Venue buying power is ${typeof power === "number" ? `$${power.toFixed(2)}` : "below the $10 minimum"}. PIT will not invent size. 0G compute credit is a different pile of money.`,
+      fix: capital?.execWhy || "Available venue margin is below the $10 Hyperliquid minimum notional.",
+      href: hyperliquidApp(net),
+      hrefLabel: "Open Hyperliquid",
+      go: "markets",
+      goLabel: "Open Markets",
     };
   }
   return {

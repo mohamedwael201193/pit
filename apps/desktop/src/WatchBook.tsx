@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { BrandMark } from "./BrandMark";
 import { compactNum, compactUsd, pctFunding } from "./format";
+import { ExternalLink } from "./ExternalLink";
 
 export type MarketCoin = {
   coin: string;
@@ -48,13 +49,13 @@ export function WatchBook({
   coins,
   bestWhy,
   scanned,
-  execGate,
   execWhy,
   computeReady,
   researchBusy,
   capitalNote,
   buyingPower,
   powerSource,
+  fundHref,
   onResearch,
 }: {
   coins: MarketCoin[];
@@ -67,6 +68,7 @@ export function WatchBook({
   capitalNote?: string;
   buyingPower?: number;
   powerSource?: string;
+  fundHref?: string;
   onResearch: (coin: string) => void;
 }) {
   const [sel, setSel] = useState(coins.find((c) => c.previewReady || c.executionFeasible)?.coin || coins.find((c) => c.eligible)?.coin || coins[0]?.coin || "");
@@ -107,7 +109,7 @@ export function WatchBook({
             <OpportunityFacts coin={best} />
             {execN === 0 ? (
               <p className="err" role="status">
-                Nothing is executable with this account right now. {execWhy || capitalNote || "Available margin is below the venue minimum."} Research can still run after Protect.
+                Nothing is executable with this account right now. {execWhy || capitalNote || "Available margin is below the venue minimum."} Research can still run after Protect and a matching policy pin.
               </p>
             ) : (
               <p className="fine" role="status">
@@ -119,9 +121,22 @@ export function WatchBook({
               {bestWhy || "Highest host rank among books this account can size. Not a model score."} · {best.venue || "hyperliquid"} · {best.provenance || "hyperliquid.info"}
             </p>
           </div>
-          <button type="button" className="primary" disabled={researchBusy || !computeReady} onClick={() => onResearch(best.coin)}>
-            Research privately
-          </button>
+          <div className="cta-row">
+            {execN === 0 && fundHref ? (
+              <ExternalLink className="primary" href={fundHref}>
+                Fund this Hyperliquid account
+              </ExternalLink>
+            ) : (
+              <button type="button" className="primary" disabled={researchBusy || !computeReady} onClick={() => onResearch(best.coin)}>
+                Research privately
+              </button>
+            )}
+            {execN === 0 ? (
+              <button type="button" className="linkish" disabled={researchBusy || !computeReady} onClick={() => onResearch(best.coin)}>
+                Research privately
+              </button>
+            ) : null}
+          </div>
         </section>
       ) : (
         <p className="empty">No opportunities match your policy. Empty is the honest state until live books arrive.</p>
@@ -174,7 +189,7 @@ export function WatchBook({
                 <span className="why-cell">{c.whyExecutable || c.why || c.block || "—"}</span>
                 <button
                   type="button"
-                  className="primary"
+                  className="linkish"
                   disabled={researchBusy || !c.eligible || !computeReady}
                   onClick={(e) => {
                     e.stopPropagation();

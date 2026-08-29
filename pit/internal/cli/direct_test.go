@@ -1,12 +1,14 @@
 package cli
 
 import (
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/mohamedwael201193/pit/internal/compute"
+	"github.com/mohamedwael201193/pit/internal/config"
 	"github.com/mohamedwael201193/pit/internal/identity"
 )
 
@@ -99,6 +101,26 @@ func TestDirectWrongWalletRefused(t *testing.T) {
 	sig[64] += 27
 	if _, err := CompleteDirect(dir, "", "0x"+encodeSig(sig)); err == nil {
 		t.Fatal("wrong wallet")
+	}
+}
+
+func TestSponsorDoesNotReplaceMissingProtect(t *testing.T) {
+	t.Setenv("PIT_KEYRING", "file")
+	t.Setenv("PIT_DIRECT_AUTH_FILE", "")
+	dir := t.TempDir()
+	sponsor := filepath.Join(dir, "direct-sponsor.json")
+	sku := compute.ForNetwork(config.Mainnet)
+	if err := compute.WriteAuth(sponsor, sku, "Bearer app-sk-test-not-used"); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("PIT_DIRECT_SPONSOR_FILE", sponsor)
+	ws := identity.NewWorkspaceID()
+	if err := Save(dir, DiskState{WorkspaceID: ws, Network: "mainnet", Wallet: "0x1111111111111111111111111111111111111111"}); err != nil {
+		t.Fatal(err)
+	}
+	_, meta, err := ResolveWorkspaceAuth(dir)
+	if err == nil || err.Error() != "direct_token_required" {
+		t.Fatalf("sponsor bypassed Protect: %v %v", meta, err)
 	}
 }
 

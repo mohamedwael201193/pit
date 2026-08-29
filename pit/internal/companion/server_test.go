@@ -234,7 +234,7 @@ func TestLocalStatusVersionNoSecret(t *testing.T) {
 	if got["sign"] == true || got["trade"] == true {
 		t.Fatal(got)
 	}
-	if got["version"] != "0.6.0" {
+	if got["version"] != "0.6.1" {
 		t.Fatalf("version %v", got["version"])
 	}
 }
@@ -611,6 +611,9 @@ func TestClassifyResearch(t *testing.T) {
 	}
 	if classifyResearch("direct_token_required") != "DIRECT_NOT_AUTHORIZED" {
 		t.Fatal("token")
+	}
+	if classifyResearch("policy_changed") != "POLICY_REJECTED" {
+		t.Fatal("pin")
 	}
 	if classifyResearch("TEE_VERIFY_FAIL") != "TEE_SIGNATURE_INVALID" {
 		t.Fatal("tee")

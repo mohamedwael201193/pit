@@ -171,7 +171,7 @@ func doneIncomplete(roles []map[string]any, err string) bool {
 func researchCardTitle(kind string) string {
 	switch kind {
 	case TermReadyEligible:
-		return "RESEARCH VERIFIED"
+		return "RESEARCH COMPLETE"
 	case TermReadyStoodDown:
 		return "COMMITTEE STOOD DOWN"
 	case TermCommitteeIncomplete:

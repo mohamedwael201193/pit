@@ -124,7 +124,7 @@ export function PositionsPanel({
           ) : (
             <>OID {lastOrder.oid}</>
           )}
-          . Flatten only with a reduce-only close that YOU authorize.
+          {positions.length === 0 ? " · Historical fill — not an open position on this account." : ""}. Flatten only with a reduce-only close that YOU authorize.
         </p>
       ) : (
         <p className="fine">No PIT order on this machine yet.</p>

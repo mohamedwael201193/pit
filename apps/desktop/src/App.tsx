@@ -574,11 +574,15 @@ export function App() {
     [checks, status, companionUp, researchRoles],
   );
   const eligible = coins.filter((c) => c.eligible);
-  const attention = nextFix(companionUp, status, checks, items, sessionAlive, net);
+  const attention = nextFix(companionUp, status, checks, items, sessionAlive, net, {
+    buyingPower: buyingPower ?? Number(summary.buyingPower || 0),
+    execGate: summary.execGate,
+    execWhy: summary.execWhy,
+  });
   const showChat = view === "chat";
   const protectedOk = Boolean(checks.find((c) => c.name === "direct_auth")?.ok);
   const computeReady = Boolean(checks.find((c) => c.name === "direct_credit")?.ok);
-  const researchAllowed = protectedOk && computeReady;
+  const researchAllowed = protectedOk && computeReady && pinned;
   const awaitingAuth = Boolean(preview?.eligible && pinned && sessionAlive && !researchBusy);
   const doing = researchBusy
     ? `Researching ${researchCoin}`
@@ -1152,6 +1156,7 @@ export function App() {
             capitalNote={capitalNote || summary.capitalNote}
             buyingPower={buyingPower ?? Number(summary.buyingPower || 0)}
             powerSource={powerSource || summary.powerSource}
+            fundHref={hyperliquidApp(net)}
             onResearch={(c) => void researchThis(c)}
           />
         ) : null}

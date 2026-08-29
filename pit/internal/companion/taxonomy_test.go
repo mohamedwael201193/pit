@@ -32,7 +32,7 @@ func TestStandDownIsNotCrash(t *testing.T) {
 	if TerminalKind(false, "risk_killed", "risk_killed", true, false, roles) != TermReadyStoodDown {
 		t.Fatal(TerminalKind(false, "risk_killed", "risk_killed", true, false, roles))
 	}
-	if researchCardTitle(TermReadyStoodDown) == "RESEARCH VERIFIED" {
+	if researchCardTitle(TermReadyStoodDown) == "RESEARCH COMPLETE" {
 		t.Fatal("title")
 	}
 }
@@ -86,10 +86,10 @@ func TestRateLimitAndSponsorAndSigner(t *testing.T) {
 }
 
 func TestVerifiedTitleOnlyForEligibleCommittee(t *testing.T) {
-	if researchCardTitle(TermReadyEligible) != "RESEARCH VERIFIED" {
+	if researchCardTitle(TermReadyEligible) != "RESEARCH COMPLETE" {
 		t.Fatal("title")
 	}
-	if researchCardTitle(TermCommitteeIncomplete) == "RESEARCH VERIFIED" {
+	if researchCardTitle(TermCommitteeIncomplete) == "RESEARCH COMPLETE" {
 		t.Fatal("incomplete")
 	}
 }

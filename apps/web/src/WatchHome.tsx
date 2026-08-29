@@ -35,7 +35,9 @@ export function WatchHome({ network = "mainnet" }: { network?: "mainnet" | "test
           return;
         }
         setCount(typeof body.count === "number" ? body.count : 0);
-        setCoins(Array.isArray(body.coins) ? body.coins : []);
+        const rows = Array.isArray(body.coins) ? body.coins : [];
+        const pass = rows.filter((c) => c.eligible).slice(0, 6);
+        setCoins(pass);
         setFail(null);
       })
       .catch(() => {

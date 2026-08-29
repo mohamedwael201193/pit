@@ -13,20 +13,9 @@ import { openExternal } from "./open";
 
 const PROMPTS = [
   "Find the best opportunity right now.",
-  "Scan the whole market under my policy.",
-  "Research the strongest setup.",
-  "Why did the committee reject it?",
-  "Why is BTC better than ETH right now?",
-  "Prepare the trade.",
-  "Enable guarded autonomy for 8 hours.",
-  "Stop autonomy.",
-  "What is PIT doing?",
-  "What did PIT trade today?",
-  "Show my risk.",
+  "Why is nothing executable?",
   "Show my evidence.",
-  "What changed since last scan?",
-  "Prepare this trade.",
-  "Explain this exact preview.",
+  "What is PIT doing?",
 ];
 
 export function CommandChat({

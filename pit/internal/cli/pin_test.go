@@ -7,6 +7,21 @@ import (
 	"github.com/mohamedwael201193/pit/internal/policy"
 )
 
+func TestResearchRefusesUnpinned(t *testing.T) {
+	t.Setenv("PIT_KEYRING", "file")
+	t.Setenv("PIT_DIRECT_AUTH_FILE", "")
+	t.Setenv("PIT_DIRECT_SPONSOR_FILE", "")
+	dir := t.TempDir()
+	ws := identity.NewWorkspaceID()
+	if err := Save(dir, DiskState{WorkspaceID: ws, Network: "mainnet", Wallet: "0x1111111111111111111111111111111111111111"}); err != nil {
+		t.Fatal(err)
+	}
+	_, err := RunWorkspaceResearchStage(dir, "BTC", nil, nil)
+	if err == nil || err.Error() != "policy_changed" {
+		t.Fatal(err)
+	}
+}
+
 func TestPinWorkspace(t *testing.T) {
 	dir := t.TempDir()
 	ws := identity.NewWorkspaceID()
