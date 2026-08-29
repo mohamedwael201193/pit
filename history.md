@@ -1867,4 +1867,48 @@ NEXT STEP: On Security, preview then pin host law (optionally raise max open you
 
 ---
 
+## M93 — Capital-aware private desk 0.5.0 (2026-08-29)
 
+DATE/TIME: 2026-08-29 19:45+03
+PHASE: Strongest truthful production/demo-ready desk. Inspect repo, overlay, official 0G/Hyperliquid, then implement the live loop without breaking CORE LAW. Do not flatten. Do not remint. Do not invent fills, TEE, or 0G proofs.
+GOAL: Live Hyperliquid universe sized to THIS account now; research/policy/exec/preview layers; host skill registry; official 0G catalog listing (never Router inference); load-bearing 0G proofs; Activity/Security/policy consequences; labeled demo rehearsal; heavy tests; honest live E2E up to the real execution gate.
+
+RESULT:
+- **IMPLEMENTED:** Version **0.5.0**. Sidecar, desktop, companion `/health`, and `pit version` all **0.5.0**.
+  1. Capital engine reads live clearinghouse + spot + `userAbstraction`. This wallet reports **unifiedAccount**. Spot USDC is used as collateral source of truth. Buying power $4.5813 is still below the $10 Hyperliquid minimum, so execution stays blocked. PIT does not invent a transfer.
+  2. Opportunity layers: research-eligible / policy-eligible / execution-feasible / preview-ready / execution-blocked. Rank prefers executable size, not BTC signal. Live scan 232 / 6 PASS / 0 executable / 0 preview-ready. Best BTC is execution-blocked `insufficient_margin`.
+  3. Host skill registry (versioned, inspectable). Cards show skill IDs. Missing candles/L2/liquidations are stated as absent. The model cannot size.
+  4. Official 0G catalog GET listing 31 models (TeeML 5, TeeTLS 18, unproven 8). Catalog rows never `private_book`. Private book stays Direct TeeML. Chat is host-parsed even if a catalog SKU is picked. No silent Router fallback.
+  5. Streaming desk chat (`/local/chat/stream`) is host-parsed SSE. Chat cannot AUTHORIZE, pin, sign, or place an order.
+  6. Policy preview does not pin. Allowed/refused copy plus which books become executable vs research-only. Pin remains desktop-only. Default hash frozen. Stored pin still mismatches host law — fail-closed.
+  7. Security readiness: 13 domains with READY / ACTION REQUIRED / BLOCKED / NEEDS ACTION plus one next action. Kill switch off. Execution BLOCKED on venue minimum.
+  8. Activity timeline adds sealed / researcher / challenger / risk / TEE kinds after a verified committee. Proof cards: copy, explorer, Verify on 0G.
+  9. DEMO GET is LIVE by default. Replay is a separate labeled rehearsal of recorded real evidence. Live and replay cannot be confused.
+  10. Mission continues on exec-block (`execution-blocked`) instead of halting the desk.
+- **TESTED:** `go test ./...` PIT 565+ PASS, 4 SKIP. sealer 7 PASS. Desktop `npx tsc --noEmit` green. Desktop e2e copy harness ok. `cargo test` `allow_official_https` pass. Web Playwright 4/4. `npx tauri build` NSIS. `forge` not on PATH. `go test -race` needs cgo UNVERIFIED.
+- **LIVE VERIFIED (installed overlay D:\PIT):**
+  - Companion `/health` 0.5.0 `sign:false trade:false`. CLI `PIT 0.5.0`.
+  - Wallet `0xbdfcee82bd42fefa58ee850b3709636a8b6b0034`. Agent **PIT-4bbee556** / `0xfc64e36babe7dfe9eb779ee3a9f2362d16881d52` until 2027-02-24. Session live. Kill off. Last fill OID **529167222216** remains historical. Not reminted. Not flattened.
+  - Hyperliquid `userAbstraction` = `unifiedAccount`. Perp equity 0 / withdrawable 0. Spot USDC 4.581269. Exec gate **insufficient_margin**.
+  - Watch: scanned 232, 6 PASS, 0 executable, best BTC mark live, skills present, gate insufficient_margin.
+  - Official catalog 31 listed, `private_book` false on catalog rows, picked `host-parsed`.
+  - DEMO `mode=live live=true`.
+  - 0G proofs still ready: BTC root `0x9c65f36076cf2ee32c7e9a02354d1aef9ccf5f6c83289dba160b8c08710424d2` tx `0xf3d7bc820154ab18198c2b26ce4f3df6748aa65f3b8b07a7336de4a1c202d65a`; ETH root `0x07238aa66936340f7ea9fa59f279a8e2313b0bb839699c805b91cb30ccb7741d` tx `0x3f90c548a8f9bc04638f459cc9daba37423f04801568457191f2e04fb4090b80`.
+  - Windows default browser opened the BTC chainscan tx via rundll32.
+  - Direct token missing on this overlay pass (Protect my strategy required). Credit probe still 4.3946 0G. TEE last 3 roles OK on disk. No new sealed spend.
+- **BLOCKED:** New MAINNET clip: venue buying power $4.58 < $10 minimum AND pin hash mismatch. Direct token missing until YOU sign Protect. TESTNET execution UNVERIFIED (workspace remains mainnet). Authenticode unavailable. Chat is host-parsed (not a sealed token stream). No new OID/fill this pass.
+
+SECURITY RESULT: Chat cannot AUTHORIZE, size, or pin. Leverage stays 1x. Withdraw/transfer remain impossible. Kill off. Agent not reminted. No flatten. No invented balances or fills. Catalog listing is not an inference path.
+TX HASH / OID: BTC evidence `0xf3d7bc820154ab18198c2b26ce4f3df6748aa65f3b8b07a7336de4a1c202d65a`. ETH evidence `0x3f90c548a8f9bc04638f459cc9daba37423f04801568457191f2e04fb4090b80`. Historical Hyperliquid fill OID `529167222216` unchanged. No new order this pass.
+INSTALLER: `PIT_0.5.0_x64-setup.exe` size 17131199 SHA256 `863F8087A10202650826F142960E54356CD752FD0469514C1F26CD4A32563A77`. Overlay `D:\PIT\pit.exe` SHA256 `0BEA45E81A1C6EFE6B9A7A133D1A360BDF6AA049BA0BB6A916E15DAAE6ECF8F4` + `D:\PIT\pit-desktop.exe` SHA256 `ED03B26202CFC5D32C0F3EC79128C8A9E3174B71127210242E72CDFE7EA47A09` + `D:\PIT\pit-sealer.exe` SHA256 `ADD18CA1BB9C11C4EF0C0CA998C5C05C4AC635B43F23876382E4413A9569321F`. Companion `/health` **0.5.0**, CLI `pit version` **PIT 0.5.0**.
+CLASSIFICATION:
+- Capital-aware opportunity engine (layers A-D, venue mins, unified spot vs perp): **IMPLEMENTED + AUTOMATED TESTED + LIVE VERIFIED** (gate insufficient_margin)
+- Typed host skill registry + provenance: **IMPLEMENTED + AUTOMATED TESTED**; live IDs on watch cards **LIVE VERIFIED**
+- Real 0G catalog listing + host-parsed streaming chat, never Router for book: **IMPLEMENTED + AUTOMATED TESTED**; catalog 31 **LIVE VERIFIED**; sealed chat stream **NOT RUN** (Direct token missing)
+- 0G load-bearing proofs + Activity/explorer links: **IMPLEMENTED + TESTED**; existing receipts **LIVE VERIFIED**; new research receipt **NOT RUN**
+- Security readiness + policy consequence preview: **IMPLEMENTED + AUTOMATED TESTED**; live pin mismatch **LIVE VERIFIED**
+- Demo rehearsal labeled, not live: **IMPLEMENTED + AUTOMATED TESTED + LIVE VERIFIED** (GET is live unless pref=replay)
+- Real tiny live execution: **BLOCKED BY USER/VENUE** (margin + pin). Flow proven through the exact execution gate.
+- Full in-window click of every CTA: **PARTIAL** (copy harness + live probes)
+PRODUCTION READY: Installed 0.5.0 is production-ready for live scan, capital-honest ranking, host skills, catalog listing, evidence, and fail-closed AUTHORIZE. It is **not** production-ready for a new MAINNET clip until YOU pin matching host law, sign Protect if Direct is expired, and the venue has >= $10 available. Do not remint. Do not flatten from chat.
+NEXT STEP: On Security, preview then pin host law. Sign Protect my strategy if Direct is missing. Fund unified collateral above $10 if you want a clip. Anyone can check `pit evidence verify --root 0x9c65f36076cf2ee32c7e9a02354d1aef9ccf5f6c83289dba160b8c08710424d2`.

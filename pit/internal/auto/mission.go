@@ -358,7 +358,7 @@ func RecordBlock(dir, reason, coin string) {
 	m := LoadMission(dir)
 	m.BlockReason = reason
 	if m.Stage != "researching" && m.Stage != "scanning" && m.Stage != "ranked" {
-		m.Stage = "exec_blocked"
+		m.Stage = "execution-blocked"
 	}
 	m.LastAction = "exec_blocked:" + reason
 	if coin != "" {

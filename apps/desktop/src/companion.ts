@@ -90,6 +90,8 @@ export type BindResult = {
     reasons?: string[];
     kind?: string;
     note?: string;
+    skills?: string[];
+    skillIds?: string[];
   };
   preview_hash?: string;
   deny?: string;
@@ -226,6 +228,8 @@ export async function fetchPolicy(): Promise<{
   pinned?: boolean;
   hash?: string;
   consequences?: string[];
+  allowed?: string[];
+  refused?: string[];
   clipFloor?: number;
   clipCeil?: number;
 }> {
@@ -234,6 +238,8 @@ export async function fetchPolicy(): Promise<{
     pinned?: boolean;
     hash?: string;
     consequences?: string[];
+    allowed?: string[];
+    refused?: string[];
     clipFloor?: number;
     clipCeil?: number;
     sign?: boolean;
@@ -241,15 +247,126 @@ export async function fetchPolicy(): Promise<{
   return body || {};
 }
 
-export async function fetchWatch(network: string): Promise<{ coins?: Array<{ coin: string; reason: string; why?: string; trend?: string; rank?: number; freshness?: string; mark: number; eligible?: boolean; oracle?: number; funding?: number; openInterest?: number; volume?: number; timestamp?: string; venue?: string; policyFit?: string; riskFlags?: string[]; provenance?: string; block?: string; execGate?: string; execWhy?: string }>; best?: { coin: string; mark: number; why?: string; policyFit?: string }; bestWhy?: string; scanned?: number; count?: number; execGate?: string; execWhy?: string; sign?: boolean; trade?: boolean }> {
-  const native = rejectSecrets(await nativeJson<{ coins?: Array<{ coin: string; reason: string; why?: string; trend?: string; rank?: number; freshness?: string; mark: number; eligible?: boolean; oracle?: number; funding?: number; openInterest?: number; timestamp?: string }>; sign?: boolean; trade?: boolean }>("local_watch", { network }));
+export async function previewPolicy(policy: HostPolicy): Promise<{
+  consequences?: string[];
+  allowed?: string[];
+  refused?: string[];
+  error?: string;
+}> {
+  const body = await fetchJson<{
+    consequences?: string[];
+    allowed?: string[];
+    refused?: string[];
+    sign?: boolean;
+    trade?: boolean;
+    error?: string;
+  }>("/local/policy/preview", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(policy),
+  });
+  if (!body || body.sign || body.trade) return { error: "companion_denied" };
+  return body;
+}
+
+export async function fetchDemo(): Promise<{ mode?: string; live?: boolean; pref?: string; label?: string }> {
+  const body = await fetchJson<{ mode?: string; live?: boolean; pref?: string; label?: string; sign?: boolean }>("/local/demo");
+  return body || {};
+}
+
+export async function setDemoMode(mode: "live" | "replay"): Promise<{ mode?: string; live?: boolean; error?: string }> {
+  const body = await fetchJson<{ mode?: string; live?: boolean; sign?: boolean; trade?: boolean; error?: string }>("/local/demo", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ mode }),
+  });
+  if (!body || body.sign || body.trade) return { error: "companion_denied" };
+  return body;
+}
+
+export async function pickChatModel(model: string): Promise<{ picked?: string; error?: string }> {
+  const body = await fetchJson<{ picked?: string; sign?: boolean; trade?: boolean; error?: string }>("/local/models", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ model }),
+  });
+  if (!body || body.sign || body.trade) return { error: "companion_denied" };
+  return body;
+}
+
+export async function streamDeskCommand(
+  text: string,
+  thread = "desk",
+  model = "host-parsed",
+  signal?: AbortSignal,
+  onDelta?: (delta: string) => void,
+): Promise<ChatReply> {
+  try {
+    const r = await fetch(`${COMPANION}/local/chat/stream`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text, thread, model }),
+      signal,
+    });
+    if (!r.ok || !r.body) {
+      return sendDeskCommand(text, thread, signal);
+    }
+    const reader = r.body.getReader();
+    const decoder = new TextDecoder();
+    let buf = "";
+    let done: ChatReply | null = null;
+    while (true) {
+      const chunk = await reader.read();
+      if (chunk.done) break;
+      buf += decoder.decode(chunk.value, { stream: true });
+      const parts = buf.split("\n\n");
+      buf = parts.pop() || "";
+      for (const part of parts) {
+        const line = part.replace(/^data:\s*/, "").trim();
+        if (!line) continue;
+        try {
+          const ev = JSON.parse(line) as ChatReply & { delta?: string; done?: boolean };
+          if (ev.sign || ev.trade) return { error: "companion_denied", execute: false };
+          if (ev.delta && onDelta) onDelta(ev.delta);
+          if (ev.done) done = { ...ev, execute: false };
+        } catch {
+          /* incomplete SSE */
+        }
+      }
+    }
+    if (done) return { ...done, execute: false };
+    return sendDeskCommand(text, thread, signal);
+  } catch (e) {
+    if (e instanceof DOMException && e.name === "AbortError") throw e;
+    return sendDeskCommand(text, thread, signal);
+  }
+}
+
+type WatchView = {
+  coins?: MarketCoinWire[];
+  best?: { coin: string; mark: number; why?: string; policyFit?: string };
+  bestWhy?: string;
+  scanned?: number;
+  count?: number;
+  execGate?: string;
+  execWhy?: string;
+  capitalNote?: string;
+  buyingPower?: number;
+  powerSource?: string;
+  sign?: boolean;
+  trade?: boolean;
+};
+type MarketCoinWire = { coin: string; reason: string; mark: number; eligible?: boolean; [k: string]: unknown };
+
+export async function fetchWatch(network: string): Promise<WatchView> {
+  const native = rejectSecrets(await nativeJson<WatchView>("local_watch", { network }));
   if (native) return native;
-  const fetched = await fetchJson<{ coins?: Array<{ coin: string; reason: string; mark: number; eligible?: boolean; oracle?: number; funding?: number; openInterest?: number }>; sign?: boolean; trade?: boolean }>(`/watch?network=${network}`);
+  const fetched = await fetchJson<WatchView>(`/watch?network=${network}`);
   if (fetched) return fetched;
   try {
     const r = await fetch(`https://pit-health.onrender.com/watch?network=${network}`);
     if (!r.ok) return {};
-    return (await r.json()) as { coins?: Array<{ coin: string; reason: string; mark: number; eligible?: boolean; oracle?: number; funding?: number; openInterest?: number }>; sign?: boolean; trade?: boolean };
+    return (await r.json()) as WatchView;
   } catch {
     return {};
   }
@@ -569,11 +686,18 @@ export async function fetchModelCatalog(): Promise<{
   models: DirectModel[];
   private_verified: DirectModel[];
   other_chat: DirectModel[];
+  official_catalog: DirectModel[];
   unsupported: DirectModel[];
+  picked?: string;
+  catalog_count?: number;
+  catalog_note?: string;
 }> {
   const body = await localGet<{
     models?: DirectModel[];
-    groups?: { private_verified?: DirectModel[]; other_chat?: DirectModel[]; unsupported?: DirectModel[] };
+    picked?: string;
+    catalog_count?: number;
+    catalog_note?: string;
+    groups?: { private_verified?: DirectModel[]; other_chat?: DirectModel[]; official_catalog?: DirectModel[]; unsupported?: DirectModel[] };
     sign?: boolean;
   }>("local_models", "/local/models");
   const models = Array.isArray(body?.models) ? body.models : [];
@@ -581,7 +705,11 @@ export async function fetchModelCatalog(): Promise<{
     models,
     private_verified: body?.groups?.private_verified || models.filter((m) => m.private_book),
     other_chat: body?.groups?.other_chat || [],
+    official_catalog: body?.groups?.official_catalog || [],
     unsupported: body?.groups?.unsupported || [],
+    picked: body?.picked,
+    catalog_count: body?.catalog_count,
+    catalog_note: body?.catalog_note,
   };
 }
 
@@ -713,6 +841,9 @@ export type AccountSummary = {
   openCount?: number;
   execGate?: string;
   execWhy?: string;
+  capitalNote?: string;
+  buyingPower?: string;
+  powerSource?: string;
   policyClipUsd?: number;
   maxOpenPositions?: number;
   maxLeverage?: number;

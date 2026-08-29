@@ -172,7 +172,7 @@ func (h *Hub) autoTick() {
 	appendActivity(h.Dir, activityEvent{
 		WorkspaceID: workspaceID(h.Dir), Kind: "mission.scanned", Action: "scan", Status: "ok", Reason: m.LastResult,
 	})
-	var pick *watch.Candidate
+	matching := make([]watch.Candidate, 0, len(filtered))
 	for i := range filtered {
 		if !filtered[i].Eligible {
 			continue
@@ -184,9 +184,17 @@ func (h *Hub) autoTick() {
 			continue
 		}
 		if auto.Matches(p.Trigger, filtered[i].Reason) {
-			pick = &filtered[i]
-			break
+			matching = append(matching, filtered[i])
 		}
+	}
+	pool := matching
+	if len(pool) == 0 {
+		pool = filtered
+	}
+	var pick *watch.Candidate
+	if best, ok := watch.BestExecutable(pool, h.capitalNow(), pol, sessOK, h.policyPinnedNow()); ok {
+		cp := best
+		pick = &cp
 	}
 	if pick == nil {
 		m.LastAction = "no_opportunity"
@@ -247,9 +255,9 @@ func (h *Hub) autoTick() {
 	if wantResearch && p.LastResearchCoin == pick.Coin {
 		m.LastAction = "waiting_after_research:" + pick.Coin
 		if m.BlockReason != "" {
-			m.Stage = "exec_blocked"
+			m.Stage = "execution-blocked"
 		} else {
-			m.Stage = "waiting"
+			m.Stage = "eligible"
 		}
 	}
 	_ = auto.SaveMission(h.Dir, m)

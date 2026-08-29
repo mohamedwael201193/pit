@@ -2,11 +2,14 @@ package companion
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/mohamedwael201193/pit/internal/compute"
 )
 
 func TestChatWhatIsHappeningIdle(t *testing.T) {
@@ -44,6 +47,11 @@ func TestChatCannotExecute(t *testing.T) {
 }
 
 func TestLocalModelsDirectOnly(t *testing.T) {
+	old := fetchOfficialCatalog
+	fetchOfficialCatalog = func(ctx context.Context) ([]compute.CatalogEntry, error) {
+		return []compute.CatalogEntry{{ID: "claude-opus-5", Verifiability: "unproven", Path: "catalog-listing", PrivateBook: false, Note: "listing only"}}, nil
+	}
+	t.Cleanup(func() { fetchOfficialCatalog = old })
 	h := New(t.TempDir())
 	req := local(httptest.NewRequest(http.MethodGet, "/local/models", nil))
 	rec := httptest.NewRecorder()
@@ -55,8 +63,8 @@ func TestLocalModelsDirectOnly(t *testing.T) {
 	if !strings.Contains(body, "glm-5.2") || !strings.Contains(body, `"path":"direct"`) {
 		t.Fatal(rec.Body.String())
 	}
-	if strings.Contains(body, "router-api") || strings.Contains(body, "claude") {
-		t.Fatal("router sku leaked")
+	if strings.Contains(body, "router-api") {
+		t.Fatal("router inference url leaked")
 	}
 	var got map[string]any
 	if err := json.Unmarshal(rec.Body.Bytes(), &got); err != nil {
@@ -65,6 +73,10 @@ func TestLocalModelsDirectOnly(t *testing.T) {
 	models, _ := got["models"].([]any)
 	if len(models) != 1 {
 		t.Fatalf("catalog %d", len(models))
+	}
+	row0, _ := models[0].(map[string]any)
+	if row0["private_book"] != true {
+		t.Fatal("direct sku must be private book")
 	}
 	groups, _ := got["groups"].(map[string]any)
 	if groups == nil {
@@ -77,5 +89,13 @@ func TestLocalModelsDirectOnly(t *testing.T) {
 	row, _ := un[0].(map[string]any)
 	if row["private_book"] == true {
 		t.Fatal("catalog marked private")
+	}
+	off, _ := groups["official_catalog"].([]any)
+	if len(off) == 0 {
+		t.Fatal("official catalog missing")
+	}
+	cat, _ := off[0].(map[string]any)
+	if cat["private_book"] == true || cat["path"] == "Direct" {
+		t.Fatalf("%+v", cat)
 	}
 }

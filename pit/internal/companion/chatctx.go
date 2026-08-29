@@ -118,8 +118,9 @@ func (h *Hub) replyWatch(parsed deskcmd.Result) string {
 		return "Hyperliquid did not return a live book. Empty Markets is the honest state. No invented scores."
 	}
 	view := watch.Public(cands, string(net))
+	view = h.annotateWatch(view, cli.ActivePolicy(h.Dir))
 	if parsed.Tool == "watch.scan" {
-		return fmt.Sprintf("Scanned %d live Hyperliquid perps. %d match your policy. %s Side is not decided here.", view.Scanned, view.Count, view.Copy)
+		return fmt.Sprintf("Scanned %d live Hyperliquid perps. %d match your policy. %d execution-feasible for this account. Buying power $%.2f (%s). %s Side is not decided here.", view.Scanned, view.Count, view.ExecFeasibleN, view.BuyingPower, view.PowerSource, view.Copy)
 	}
 	if len(view.Coins) == 0 {
 		return "No live Hyperliquid books matched this scan. Empty is honest. Side is not decided on Markets."
@@ -148,9 +149,13 @@ func (h *Hub) replyWatch(parsed deskcmd.Result) string {
 	if parsed.Tool == "watch.compare" && view.Best != nil {
 		whyBetter = "\nWhy it ranks first: " + view.BestWhy
 	}
-	return fmt.Sprintf("%s\nMark %s (oracle %s, funding %s, open interest %s, day notional %s).\n%s\nTrend: %s. Host rank %d, not a model score. Policy %s. Freshness %s. Venue hyperliquid. Provenance %s.\nWhy it passes policy: %s\nWhat would invalidate it: %s\nWhat research will test: %s%s\nSide is not decided here.",
-		row.Coin, watch.Price(row.Mark), watch.Price(row.Oracle), watch.FundingPct(row.Funding), watch.Compact(row.OpenInterest), watch.CompactUSD(row.Volume), row.Why, row.Trend, row.Rank, fit, row.Freshness, row.Provenance,
-		watch.WhyPolicyFrom(row.Eligible, row.Block), watch.WhatInvalidatesReason(row.Reason), watch.ResearchWillTestFrom(row.Coin, row.Eligible), whyBetter)
+	execLine := row.WhyExecutable
+	if execLine == "" {
+		execLine = row.ExecWhy
+	}
+	return fmt.Sprintf("%s\nMark %s (oracle %s, funding %s, open interest %s, day notional %s).\n%s\nTrend: %s. Host rank %d, not a model score. Policy %s. Layer %s. Freshness %s. Venue hyperliquid. Provenance %s.\nWhy it passes policy: %s\nRequired margin $%.2f · available $%.2f · host-sized $%.2f · min $%.0f.\nWhy it is executable for this user: %s\nWhat would invalidate it: %s\nWhat research will test: %s%s\nSide is not decided here. Chat cannot AUTHORIZE.",
+		row.Coin, watch.Price(row.Mark), watch.Price(row.Oracle), watch.FundingPct(row.Funding), watch.Compact(row.OpenInterest), watch.CompactUSD(row.Volume), row.Why, row.Trend, row.Rank, fit, row.Layer, row.Freshness, row.Provenance,
+		watch.WhyPolicyFrom(row.Eligible, row.Block), row.RequiredMargin, row.AvailableMargin, row.HostNotional, row.MinNotional, execLine, watch.WhatInvalidatesReason(row.Reason), watch.ResearchWillTestFrom(row.Coin, row.Eligible), whyBetter)
 }
 
 func (h *Hub) pickBestCoin() string {
@@ -163,9 +168,13 @@ func (h *Hub) pickBestCoin() string {
 	if nerr != nil {
 		return ""
 	}
-	cands, lerr := watch.LiveUniverse(hl.New(config.For(net)), cli.ActivePolicy(h.Dir))
+	pol := cli.ActivePolicy(h.Dir)
+	cands, lerr := watch.LiveUniverse(hl.New(config.For(net)), pol)
 	if lerr != nil {
 		return ""
+	}
+	if best, ok := watch.BestExecutable(cands, h.capitalNow(), pol, h.sessionAliveNow(), h.policyPinnedNow()); ok {
+		return best.Coin
 	}
 	if best, ok := watch.Best(cands); ok {
 		return best.Coin
@@ -195,13 +204,18 @@ func (h *Hub) replyPolicy() string {
 	p := cli.ActivePolicy(h.Dir)
 	open := h.openPositionCount()
 	avail := h.availableUSD()
+	cap := h.capitalNow()
 	block, why := policy.ExecWhy(open, avail, p)
 	gate := "Execution gate is clear."
 	if block != "" {
 		gate = "Execution blocked: " + strings.ReplaceAll(block, "_", " ") + ". " + why
 	}
-	return fmt.Sprintf("Host policy on this computer: max trade $%.0f, leverage 1x, assets %s, venue hyperliquid, max open %d, daily loss $%.0f, slippage %d bps, cooldown %ds, uncertainty %.2f, session TTL %ds. Chat cannot pin or mutate this. Open Security to edit and pin. %s",
-		p.MaxClipUSD, strings.Join(p.AllowedAssets, " "), p.MaxOpenPositions, p.DailyLossUSD, p.MaxSlippageBps, p.CooldownSeconds, p.MaxUncertainty, p.SessionTTLSeconds, gate)
+	spot := ""
+	if cap.SpotUSDC > 0 {
+		spot = fmt.Sprintf(" Spot USDC %.4f (%s).", cap.SpotUSDC, cap.PowerSource)
+	}
+	return fmt.Sprintf("Host policy on this computer: max trade $%.0f, leverage 1x, assets %s, venue hyperliquid, max open %d, daily loss $%.0f, slippage %d bps, cooldown %ds, uncertainty %.2f, session TTL %ds. Chat cannot pin or mutate this. Open Security to edit and pin. %s%s",
+		p.MaxClipUSD, strings.Join(p.AllowedAssets, " "), p.MaxOpenPositions, p.DailyLossUSD, p.MaxSlippageBps, p.CooldownSeconds, p.MaxUncertainty, p.SessionTTLSeconds, gate, spot)
 }
 
 func (h *Hub) replyPositions() string {

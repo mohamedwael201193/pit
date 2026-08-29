@@ -217,6 +217,27 @@ func Diff(from, to Policy) []string {
 	return out
 }
 
+func AllowedRefused(p Policy) (allowed, refused []string) {
+	p = Clamp(p)
+	allowed = []string{
+		fmt.Sprintf("Size a perp clip up to $%.0f at 1x on Hyperliquid for %s.", p.MaxClipUSD, join(p.AllowedAssets)),
+		fmt.Sprintf("Hold at most %d open positions. Scan and private research continue if that ceiling is full.", p.MaxOpenPositions),
+	}
+	if !p.KillSwitch {
+		allowed = append(allowed, "Accept AUTHORIZE on this computer when session, policy pin, and venue margin all pass.")
+	}
+	refused = []string{
+		"Withdraw, transfer, or change venue leverage.",
+		"Place an order from chat or from a model.",
+		"Invent size below the $10 Hyperliquid minimum notional.",
+		"Silently raise clip, assets, or kill switch.",
+	}
+	if p.KillSwitch {
+		refused = append(refused, "Any new AUTHORIZE while kill switch is on.")
+	}
+	return allowed, refused
+}
+
 func ExecWhy(openPositions int, availableUSD float64, p Policy) (block, why string) {
 	p = Clamp(p)
 	if p.KillSwitch {
@@ -225,7 +246,7 @@ func ExecWhy(openPositions int, availableUSD float64, p Policy) (block, why stri
 	if p.MaxOpenPositions > 0 && openPositions >= p.MaxOpenPositions {
 		return "max_open_positions", "An open position already fills the host ceiling. Scan and private research continue. Existing positions are not flattened."
 	}
-	if availableUSD+1e-9 > 0 && availableUSD+1e-9 < ClipFloorUSD {
+	if availableUSD+1e-9 < ClipFloorUSD {
 		return "insufficient_margin", "Available venue margin is below the $10 Hyperliquid minimum notional. PIT will not invent size."
 	}
 	if p.MaxClipUSD+1e-9 < ClipFloorUSD {

@@ -112,6 +112,7 @@ func (h *Hub) Handler() http.Handler {
 	mux.HandleFunc("/local/session", h.localSession)
 	mux.HandleFunc("/local/connection-preview", h.localConnectionPreview)
 	mux.HandleFunc("/local/policy", h.localPolicy)
+	mux.HandleFunc("/local/policy/preview", h.localPolicyPreview)
 	mux.HandleFunc("/local/revoke-session", h.localRevokeSession)
 	mux.HandleFunc("/local/direct-intent", h.localDirectIntent)
 	mux.HandleFunc("/local/direct-complete", h.localDirectComplete)
@@ -138,6 +139,8 @@ func (h *Hub) Handler() http.Handler {
 	mux.HandleFunc("/local/update", h.localUpdate)
 	mux.HandleFunc("/local/explain", h.localExplain)
 	mux.HandleFunc("/local/models", h.localModels)
+	mux.HandleFunc("/local/demo", h.localDemo)
+	mux.HandleFunc("/local/chat/stream", h.localChatStream)
 	mux.HandleFunc("/local/automation", h.localAutomation)
 	mux.HandleFunc("/local/mission", h.localMission)
 	mux.HandleFunc("/local/kill", h.localKill)
@@ -451,14 +454,7 @@ func (h *Hub) localPolicy(w http.ResponseWriter, r *http.Request) {
 		writeBindErr(w, fmt.Errorf("unbound"))
 		return
 	}
-	draft := cli.ActivePolicy(h.Dir)
-	var body policy.Policy
-	if r.Body != nil {
-		_ = json.NewDecoder(r.Body).Decode(&body)
-		if body.MaxClipUSD > 0 {
-			draft = body
-		}
-	}
+	draft := decodePolicyBody(r, cli.ActivePolicy(h.Dir))
 	before := cli.ActivePolicy(h.Dir)
 	p, hash, err := policy.Save(h.Dir, st.WorkspaceID, draft)
 	if err != nil {
@@ -472,7 +468,7 @@ func (h *Hub) localPolicy(w http.ResponseWriter, r *http.Request) {
 	appendActivity(h.Dir, activityEvent{
 		WorkspaceID: st.WorkspaceID, Kind: "policy.pinned", Action: "pin", Status: "ok", PreviewHash: hash,
 	})
-	writeLocal(w, http.StatusOK, h.policyPublic(policy.Diff(before, p)))
+	writeLocal(w, http.StatusOK, h.policyPublic(append(policy.Diff(before, p), h.opportunityConsequences(p)...)))
 }
 
 func (h *Hub) localRevokeSession(w http.ResponseWriter, r *http.Request) {
@@ -553,7 +549,7 @@ func (h *Hub) watch(w http.ResponseWriter, r *http.Request) {
 	cands, err := watch.LiveUniverse(hl.New(config.For(net)), pol)
 	if err == nil {
 		view = watch.Public(cands, string(net))
-		view = annotateExec(view, h.openPositionCount(), h.availableUSD(), pol)
+		view = h.annotateWatch(view, pol)
 	}
 	if r.Method == http.MethodHead {
 		w.Header().Set("Content-Type", "application/json")

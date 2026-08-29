@@ -1,50 +1,82 @@
 package watch
 
 import (
+	"sort"
 	"time"
 
+	"github.com/mohamedwael201193/pit/internal/feasibility"
+	"github.com/mohamedwael201193/pit/internal/hl"
 	"github.com/mohamedwael201193/pit/internal/policy"
+	"github.com/mohamedwael201193/pit/internal/skills"
 )
 
 type PublicCoin struct {
-	Coin         string   `json:"coin"`
-	Venue        string   `json:"venue"`
-	Reason       string   `json:"reason"`
-	Why          string   `json:"why"`
-	Trend        string   `json:"trend,omitempty"`
-	Rank         int      `json:"rank"`
-	Freshness    string   `json:"freshness"`
-	Mark         float64  `json:"mark"`
-	Oracle       float64  `json:"oracle,omitempty"`
-	Funding      float64  `json:"funding,omitempty"`
-	OpenInterest float64  `json:"openInterest,omitempty"`
-	Volume       float64  `json:"volume,omitempty"`
-	Timestamp    string   `json:"timestamp"`
-	Provenance   string   `json:"provenance"`
-	Source       string   `json:"source"`
-	Network      string   `json:"network"`
-	Eligible     bool     `json:"eligible"`
-	PolicyFit    string   `json:"policyFit"`
-	RiskFlags    []string `json:"riskFlags,omitempty"`
-	Block        string   `json:"block,omitempty"`
-	ExecGate     string   `json:"execGate,omitempty"`
-	ExecWhy      string   `json:"execWhy,omitempty"`
+	Coin              string           `json:"coin"`
+	Venue             string           `json:"venue"`
+	Reason            string           `json:"reason"`
+	Why               string           `json:"why"`
+	Trend             string           `json:"trend,omitempty"`
+	Rank              int              `json:"rank"`
+	RankGroup         int              `json:"rankGroup"`
+	Freshness         string           `json:"freshness"`
+	Mark              float64          `json:"mark"`
+	Oracle            float64          `json:"oracle,omitempty"`
+	Funding           float64          `json:"funding,omitempty"`
+	OpenInterest      float64          `json:"openInterest,omitempty"`
+	Volume            float64          `json:"volume,omitempty"`
+	SzDecimals        int              `json:"szDecimals,omitempty"`
+	Timestamp         string           `json:"timestamp"`
+	Provenance        string           `json:"provenance"`
+	Source            string           `json:"source"`
+	Network           string           `json:"network"`
+	Eligible          bool             `json:"eligible"`
+	PolicyFit         string           `json:"policyFit"`
+	ResearchEligible  bool             `json:"researchEligible"`
+	PolicyEligible    bool             `json:"policyEligible"`
+	ExecutionFeasible bool             `json:"executionFeasible"`
+	PreviewReady      bool             `json:"previewReady"`
+	Layer             string           `json:"layer,omitempty"`
+	RiskFlags         []string         `json:"riskFlags,omitempty"`
+	Block             string           `json:"block,omitempty"`
+	ExecGate          string           `json:"execGate,omitempty"`
+	ExecWhy           string           `json:"execWhy,omitempty"`
+	MinNotional       float64          `json:"minNotional,omitempty"`
+	RequiredMargin    float64          `json:"requiredMargin,omitempty"`
+	AvailableMargin   float64          `json:"availableMargin,omitempty"`
+	PolicyClip        float64          `json:"policyClip,omitempty"`
+	HostNotional      float64          `json:"hostNotional,omitempty"`
+	HostSz            float64          `json:"hostSz,omitempty"`
+	EstimatedSlippage string           `json:"estimatedSlippage,omitempty"`
+	WhyExecutable     string           `json:"whyExecutable,omitempty"`
+	ExpectedEdge      string           `json:"expectedEdge,omitempty"`
+	Invalidation      string           `json:"invalidation,omitempty"`
+	WhyRanked         string           `json:"whyRanked,omitempty"`
+	Skills            []skills.Finding `json:"skills,omitempty"`
+	SkillIDs          []string         `json:"skillIds,omitempty"`
 }
 
 type PublicView struct {
-	OK      bool        `json:"ok"`
-	Sign    bool        `json:"sign"`
-	Trade   bool        `json:"trade"`
-	Count   int         `json:"count"`
-	Scanned int         `json:"scanned"`
-	Copy    string       `json:"copy"`
-	Coins   []PublicCoin `json:"coins"`
-	Best    *PublicCoin  `json:"best,omitempty"`
-	BestWhy string       `json:"bestWhy,omitempty"`
-	ExecGate string      `json:"execGate,omitempty"`
-	ExecWhy  string      `json:"execWhy,omitempty"`
-	Source  string       `json:"source"`
-	Network string      `json:"network"`
+	OK            bool         `json:"ok"`
+	Sign          bool         `json:"sign"`
+	Trade         bool         `json:"trade"`
+	Count         int          `json:"count"`
+	Scanned       int          `json:"scanned"`
+	Copy          string       `json:"copy"`
+	Coins         []PublicCoin `json:"coins"`
+	Best          *PublicCoin  `json:"best,omitempty"`
+	BestWhy       string       `json:"bestWhy,omitempty"`
+	ExecGate      string       `json:"execGate,omitempty"`
+	ExecWhy       string       `json:"execWhy,omitempty"`
+	PreviewReadyN int          `json:"previewReady,omitempty"`
+	ExecFeasibleN int          `json:"executionFeasible,omitempty"`
+	BuyingPower   float64      `json:"buyingPower,omitempty"`
+	PowerSource   string       `json:"powerSource,omitempty"`
+	SpotUSDC      float64      `json:"spotUsdc,omitempty"`
+	PerpEquity    float64      `json:"perpEquity,omitempty"`
+	Withdrawable  float64      `json:"withdrawable,omitempty"`
+	CapitalNote   string       `json:"capitalNote,omitempty"`
+	Source        string       `json:"source"`
+	Network       string       `json:"network"`
 }
 
 func toPublic(c Candidate, net, now string) PublicCoin {
@@ -52,6 +84,7 @@ func toPublic(c Candidate, net, now string) PublicCoin {
 	if c.Eligible {
 		fit = "PASS"
 	}
+	facts := skills.Apply(c.Book, nil)
 	return PublicCoin{
 		Coin:         c.Coin,
 		Venue:        "hyperliquid",
@@ -65,6 +98,7 @@ func toPublic(c Candidate, net, now string) PublicCoin {
 		Funding:      c.Book.Funding,
 		OpenInterest: c.Book.OpenInterest,
 		Volume:       c.Book.DayNtlVlm,
+		SzDecimals:   c.Book.SzDecimals,
 		Timestamp:    now,
 		Provenance:   "hyperliquid.info metaAndAssetCtxs",
 		Source:       "hyperliquid",
@@ -73,6 +107,8 @@ func toPublic(c Candidate, net, now string) PublicCoin {
 		PolicyFit:    fit,
 		RiskFlags:    c.Risk,
 		Block:        c.Block,
+		Skills:       facts,
+		SkillIDs:     skills.IDs(facts),
 	}
 }
 
@@ -122,4 +158,130 @@ func EmptyPublic(net string) PublicView {
 
 func PolicyForWatch() policy.Policy {
 	return policy.Default()
+}
+
+func bookOf(c PublicCoin) hl.BookSnapshot {
+	return hl.BookSnapshot{
+		Coin:         c.Coin,
+		MarkPx:       c.Mark,
+		OraclePx:     c.Oracle,
+		Funding:      c.Funding,
+		OpenInterest: c.OpenInterest,
+		DayNtlVlm:    c.Volume,
+		SzDecimals:   c.SzDecimals,
+	}
+}
+
+func attachFit(row PublicCoin, f feasibility.Fit) PublicCoin {
+	row.ResearchEligible = f.ResearchEligible
+	row.PolicyEligible = f.PolicyEligible
+	row.ExecutionFeasible = f.ExecutionFeasible
+	row.PreviewReady = f.PreviewReady
+	row.Layer = f.Layer
+	row.ExecGate = f.Gate
+	row.ExecWhy = f.Why
+	row.WhyExecutable = f.WhyExecutable
+	row.MinNotional = f.MinNotionalUSD
+	row.RequiredMargin = f.RequiredMargin
+	row.AvailableMargin = f.AvailableMargin
+	row.PolicyClip = f.PolicyClip
+	row.HostNotional = f.HostNotional
+	row.HostSz = f.HostSz
+	row.EstimatedSlippage = f.EstimatedSlippage
+	row.ExpectedEdge = f.ExpectedEdge
+	row.Invalidation = f.Invalidation
+	row.RankGroup = feasibility.RankGroup(f)
+	if f.WhyExecutable != "" && f.ExecutionFeasible {
+		row.WhyRanked = "Ranked because this account can actually size it, not because the signal is the largest in the universe."
+	} else if f.PolicyEligible {
+		row.WhyRanked = "Policy-eligible. Not execution-feasible for this account right now."
+	} else {
+		row.WhyRanked = "Live book only. Not policy-eligible."
+	}
+	return row
+}
+
+func ApplyCapital(view PublicView, acct feasibility.Account, p policy.Policy, sessionAlive, pinned bool) PublicView {
+	previewN, execN := 0, 0
+	for i, row := range view.Coins {
+		f := feasibility.FitBook(bookOf(row), p, acct, sessionAlive, pinned)
+		view.Coins[i] = attachFit(row, f)
+		if view.Coins[i].PreviewReady {
+			previewN++
+		}
+		if view.Coins[i].ExecutionFeasible {
+			execN++
+		}
+	}
+	sort.SliceStable(view.Coins, func(i, j int) bool {
+		if view.Coins[i].RankGroup != view.Coins[j].RankGroup {
+			return view.Coins[i].RankGroup > view.Coins[j].RankGroup
+		}
+		return view.Coins[i].Rank > view.Coins[j].Rank
+	})
+	view.PreviewReadyN = previewN
+	view.ExecFeasibleN = execN
+	view.BuyingPower = acct.BuyingPower
+	view.PowerSource = acct.PowerSource
+	view.SpotUSDC = acct.SpotUSDC
+	view.PerpEquity = acct.PerpEquity
+	view.Withdrawable = acct.Withdrawable
+	view.CapitalNote = acct.Note
+	block, why := policy.ExecWhy(acct.OpenPositions, acct.BuyingPower, p)
+	if block == "" && acct.BuyingPower+1e-9 < feasibility.MinNotionalUSD {
+		block = "insufficient_margin"
+		why = acct.Note
+	}
+	view.ExecGate = block
+	view.ExecWhy = why
+	var best *PublicCoin
+	for i := range view.Coins {
+		row := view.Coins[i]
+		if row.PreviewReady || row.ExecutionFeasible {
+			copyRow := row
+			best = &copyRow
+			break
+		}
+	}
+	if best == nil {
+		for i := range view.Coins {
+			if view.Coins[i].PolicyEligible {
+				copyRow := view.Coins[i]
+				best = &copyRow
+				break
+			}
+		}
+	}
+	view.Best = best
+	if best != nil && (best.PreviewReady || best.ExecutionFeasible) {
+		view.BestWhy = "Highest host rank among books this account can actually size under pinned policy, venue minimum, and available margin. BTC is not auto-first. Side is not decided here."
+	} else if best != nil {
+		view.BestWhy = "Highest host rank among policy-eligible live books. None are execution-feasible for this account right now. " + why
+	}
+	return view
+}
+
+func BestExecutable(cands []Candidate, acct feasibility.Account, p policy.Policy, sessionAlive, pinned bool) (Candidate, bool) {
+	type scored struct {
+		c Candidate
+		g int
+		r int
+	}
+	rows := make([]scored, 0, len(cands))
+	for _, c := range cands {
+		f := feasibility.FitBook(c.Book, p, acct, sessionAlive, pinned)
+		rows = append(rows, scored{c: c, g: feasibility.RankGroup(f), r: Rank(c)})
+	}
+	sort.SliceStable(rows, func(i, j int) bool {
+		if rows[i].g != rows[j].g {
+			return rows[i].g > rows[j].g
+		}
+		return rows[i].r > rows[j].r
+	})
+	for _, row := range rows {
+		if row.g >= 2 {
+			return row.c, true
+		}
+	}
+	return Candidate{}, false
 }

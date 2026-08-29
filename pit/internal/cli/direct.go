@@ -12,6 +12,7 @@ import (
 	"github.com/mohamedwael201193/pit/internal/config"
 	"github.com/mohamedwael201193/pit/internal/hl"
 	"github.com/mohamedwael201193/pit/internal/keyring"
+	"github.com/mohamedwael201193/pit/internal/skills"
 )
 
 func challengePath(dir, workspace string) string {
@@ -254,11 +255,15 @@ func RunWorkspaceResearchStage(dir, coin string, stage compute.StageFn, stop fun
 	if !allowed {
 		return compute.AskReport{}, fmt.Errorf("asset_not_allowed")
 	}
-	snap, err := hl.New(config.For(net)).PublicBook(want)
+	client := hl.New(config.For(net))
+	snap, err := client.PublicBook(want)
 	if err != nil || snap.MarkPx <= 0 {
 		return compute.AskReport{}, fmt.Errorf("empty_envelope")
 	}
-	market, err := compute.MarketJSON(snap)
+	facts := skills.Apply(snap, hostCandles(client.Candles(want, "1h", 24*time.Hour)))
+	market, err := compute.MarketJSON(map[string]any{
+		"book": snap, "skills": facts, "skillIds": skills.IDs(facts),
+	})
 	if err != nil {
 		return compute.AskReport{}, err
 	}

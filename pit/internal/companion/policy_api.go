@@ -1,13 +1,18 @@
 package companion
 
 import (
-	"strconv"
+	"encoding/json"
+	"io"
+	"net/http"
 	"strings"
+	"time"
 
 	"github.com/mohamedwael201193/pit/internal/cli"
 	"github.com/mohamedwael201193/pit/internal/config"
+	"github.com/mohamedwael201193/pit/internal/feasibility"
 	"github.com/mohamedwael201193/pit/internal/hl"
 	"github.com/mohamedwael201193/pit/internal/policy"
+	"github.com/mohamedwael201193/pit/internal/session"
 	"github.com/mohamedwael201193/pit/internal/watch"
 )
 
@@ -28,9 +33,11 @@ func (h *Hub) policyPublic(consequences []string) map[string]any {
 	if consequences == nil {
 		consequences = []string{}
 	}
+	allow, refuse := policy.AllowedRefused(p)
 	return map[string]any{
 		"ok": true, "pinned": pinned, "hash": hash, "version": p.Version, "workspace": workspace,
 		"policy": p, "cards": rows, "consequences": consequences,
+		"allowed": allow, "refused": refuse,
 		"assets": policy.HostAssets, "clipFloor": policy.ClipFloorUSD, "clipCeil": policy.ClipCeilUSD,
 		"leverageLocked": 1, "venues": []string{"hyperliquid"}, "marketTypes": []string{"perp"},
 		"mutate": false, "sign": false, "trade": false,
@@ -38,34 +45,119 @@ func (h *Hub) policyPublic(consequences []string) map[string]any {
 	}
 }
 
-func (h *Hub) availableUSD() float64 {
+func (h *Hub) sessionAliveNow() bool {
+	st, err := cli.Load(h.Dir)
+	if err != nil || st.Kill {
+		return false
+	}
+	sf, serr := cli.LoadSession(h.Dir)
+	if serr != nil {
+		return false
+	}
+	return session.Alive(sf.Meta().Session(), time.Now().UnixMilli())
+}
+
+func (h *Hub) policyPinnedNow() bool {
+	st, err := cli.Load(h.Dir)
+	if err != nil {
+		return false
+	}
+	return cli.CheckPinned(h.Dir, st.WorkspaceID, cli.ActivePolicy(h.Dir)) == nil
+}
+
+func (h *Hub) capitalNow() feasibility.Account {
 	st, err := cli.Load(h.Dir)
 	if err != nil || strings.TrimSpace(st.Wallet) == "" {
-		return 0
+		return feasibility.Account{PowerSource: "unbound", Note: "This computer is not bound. Capital is unread."}
 	}
 	net, nerr := config.ParseNetwork(st.Network)
 	if nerr != nil {
-		return 0
+		return feasibility.Account{PowerSource: "wrong_network", Note: "Wrong network. Capital stays unread."}
 	}
-	_, acct, perr := hl.New(config.For(net)).Clearinghouse(st.Wallet)
-	if perr != nil {
-		return 0
+	got, err := hl.New(config.For(net)).Capital(st.Wallet)
+	if err != nil {
+		return feasibility.Account{PowerSource: "venue_unread", Note: "Hyperliquid did not return capital. PIT will not invent balances."}
 	}
-	v, _ := strconv.ParseFloat(strings.TrimSpace(acct.Withdrawable), 64)
-	return v
+	return feasibility.FromCapital(got)
 }
 
-func annotateExec(view watch.PublicView, open int, avail float64, pol policy.Policy) watch.PublicView {
-	block, why := policy.ExecWhy(open, avail, pol)
-	view.ExecGate = block
-	view.ExecWhy = why
-	for i := range view.Coins {
-		view.Coins[i].ExecGate = block
-		view.Coins[i].ExecWhy = why
+func (h *Hub) availableUSD() float64 {
+	return h.capitalNow().BuyingPower
+}
+
+func (h *Hub) annotateWatch(view watch.PublicView, pol policy.Policy) watch.PublicView {
+	acct := h.capitalNow()
+	if acct.OpenPositions == 0 {
+		acct.OpenPositions = h.openPositionCount()
 	}
-	if view.Best != nil {
-		view.Best.ExecGate = block
-		view.Best.ExecWhy = why
+	return watch.ApplyCapital(view, acct, pol, h.sessionAliveNow(), h.policyPinnedNow())
+}
+
+func (h *Hub) opportunityConsequences(draft policy.Policy) []string {
+	lines := []string{}
+	acct := h.capitalNow()
+	st, err := cli.Load(h.Dir)
+	netName := "mainnet"
+	if err == nil && strings.TrimSpace(st.Network) != "" {
+		netName = st.Network
 	}
-	return view
+	net, nerr := config.ParseNetwork(netName)
+	if nerr != nil {
+		return lines
+	}
+	cands, lerr := watch.LiveUniverse(hl.New(config.For(net)), policy.Clamp(draft))
+	if lerr != nil {
+		return lines
+	}
+	exec, research := []string{}, []string{}
+	sess, pin := h.sessionAliveNow(), true
+	for _, c := range cands {
+		f := feasibility.FitBook(c.Book, policy.Clamp(draft), acct, sess, pin)
+		if f.ExecutionFeasible {
+			exec = append(exec, c.Coin)
+		} else if f.PolicyEligible || f.ResearchEligible {
+			research = append(research, c.Coin)
+		}
+	}
+	if len(exec) > 12 {
+		exec = exec[:12]
+	}
+	if len(research) > 12 {
+		research = research[:12]
+	}
+	if len(exec) == 0 {
+		lines = append(lines, "No current live book is execution-feasible under this draft and this account. Research can still run. PIT will not invent size.")
+	} else {
+		lines = append(lines, "Would become executable with this account: "+strings.Join(exec, ", ")+".")
+	}
+	if len(research) > 0 {
+		lines = append(lines, "Would stay research-only or blocked: "+strings.Join(research, ", ")+".")
+	}
+	if acct.Note != "" {
+		lines = append(lines, acct.Note)
+	}
+	return lines
+}
+
+func decodePolicyBody(r *http.Request, fallback policy.Policy) policy.Policy {
+	if r == nil || r.Body == nil {
+		return fallback
+	}
+	raw, err := io.ReadAll(r.Body)
+	if err != nil || len(raw) == 0 {
+		return fallback
+	}
+	var body policy.Policy
+	_ = json.Unmarshal(raw, &body)
+	var wrap struct {
+		Policy policy.Policy `json:"policy"`
+	}
+	_ = json.Unmarshal(raw, &wrap)
+	if wrap.Policy.MaxClipUSD > 0 {
+		return wrap.Policy
+	}
+	if body.MaxClipUSD > 0 {
+		return body
+	}
+	return fallback
 }

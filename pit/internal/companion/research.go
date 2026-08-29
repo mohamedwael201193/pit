@@ -427,7 +427,10 @@ func (h *Hub) cancelled() bool {
 func (h *Hub) beginResearch(coin string) {
 	want := strings.ToUpper(strings.TrimSpace(coin))
 	if want == "" {
-		want = "ETH"
+		want = h.pickBestCoin()
+	}
+	if want == "" {
+		return
 	}
 	h.researchMu.Lock()
 	if h.job.running {
@@ -516,6 +519,26 @@ func (h *Hub) execResearch(coin string) {
 		Action: "research", Status: kind, JobID: h.job.ID, PreviewHash: h.job.previewHash, Reason: h.job.deny, Link: book,
 	})
 	if namedRolesVerified(h.job.roles) {
+		appendActivity(h.Dir, activityEvent{
+			WorkspaceID: workspaceID(h.Dir), Kind: "research.sealed", Market: h.job.coin,
+			Action: "seal", Status: "ok", JobID: h.job.ID, PreviewHash: h.job.previewHash, Link: book,
+		})
+		for _, rm := range h.job.roles {
+			role := strings.ToLower(strings.TrimSpace(fmtString(rm["role"])))
+			ver := strings.TrimSpace(fmtString(rm["verify_e2ee"]))
+			if role == "" || !strings.EqualFold(ver, "OK") {
+				continue
+			}
+			appendActivity(h.Dir, activityEvent{
+				WorkspaceID: workspaceID(h.Dir), Kind: role + ".verified", Market: h.job.coin,
+				Action: role, Status: ver, JobID: h.job.ID, PreviewHash: h.job.previewHash, Link: book,
+			})
+		}
+		appendActivity(h.Dir, activityEvent{
+			WorkspaceID: workspaceID(h.Dir), Kind: "tee.verified", Market: h.job.coin,
+			Action: "tee", Status: "VerifyE2EE", JobID: h.job.ID, PreviewHash: h.job.previewHash,
+			Reason: committeeReason(h.job.roles), Link: book,
+		})
 		appendActivity(h.Dir, activityEvent{
 			WorkspaceID: workspaceID(h.Dir), Kind: "committee.verified", Market: h.job.coin,
 			Action: "committee", Status: kind, JobID: h.job.ID, PreviewHash: h.job.previewHash,

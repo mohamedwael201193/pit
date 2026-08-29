@@ -26,6 +26,9 @@ import {
   pairCode,
   pinLocalPolicy,
   fetchPolicy,
+  previewPolicy,
+  fetchDemo,
+  setDemoMode,
   postMission,
   prettyCode,
   researchEvidence,
@@ -64,7 +67,7 @@ import { BootGate } from "./BootGate";
 import { CommandPalette } from "./CommandPalette";
 import { ThreadRail } from "./ThreadRail";
 import { DeskHome } from "./DeskHome";
-import { WatchBook } from "./WatchBook";
+import { WatchBook, type MarketCoin } from "./WatchBook";
 import { ResearchBoard } from "./ResearchBoard";
 import { askNotify, deskNotify } from "./notify";
 import { DESKTOP_VERSION } from "./version";
@@ -72,7 +75,7 @@ import { DESKTOP_VERSION } from "./version";
 type Net = "mainnet" | "testnet";
 type View = "home" | "chat" | "markets" | "research" | "portfolio" | "activity" | "automation" | "security";
 
-type Coin = { coin: string; reason: string; why?: string; trend?: string; rank?: number; freshness?: string; mark: number; eligible?: boolean; oracle?: number; funding?: number; openInterest?: number; volume?: number; timestamp?: string; venue?: string; policyFit?: string; riskFlags?: string[]; provenance?: string; block?: string; execGate?: string; execWhy?: string };
+type Coin = MarketCoin;
 
 function mapView(v: string): View {
   if (v === "watch" || v === "markets") return "markets";
@@ -190,6 +193,12 @@ export function App() {
   const [summary, setSummary] = useState<AccountSummary>({});
   const [hostPolicy, setHostPolicy] = useState<HostPolicy | null>(null);
   const [policyConsequences, setPolicyConsequences] = useState<string[]>([]);
+  const [policyAllowed, setPolicyAllowed] = useState<string[]>([]);
+  const [policyRefused, setPolicyRefused] = useState<string[]>([]);
+  const [capitalNote, setCapitalNote] = useState("");
+  const [buyingPower, setBuyingPower] = useState<number | undefined>(undefined);
+  const [powerSource, setPowerSource] = useState("");
+  const [demoReplay, setDemoReplay] = useState(false);
   const [autoPrefs, setAutoPrefs] = useState<AutoPrefs>({ watch: true, notify: true, auto_research: false, cadence_minutes: 15, trigger: "policy_pass" });
   const [mission, setMission] = useState<MissionPublic>({ mode: "manual", mission: { mode: "manual" } });
   const [confirmHours, setConfirmHours] = useState(8);
@@ -392,9 +401,12 @@ export function App() {
         fetchWatch(net)
           .then((body) => {
             if (gone || body.sign || body.trade) return;
-            setCoins(Array.isArray(body.coins) ? body.coins : []);
+            setCoins((Array.isArray(body.coins) ? body.coins : []) as Coin[]);
             if (body.bestWhy) setBestWhy(body.bestWhy);
             if (typeof body.scanned === "number") setScanned(body.scanned);
+            if (body.capitalNote) setCapitalNote(body.capitalNote);
+            if (typeof body.buyingPower === "number") setBuyingPower(body.buyingPower);
+            if (body.powerSource) setPowerSource(body.powerSource);
           })
           .catch(() => {
             if (!gone) setCoins([]);
@@ -423,6 +435,11 @@ export function App() {
           if (gone || !p.policy) return;
           setHostPolicy(p.policy);
           if (typeof p.pinned === "boolean") setPinned(p.pinned);
+          if (p.allowed) setPolicyAllowed(p.allowed);
+          if (p.refused) setPolicyRefused(p.refused);
+        });
+        void fetchDemo().then((d) => {
+          if (!gone) setDemoReplay(d.pref === "replay");
         });
         void fetchSecurity().then((d) => {
           if (!gone) setSecurityDomains(d);
@@ -968,6 +985,7 @@ export function App() {
               <span className={status?.wallet ? "chip ok" : "chip"}>
                 Account {status?.wallet ? `${status.wallet.slice(0, 6)}…${status.wallet.slice(-4)}` : "unbound"}
               </span>
+              <span className={demoReplay ? "chip fail" : "chip ok"}>{demoReplay ? "REPLAY" : "LIVE"}</span>
             </div>
             <NetworkToggle net={net} onChange={setNet} />
             {walletCheck?.ok ? null : (
@@ -1100,7 +1118,7 @@ export function App() {
               researchStage={researchStage}
               researchKind={researchKind}
               awaitingAuth={Boolean(preview?.eligible)}
-              coins={eligible}
+              coins={coins}
               lastEvent={activity.length ? eventLine(activity[activity.length - 1]) : undefined}
               mode={status?.mode || mission.mode}
               exposure={summary.totalNtlPos || summary.accountValue}
@@ -1118,6 +1136,9 @@ export function App() {
             execWhy={summary.execWhy}
             computeReady={Boolean(checks.find((c) => c.name === "direct_credit")?.ok)}
             researchBusy={researchBusy}
+            capitalNote={capitalNote || summary.capitalNote}
+            buyingPower={buyingPower ?? Number(summary.buyingPower || 0)}
+            powerSource={powerSource || summary.powerSource}
             onResearch={(c) => void researchThis(c)}
           />
         ) : null}
@@ -1183,6 +1204,19 @@ export function App() {
             <p className="eyebrow">Activity</p>
             <h1>Evidence trail</h1>
             <p className="lead">Market scan, research, committee, policy, preview hash, execution, OID, fill, receipt. Historical fills never appear inside a new preview.</p>
+            <p className={demoReplay ? "err" : "fine"} role="status">
+              {demoReplay ? "DEMO REHEARSAL — recorded real evidence, not live." : "Live desk. Replay is labeled separately."}
+            </p>
+            <button
+              type="button"
+              className="linkish"
+              onClick={() => {
+                const next = demoReplay ? "live" : "replay";
+                void setDemoMode(next).then((r) => setDemoReplay(r.mode === "replay"));
+              }}
+            >
+              {demoReplay ? "Exit rehearsal" : "Replay recorded evidence"}
+            </button>
             <ProofTimeline />
             <ActivityTimeline events={activity} lastOid={lastOid} lastOrder={status?.lastOrder} />
           </main>
@@ -1239,13 +1273,21 @@ export function App() {
             policy={hostPolicy}
             pinned={pinned}
             consequences={policyConsequences}
+            allowed={policyAllowed}
+            refused={policyRefused}
             identityNote={identityNote}
             calibCopy={calibCopy}
             updateNote={updateNote}
             restartAllowed={restartAllowed}
             busy={bindBusy}
             onSession={() => void onSession()}
-            onPolicyPreview={() => undefined}
+            onPolicyPreview={(p) => {
+              void previewPolicy(p).then((r) => {
+                if (r.consequences) setPolicyConsequences(r.consequences);
+                if (r.allowed) setPolicyAllowed(r.allowed);
+                if (r.refused) setPolicyRefused(r.refused);
+              });
+            }}
             onPolicyPin={(p) => void onPolicy(p)}
             onCheck={() => void onCheck()}
             onRevoke={() => void onRevoke()}

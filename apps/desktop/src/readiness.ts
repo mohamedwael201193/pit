@@ -75,5 +75,19 @@ export function probes(checks: DoctorCheck[], status: LocalStatus | null, compan
   const local: Probe = companionUp
     ? { id: "local", label: "Local companion", state: "ok", detail: status?.version ? `PIT ${status.version}` : "Loopback companion is up." }
     : { id: "local", label: "Local companion", state: "waiting", detail: "Waiting for 127.0.0.1:17373." };
-  return [local, wallet, hl, direct, tee, storage, policy, session, agent];
+  const chain = fromCheck("0g_rpc", "0G Chain", checkNamed(checks, "0g_rpc"), "Aristotle RPC not reached.");
+  const compute = fromCheck("direct_credit", "0G compute", checkNamed(checks, "direct_credit"), "Private compute credit not confirmed.");
+  const kill: Probe = status?.kill
+    ? { id: "kill", label: "Kill switch", state: "fail", detail: "Kill switch is on. Discovery continues. AUTHORIZE stays off." }
+    : { id: "kill", label: "Kill switch", state: "ok", detail: "Kill switch is off. Host law still sizes and gates every order." };
+  const execution: Probe =
+    policy.state === "ok" && session.state === "ok" && agent.state === "ok" && kill.state === "ok"
+      ? { id: "execution", label: "Execution readiness", state: "ok", detail: "Pinned policy, live session, and Hyperliquid agent. AUTHORIZE still required." }
+      : {
+          id: "execution",
+          label: "Execution readiness",
+          state: "waiting",
+          detail: "Pin policy, approve the PIT agent, and keep a live session. Chat cannot skip this.",
+        };
+  return [local, wallet, hl, direct, compute, tee, storage, chain, policy, session, agent, execution, kill];
 }

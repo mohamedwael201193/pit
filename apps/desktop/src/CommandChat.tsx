@@ -1,6 +1,7 @@
 import { FormEvent, useEffect, useRef, useState } from "react";
 import {
-  sendDeskCommand,
+  streamDeskCommand,
+  pickChatModel,
   fetchChatLog,
   fetchModelCatalog,
   type ChatMessage,
@@ -21,7 +22,11 @@ const PROMPTS = [
   "Stop autonomy.",
   "What is PIT doing?",
   "What did PIT trade today?",
-  "Show me the proof for that trade.",
+  "Show my risk.",
+  "Show my evidence.",
+  "What changed since last scan?",
+  "Prepare this trade.",
+  "Explain this exact preview.",
 ];
 
 export function CommandChat({
@@ -65,6 +70,8 @@ export function CommandChat({
   const [privateModels, setPrivate] = useState<DirectModel[]>([]);
   const [otherModels, setOther] = useState<DirectModel[]>([]);
   const [unsupported, setUnsupported] = useState<DirectModel[]>([]);
+  const [catalog, setCatalog] = useState<DirectModel[]>([]);
+  const [catalogNote, setCatalogNote] = useState("");
   const [modelOpen, setModelOpen] = useState(false);
   const [picked, setPicked] = useState<DirectModel | null>(null);
   const [lastUser, setLastUser] = useState("");
@@ -89,8 +96,11 @@ export function CommandChat({
       setPrivate(c.private_verified);
       setOther(c.other_chat);
       setUnsupported(c.unsupported);
+      setCatalog(c.official_catalog || []);
+      setCatalogNote(c.catalog_note || "");
       const host = c.other_chat.find((m) => m.model === "host-parsed");
-      setPicked(host || c.private_verified[0] || c.models[0] || null);
+      const remembered = [...c.other_chat, ...c.private_verified, ...(c.official_catalog || [])].find((m) => m.model === c.picked);
+      setPicked(remembered || host || c.private_verified[0] || c.models[0] || null);
     });
     return () => {
       gone = true;
@@ -110,11 +120,28 @@ export function CommandChat({
     abort.current?.abort();
     const ac = new AbortController();
     abort.current = ac;
+    const streamIdx = { n: -1 };
     try {
-      const r = await sendDeskCommand(text, thread, ac.signal);
+      setLines((cur) => {
+        streamIdx.n = cur.length;
+        return [...cur, { role: "pit", text: "", ts: Date.now(), thread }];
+      });
+      const r = await streamDeskCommand(text, thread, picked?.model || "host-parsed", ac.signal, (delta) => {
+        setLines((cur) => {
+          const next = [...cur];
+          const i = streamIdx.n >= 0 ? streamIdx.n : next.length - 1;
+          if (next[i]?.role === "pit") next[i] = { ...next[i], text: (next[i].text || "") + delta };
+          return next;
+        });
+      });
       if (ac.signal.aborted) return;
       const reply = r.reply || r.error || "PIT could not complete that command.";
-      setLines((cur) => [...cur, { role: "pit", text: reply, tool: r.tool, ts: Date.now(), thread, coin: r.coin }]);
+      setLines((cur) => {
+        const next = [...cur];
+        const i = streamIdx.n >= 0 ? streamIdx.n : next.length - 1;
+        if (next[i]?.role === "pit") next[i] = { ...next[i], text: reply, tool: r.tool, coin: r.coin };
+        return next;
+      });
       applyReply(r);
     } catch (e) {
       if (ac.signal.aborted) return;
@@ -175,12 +202,17 @@ export function CommandChat({
                 <p className="fine">No verified Direct SKU on this network.</p>
               ) : (
                 privateModels.map((m) => (
-                  <ModelRow key={m.model} m={m} picked={picked} onPick={() => { setPicked(m); setModelOpen(false); }} />
+                  <ModelRow key={m.model} m={m} picked={picked} onPick={() => { setPicked(m); setModelOpen(false); void pickChatModel(m.model || "host-parsed"); }} />
                 ))
               )}
               <p className="label">General chat</p>
               {otherModels.map((m) => (
-                <ModelRow key={m.model} m={m} picked={picked} onPick={() => { setPicked(m); setModelOpen(false); }} />
+                <ModelRow key={m.model} m={m} picked={picked} onPick={() => { setPicked(m); setModelOpen(false); void pickChatModel(m.model || "host-parsed"); }} />
+              ))}
+              <p className="label">Official catalog (listing only)</p>
+              <p className="fine">{catalogNote || "Listed SKUs are not inference paths. Private book stays Direct TeeML."}</p>
+              {catalog.slice(0, 31).map((m) => (
+                <ModelRow key={m.model} m={m} picked={picked} onPick={() => { setPicked(m); setModelOpen(false); void pickChatModel(m.model || "host-parsed"); }} />
               ))}
               <p className="label">Unsupported for private research</p>
               {unsupported.map((m) => (

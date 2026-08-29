@@ -86,6 +86,10 @@ func TestExecWhyOpenCeiling(t *testing.T) {
 	if block != "" || why != "" {
 		t.Fatalf("%s %s", block, why)
 	}
+	block, _ = ExecWhy(0, 0, p)
+	if block != "insufficient_margin" {
+		t.Fatalf("zero power %s", block)
+	}
 }
 
 func TestDiffMentionsOpenCeiling(t *testing.T) {

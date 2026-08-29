@@ -1,6 +1,7 @@
 package companion
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -22,6 +23,8 @@ import (
 	"github.com/mohamedwael201193/pit/internal/session"
 	"github.com/mohamedwael201193/pit/internal/version"
 )
+
+var fetchOfficialCatalog = compute.ListOfficialCatalog
 
 func (h *Hub) localActivity(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
@@ -102,7 +105,8 @@ func (h *Hub) localPositions(w http.ResponseWriter, r *http.Request) {
 	if av, aerr := c.Account(user); aerr == nil {
 		spot = av
 	}
-	avail, _ := strconv.ParseFloat(strings.TrimSpace(acct.Withdrawable), 64)
+	cap := h.capitalNow()
+	avail := cap.BuyingPower
 	gate, why := policy.ExecWhy(openN, avail, pol)
 	writeLocal(w, http.StatusOK, map[string]any{
 		"ok": true, "account": user, "queried": "master", "positions": out, "sign": false, "trade": false,
@@ -110,8 +114,11 @@ func (h *Hub) localPositions(w http.ResponseWriter, r *http.Request) {
 		"summary": map[string]any{
 			"accountValue": acct.AccountValue, "totalMarginUsed": acct.TotalMarginUsed,
 			"totalNtlPos": acct.TotalNtlPos, "withdrawable": acct.Withdrawable,
-			"spotUsdc": fmt.Sprintf("%.4f", spot.SpotUSDC), "perpValue": fmt.Sprintf("%.4f", spot.PerpValue),
+			"spotUsdc": fmt.Sprintf("%.4f", cap.SpotUSDC), "perpValue": fmt.Sprintf("%.4f", cap.PerpEquity),
+			"spotFree": fmt.Sprintf("%.4f", cap.SpotFree), "buyingPower": fmt.Sprintf("%.4f", cap.BuyingPower),
+			"powerSource": cap.PowerSource, "abstraction": cap.Abstraction, "openOrders": cap.OpenOrders,
 			"fundingState": string(spot.State), "openCount": openN, "execGate": gate, "execWhy": why,
+			"capitalNote":   cap.Note,
 			"policyClipUsd": pol.MaxClipUSD, "maxOpenPositions": pol.MaxOpenPositions, "maxLeverage": pol.MaxLeverage,
 		},
 	})
@@ -124,6 +131,7 @@ func (h *Hub) localChat(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		Text   string `json:"text"`
 		Thread string `json:"thread"`
+		Model  string `json:"model"`
 	}
 	_ = json.NewDecoder(r.Body).Decode(&body)
 	thread := strings.TrimSpace(body.Thread)
@@ -153,12 +161,20 @@ func (h *Hub) localChat(w http.ResponseWriter, r *http.Request) {
 		}
 		parsed.Reply = parsed.Reply + " Chat cannot AUTHORIZE. The desk will start the sealed job on this computer."
 	}
+	picked := strings.TrimSpace(body.Model)
+	if picked == "" {
+		picked = loadChatModel(h.Dir)
+	}
+	if note := h.chatModelHonesty(firstNonEmpty(picked, loadChatModel(h.Dir))); note != "" {
+		parsed.Reply = parsed.Reply + "\n\n" + note
+	}
 	appendChatThread(h.Dir, "user", body.Text, "", thread)
 	appendChatThread(h.Dir, "pit", parsed.Reply, parsed.Tool, thread)
 	writeLocal(w, http.StatusOK, map[string]any{
 		"ok": true, "reply": parsed.Reply, "tool": parsed.Tool, "mutate": parsed.Mutate,
 		"execute": false, "start_research": parsed.StartResearch, "coin": parsed.Coin,
-		"navigate": parsed.Navigate, "open_url": parsed.OpenURL, "thread": thread, "hours": parsed.Hours, "sign": false, "trade": false,
+		"navigate": parsed.Navigate, "open_url": parsed.OpenURL, "thread": thread, "hours": parsed.Hours,
+		"model": picked, "stream": false, "sign": false, "trade": false,
 	})
 }
 
@@ -240,17 +256,40 @@ func (h *Hub) localSecurity(w http.ResponseWriter, r *http.Request) {
 		teeState = "BLOCKED"
 		teeWhy = tee.Detail
 	}
+	cap := h.capitalNow()
+	execState, execWhy := "READY", "Host can size a clip if policy, session, and venue minimum pass."
+	if cap.BuyingPower+1e-9 < 10 {
+		execState = "BLOCKED"
+		execWhy = cap.Note
+		if execWhy == "" {
+			execWhy = "Available margin is below the $10 Hyperliquid minimum. PIT will not invent size."
+		}
+	}
+	killOn := false
+	if st, err := cli.Load(h.Dir); err == nil {
+		killOn = st.Kill
+	}
+	killState, killWhy := "READY", "Kill switch is off."
+	if killOn {
+		killState = "BLOCKED"
+		killWhy = "Kill switch is on. AUTHORIZE is refused. Positions are not flattened."
+	}
+	chain := named["0g_rpc"]
 	writeLocal(w, http.StatusOK, map[string]any{
 		"domains": []map[string]any{
 			securityDomain("wallet", named["wallet"], "Connect wallet", "Open pairing"),
-			{"id": "compute", "state": map[bool]string{true: "READY", false: "NEEDS ACTION"}[named["direct_auth"].OK], "why": named["direct_auth"].Detail, "means": "Sealed research needs Protect my strategy and Direct funds.", "do": "Protect my strategy, then Open 0G Private Compute", "href": "https://pc.0g.ai/sdk/dashboard/funds", "hrefLabel": "Open 0G Private Compute"},
-			{"id": "tee", "state": teeState, "why": teeWhy, "means": "VerifyE2EE must match the on-chain signer after a committee.", "do": "Run sealed research when compute is ready", "href": "", "hrefLabel": ""},
-			{"id": "hyperliquid", "state": map[bool]string{true: "READY", false: "NEEDS ACTION"}[named["hl_agent"].OK], "why": named["hl_agent"].Detail, "means": "Hyperliquid must list the PIT agent. PIT cannot withdraw.", "do": "Approve PIT on Hyperliquid", "href": "https://app.hyperliquid.xyz/API", "hrefLabel": "Open Hyperliquid API"},
-			{"id": "session", "state": map[bool]string{true: "READY", false: "NEEDS ACTION"}[sessionAlive], "why": "Local order/cancel session on this computer.", "means": "PIT still cannot withdraw.", "do": "Create / refresh secure session", "href": "", "hrefLabel": "Create session"},
-			securityDomain("policy", named["policy"], "Pin policy", "Open Policy"),
-			securityDomain("storage", named["storage"], "Install official storage client", "Open documentation"),
-			{"id": "identity", "state": "READY", "why": "Desk identity is optional. Transfer of Agentic ID is not live on mainnet.", "means": "Trading does not wait on mint.", "do": "None required", "href": "", "hrefLabel": ""},
 			{"id": "workspace", "state": "READY", "why": "This computer’s workspace is isolated by wallet.", "means": "Another wallet cannot read this session.", "do": "", "href": "", "hrefLabel": ""},
+			{"id": "compute", "state": map[bool]string{true: "READY", false: "ACTION REQUIRED"}[named["direct_auth"].OK], "why": named["direct_auth"].Detail, "means": "Sealed research needs Protect my strategy and Direct funds.", "do": "Protect my strategy, then Open 0G Private Compute", "href": "https://pc.0g.ai/sdk/dashboard/funds", "hrefLabel": "Open 0G Private Compute"},
+			{"id": "tee", "state": teeState, "why": teeWhy, "means": "VerifyE2EE must match the on-chain signer after a committee.", "do": "Run sealed research when compute is ready", "href": "", "hrefLabel": ""},
+			securityDomain("storage", named["storage"], "Install official storage client", "Open documentation"),
+			{"id": "chain", "state": map[bool]string{true: "READY", false: "UNAVAILABLE"}[chain.OK], "why": chain.Detail, "means": "0G Chain is required to anchor receipts.", "do": "Check 0G RPC", "href": "https://chainscan.0g.ai", "hrefLabel": "Open 0G explorer"},
+			{"id": "hyperliquid", "state": map[bool]string{true: "READY", false: "ACTION REQUIRED"}[named["hyperliquid"].OK], "why": named["hyperliquid"].Detail, "means": "Live books come from Hyperliquid info.", "do": "Retry live book", "href": "https://app.hyperliquid.xyz", "hrefLabel": "Open Hyperliquid"},
+			{"id": "hl_agent", "state": map[bool]string{true: "READY", false: "ACTION REQUIRED"}[named["hl_agent"].OK], "why": named["hl_agent"].Detail, "means": "Hyperliquid must list the PIT agent. PIT cannot withdraw.", "do": "Approve PIT on Hyperliquid", "href": "https://app.hyperliquid.xyz/API", "hrefLabel": "Open Hyperliquid API"},
+			{"id": "session", "state": map[bool]string{true: "READY", false: "ACTION REQUIRED"}[sessionAlive], "why": "Local order/cancel session on this computer.", "means": "PIT still cannot withdraw.", "do": "Create / refresh secure session", "href": "", "hrefLabel": "Create session"},
+			securityDomain("policy", named["policy"], "Pin policy", "Open Policy"),
+			{"id": "execution", "state": execState, "why": execWhy, "means": "Host sizes from real available margin. Spot is not silently treated as perp margin.", "do": "Fund perp margin or enable unified account on Hyperliquid", "href": "https://app.hyperliquid.xyz", "hrefLabel": "Open Hyperliquid"},
+			{"id": "kill", "state": killState, "why": killWhy, "means": "YOU flip this. The model cannot.", "do": "Toggle kill on Security", "href": "", "hrefLabel": ""},
+			{"id": "identity", "state": "READY", "why": "Desk identity is optional. Transfer of Agentic ID is not live on mainnet.", "means": "Trading does not wait on mint.", "do": "None required", "href": "", "hrefLabel": ""},
 		},
 		"sign": false, "trade": false, "version": version.Number,
 	})
@@ -400,6 +439,21 @@ func readChatThread(dir, thread string, limit int) []chatLine {
 }
 
 func (h *Hub) localModels(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodPost {
+		if !desktopOnly(w, r) {
+			return
+		}
+		var body struct {
+			Model string `json:"model"`
+		}
+		_ = json.NewDecoder(r.Body).Decode(&body)
+		if err := saveChatModel(h.Dir, body.Model); err != nil {
+			writeBindErr(w, err)
+			return
+		}
+		writeLocal(w, http.StatusOK, map[string]any{"ok": true, "picked": loadChatModel(h.Dir), "sign": false, "trade": false})
+		return
+	}
 	if r.Method != http.MethodGet {
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
@@ -445,22 +499,42 @@ func (h *Hub) localModels(w http.ResponseWriter, r *http.Request) {
 		"note": "Desk chat is host-parsed on this computer. It is not a sealed model and cannot AUTHORIZE.",
 	}
 	other = append(other, hostChat)
+	ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
+	defer cancel()
+	catalog, catalogErr := fetchOfficialCatalog(ctx)
+	official := make([]map[string]any, 0, len(catalog))
+	for _, e := range catalog {
+		official = append(official, map[string]any{
+			"model": e.ID, "name": e.Name, "label": e.Name, "path": e.Path,
+			"verifiability": e.Verifiability, "private_book": false, "proven_e2ee": false,
+			"capability": e.UsableFor, "note": e.Note, "type": e.Type,
+			"provider_count": e.ProviderCount, "tee_attested": e.TeeAttested,
+		})
+	}
 	unsupported := []map[string]any{{
 		"model": "public-catalog", "label": "Public compute catalog", "path": "unsupported",
-		"private_book": false, "proven_e2ee": false, "capability": "not used",
+		"private_book": false, "proven_e2ee": false, "capability": "listing only",
 		"note": "SKUs that only exist on the public compute catalog are unsupported for private research. PIT never routes the sealed book there.",
 	}}
 	models := private
 	if len(models) == 0 {
 		models = []map[string]any{}
 	}
+	catalogNote := "Official catalog is a listing. PIT never uses it as an inference path."
+	if catalogErr != nil {
+		catalogNote = "Official catalog listing was unreachable. Direct SKU is still listed from this computer."
+	}
 	writeLocal(w, http.StatusOK, map[string]any{
 		"ok": true, "network": string(net), "sign": false, "trade": false,
-		"note":   "Private book uses Direct only. Presence in a catalog does not make a model private.",
-		"models": models,
+		"note":          "Private book uses Direct only. Presence in a catalog does not make a model private.",
+		"models":        models,
+		"picked":        loadChatModel(h.Dir),
+		"catalog_count": len(official),
+		"catalog_note":  catalogNote,
 		"groups": map[string]any{
 			"private_verified": private,
 			"other_chat":       other,
+			"official_catalog": official,
 			"unsupported":      unsupported,
 		},
 	})

@@ -384,6 +384,14 @@ export function ResearchBoard({
             <td>—</td>
             <td>{preview?.eligible ? "Exact preview after verification." : "A stand-down is a successful research outcome."}</td>
           </tr>
+          {preview?.skillIds && preview.skillIds.length > 0 ? (
+            <tr>
+              <td>Skills</td>
+              <td className="state success">HOST</td>
+              <td>—</td>
+              <td>{preview.skillIds.join(" · ")}. Host-only. The model does not invent candle math.</td>
+            </tr>
+          ) : null}
         </tbody>
       </table>
       {!researchBusy && (explained || researchKind) ? (

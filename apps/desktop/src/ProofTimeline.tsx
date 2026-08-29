@@ -182,15 +182,36 @@ export function ProofTimeline() {
                 <div className="proof-what">
                   <p>{subject(row) || "no subject"}</p>
                   <p className="hash proof-root" title={root}>
-                    root {shortHash(root)}
+                    root {shortHash(root)}{" "}
+                    <button type="button" className="linkish" onClick={() => void navigator.clipboard.writeText(root)}>
+                      Copy
+                    </button>
                   </p>
                   <p className="hash proof-root" title={row.digest}>
-                    digest {shortHash(row.digest)}
+                    digest {shortHash(row.digest)}{" "}
+                    {row.digest ? (
+                      <button type="button" className="linkish" onClick={() => void navigator.clipboard.writeText(String(row.digest))}>
+                        Copy
+                      </button>
+                    ) : null}
+                  </p>
+                  {row.job_id ? <p className="fine">job {row.job_id}</p> : null}
+                  {row.preview_hash ? <p className="hash">preview {shortHash(row.preview_hash)}</p> : null}
+                  {row.tx ? (
+                    <p className="hash">
+                      tx {shortHash(row.tx)}{" "}
+                      <button type="button" className="linkish" onClick={() => void navigator.clipboard.writeText(String(row.tx))}>
+                        Copy
+                      </button>
+                    </p>
+                  ) : null}
+                  <p className="fine">
+                    {row.network || "0G"} · chain {row.chain_id || "—"}
                   </p>
                 </div>
                 <div className="proof-act">
                   {row.tx_link ? (
-                    <ExternalLink href={row.tx_link}>Chain transaction</ExternalLink>
+                    <ExternalLink href={row.tx_link}>Open explorer</ExternalLink>
                   ) : (
                     <span className="fine">{row.duplicate ? "bytes already stored" : "no transaction recorded"}</span>
                   )}

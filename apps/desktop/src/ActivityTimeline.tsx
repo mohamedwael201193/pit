@@ -40,6 +40,15 @@ function humanKind(kind?: string) {
   if (k.includes("mission.empty")) return "No opportunity";
   if (k.includes("mission.scan_failed")) return "Scan failed";
   if (k.includes("opportunity")) return "Opportunity found";
+  if (k === "research.sealed") return "Sealed";
+  if (k === "researcher.verified") return "Researcher verified";
+  if (k === "challenger.verified") return "Challenger verified";
+  if (k === "risk.verified") return "Risk verified";
+  if (k === "tee.verified") return "TEE verified";
+  if (k === "policy.pinned") return "Policy pinned";
+  if (k === "policy.failed" || k === "policy.fail") return "Policy fail";
+  if (k === "candidate" || k.includes("candidate")) return "Candidate";
+  if (k.includes("calibration") || k.includes("calib")) return "Calibration";
   if (k === "research.started") return "Research started";
   if (k === "research.verified") return "Research verified";
   if (k === "research.stood_down") return "Research stood down";

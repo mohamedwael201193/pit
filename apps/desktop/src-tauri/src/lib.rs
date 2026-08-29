@@ -378,7 +378,7 @@ async fn local_explain() -> Result<serde_json::Value, String> {
 
 #[tauri::command]
 async fn local_models() -> Result<serde_json::Value, String> {
-    json_get("/local/models".into(), 4).await
+    json_get("/local/models".into(), 12).await
 }
 
 #[tauri::command]
@@ -615,7 +615,7 @@ fn same_install(path: &Path) -> bool {
     path.parent().map(|p| p == dir).unwrap_or(false)
 }
 
-const SIDECAR_VERSION: &str = "0.4.2";
+const SIDECAR_VERSION: &str = "0.5.0";
 
 fn companion_version() -> Option<String> {
     let raw = loopback_get("/health").ok()?;

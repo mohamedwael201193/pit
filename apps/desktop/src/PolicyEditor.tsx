@@ -27,6 +27,8 @@ export function emptyPolicy(p?: Partial<HostPolicy> | null): HostPolicy {
 export function PolicyEditor({
   current,
   consequences,
+  allowed,
+  refused,
   pinned,
   busy,
   clipFloor = 10,
@@ -36,6 +38,8 @@ export function PolicyEditor({
 }: {
   current?: HostPolicy | null;
   consequences?: string[];
+  allowed?: string[];
+  refused?: string[];
   pinned?: boolean;
   busy?: boolean;
   clipFloor?: number;
@@ -151,6 +155,22 @@ export function PolicyEditor({
         {note.map((line) => (
           <p key={line}>{line}</p>
         ))}
+        {allowed && allowed.length ? (
+          <>
+            <p className="label">What PIT will be allowed to do</p>
+            {allowed.map((line) => (
+              <p key={line}>{line}</p>
+            ))}
+          </>
+        ) : null}
+        {refused && refused.length ? (
+          <>
+            <p className="label">What PIT will refuse</p>
+            {refused.map((line) => (
+              <p key={line}>{line}</p>
+            ))}
+          </>
+        ) : null}
       </article>
       <div className="cta-row">
         <button

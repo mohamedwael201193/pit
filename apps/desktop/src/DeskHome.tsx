@@ -13,6 +13,9 @@ type Coin = {
   trend?: string;
   mark: number;
   eligible?: boolean;
+  executionFeasible?: boolean;
+  previewReady?: boolean;
+  rankGroup?: number;
 };
 
 function Chip({ ok, label, value }: { ok: boolean; label: string; value: string }) {
@@ -69,7 +72,10 @@ export function DeskHome({
   onGo: (view: "markets" | "research" | "security" | "chat" | "automation" | "portfolio" | "activity") => void;
 }) {
   const showPair = items.find((p) => p.id === "wallet")?.state !== "ok";
-  const best = coins.find((c) => c.eligible);
+  const best =
+    coins.find((c) => c.previewReady) ||
+    coins.find((c) => c.executionFeasible) ||
+    coins.find((c) => c.eligible);
   const modeLabel = mode === "guarded" ? "Guarded Autonomy" : mode === "research_only" ? "Research Only" : "Manual";
   return (
     <main className="page dense desk-home">

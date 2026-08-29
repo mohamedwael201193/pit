@@ -10,6 +10,7 @@ import (
 	"github.com/mohamedwael201193/pit/internal/engine"
 	"github.com/mohamedwael201193/pit/internal/hl"
 	"github.com/mohamedwael201193/pit/internal/policy"
+	"github.com/mohamedwael201193/pit/internal/skills"
 )
 
 func BindResearchPreview(dir, coin string, snap hl.BookSnapshot, pol policy.Policy, st DiskState, rep compute.AskReport) compute.AskReport {
@@ -57,6 +58,7 @@ func BindResearchPreview(dir, coin string, snap hl.BookSnapshot, pol policy.Poli
 	}
 	rep.Eligible = true
 	rep.PreviewHash = hash
+	facts := skills.Apply(snap, nil)
 	rep.Preview = map[string]any{
 		"eligible":      true,
 		"market":        p.Market,
@@ -71,6 +73,8 @@ func BindResearchPreview(dir, coin string, snap hl.BookSnapshot, pol policy.Poli
 		"forecastId":    p.ForecastID,
 		"hash":          hash,
 		"notionalUsd":   got.Size.NotionalUSD,
+		"skills":        facts,
+		"skillIds":      skills.IDs(facts),
 	}
 	return rep
 }

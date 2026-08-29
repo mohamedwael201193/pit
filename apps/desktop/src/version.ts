@@ -1,1 +1,1 @@
-export const DESKTOP_VERSION = "0.4.2";
+export const DESKTOP_VERSION = "0.5.0";

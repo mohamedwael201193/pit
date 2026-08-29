@@ -31,6 +31,8 @@ export function SecurityCenter({
   policy,
   pinned,
   consequences,
+  allowed,
+  refused,
   identityNote,
   calibCopy,
   updateNote,
@@ -57,6 +59,8 @@ export function SecurityCenter({
   policy?: HostPolicy | null;
   pinned?: boolean;
   consequences?: string[];
+  allowed?: string[];
+  refused?: string[];
   identityNote?: string;
   calibCopy?: string;
   updateNote?: string;
@@ -150,6 +154,8 @@ export function SecurityCenter({
       <PolicyEditor
         current={policy}
         consequences={consequences}
+        allowed={allowed}
+        refused={refused}
         pinned={pinned}
         busy={busy}
         onPreview={onPolicyPreview}
