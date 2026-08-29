@@ -2101,7 +2101,7 @@ GOAL: [PIT UX live demo audit](d12538be-80fa-4b8f-90ed-7b5b69be10f3) still saw s
 RESULT:
 - **IMPLEMENTED:** `apps/web` Watch is one table: asset, mark, policy-eligible, why. One footer: this site cannot size or AUTHORIZE. Header copy is scanned books + policy-pass count, not six identical AUTHORIZE walls. Public `/watch` JSON `copy` field is unchanged (SDK contract).
 - **TESTED:** `go test ./internal/watch/...` and web `tsc --noEmit` after this change.
-- **LIVE VERIFIED:** after Vercel deploy, Chrome `/app` Watch.
+- **LIVE VERIFIED:** Chrome `https://pit0g.vercel.app/app?v=072b` — “232 live Hyperliquid books. 6 pass the default policy. None of these cards can trade.” Compact table SOL…BTC last. Footer: AUTHORIZE not on this website. Commit `8dfa4377a2abeb6636d34fb1bbf48fc12310476d`.
 - **UNVERIFIED / BLOCKED:** unchanged from M98.
 
 SECURITY RESULT: Web still cannot authorize, pin, or enable autonomy.
