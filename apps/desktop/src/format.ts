@@ -61,6 +61,12 @@ export function powerSourceLabel(src?: string) {
   return src.replaceAll("_", " ");
 }
 
+export function nearestVenueMin(coins: Array<{ minNotional?: number }>): number {
+  const mins = coins.map((c) => c.minNotional).filter((n): n is number => typeof n === "number" && n > 0);
+  if (!mins.length) return 10;
+  return Math.min(...mins);
+}
+
 export function accountSizeGate(have?: number, min = 10, executable = 0) {
   const h = typeof have === "number" && Number.isFinite(have) ? have : 0;
   const m = min > 0 ? min : 10;

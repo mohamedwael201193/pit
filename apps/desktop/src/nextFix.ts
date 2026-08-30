@@ -115,11 +115,11 @@ export function nextFix(
     };
   }
   const tee = items.find((p) => p.id === "tee");
-  if (tee && tee.state !== "ok") {
+  if (tee && tee.state === "fail") {
     return {
-      title: "Run sealed research",
-      why: "TEE is only proven after VerifyE2EE matches the on-chain signer on this machine.",
-      fix: "Open Research and run a live sealed request. Waiting is honest until that happens.",
+      title: "TEE verification failed",
+      why: "VerifyE2EE did not match the on-chain signer. Idle is not a failure. A failed verify is.",
+      fix: "Open Research and retry sealed research. PIT did not place an order.",
       go: "research",
       goLabel: "Open Research",
     };
@@ -128,9 +128,9 @@ export function nextFix(
   const gate = String(capital?.execGate || "");
   if (gate === "insufficient_margin" || (typeof power === "number" && power > 0 && power < 10)) {
     return {
-      title: "Fund this Hyperliquid account",
-      why: `Venue buying power is ${typeof power === "number" ? `$${power.toFixed(2)}` : "below the $10 minimum"}. PIT will not invent size. 0G compute credit is a different pile of money.`,
-      fix: capital?.execWhy || "Available venue margin is below the $10 Hyperliquid minimum notional.",
+      title: "Watching. Nothing can open.",
+      why: `This account has ${typeof power === "number" ? `$${power.toFixed(2)}` : "less than the venue floor"}. PIT will not invent size. 0G compute credit is a different pile of money.`,
+      fix: capital?.execWhy || "Available venue margin is below this market's Hyperliquid minimum.",
       href: hyperliquidApp(net),
       hrefLabel: "Open Hyperliquid",
       go: "markets",

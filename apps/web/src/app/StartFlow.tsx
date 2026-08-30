@@ -40,7 +40,7 @@ const STEPS = [
   {
     id: 2,
     title: "Get started",
-    why: "Pick MAINNET production or TESTNET lab. You'll set policy next.",
+    why: "This flagship product is MAINNET: Aristotle 16661 and Hyperliquid mainnet. The laboratory stays behind developer mode.",
     action: "Tap a card. One workspace. Never both.",
     fail: namedState("WRONG_NETWORK"),
     Diagram: DiagramMainnet,
@@ -177,7 +177,7 @@ export function StartFlow() {
               <div className="mt-10 grid gap-4 sm:grid-cols-2">
                 <ChoiceCard
                   title="MAINNET"
-                  body="Production. Aristotle and Hyperliquid mainnet. Transfer of Agentic ID is not live."
+                  body="Production. Aristotle 16661 and Hyperliquid mainnet. Transfer of Agentic ID is not live."
                   Diagram={DiagramMainnet}
                   active={net === "mainnet"}
                   onClick={() => {
@@ -185,16 +185,25 @@ export function StartFlow() {
                     next();
                   }}
                 />
-                <ChoiceCard
-                  title="TESTNET"
-                  body="Protocol laboratory. Galileo and Hyperliquid testnet. Sealed ask stays off until proven."
-                  Diagram={DiagramTestnet}
-                  active={net === "testnet"}
-                  onClick={() => {
-                    setNet("testnet");
-                    next();
-                  }}
-                />
+                {typeof window !== "undefined" && new URLSearchParams(window.location.search).get("dev") === "1" ? (
+                  <ChoiceCard
+                    title="TESTNET"
+                    body="Developer laboratory. Galileo and Hyperliquid testnet. Sealed ask stays off until proven."
+                    Diagram={DiagramTestnet}
+                    active={net === "testnet"}
+                    onClick={() => {
+                      setNet("testnet");
+                      next();
+                    }}
+                  />
+                ) : (
+                  <ChoiceCard
+                    title="Continue"
+                    body="Laboratory networks stay in PIT Desktop Help (seven clicks) and CI. This website is production."
+                    Diagram={DiagramLearn}
+                    onClick={next}
+                  />
+                )}
               </div>
               <NetworkBanner net={net} />
             </>

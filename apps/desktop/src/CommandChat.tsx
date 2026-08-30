@@ -15,6 +15,7 @@ const PROMPTS = [
   "Find the best opportunity right now.",
   "Why didn't you trade?",
   "Why is nothing executable?",
+  "Why this setup matters",
   "Research the best one.",
   "Show my evidence.",
 ];

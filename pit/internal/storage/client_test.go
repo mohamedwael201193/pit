@@ -9,6 +9,9 @@ func TestRejectUnofficialClient(t *testing.T) {
 	if err := RejectUnofficialClient("/usr/bin/0g-storage-client"); err != nil {
 		t.Fatal(err)
 	}
+	if err := RejectUnofficialClient("C:\\evil\\not-storage.exe"); err == nil {
+		t.Fatal("basename")
+	}
 }
 
 func TestDownloadMustProve(t *testing.T) {

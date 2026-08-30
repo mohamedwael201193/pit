@@ -9,6 +9,9 @@ func TestTradeDenied(t *testing.T) {
 	if TradeDenied("opportunities") || TradeDenied("market") {
 		t.Fatal("read")
 	}
+	if !TradeDenied("sealer") || !TradeDenied("post") || !TradeDenied("mission") {
+		t.Fatal("forbidden")
+	}
 	if Handle(Request{Tool: "order"}).OK {
 		t.Fatal("mcp order")
 	}

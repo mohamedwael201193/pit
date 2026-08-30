@@ -144,6 +144,11 @@ description = "Read calibration honesty. NOT ENOUGH DATA until N is enough."
 commands.allow = ["local_calibration"]
 
 [[permission]]
+identifier = "allow-local-experience"
+description = "Read verified-experience metadata. Never the memory key."
+commands.allow = ["local_experience"]
+
+[[permission]]
 identifier = "allow-local-security"
 description = "Read security domain states. Never a secret."
 commands.allow = ["local_security"]

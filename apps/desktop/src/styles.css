@@ -1048,7 +1048,8 @@ details.card > summary { cursor: pointer; font-weight: 600; letter-spacing: 0.08
   padding: 10px 12px;
   background: var(--panel);
 }
-.workflow li.on { border-color: var(--coral); }
+.workflow li.on { border-color: var(--ok); }
+.workflow li.calm { border-color: rgb(240 231 212 / 0.35); }
 .workflow span {
   display: block;
   font-size: 10px;

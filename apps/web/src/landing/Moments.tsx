@@ -36,8 +36,8 @@ const CARDS: {
   },
   {
     Diagram: DiagramLearn,
-    title: "Then it learns",
-    body: "Brier and ECE after outcomes. Until 30 resolved forecasts: not enough data.",
+    title: "Then it remembers",
+    body: "Verified cases only. Until enough outcomes: NOT ENOUGH DATA. The model did not learn this.",
   },
 ];
 

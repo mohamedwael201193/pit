@@ -39,6 +39,13 @@ func (h *Hub) decorateChat(parsed deskcmd.Result) deskcmd.Result {
 	case "watch.why_not":
 		parsed.Reply = h.replyWhyNotTrade()
 		parsed.Navigate = "automation"
+	case "experience.why":
+		coin := parsed.Coin
+		if coin == "" {
+			coin = h.pickBestCoin()
+		}
+		parsed.Reply = h.whyThisSetup(coin) + " Chat cannot AUTHORIZE. Private memory never includes the memory key."
+		parsed.Navigate = "research"
 	case "research.start", "research.best":
 		if live := h.replyWatch(parsed); live != "" {
 			parsed.Reply = live + " " + parsed.Reply
@@ -186,29 +193,60 @@ func (h *Hub) pickBestCoin() string {
 func (h *Hub) replyWhyNotTrade() string {
 	cap := h.capitalNow()
 	pol := cli.ActivePolicy(h.Dir)
-	block, why := policy.ExecWhy(h.openPositionCount(), cap.BuyingPower, pol)
 	away := auto.LoadAway(h.Dir)
-	human := auto.HumanWhy(block)
-	if human == "" {
-		human = why
-	}
-	last := ""
-	if n := len(away.Events); n > 0 {
-		ev := away.Events[n-1]
-		if ev.Human != "" {
-			last = ev.Human
-		} else {
-			last = auto.HumanWhy(ev.Why)
-		}
-		if ev.Coin != "" {
-			last = ev.Coin + ": " + last
+	m := auto.LoadMission(h.Dir)
+	p := auto.Load(h.Dir)
+	note := strings.TrimSpace(m.SearchNote)
+	if note == "" {
+		if last := p.LatestSkip(); last.Coin != "" {
+			note = auto.SearchNote(last.Coin, last.Kind, "")
 		}
 	}
-	if last == "" {
-		last = "No named refusal yet this session."
+	nextLine := "No remaining candidate qualifies under this account and law."
+	st, err := cli.Load(h.Dir)
+	netName := "mainnet"
+	if err == nil && strings.TrimSpace(st.Network) != "" {
+		netName = st.Network
 	}
-	return fmt.Sprintf("Why PIT did not trade: %s Buying power $%.2f (%s). While you were away: %d detected, %d researched, %d refused, %d autonomous trades. Latest: %s Chat cannot AUTHORIZE. PIT will not invent size.",
-		human, cap.BuyingPower, cap.PowerSource, away.Detected, away.Researched, away.Rejected, away.Traded, last)
+	if net, nerr := config.ParseNetwork(netName); nerr == nil {
+		cands, lerr := watch.LiveUniverse(hl.New(config.For(net)), pol)
+		if lerr == nil {
+			view := watch.Public(cands, string(net))
+			view = h.annotateWatch(view, pol)
+			skip := p.SkipSet(time.Now().Unix())
+			best, exe, ok := watch.NextCandidate(cands, cap, pol, h.sessionAliveNow(), h.policyPinnedNow(), skip)
+			if ok {
+				why := ""
+				for _, c := range view.Coins {
+					if strings.EqualFold(c.Coin, best.Coin) {
+						why = c.WhyExecutable
+						if why == "" {
+							why = c.ExecWhy
+						}
+						break
+					}
+				}
+				if why == "" {
+					why = "This candidate is not executable for this account."
+				}
+				layer := "not executable"
+				if exe {
+					layer = "execution-feasible"
+				}
+				nextLine = fmt.Sprintf("Next candidate %s is %s. %s", best.Coin, layer, why)
+			}
+		}
+	}
+	if note == "" {
+		block, why := policy.ExecWhy(h.openPositionCount(), cap.BuyingPower, pol)
+		human := auto.HumanWhy(block)
+		if human == "" {
+			human = why
+		}
+		note = human
+	}
+	return fmt.Sprintf("Why PIT did not trade: %s Buying power $%.2f (%s). Scan continues past a blocked or stood-down book. %s While you were away: %d detected, %d researched, %d refused, %d autonomous trades. Chat cannot AUTHORIZE. PIT will not invent size.",
+		note, cap.BuyingPower, cap.PowerSource, nextLine, away.Detected, away.Researched, away.Rejected, away.Traded)
 }
 
 func (h *Hub) replyMissionEnable() string {

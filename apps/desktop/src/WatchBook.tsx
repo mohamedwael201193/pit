@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { BrandMark } from "./BrandMark";
-import { accountSizeGate, compactNum, compactUsd, marketSizeGate, pctFunding, powerSourceLabel } from "./format";
+import { accountSizeGate, compactNum, compactUsd, marketSizeGate, nearestVenueMin, pctFunding, powerSourceLabel } from "./format";
 import { ExternalLink } from "./ExternalLink";
 
 export type MarketCoin = {
@@ -109,11 +109,11 @@ export function WatchBook({
   }, [coins, q, filter]);
   const execN = coins.filter((c) => c.executionFeasible).length;
   const passN = coins.filter((c) => c.eligible).length;
-  const venueMin = coins.find((c) => c.minNotional && c.minNotional > 0)?.minNotional || 10;
+  const venueMin = nearestVenueMin(coins);
   const have = typeof buyingPower === "number" ? buyingPower : coins[0]?.availableMargin;
   const gate = accountSizeGate(have, venueMin, execN);
   const row = filtered.find((c) => c.coin === sel);
-  const useTiles = filtered.length > 0 && filtered.length <= 18;
+  const useTiles = false;
   const counts = {
     all: coins.length,
     pass: passN,

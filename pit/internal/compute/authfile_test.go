@@ -18,6 +18,12 @@ func TestRefuseRouterKey(t *testing.T) {
 	if err := RefuseRouterKey("Bearer app-sk-direct"); err != nil {
 		t.Fatal(err)
 	}
+	if err := RefuseRouterKey("Bearer xyz-not-direct"); err == nil {
+		t.Fatal("random bearer")
+	}
+	if err := RefuseRouterKey(""); err != nil {
+		t.Fatal(err)
+	}
 }
 
 func TestWriteAuthRefusesRouterURL(t *testing.T) {

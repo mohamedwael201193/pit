@@ -1,6 +1,11 @@
+import { isDeveloper } from "./developer";
+
 type Net = "mainnet" | "testnet";
 
 export function NetworkToggle({ net, onChange }: { net: Net; onChange: (n: Net) => void }) {
+  if (!isDeveloper()) {
+    return <p className="fine" style={{ margin: 0 }}>MAINNET</p>;
+  }
   return (
     <div className="row">
       {(["mainnet", "testnet"] as const).map((n) => (

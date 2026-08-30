@@ -2,9 +2,9 @@
 
 import { expect, test } from "@playwright/test";
 
-test("testnet lab copy is distinct from production", async ({ page }) => {
+test("landing is mainnet product", async ({ page }) => {
   await page.goto("/");
-  await page.getByRole("button", { name: "TESTNET" }).click();
-  await expect(page.getByText("TESTNET is the full integration lab.")).toBeVisible();
-  await expect(page.getByText("Different model catalog than production")).toBeVisible();
+  await expect(page.getByText("MAINNET only")).toBeVisible();
+  await expect(page.getByRole("button", { name: "TESTNET" })).toHaveCount(0);
+  await expect(page.getByText("The laboratory exists for CI and developers, not for the public desk.")).toBeVisible();
 });

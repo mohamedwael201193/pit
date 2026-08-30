@@ -36,7 +36,7 @@ func HumanWhy(code string) string {
 	case "insufficient_margin":
 		return "Not enough available trading capital for this market."
 	case "below_min_notional", "below_minimum":
-		return "This account cannot size a clip at the $10 Hyperliquid minimum. PIT will not invent size."
+		return "This market's rounded Hyperliquid minimum is above this account's buying power. PIT will not invent size."
 	case "policy_denied", "policy_fail", "asset_blocked":
 		return "Pinned policy does not allow this market."
 	case "asset_not_allowed":

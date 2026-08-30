@@ -22,7 +22,7 @@ export function oidBelongsToPreview(orderHash?: string | null, previewHash?: str
 
 export function researchCardTitle(kind?: string | null, verified?: boolean): string {
   if (kind === "READY_ELIGIBLE" || (verified && !kind)) return "RESEARCH COMPLETE";
-  if (kind === "READY_STOOD_DOWN") return "COMMITTEE STOOD DOWN";
+  if (kind === "READY_STOOD_DOWN") return "NO TRADE SURVIVED CHALLENGE";
   if (kind === "COMMITTEE_INCOMPLETE") return "RESEARCH INCOMPLETE";
   if (kind === "CANCELED_BY_USER") return "YOU CANCELLED";
   if (kind === "POLICY_DENIED") return "POLICY BLOCKED THIS";

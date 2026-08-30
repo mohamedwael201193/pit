@@ -173,7 +173,7 @@ func researchCardTitle(kind string) string {
 	case TermReadyEligible:
 		return "RESEARCH COMPLETE"
 	case TermReadyStoodDown:
-		return "COMMITTEE STOOD DOWN"
+		return "NO TRADE SURVIVED CHALLENGE"
 	case TermCommitteeIncomplete:
 		return "RESEARCH INCOMPLETE"
 	case TermCanceledByUser:

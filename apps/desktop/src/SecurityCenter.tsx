@@ -97,7 +97,7 @@ export function SecurityCenter({
       <div className="page-head">
         <div>
           <p className="eyebrow">Security</p>
-          <h1>{missing.length ? "Action required" : "Workspace ready"}</h1>
+          <h1>{missing.filter((p) => p.id !== "pairing" && p.id !== "tee" && p.state !== "optional").length ? "Action required" : "Workspace ready"}</h1>
         </div>
         <button type="button" className="linkish" onClick={onCheck} disabled={busy}>
           Check again

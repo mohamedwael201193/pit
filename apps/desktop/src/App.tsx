@@ -1,5 +1,6 @@
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { NetworkToggle } from "./NetworkToggle";
+import { isDeveloper, armDeveloper } from "./developer";
 import { committeeDeny } from "./committee";
 import {
   authorizePreview,
@@ -13,6 +14,7 @@ import {
   fetchActivity,
   fetchAutomation,
   fetchCalibration,
+  fetchExperience,
   fetchChatThreads,
   fetchIdentity,
   fetchMission,
@@ -71,6 +73,7 @@ import { WatchBook, type MarketCoin } from "./WatchBook";
 import { ResearchBoard } from "./ResearchBoard";
 import { StrategyHealth } from "./StrategyHealth";
 import { askNotify, deskNotify } from "./notify";
+import { compactUsd } from "./format";
 import { DESKTOP_VERSION } from "./version";
 
 type Net = "mainnet" | "testnet";
@@ -170,6 +173,7 @@ export function App() {
   const [calibNeed, setCalibNeed] = useState(0);
   const [calibEnough, setCalibEnough] = useState(false);
   const [calibSkills, setCalibSkills] = useState<Array<{ id?: string; title?: string; version?: string; n?: number; copy?: string }>>([]);
+  const [experienceWhy, setExperienceWhy] = useState("NOT ENOUGH DATA");
   const [identityNote, setIdentityNote] = useState("Transfer of Agentic ID is not live on mainnet.");
   const [updateNote, setUpdateNote] = useState("This build is checksum-verified, not OS-signed.");
   const [restartAllowed, setRestartAllowed] = useState(true);
@@ -359,7 +363,8 @@ export function App() {
               setHypothesis(s.hypothesis);
             }
             if (s?.lastOrder?.oid) setLastOid(String(s.lastOrder.oid));
-            if (s?.network === "testnet" || s?.network === "mainnet") setNet(s.network);
+            if (s?.network === "mainnet") setNet("mainnet");
+            if (s?.network === "testnet" && isDeveloper()) setNet("testnet");
             if (s?.wallet) {
               walletBoundRef.current = s.wallet;
               setWalletDraft((cur) => cur || s.wallet || "");
@@ -461,6 +466,9 @@ export function App() {
           setCalibEnough(Boolean(c.enough));
           setCalibSkills(c.skills || []);
         });
+        void fetchExperience(researchCoin).then((e) => {
+          if (!gone) setExperienceWhy(e.why || "NOT ENOUGH DATA");
+        });
         void fetchIdentity().then((id) => {
           if (!gone) setIdentityNote(id.note || "Transfer of Agentic ID is not live on mainnet.");
         });
@@ -537,13 +545,43 @@ export function App() {
     if (companionUp || ticks >= 8) setBooted(true);
   }, [companionUp, ticks]);
 
+  const goChord = useRef(false);
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      const typing = e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement || e.target instanceof HTMLSelectElement;
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
         setPalette((v) => !v);
+        return;
       }
-      if (e.key === "Escape") setPalette(false);
+      if (e.key === "Escape") {
+        setPalette(false);
+        goChord.current = false;
+        return;
+      }
+      if (typing) return;
+      if (e.key.toLowerCase() === "g" && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        goChord.current = true;
+        return;
+      }
+      if (goChord.current) {
+        goChord.current = false;
+        const map: Record<string, View> = {
+          d: "home",
+          m: "markets",
+          c: "chat",
+          r: "research",
+          a: "automation",
+          y: "activity",
+          p: "portfolio",
+          s: "security",
+        };
+        const next = map[e.key.toLowerCase()];
+        if (next) {
+          e.preventDefault();
+          setView(next);
+        }
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -606,7 +644,7 @@ export function App() {
         ? mission.mode === "guarded"
           ? "Guarded Autonomy live"
           : `Mission ${status?.mode || mission.mode}`
-        : attention.title === "Desk is ready"
+        : attention.title === "Desk is ready" || attention.title.startsWith("Watching")
           ? "Idle"
           : attention.title;
 
@@ -708,7 +746,7 @@ export function App() {
     setChecks(await doctor());
   }
 
-  async function researchThis(coin?: string) {
+  async function researchThis(coin?: string, source: "chat" | "research_ui" = "research_ui") {
     const gen = ++researchGen.current;
     const want = (coin || coins.find((c) => c.eligible)?.coin || "").toUpperCase();
     setResearchNote(null);
@@ -754,7 +792,7 @@ export function App() {
       if (gen === researchGen.current) setResearchElapsed(Date.now() - wall);
     }, 250);
     try {
-      const started = await startResearch(want, hypothesis);
+      const started = await startResearch(want, hypothesis, source);
       if (gen !== researchGen.current) return;
       if (started.error && !started.running) {
         setResearchStop(started.error);
@@ -919,7 +957,9 @@ export function App() {
 
   return (
     <div className="app">
-      <TitleBar status={doing} />
+      <TitleBar
+        status={`${DESKTOP_VERSION} · ${net.toUpperCase()}${status?.wallet ? ` · ${status.wallet.slice(0, 6)}…${status.wallet.slice(-4)}` : ""} · ${compactUsd(buyingPower ?? Number(summary.buyingPower || 0))} · ${mission.mode === "guarded" && mission.running ? "Guarded" : "Manual"}`}
+      />
       <BootGate
         open={!booted}
         rows={[
@@ -984,7 +1024,14 @@ export function App() {
           <p>{sessionAlive ? "session live" : "no session"}</p>
           <p>{checks.find((c) => c.name === "direct_credit")?.ok ? "compute ready" : "compute action"}</p>
           <p>{companionUp ? "companion live" : "starting companion"}</p>
-          <button type="button" className="ghost" onClick={() => setView("security")}>
+          <button
+            type="button"
+            className="ghost"
+            onClick={() => {
+              armDeveloper();
+              setView("security");
+            }}
+          >
             Help / Diagnostics
           </button>
         </div>
@@ -1005,20 +1052,11 @@ export function App() {
             {attention.title}
           </p>
           <div className="bar-meta">
-            <div className="bar-chips" aria-label="System">
-              <span className={companionUp ? "chip ok" : "chip fail"}>Health {companionUp ? "live" : "down"}</span>
-              <span className={mission.status === "ACTIVE" || mission.running ? "chip ok" : "chip"}>
-                Autonomy {mission.mode === "guarded" && mission.running ? "live" : mission.mode === "research_only" ? "research" : "manual"}
-              </span>
-              <span className={sessionAlive ? "chip ok" : "chip fail"}>Session {sessionAlive ? "live" : "none"}</span>
-              <span className={checks.find((c) => c.name === "direct_credit")?.ok ? "chip ok" : "chip fail"}>
-                Compute {checks.find((c) => c.name === "direct_credit")?.ok ? "ready" : "action"}
-              </span>
-              <span className={status?.wallet ? "chip ok" : "chip"}>
-                Account {status?.wallet ? `${status.wallet.slice(0, 6)}…${status.wallet.slice(-4)}` : "unbound"}
-              </span>
-              <span className={demoReplay ? "chip fail" : "chip ok"}>{demoReplay ? "REPLAY" : "LIVE"}</span>
-            </div>
+            <p className="fine" style={{ margin: 0 }}>
+              {compactUsd(buyingPower ?? Number(summary.buyingPower || 0))} · {sessionAlive ? "session live" : "no session"} ·{" "}
+              {mission.mode === "guarded" && mission.running ? "guarded" : mission.mode === "research_only" ? "research only" : "manual"}
+              {demoReplay ? " · REPLAY" : " · LIVE"}
+            </p>
             <NetworkToggle net={net} onChange={setNet} />
             {mission.mode === "guarded" && mission.running ? (
               <button
@@ -1116,7 +1154,7 @@ export function App() {
                 setOpenConfirm(true);
                 setView("automation");
               }}
-              onResearch={(c) => void researchThis(c)}
+              onResearch={(c) => void researchThis(c, "chat")}
               onOpenPreview={() => setView("research")}
               onStop={() => void onCancelResearch()}
               live={{
@@ -1314,7 +1352,7 @@ export function App() {
         ) : null}
 
         {setupDone && view === "health" ? (
-          <StrategyHealth copy={calibCopy} n={calibN} need={calibNeed} enough={calibEnough} skills={calibSkills} />
+          <StrategyHealth copy={calibCopy} n={calibN} need={calibNeed} enough={calibEnough} skills={calibSkills} experience={experienceWhy} />
         ) : null}
 
         {setupDone && view === "security" ? (

@@ -2107,6 +2107,36 @@ RESULT:
 SECURITY RESULT: Web still cannot authorize, pin, or enable autonomy.
 TX HASH / OID: Historical OID `529167222216` unchanged.
 
+---
+
+## M100 — War room 0.7.3: verified experience + MAINNET chrome (2026-08-30)
+
+DATE/TIME: 2026-08-30 04:20+03
+PHASE: 0.7.3. Do not flatten OID 529167222216. Do not remint PIT-4bbee556. Do not invent size. Do not enable Guarded Autonomy. Do not auto-pin.
+GOAL: Three Grok 4.6 war rooms (competitor / 0G-security / UX). Ship Adaptive Private Trading Memory, continue-search copy, per-book capital honesty, hide TESTNET from the customer desk, stop `/watch` leaking this account's buying power to the website, and keep chat research from host-executing Guarded Autonomy.
+RESULT:
+- **IMPLEMENTED:** Version **0.7.3**.
+  1. Encrypted `experience.enc` (AES-GCM, workspace keyring). Research stand-downs and venue OIDs append typed cases. `GET /local/experience`, `pit memory`, MCP `experience` are read-only. Qualitative copy stays **NOT ENOUGH DATA** until N≥5. Memory key never enters prompts.
+  2. Chat / Research UI research **stop at preview**. Only the automation loop may `maybeGuardedExecute`. Recovered guarded execute requires `source=automation`.
+  3. Unauthenticated website Origin on `/watch` gets the public universe **without** `ApplyCapital`. Desktop Origin still sizes this account.
+  4. Direct auth must be `app-sk-`. Official storage client basename is `0g-storage-client(.exe)`. Hex keys are secretful. CLI `authorize` posts through `ExecuteDeskOrder` and reconciles OID instead of a second POST.
+  5. Desk hero: "Watching. Nothing can open." Stand-down is success, not coral fail. Pairing is optional, not Action required. TESTNET is developer-only (`?dev=1` / Help 7-clicks). Landing Dual is MAINNET-only.
+- **TESTED:** `go test ./...` PASS including `TestMayHostGuardedExecuteOnlyAutomation`, `TestWatchWebOriginOmitsAccountCapital`, `TestRefuseRouterKey` random bearer, `TestRejectUnofficialClient` basename. Desktop `tsc -b` green. Web `tsc --noEmit` green. Desktop copy e2e harness ok. `go build ./cmd/pit ./cmd/mcp`.
+- **LIVE VERIFIED:** Overlay companion `D:\PIT\pit.exe` `/health` **0.7.3**. SHA256 `758B894B8D9069281EAE6BBCBD9E718B8CCC7ED22DBF5AF4242C03A8B52E5383`. Wallet `0xbdfcee…0034`, agent PIT-4bbee556 / `0xfc64e36babe7dfe9eb779ee3a9f2362d16881d52`, OID `529167222216` unchanged. Session live, mission STOPPED `user_stop`. Watch scanned **232**, best **DOGE**, buying power **$16.18**. All six policy books `below_min_notional` because the pinned **$10 clip** cannot meet rounded mins (~$10.03–$10.82). Website Origin `/watch` `buyingPower` empty. `/local/experience` `NOT ENOUGH DATA (0/5)`. Chrome production landing still 0.7.2 copy until this commit deploys.
+- **UNVERIFIED:** Guarded live order. New 0G Storage/chain proof this pass. Full NSIS 0.7.3 installer (desktop window still 0.7.2 UI talking to 0.7.3 sidecar — version banner is honest). Pairing ceremony this pass.
+- **BLOCKED:** New MAINNET clip: host clip $10 cannot size any live policy book after szDecimals rounding. Raising max trade requires YOU to preview then pin. Guarded Autonomy not enabled (deliberate). iTransfer UNAVAILABLE on Aristotle.
+
+SECURITY RESULT: Chat/web/MCP still cannot authorize, pin, or enable autonomy. Chat research cannot spend a Guarded execute. Website `/watch` no longer carries this account's margin.
+TX HASH / OID: Historical OID `529167222216` unchanged.
+CLASSIFICATION:
+- Verified experience: **IMPLEMENTED + LIVE VERIFIED** (empty store, honest NOT ENOUGH DATA)
+- Continue-search / stand-down success copy: **IMPLEMENTED**
+- Website capital leak: **IMPLEMENTED + LIVE VERIFIED**
+- Guarded execute origin: **IMPLEMENTED + AUTOMATED TESTED**
+- TESTNET hidden from customer chrome: **IMPLEMENTED**; production landing **UNVERIFIED until Vercel**
+PRODUCTION READY: 0.7.3 is production-ready for honest memory, capital isolation, and MAINNET-only chrome. It is **not** production-ready for a new MAINNET clip until YOU pin a clip that meets a book's rounded min.
+NEXT STEP: Close PIT Desktop and relaunch to pick up the 0.7.3 window. On Security, preview then pin a clip above the candidate min if you want a clip. Do not flatten. Do not remint.
+
 
 
 

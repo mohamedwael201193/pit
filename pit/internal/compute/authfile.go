@@ -18,14 +18,18 @@ type AuthFile struct {
 }
 
 func RefuseRouterKey(auth string) error {
-	low := strings.ToLower(auth)
+	trimmed := strings.TrimSpace(auth)
+	if trimmed == "" {
+		return nil
+	}
+	low := strings.ToLower(trimmed)
 	if strings.Contains(low, "app-sk-") {
 		return nil
 	}
 	if strings.Contains(low, "sk-") || strings.Contains(low, "mk-") {
 		return fmt.Errorf("router_api_key_denied")
 	}
-	return nil
+	return fmt.Errorf("direct_token_required")
 }
 
 func DirectAuthPath() string {

@@ -308,7 +308,7 @@ func (h *Hub) autoTick() {
 		m.Stage = "researching"
 		_ = auto.SaveMission(h.Dir, m)
 		_ = auto.Save(h.Dir, p)
-		h.beginResearch(pick.Coin)
+		h.beginResearch(pick.Coin, "automation")
 		return
 	}
 	if wantResearch && p.LastResearchCoin == pick.Coin && execOK {
@@ -444,10 +444,11 @@ func (h *Hub) recoverGuardedExecute() {
 	hash := h.job.previewHash
 	coin := h.job.coin
 	started := h.job.started
+	source := h.job.source
 	eligible := h.job.eligible && strings.TrimSpace(hash) != ""
 	expired := previewExpiredMap(h.job.preview, time.Now().UnixMilli())
 	h.researchMu.Unlock()
-	if !eligible || expired {
+	if !eligible || expired || !mayHostGuardedExecute(source) {
 		return
 	}
 	last := cli.LoadLastOrder(h.Dir)

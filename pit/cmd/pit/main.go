@@ -71,6 +71,7 @@ Research
   pit research --market market.json --book book.json
   pit forecast
   pit calibration
+  pit memory [ETH|BTC]
   pit preview --market ETH --side buy --forecast <id>
   pit authorize --i-understand
   pit execute --i-understand
@@ -169,6 +170,8 @@ func main() {
 		cmdAuthorize(rest[1:])
 	case "calibration":
 		cmdForecast()
+	case "memory", "experience":
+		cmdMemory(rest[1:])
 	case "direct":
 		cmdDirect(rest[1:])
 	case "forecast":
@@ -1068,34 +1071,20 @@ func cmdAuthorize(args []string) {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(2)
 	}
-	h := pitexec.HashForAuthorize(hash)
-	used := map[string]struct{}{}
-	if err := pitexec.Prepare(pitexec.Intent{
-		Action:    "order",
-		Preview:   card,
-		Hash:      h,
-		Workspace: live.Workspace,
-	}, time.Now().UnixMilli(), used); err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(2)
+	got := cli.ExecuteDeskOrder(stateDir(), typed, hash)
+	if got.Error == "venue_oid_missing" {
+		cli.ReconcileLastOrder(stateDir())
+		if last := cli.LoadLastOrder(stateDir()); last != nil {
+			if oid, _ := last["oid"].(string); strings.TrimSpace(oid) != "" {
+				got.OID = oid
+				got.OK = true
+				got.Error = ""
+			}
+		}
 	}
-	coin, err := pitexec.CoinFromMarket(card.Market)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(2)
-	}
-	book, err := cli.LiveAsset(st.Network, coin)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(2)
-	}
-	raw, err := pitexec.WireFromPreview(card, book.Asset)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(2)
-	}
-	if err := cli.RememberAuthorized(stateDir(), st.Network, live.Workspace, card.Cloid, h); err != nil {
-		fmt.Fprintln(os.Stderr, err)
+	if got.Error != "" {
+		fmt.Fprintln(os.Stderr, got.Error)
+		fmt.Println("PIT did not send a second order")
 		os.Exit(2)
 	}
 	fmt.Println("order allowed")
@@ -1103,44 +1092,27 @@ func cmdAuthorize(args []string) {
 	fmt.Println("withdraw denied")
 	fmt.Println("preview bound")
 	fmt.Println("authorized")
-	fmt.Println("ledger    recorded")
-	fmt.Printf("asset    %d\n", book.Asset)
-	env, signErr := cli.SignBound(stateDir(), live, st.Network, raw, time.Now().UnixMilli())
-	if signErr != nil || !env.Signed() {
-		if err := pitexec.RefuseUnsigned(false); err != nil {
-			fmt.Println(err)
-		}
-		fmt.Println("PIT did not send an order")
+	if got.Posted {
+		fmt.Println("posted")
+	}
+	if got.OID != "" {
+		fmt.Printf("oid      %s\n", got.OID)
+	}
+}
+
+func cmdMemory(args []string) {
+	coin := ""
+	if len(args) > 0 && !strings.HasPrefix(args[0], "-") {
+		coin = args[0]
+	}
+	body := companion.ExperienceSummary(stateDir(), coin)
+	if asJSON {
+		cli.Emit(os.Stdout, true, "", body)
 		return
 	}
-	fmt.Println("signed locally")
-	linked, linkErr := cli.LiveLinked(st.Network, st.Wallet, live.Workspace, live.AgentAddr, time.Now().UnixMilli())
-	if linkErr != nil {
-		fmt.Fprintln(os.Stderr, linkErr)
-		linked = false
-	}
-	if linked {
-		fmt.Println("agent linked")
-	}
-	if err := pitexec.RefusePostUntilLinked(linked); err != nil {
-		fmt.Println(err)
-		fmt.Println("PIT did not send an order")
-		return
-	}
-	body, err := cli.PostLinked(st.Network, env, linked, h)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		fmt.Println("PIT did not send an order")
-		os.Exit(2)
-	}
-	oid := pitexec.ReceiptOID(body)
-	if err := cli.RememberPosted(stateDir(), st.Network, live.Workspace, card.Cloid, oid); err != nil {
-		fmt.Fprintln(os.Stderr, err)
-	}
-	fmt.Println("posted")
-	if oid != "" {
-		fmt.Printf("oid      %s\n", oid)
-	}
+	why, _ := body["why"].(string)
+	fmt.Println(why)
+	fmt.Println("Chat cannot AUTHORIZE. Private memory never includes the memory key.")
 }
 
 func cmdVerify(args []string) {

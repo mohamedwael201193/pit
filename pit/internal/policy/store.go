@@ -229,7 +229,7 @@ func AllowedRefused(p Policy) (allowed, refused []string) {
 	refused = []string{
 		"Withdraw, transfer, or change venue leverage.",
 		"Place an order from chat or from a model.",
-		"Invent size below the $10 Hyperliquid minimum notional.",
+		"Invent size below a book's Hyperliquid minimum notional.",
 		"Silently raise clip, assets, or kill switch.",
 	}
 	if p.KillSwitch {
@@ -251,7 +251,7 @@ func ExecWhy(openPositions int, availableUSD float64, p Policy) (block, why stri
 			return "insufficient_margin", "Available venue margin is $0.00. Hyperliquid needs at least the $10 minimum. PIT will not invent size."
 		}
 		short := ClipFloorUSD - availableUSD
-		return "insufficient_margin", fmt.Sprintf("Available venue margin is $%.2f — $%.2f short of the $10 Hyperliquid minimum. PIT will not invent size.", availableUSD, short)
+		return "insufficient_margin", fmt.Sprintf("Available venue margin is $%.2f — $%.2f short of Hyperliquid's $%d rounded open floor. Per-book minimums can be higher after szDecimals. PIT will not invent size.", availableUSD, short, ClipFloorUSD)
 	}
 	if p.MaxClipUSD+1e-9 < ClipFloorUSD {
 		return "below_min_notional", "Policy clip is below the $10 venue minimum. Raise max trade on Security, then pin."

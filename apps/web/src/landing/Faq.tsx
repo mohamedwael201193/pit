@@ -21,11 +21,11 @@ const QUESTIONS: readonly { q: string; a: string }[] = [
   },
   {
     q: "What is the laboratory?",
-    a: "TESTNET is the protocol laboratory. Galileo and Hyperliquid testnet stay on that workspace. Capabilities are not copied from production.",
+    a: "TESTNET is for CI, developers, and protocol checks. The public product is MAINNET only. Desktop hides TESTNET unless you arm developer mode.",
   },
   {
     q: "How does it learn?",
-    a: "After a real outcome, PIT scores Brier and ECE. Until thirty resolved forecasts it says not enough data. It never prints a fake 72 percent.",
+    a: "PIT stores verified experience in an encrypted workspace file: thesis outcomes, stand-downs, fills, and calibration. Until enough cases exist it says NOT ENOUGH DATA. It never prints a fake lesson.",
   },
   {
     q: "How do I install PIT?",

@@ -26,6 +26,20 @@ func TestNamedRolesVerifiedRequiresThree(t *testing.T) {
 	}
 }
 
+func TestReplyWhyNotContinuesPastOneBook(t *testing.T) {
+	h := &Hub{Dir: t.TempDir()}
+	got := h.replyWhyNotTrade()
+	if strings.Contains(got, "Latest: BTC") {
+		t.Fatal(got)
+	}
+	if !strings.Contains(got, "Scan continues") {
+		t.Fatal(got)
+	}
+	if strings.Contains(got, `"execute":true`) {
+		t.Fatal(got)
+	}
+}
+
 func TestGuardedAlreadyAttemptedSameHash(t *testing.T) {
 	if guardedAlreadyAttempted(nil, "0xabc") {
 		t.Fatal("nil")

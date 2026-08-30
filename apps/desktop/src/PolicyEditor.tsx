@@ -88,6 +88,10 @@ export function PolicyEditor({
     <section className="policy-editor">
       <p className="label">Policy studio</p>
       <p className="fine">You edit. You pin. The model cannot. Leverage is locked at 1x. Withdraw stays impossible. Chat cannot pin.</p>
+      <p className="lead">
+        PIT can trade {draft.allowedAssets.join(", ")} up to ${draft.maxClipUsd} at 1x with {draft.maxOpenPositions} open
+        position{draft.maxOpenPositions === 1 ? "" : "s"} and stops after ${draft.dailyLossUsd} realized loss.
+      </p>
       <div className="policy-cat">
         <p className="label">Size</p>
         <div className="policy-grid">

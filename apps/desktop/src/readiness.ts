@@ -76,10 +76,10 @@ export function probes(checks: DoctorCheck[], status: LocalStatus | null, compan
     ? {
         id: "pairing",
         label: "Pairing",
-        state: status?.paired ? "ok" : "waiting",
+        state: status?.paired ? "ok" : "optional",
         detail: status?.paired
           ? `Browser paired (${status.pairingDevices || 1} device). Desktop is the signer.`
-          : "Type the one-time code on the pairing page. The website never receives a session key.",
+          : "Browser unpaired. This desk still runs. Pairing is for the website, not for orders.",
       }
     : { id: "pairing", label: "Pairing", state: "waiting", detail: "Launch PIT Desktop first." };
   const identity: Probe = {

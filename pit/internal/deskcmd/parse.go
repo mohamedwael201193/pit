@@ -35,6 +35,12 @@ func Parse(text string) Result {
 		out.Reply = "PIT did not invent a fill. Open Automation for the named refusal, or Activity for the forensic ledger."
 		return out
 	}
+	if strings.Contains(low, "why this setup") || strings.Contains(low, "verified experience") || (strings.Contains(low, "memory") && strings.Contains(low, "learn")) {
+		out.Tool = "experience.why"
+		out.Navigate = "research"
+		out.Reply = "Verified experience is workspace-local. NOT ENOUGH DATA until enough cases exist. Chat cannot AUTHORIZE."
+		return out
+	}
 	if wantsFlatten(low) {
 		out.Tool = "refuse_execute"
 		out.Navigate = "preview"

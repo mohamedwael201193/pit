@@ -6,6 +6,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -59,6 +60,9 @@ func sealBytes(dir string, plain []byte) (string, error) {
 func openBytes(dir, line string) ([]byte, error) {
 	raw := strings.TrimSpace(line)
 	if !strings.HasPrefix(raw, memPrefix) {
+		if looksLikeHexKey(raw) {
+			return nil, fmt.Errorf("memory_plaintext_refused")
+		}
 		return []byte(raw), nil
 	}
 	key, err := memoryKey(dir)
@@ -114,6 +118,7 @@ func fmtAny(row map[string]any) string {
 func forgetMemoryFiles(dir string) {
 	_ = os.Remove(filepath.Join(dir, "memory-working.json"))
 	_ = os.Remove(workingPath(dir))
+	_ = os.Remove(experiencePath(dir))
 	_ = os.Remove(chatPath(dir))
 	_ = os.Remove(threadsPath(dir))
 	store, err := keyring.OpenProduct(dir)

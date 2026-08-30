@@ -146,6 +146,7 @@ func (h *Hub) Handler() http.Handler {
 	mux.HandleFunc("/local/automation", h.localAutomation)
 	mux.HandleFunc("/local/mission", h.localMission)
 	mux.HandleFunc("/local/kill", h.localKill)
+	mux.HandleFunc("/local/experience", h.localExperience)
 	mux.HandleFunc("/direct/intent", h.deviceDirectIntent)
 	mux.HandleFunc("/direct/complete", h.deviceDirectComplete)
 	mux.HandleFunc("/bind", h.bind)
@@ -329,14 +330,14 @@ func (h *Hub) localCode(w http.ResponseWriter, r *http.Request) {
 	}
 	code, exp, n := h.pairingPublic()
 	writeLocal(w, http.StatusOK, map[string]any{
-		"code":     code,
-		"expires":  exp.UTC().Format(time.RFC3339),
-		"paired":   n > 0,
-		"devices":  n,
-		"desktop":  true,
-		"browser":  n > 0,
-		"sign":     false,
-		"trade":    false,
+		"code":    code,
+		"expires": exp.UTC().Format(time.RFC3339),
+		"paired":  n > 0,
+		"devices": n,
+		"desktop": true,
+		"browser": n > 0,
+		"sign":    false,
+		"trade":   false,
 	})
 }
 
@@ -596,7 +597,9 @@ func (h *Hub) watch(w http.ResponseWriter, r *http.Request) {
 	cands, err := watch.LiveUniverse(hl.New(config.For(net)), pol)
 	if err == nil {
 		view = watch.Public(cands, string(net))
-		view = h.annotateWatch(view, pol)
+		if httpx.CodeOriginOK(r.Header.Get("Origin")) {
+			view = h.annotateWatch(view, pol)
+		}
 	}
 	if r.Method == http.MethodHead {
 		w.Header().Set("Content-Type", "application/json")

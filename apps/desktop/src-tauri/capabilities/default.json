@@ -34,6 +34,7 @@
     "allow-local-chat-log",
     "allow-local-memory-forget",
     "allow-local-calibration",
+    "allow-local-experience",
     "allow-local-security",
     "allow-local-identity",
     "allow-local-update",

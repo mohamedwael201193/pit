@@ -7,7 +7,7 @@ import (
 
 var AllowedTools = []string{
 	"market", "opportunities", "watch", "forecast", "status", "card", "verify", "preview",
-	"receipts", "calibration", "policy", "security", "research",
+	"receipts", "calibration", "policy", "security", "research", "experience",
 }
 
 var ForbiddenTools = []string{
@@ -94,6 +94,11 @@ func Handle(req Request) Response {
 		return Response{OK: true, Body: map[string]any{"count": 0, "copy": "No receipt until Hyperliquid accepts an order after AUTHORIZE.", "sign": false, "trade": false}}
 	case "calibration":
 		return Response{OK: true, Body: map[string]any{"copy": "NOT ENOUGH DATA", "n": 0, "sign": false, "trade": false}}
+	case "experience":
+		return Response{OK: true, Body: map[string]any{
+			"copy": "Verified experience lives on PIT Desktop. MCP can only say NOT ENOUGH DATA. No memory key. No authorize.",
+			"n":    0, "sign": false, "trade": false, "authorize": false,
+		}}
 	default:
 		return Response{OK: true, Body: map[string]any{"tool": req.Tool, "note": "bind a workspace first"}}
 	}

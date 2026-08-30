@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/mohamedwael201193/pit/internal/cli"
 	"github.com/mohamedwael201193/pit/internal/config"
 	"github.com/mohamedwael201193/pit/internal/hl"
 	"github.com/mohamedwael201193/pit/internal/watch"
@@ -18,6 +19,13 @@ func main() {
 	}
 	mcp.LiveOpportunities = func() map[string]any {
 		net := config.Mainnet
+		if dir, err := cli.DefaultDir(); err == nil {
+			if st, lerr := cli.Load(dir); lerr == nil {
+				if n, perr := config.ParseNetwork(st.Network); perr == nil {
+					net = n
+				}
+			}
+		}
 		view := watch.EmptyPublic(string(net))
 		cands, err := watch.Live(hl.New(config.For(net)), watch.PolicyForWatch())
 		if err == nil {

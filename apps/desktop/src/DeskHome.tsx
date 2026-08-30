@@ -1,8 +1,7 @@
 import { BrandMark } from "./BrandMark";
 import { EvidenceStrip } from "./EvidenceStrip";
-import { PairingDock } from "./PairingDock";
 import { ExternalLink } from "./ExternalLink";
-import { accountSizeGate, compactNum, compactUsd } from "./format";
+import { accountSizeGate, compactNum, compactUsd, marketSizeGate, nearestVenueMin } from "./format";
 import type { NextFix } from "./nextFix";
 import type { Probe } from "./readiness";
 
@@ -31,8 +30,8 @@ export function DeskHome({
   doing,
   items,
   attention,
-  code,
-  companionUp,
+  code: _code,
+  companionUp: _companionUp,
   sessionAlive,
   computeReady,
   protectedOk,
@@ -42,10 +41,10 @@ export function DeskHome({
   researchStage,
   researchKind,
   awaitingAuth,
-  expires,
+  expires: _expires,
   paired,
-  pairingDevices,
-  onRotatePair,
+  pairingDevices: _pairingDevices,
+  onRotatePair: _onRotatePair,
   coins,
   lastEvent,
   mode,
@@ -91,7 +90,6 @@ export function DeskHome({
   onResearch: (coin: string) => void;
   onGo: (view: "markets" | "research" | "security" | "chat" | "automation" | "portfolio" | "activity") => void;
 }) {
-  const showPair = true;
   const best =
     coins.find((c) => c.previewReady) ||
     coins.find((c) => c.executionFeasible) ||
@@ -100,9 +98,21 @@ export function DeskHome({
   const liveBook = policyPinned && Boolean(coins.find((c) => c.executionFeasible) || coins.find((c) => c.previewReady));
   const sealedNow = policyPinned && Boolean(researchBusy);
   const modeLabel = mode === "guarded" ? "Guarded Autonomy" : mode === "research_only" ? "Research Only" : "Manual";
-  const venueMin = coins.find((c) => c.minNotional && c.minNotional > 0)?.minNotional || 10;
+  const venueMin = nearestVenueMin(coins);
   const execN = coins.filter((c) => c.executionFeasible).length;
   const gate = accountSizeGate(buyingPower, venueMin, execN);
+  const nearest = [...coins].filter((c) => (c.minNotional || 0) > 0).sort((a, b) => (a.minNotional || 0) - (b.minNotional || 0))[0];
+  const heroTitle = researchBusy
+    ? doing
+    : awaitingAuth
+      ? "Waiting for you"
+      : researchKind === "READY_STOOD_DOWN"
+        ? "Committee stood down. Checking next."
+        : ready && !gate.canOpen
+          ? "Watching. Nothing can open."
+          : ready
+            ? "Watching the live book"
+            : attention.title;
   const path = (
       <ol className="demo-path" aria-label="New user path">
         <li className={items.find((p) => p.id === "wallet")?.state === "ok" ? "on" : ""}>
@@ -153,10 +163,11 @@ export function DeskHome({
       <section className="desk-hero">
         <div>
           <p className="eyebrow">Desk</p>
-          <h1>{researchBusy ? doing : awaitingAuth ? "Waiting for you" : ready ? "Watching the live book" : attention.title}</h1>
+          <h1>{heroTitle}</h1>
           <p className="lead">{doing}</p>
           <p className="capital-line" role="status">
-            This account {compactUsd(gate.have)} · this market min {compactUsd(gate.min)}
+            This account {compactUsd(gate.have)}
+            {nearest ? ` · nearest floor ${nearest.coin} ${compactUsd(nearest.minNotional)}` : ` · this market min ${compactUsd(gate.min)}`}
             {gate.canOpen ? "" : ` · ${compactUsd(gate.shortfall)} short`}
             {powerSource ? ` · ${powerSource.replaceAll("_", " ")}` : ""}
             {execGate ? ` · ${execGate.replaceAll("_", " ")}` : ""}
@@ -228,9 +239,17 @@ export function DeskHome({
           <span>Discover</span>
           <strong>{best && policyPinned ? best.coin : "none"}</strong>
         </li>
-        <li className={researchBusy || (researchKind && policyPinned) ? "on" : ""}>
+        <li className={researchBusy || (researchKind === "READY_ELIGIBLE" && policyPinned) ? "on" : researchKind === "READY_STOOD_DOWN" ? "calm" : ""}>
           <span>Research</span>
-          <strong>{researchBusy ? (researchStage || "running").replaceAll("_", " ") : researchKind ? researchKind.replaceAll("_", " ") : "idle"}</strong>
+          <strong>
+            {researchBusy
+              ? (researchStage || "running").replaceAll("_", " ")
+              : researchKind === "READY_STOOD_DOWN"
+                ? "no trade survived challenge"
+                : researchKind
+                  ? researchKind.replaceAll("_", " ")
+                  : "idle"}
+          </strong>
         </li>
         <li className={awaitingAuth ? "on" : ""}>
           <span>Decision</span>
@@ -269,10 +288,12 @@ export function DeskHome({
                   <span className="tile-head">
                     <BrandMark symbol={c.coin} size={16} />
                     <strong>{c.coin}</strong>
-                    <span className={`layer-chip ${c.executionFeasible ? "ok" : "pass"}`}>{c.executionFeasible ? "Can open" : "Policy"}</span>
+                    <span className={`layer-chip ${c.executionFeasible ? "ok" : "pass"}`}>
+                      {c.executionFeasible ? "Can open" : marketSizeGate(c.coin, buyingPower, c.minNotional, c.executionFeasible).chip}
+                    </span>
                   </span>
                   <span className="tile-mark">{compactNum(c.mark)}</span>
-                  <span className="tile-meta">{c.why || c.trend || "In policy universe."}</span>
+                  <span className="tile-meta">{marketSizeGate(c.coin, buyingPower, c.minNotional, c.executionFeasible).detail}</span>
                 </button>
               </li>
             ))}
@@ -283,15 +304,8 @@ export function DeskHome({
       )}
       <EvidenceStrip onOpen={() => onGo("activity")} />
       {lastEvent ? <p className="fine">Recently: {lastEvent}</p> : null}
-      {showPair ? (
-        <PairingDock
-          code={code}
-          expires={expires}
-          companionUp={companionUp}
-          paired={paired}
-          devices={pairingDevices}
-          onRotate={onRotatePair}
-        />
+      {!paired ? (
+        <p className="fine">Browser unpaired. This desk still runs. Pairing is for the website, not for orders.</p>
       ) : null}
     </main>
   );

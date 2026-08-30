@@ -1,6 +1,19 @@
 type Net = "mainnet" | "testnet";
 
+function labOn() {
+  try {
+    return localStorage.getItem("pit.developer") === "1" || new URLSearchParams(window.location.search).get("dev") === "1";
+  } catch {
+    return false;
+  }
+}
+
 export function NetworkToggle({ net, onChange }: { net: Net; onChange: (n: Net) => void }) {
+  if (!labOn()) {
+    return (
+      <p className="mt-4 text-[0.875rem] tracking-[0.12em] text-[rgb(240_231_212/0.55)]">MAINNET · Aristotle 16661</p>
+    );
+  }
   return (
     <div className="mt-4 flex gap-2">
       {(["mainnet", "testnet"] as const).map((n) => (

@@ -25,7 +25,7 @@ export function explainStop(code: string | null): { title: string; body: string 
   if (code === "insufficient_margin") {
     return {
       title: "Not enough trading capital",
-      body: "Available venue margin is below the $10 Hyperliquid minimum. PIT will not invent size. 0G compute credit is a different pile of money.",
+      body: "Available venue margin is below this market's Hyperliquid minimum. PIT will not invent size. 0G compute credit is a different pile of money.",
     };
   }
   if (code === "max_open_positions") {
@@ -138,8 +138,8 @@ export function explainStop(code: string | null): { title: string; body: string 
   }
   if (code === "READY_STOOD_DOWN") {
     return {
-      title: "Committee stood down",
-      body: "Three roles verified. The committee did not propose a trade. That is a verified result, not a crash.",
+      title: "No trade survived challenge",
+      body: "Three roles verified. That is a successful no-trade, not a crash. PIT is checking the next eligible market. No order was placed.",
     };
   }
   if (code === "companion_http") {

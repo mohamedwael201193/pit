@@ -390,7 +390,7 @@ export function ResearchBoard({
       {!researchBusy && stood ? (
         <section className="stand-success" role="status">
           <p className="label">Successful no-trade</p>
-          <h2>Committee stood down. Checking next.</h2>
+          <h2>No trade survived challenge. Checking next.</h2>
           <p>
             A verified stand-down is the result, not a crash. Host did not size a clip. Markets stay live. Chat cannot AUTHORIZE.
           </p>

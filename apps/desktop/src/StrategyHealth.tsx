@@ -4,12 +4,14 @@ export function StrategyHealth({
   need,
   enough,
   skills,
+  experience,
 }: {
   copy?: string;
   n?: number;
   need?: number;
   enough?: boolean;
   skills?: Array<{ id?: string; title?: string; version?: string; n?: number; copy?: string }>;
+  experience?: string;
 }) {
   const rows = skills || [];
   const ok = Boolean(enough);
@@ -25,6 +27,11 @@ export function StrategyHealth({
       <p className="lead">
         PIT never invents skill performance. A skill with no resolved outcomes stays NOT ENOUGH DATA. The model did not “learn this.”
       </p>
+      <section className="card slim">
+        <p className="label">Why this setup</p>
+        <p>{experience || "NOT ENOUGH DATA"}</p>
+        <p className="fine">Verified internal cases only. PIT will not invent that this desk learned.</p>
+      </section>
       <section className="card">
         <p className="label">Calibration</p>
         <p>{copy || "NOT ENOUGH DATA"}</p>

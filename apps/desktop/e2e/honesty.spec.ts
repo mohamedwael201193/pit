@@ -11,7 +11,7 @@ export function assertHonesty() {
     { role: "risk", verify_e2ee: "OK" },
   ];
   if (!committeeVerified(three)) throw new Error("three roles");
-  if (researchCardTitle("READY_STOOD_DOWN") !== "COMMITTEE STOOD DOWN") throw new Error("stood down title");
+  if (researchCardTitle("READY_STOOD_DOWN") !== "NO TRADE SURVIVED CHALLENGE") throw new Error("stood down title");
   if (researchCardTitle("COMMITTEE_INCOMPLETE") === "RESEARCH VERIFIED") throw new Error("incomplete title");
   if (oidBelongsToPreview("0xold", "0xnew")) throw new Error("stale oid");
   if (!oidBelongsToPreview("0xabc", "0xabc")) throw new Error("matching hash");

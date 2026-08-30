@@ -269,7 +269,7 @@ func (h *Hub) localSecurity(w http.ResponseWriter, r *http.Request) {
 		execState = "BLOCKED"
 		execWhy = cap.Note
 		if execWhy == "" {
-			execWhy = "Available margin is below the $10 Hyperliquid minimum. PIT will not invent size."
+			execWhy = "Available margin is below this market's Hyperliquid minimum. PIT will not invent size."
 		}
 	}
 	killOn := false
@@ -624,5 +624,24 @@ func secretful(s string) bool {
 	if strings.Contains(low, "mnemonic") || strings.Contains(low, "seed phrase") {
 		return true
 	}
+	if looksLikeHexKey(s) {
+		return true
+	}
 	return false
+}
+
+func looksLikeHexKey(s string) bool {
+	h := strings.TrimSpace(s)
+	if strings.HasPrefix(strings.ToLower(h), "0x") {
+		h = h[2:]
+	}
+	if len(h) != 64 {
+		return false
+	}
+	for _, c := range strings.ToLower(h) {
+		if (c < '0' || c > '9') && (c < 'a' || c > 'f') {
+			return false
+		}
+	}
+	return true
 }

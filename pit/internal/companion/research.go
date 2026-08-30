@@ -33,6 +33,7 @@ type researchJob struct {
 	previewHash string           `json:"-"`
 	deny        string           `json:"-"`
 	eligible    bool             `json:"-"`
+	source      string           `json:"-"`
 }
 
 func jobFile(dir string) string {
@@ -169,6 +170,7 @@ func (h *Hub) loadJobLocked() {
 		PreviewHash string           `json:"preview_hash"`
 		Deny        string           `json:"deny"`
 		Eligible    bool             `json:"eligible"`
+		Source      string           `json:"source"`
 	}
 	if json.Unmarshal(raw, &p) != nil {
 		return
@@ -187,6 +189,7 @@ func (h *Hub) loadJobLocked() {
 	h.job.previewHash = p.PreviewHash
 	h.job.deny = p.Deny
 	h.job.eligible = p.Eligible
+	h.job.source = normalizeResearchSource(p.Source)
 	h.job.seq = p.Seq
 	if p.Started > 0 {
 		h.job.started = time.UnixMilli(p.Started)
@@ -295,6 +298,7 @@ func (h *Hub) persistJobLocked() {
 		"eligible":        h.job.eligible,
 		"deny":            h.job.deny,
 		"preview_hash":    h.job.previewHash,
+		"source":          h.job.source,
 	}
 	if h.job.preview != nil {
 		body["preview"] = h.job.preview
@@ -407,7 +411,8 @@ func (h *Hub) snapshotResearch() map[string]any {
 	return body
 }
 
-func (h *Hub) rememberResearchOutcome(coin, jobErr, deny string, eligible bool) {
+func (h *Hub) rememberResearchOutcome(coin, jobErr, deny string, eligible bool, hash string) {
+	h.recordResearchExperience(coin, deny, jobErr, eligible, hash)
 	p := auto.Load(h.Dir)
 	kind, hold, latch := auto.ClassifyResearchSkip(jobErr, deny, eligible)
 	if latch {
@@ -465,7 +470,22 @@ func (h *Hub) cancelled() bool {
 	return h.job.cancel
 }
 
-func (h *Hub) beginResearch(coin string) {
+func normalizeResearchSource(src string) string {
+	switch strings.ToLower(strings.TrimSpace(src)) {
+	case "automation":
+		return "automation"
+	case "chat":
+		return "chat"
+	default:
+		return "research_ui"
+	}
+}
+
+func mayHostGuardedExecute(source string) bool {
+	return normalizeResearchSource(source) == "automation"
+}
+
+func (h *Hub) beginResearch(coin, source string) {
 	want := strings.ToUpper(strings.TrimSpace(coin))
 	if want == "" {
 		want = h.pickBestCoin()
@@ -488,6 +508,7 @@ func (h *Hub) beginResearch(coin string) {
 		seq:     1,
 		stage:   "READING_MARKET",
 		coin:    want,
+		source:  normalizeResearchSource(source),
 	}
 	_ = os.WriteFile(filepath.Join(h.Dir, "last-research.json"), []byte(`{"sign":false,"trade":false,"roles":[]}`), 0o600)
 	h.persistJobLocked()
@@ -546,7 +567,7 @@ func (h *Hub) execResearch(coin string) {
 			Action: "research", Status: h.job.err, JobID: h.job.ID, Reason: h.job.err,
 		})
 		auto.RecordStage(h.Dir, "research_failed", "research_failed:"+h.job.err, h.job.err, h.job.coin)
-		h.rememberResearchOutcome(h.job.coin, h.job.err, h.job.deny, false)
+		h.rememberResearchOutcome(h.job.coin, h.job.err, h.job.deny, false, "")
 		continueNext = true
 		return
 	}
@@ -605,10 +626,10 @@ func (h *Hub) execResearch(coin string) {
 		})
 	}
 	auto.RecordStage(h.Dir, "researched", "research_done:"+kind, kind, h.job.coin)
-	h.rememberResearchOutcome(h.job.coin, h.job.err, h.job.deny, h.job.eligible)
+	h.rememberResearchOutcome(h.job.coin, h.job.err, h.job.deny, h.job.eligible, h.job.previewHash)
 	model, provider := researchModels()
 	h.fileResearch(h.job.ID, h.job.coin, kind, h.job.deny, h.job.previewHash, h.job.roles, model, provider)
-	if h.job.eligible && h.job.previewHash != "" {
+	if h.job.eligible && h.job.previewHash != "" && mayHostGuardedExecute(h.job.source) {
 		hash := h.job.previewHash
 		coin := h.job.coin
 		started := h.job.started
@@ -625,6 +646,7 @@ func (h *Hub) localResearchStart(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		Coin       string `json:"coin"`
 		Hypothesis string `json:"hypothesis"`
+		Source     string `json:"source"`
 	}
 	_ = json.NewDecoder(r.Body).Decode(&body)
 	if strings.TrimSpace(body.Hypothesis) != "" {
@@ -633,7 +655,7 @@ func (h *Hub) localResearchStart(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	h.beginResearch(body.Coin)
+	h.beginResearch(body.Coin, body.Source)
 	writeLocal(w, http.StatusOK, h.snapshotResearch())
 }
 

@@ -434,9 +434,13 @@ export async function directStatus(): Promise<BindResult> {
   }
 }
 
-export async function startResearch(coin: string, hypothesis?: string): Promise<BindResult> {
+export async function startResearch(coin: string, hypothesis?: string, source?: string): Promise<BindResult> {
   try {
-    const native = await nativeJsonOrError<BindResult>("local_research_start", { coin, hypothesis: hypothesis || "none" });
+    const native = await nativeJsonOrError<BindResult>("local_research_start", {
+      coin,
+      hypothesis: hypothesis || "none",
+      source: source || "research_ui",
+    });
     if (native.sign || native.trade) return { error: "companion_denied" };
     return native;
   } catch (e) {
@@ -947,6 +951,12 @@ export async function fetchCalibration(): Promise<{
       sign?: boolean;
     }>("local_calibration", "/local/calibration")) || { copy: "NOT ENOUGH DATA" }
   );
+}
+
+export async function fetchExperience(coin?: string): Promise<{ why?: string; n?: number; min_samples?: number }> {
+  const q = coin ? `?coin=${encodeURIComponent(coin)}` : "";
+  const fetched = rejectSecrets(await fetchJson<{ why?: string; n?: number; min_samples?: number; sign?: boolean }>(`/local/experience${q}`));
+  return fetched || { why: "NOT ENOUGH DATA", n: 0 };
 }
 
 export async function fetchIdentity(): Promise<{ itransfer?: string; iclone?: string; note?: string }> {

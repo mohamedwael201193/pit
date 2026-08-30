@@ -38,7 +38,7 @@ Ordinary path:
 5. Pair the browser at [/pair](https://pit0g.vercel.app/pair) with the one-time code shown on the machine
 6. Connect **your wallet**. PIT never asks for a seed phrase.
 7. Sign **Protect my strategy** in the paired browser. The Direct token stays on this computer.
-8. Pick MAINNET or TESTNET. Connect **your Hyperliquid account**. Set **your policy**. Approve the printed agent (order and cancel only).
+8. Stay on **MAINNET**. Connect **your Hyperliquid account**. Set **your policy**. Approve the printed agent (order and cancel only).
 
 macOS and Linux: source build only until those installers are packaged and tested. Do not claim they are production-ready.
 
@@ -49,7 +49,7 @@ Health (public Watch, `sign: false`): [pit-health.onrender.com](https://pit-heal
 ### How to verify your PIT download
 
 ```powershell
-Get-FileHash .\PIT_0.7.2_x64-setup.exe -Algorithm SHA256
+Get-FileHash .\PIT_0.7.3_x64-setup.exe -Algorithm SHA256
 ```
 
 Compare with `SHA256SUMS` on the same GitHub Release. The source commit is on the release tag.
@@ -59,8 +59,8 @@ Compare with `SHA256SUMS` on the same GitHub Release. The source commit is on th
 ## 20 seconds
 
 1. Connect **your wallet**. PIT never asks for a seed phrase.
-2. Pick **MAINNET** or **TESTNET**. One workspace is exactly one pair. Never mixed.
-3. Connect **your Hyperliquid account**. Unified accounts use spot USDC as buying power. PIT will not invent a perp deposit or pad size below the $10 venue minimum.
+2. Stay on **MAINNET**. TESTNET stays in developer mode and CI.
+3. Connect **your Hyperliquid account**. Unified accounts use spot USDC as buying power. PIT will not invent a perp deposit or pad size below that book's Hyperliquid minimum.
 4. Set **your policy** (clip, leverage, kill, allowlist).
 5. Create **your session** on desktop or CLI (order + cancel, 24 hours; reused if Hyperliquid still lists the PIT agent).
 6. Ask, or wait for a policy-eligible opportunity.
@@ -295,7 +295,7 @@ Full command set:
 
 `init` `login` `wallet` `pair` `network` `policy` `session` `companion` `approve` `hyperliquid` `agent` `compute` `direct` `ask` `research` `watch` `opportunities` `chat` `positions` `health` `forecast` `calibration` `preview` `authorize` `execute` `orders` `cancel` `status` `resolve` `card` `verify` `proof` `kill` `revoke` `doctor` `activity` `receipt` `logout` `version` `update`
 
-Every command accepts `--json`. `pit version` prints `PIT 0.7.2`. `pit doctor` probes version, wallet, network, OS keychain, memory-key hazard, Hyperliquid, 0G RPC, companion, sealer, Direct token (keychain, operator file, or sponsored compute), Direct credit, TEE evidence, storage client, registry, session, Hyperliquid agent, and policy. It never prints secrets. A global `PIT_MEMORY_KEY` is a doctor failure. The desktop can bind a public wallet, pin policy, and mint a session without a terminal. `pit research [ETH] --hypothesis none|long|short` seals a user hypothesis into the private book. `pit pair`, `pit approve`, `pit execute`, `pit mcp`, `pit scan`, `pit mission`, and `pit calibration` are first-class commands. `pit direct` issues the official wallet-signed Direct challenge and stores the token in the keychain. Discovery ranks books this account can actually size: policy PASS is not the same as execution-feasible. Spot USDC is not silently treated as perp margin unless Hyperliquid reports unified account mode.
+Every command accepts `--json`. `pit version` prints `PIT 0.7.3`. `pit doctor` probes version, wallet, network, OS keychain, memory-key hazard, Hyperliquid, 0G RPC, companion, sealer, Direct token (keychain, operator file, or sponsored compute), Direct credit, TEE evidence, storage client, registry, session, Hyperliquid agent, and policy. It never prints secrets. A global `PIT_MEMORY_KEY` is a doctor failure. The desktop can bind a public wallet, pin policy, and mint a session without a terminal. `pit research [ETH] --hypothesis none|long|short` seals a user hypothesis into the private book. `pit pair`, `pit approve`, `pit execute`, `pit mcp`, `pit scan`, `pit mission`, and `pit calibration` are first-class commands. `pit direct` issues the official wallet-signed Direct challenge and stores the token in the keychain. Discovery ranks books this account can actually size: policy PASS is not the same as execution-feasible. Spot USDC is not silently treated as perp margin unless Hyperliquid reports unified account mode.
 
 Official storage client (not the TypeScript SDK): `upload --url --file --key --encryption-key` and `download --proof --root --file --encryption-key`. `pit proof` requires `--key-file` per workspace and refuses a global memory key.
 
