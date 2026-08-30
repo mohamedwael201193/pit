@@ -46,6 +46,8 @@ export type MarketCoin = {
   skillIds?: string[];
 };
 
+export const MARKET_FILTERS = ["Actionable", "Research", "Watch", "Blocked"] as const;
+
 function researchTitle(pinned?: boolean, computeReady?: boolean) {
   if (!pinned) {
     return "Research privately — blocked: policy is not pinned. Protect and compute are not the issue if they are ready. Pin on Security.";
@@ -99,7 +101,7 @@ export function WatchBook({
 }) {
   const [sel, setSel] = useState("");
   const [q, setQ] = useState("");
-  const [filter, setFilter] = useState<"all" | "pass" | "exec" | "research" | "capital" | "blocked">("pass");
+  const [filter, setFilter] = useState<"all" | "pass" | "exec" | "research" | "capital" | "blocked">("exec");
   const autoExec = useRef(false);
   const filtered = useMemo(() => {
     const n = q.trim().toLowerCase();
@@ -228,12 +230,10 @@ export function WatchBook({
         <div className="filter-row" role="tablist" aria-label="Market filters">
           {(
             [
-              ["pass", `Policy ${counts.pass}`],
               ["exec", `Actionable ${counts.exec}`],
               ["research", `Research ${counts.research}`],
-              ["capital", `Capital ${counts.capital}`],
+              ["pass", `Watch ${counts.pass}`],
               ["blocked", `Blocked ${counts.blocked}`],
-              ["all", `All ${counts.all}`],
             ] as const
           ).map(([id, label]) => (
             <button
@@ -287,8 +287,10 @@ export function WatchBook({
           <li className="book-head" aria-hidden="true">
             <span className="book-row head">
               <span>Asset</span>
-              <span>Price</span>
+              <span>Mark</span>
+              <span>Oracle</span>
               <span>Funding</span>
+              <span>OI</span>
               <span>Status</span>
               <span>Min / clip</span>
             </span>
@@ -306,7 +308,13 @@ export function WatchBook({
                   </span>
                   <span className="tile-mark">{compactNum(c.mark)}</span>
                   <span className="fine" style={{ margin: 0 }}>
+                    {c.oracle ? compactNum(c.oracle) : "—"}
+                  </span>
+                  <span className="fine" style={{ margin: 0 }}>
                     {pctFunding(c.funding)}
+                  </span>
+                  <span className="fine" style={{ margin: 0 }}>
+                    {c.openInterest ? compactNum(c.openInterest) : "—"}
                   </span>
                   <span className={`layer-chip ${chip.k}`}>{chip.t}</span>
                   <span className="fine" style={{ margin: 0 }}>

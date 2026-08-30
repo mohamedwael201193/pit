@@ -120,6 +120,32 @@ func Parse(text string) Result {
 		out.Reply = "Desk shows the next required step. Chat cannot AUTHORIZE."
 		return out
 	}
+	if (strings.Contains(low, "last research") || strings.Contains(low, "last thesis") || strings.Contains(low, "show me the last research")) && !execAsk {
+		out.Tool = "research.result"
+		out.Navigate = "research"
+		out.Reply = "Last sealed research is on Research with committee roles, TEE check, and the named stand-down or preview. Chat cannot AUTHORIZE."
+		return out
+	}
+	if strings.Contains(low, "compare") && coin == "" {
+		out.Tool = "watch.compare"
+		out.Navigate = "markets"
+		out.Reply = "Host rank compares policy-eligible books by mark/oracle gap, funding, and open interest. It is not a model score."
+		return out
+	}
+	if strings.Contains(low, "compare") && coin != "" {
+		out.Tool = "watch.compare"
+		out.Coin = coin
+		out.Navigate = "markets"
+		out.Reply = "Host rank compares those policy-eligible books by mark/oracle gap, funding, and open interest. It is not a model score."
+		return out
+	}
+	if (strings.Contains(low, "happening") || strings.Contains(low, "why is") && strings.Contains(low, "moving")) && coin != "" {
+		out.Tool = "watch.get"
+		out.Coin = coin
+		out.Navigate = "markets"
+		out.Reply = fmt.Sprintf("Live Hyperliquid state for %s. Freshness is the book timestamp. Side is not decided here. Private thesis stays sealed.", coin)
+		return out
+	}
 	if strings.Contains(low, "happening") || strings.Contains(low, "what is pit doing") || strings.Contains(low, "waiting for") {
 		out.Tool = "status"
 		out.Navigate = "chat"

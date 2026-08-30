@@ -85,6 +85,22 @@ func TestHappeningAndPositions(t *testing.T) {
 	if r.Execute || r.Tool != "status" {
 		t.Fatalf("%+v", r)
 	}
+	r = Parse("What is happening with BTC?")
+	if r.Execute || r.Tool != "watch.get" || r.Coin != "BTC" || r.Navigate != "markets" {
+		t.Fatalf("%+v", r)
+	}
+	r = Parse("Why is ETH moving?")
+	if r.Execute || r.Tool != "watch.get" || r.Coin != "ETH" {
+		t.Fatalf("%+v", r)
+	}
+	r = Parse("Compare BTC and ETH.")
+	if r.Execute || r.Tool != "watch.compare" {
+		t.Fatalf("%+v", r)
+	}
+	r = Parse("Show me the last research.")
+	if r.Execute || r.Tool != "research.result" || r.Navigate != "research" {
+		t.Fatalf("%+v", r)
+	}
 	r = Parse("Show me my current positions")
 	if r.Navigate != "portfolio" || r.Execute {
 		t.Fatalf("%+v", r)

@@ -122,17 +122,18 @@ function eventLine(ev: ActivityEvent) {
 
 const SETUP_KEY = "pit.desk.setup";
 
-const RAIL: { id: View; label: string }[] = [
-  { id: "home", label: "Desk" },
-  { id: "chat", label: "Chat" },
-  { id: "markets", label: "Markets" },
-  { id: "research", label: "Research" },
-  { id: "portfolio", label: "Portfolio" },
-  { id: "activity", label: "Activity" },
-  { id: "automation", label: "Automation" },
-  { id: "health", label: "Health" },
-  { id: "security", label: "Security" },
+const RAIL: { id: View; label: string; glyph: string }[] = [
+  { id: "home", label: "Desk", glyph: "D" },
+  { id: "chat", label: "Chat", glyph: "C" },
+  { id: "markets", label: "Markets", glyph: "M" },
+  { id: "research", label: "Research", glyph: "R" },
+  { id: "portfolio", label: "Portfolio", glyph: "P" },
+  { id: "activity", label: "Activity", glyph: "A" },
+  { id: "automation", label: "Automation", glyph: "G" },
+  { id: "health", label: "Health", glyph: "H" },
+  { id: "security", label: "Security", glyph: "S" },
 ];
+const RAIL_KEY = "pit.desk.rail";
 
 export function App() {
   useNativeExternalLinks();
@@ -197,6 +198,13 @@ export function App() {
     }
   });
   const [booted, setBooted] = useState(false);
+  const [railCollapsed, setRailCollapsed] = useState(() => {
+    try {
+      return window.localStorage.getItem(RAIL_KEY) === "1";
+    } catch {
+      return false;
+    }
+  });
   const [palette, setPalette] = useState(false);
   const [thread, setThread] = useState("desk");
   const [threads, setThreads] = useState<ChatThread[]>([{ id: "desk", title: "Desk" }]);
@@ -558,6 +566,11 @@ export function App() {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
         setPalette((v) => !v);
+        return;
+      }
+      if (!typing && (e.key === "?" || (e.shiftKey && e.key === "/"))) {
+        e.preventDefault();
+        setPalette(true);
         return;
       }
       if (e.key === "Escape") {
@@ -966,7 +979,24 @@ export function App() {
   return (
     <div className="app">
       <TitleBar
-        status={`${DESKTOP_VERSION} · ${net.toUpperCase()}${status?.wallet ? ` · ${status.wallet.slice(0, 6)}…${status.wallet.slice(-4)}` : ""} · ${compactUsd(buyingPower ?? Number(summary.buyingPower || 0))} · ${mission.mode === "guarded" && mission.running ? "Guarded" : "Manual"}`}
+        chips={[
+          { id: "net", label: "Net", value: net === "mainnet" ? "MAINNET" : "TESTNET", ok: net === "mainnet" },
+          {
+            id: "wallet",
+            label: "Wallet",
+            value: status?.wallet ? `${status.wallet.slice(0, 6)}…${status.wallet.slice(-4)}` : "unbound",
+            ok: Boolean(status?.wallet),
+          },
+          { id: "bp", label: "Power", value: compactUsd(buyingPower ?? Number(summary.buyingPower || 0)) },
+          { id: "session", label: "Session", value: sessionAlive ? "live" : "none", ok: sessionAlive },
+          { id: "compute", label: "Compute", value: protectedOk && computeReady ? "ready" : "action", ok: protectedOk && computeReady },
+          { id: "policy", label: "Policy", value: pinned ? "pinned" : "draft", ok: pinned },
+          {
+            id: "mode",
+            label: "Mode",
+            value: mission.mode === "guarded" && mission.running ? "guarded" : mission.mode === "research_only" ? "research" : "manual",
+          },
+        ]}
       />
       <BootGate
         open={!booted}
@@ -995,6 +1025,8 @@ export function App() {
           { id: "automation", label: "Open Automation", run: () => setView("automation") },
           { id: "health", label: "Open Strategy Health", run: () => setView("health") },
           { id: "security", label: "Open Security", run: () => setView("security") },
+          { id: "policy", label: "Open Policy", run: () => setView("security") },
+          { id: "keys", label: "Keyboard: Ctrl+K palette, g then d/m/c/r/p/y/s", run: () => undefined },
           { id: "start", label: "Start research", run: () => void researchThis() },
           { id: "hl", label: "Open Hyperliquid", run: () => void openExternal(hyperliquidApp(net)) },
           { id: "hlapi", label: "Open Hyperliquid API", run: () => void openExternal(hyperliquidAPI(net)) },
@@ -1005,8 +1037,8 @@ export function App() {
           { id: "act", label: "Show latest activity", run: () => setView("activity") },
         ]}
       />
-      <div className="work">
-      <aside className="rail">
+      <div className={railCollapsed ? "work rail-collapsed" : "work"}>
+      <aside className={railCollapsed ? "rail collapsed" : "rail"}>
         <div className="rail-brand">
           <div className="word">PIT.</div>
           <p className="kicker">{status?.version || DESKTOP_VERSION} · local execution</p>
@@ -1017,12 +1049,13 @@ export function App() {
               key={item.id}
               type="button"
               className={view === item.id ? "on" : ""}
+              title={item.label}
               onClick={() => {
                 setSetupDone(true);
                 setView(item.id);
               }}
             >
-              {item.label}
+              {railCollapsed ? item.glyph : <span>{item.label}</span>}
             </button>
           ))}
         </nav>
@@ -1040,7 +1073,26 @@ export function App() {
               setView("security");
             }}
           >
-            Help / Diagnostics
+            Help
+          </button>
+          <button
+            type="button"
+            className="rail-collapse"
+            aria-pressed={railCollapsed}
+            aria-label={railCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+            onClick={() => {
+              setRailCollapsed((v) => {
+                const next = !v;
+                try {
+                  window.localStorage.setItem(RAIL_KEY, next ? "1" : "0");
+                } catch {
+                  /* persist is best-effort */
+                }
+                return next;
+              });
+            }}
+          >
+            {railCollapsed ? "»" : "Collapse"}
           </button>
         </div>
       </aside>

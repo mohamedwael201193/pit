@@ -11,6 +11,7 @@ import { assertReducedMotionCopy } from "./motion.spec.ts";
 import { assertTeeNeverGreenIdle, assertDirectNotGreenWithoutAuth } from "./readiness.spec.ts";
 import { assertNamedErrors } from "./errors.spec.ts";
 import { assertCapitalFloorIgnoresDust, assertPolicyClipTightCopy, assertAgenticIdPartial, assertDeskHeadlinePrefersExecutable } from "./capital.spec.ts";
+import { assertShellFilters } from "./shell.spec.ts";
 
 assertOfficialLinks();
 assertHonesty();
@@ -32,4 +33,5 @@ assertCapitalFloorIgnoresDust();
 assertPolicyClipTightCopy();
 assertAgenticIdPartial();
 assertDeskHeadlinePrefersExecutable();
+assertShellFilters();
 console.log("desktop e2e copy harness ok");

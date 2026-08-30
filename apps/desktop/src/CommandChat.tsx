@@ -12,13 +12,17 @@ import { ExternalLink } from "./ExternalLink";
 import { openExternal } from "./open";
 
 const PROMPTS = [
+  "What is happening with BTC?",
+  "Why is ETH moving?",
   "Find the best opportunity right now.",
+  "Research SOL.",
   "Why didn't you trade?",
-  "Why is nothing executable?",
-  "Why this setup matters",
-  "What did we learn on HYPE?",
-  "Research the best one.",
-  "Show my evidence.",
+  "What positions do I have?",
+  "What is my current risk?",
+  "Show me the last research.",
+  "Compare BTC and ETH.",
+  "Show my policy.",
+  "Start private research on BTC.",
 ];
 
 export function CommandChat({
