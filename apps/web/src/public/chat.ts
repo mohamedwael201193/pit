@@ -1,6 +1,6 @@
 import { HISTORICAL_FILL, PIT_AGENT } from "./facts";
 import { compact, fundingLabel, markLabel, usd } from "./format";
-import type { WatchView } from "./types";
+import type { PublicCoin, WatchView } from "./types";
 import { coinMin } from "./venue";
 
 export type ChatTurn = { q: string; a: string };
@@ -15,7 +15,7 @@ export const STARTERS = [
   "How does PIT use 0G?",
 ] as const;
 
-function mentionedCoin(q: string, coins: { coin: string }[]) {
+function mentionedCoin(q: string, coins: PublicCoin[]) {
   const ordered = [...coins].sort((a, b) => b.coin.length - a.coin.length);
   return ordered.find((c) => {
     const token = c.coin.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");

@@ -2357,7 +2357,8 @@ RESULT:
 - **TESTED:** Playwright 23/23 PASS (landing, radar Pair+Ask PIT, capital SIMULATION, missions, proof, agent iTransfer, download unsigned, pair, chat refuse authorize, radar chat scanned not `W mark`).
 - **LIVE VERIFIED (Chrome, local :3000, 1440×900):** `/radar` heading below header, no cream overlay, RESEARCH 6, Ask PIT answers 232 scanned / 6 eligible / actionable 0, SOL interesting, authorize refused. `/pair` Pair tab + Protect my strategy. `/proof` `/agent` `/capital` `/missions` `/how-it-works` `/download` `/radar/SOL` `/missions/historical-eth/replay` share the same rail. `/signin` and unauthenticated `/app` are wallet gate + Browse radar first. `/` stays coral landing.
 - **LIVE VERIFIED (Chrome, 390×844):** Radar uses sticky header + horizontal tabs. Heading below header. Pair in the tab row. No overlapping Download FAB.
-- **UNVERIFIED:** Production pit0g.vercel.app until this commit is aliased. Signed-in `/app` Overview on this Chrome session (wallet not connected here).
+- **UNVERIFIED:** Production pit0g.vercel.app until the follow-up typecheck commit is aliased. Signed-in `/app` Overview on this Chrome session (wallet not connected here).
+- **FOLLOW-UP:** `mentionedCoin` typed as `PublicCoin[]` so `tsc -b` (Vercel `npm run build`) passes.
 - **BLOCKED:** iTransfer UNAVAILABLE. Authenticode absent. macOS/Linux not packaged.
 
 SECURITY RESULT: Browser still cannot receive session keys, Direct token plaintext, private prompts, or private memory. Chat still cannot authorize, pin, or enable autonomy.
