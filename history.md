@@ -2,6 +2,33 @@
 
 ---
 
+## M121 — GitHub Latest 0.9.0. Hero centered. Beats ordered.
+
+- **Source:** GitHub Releases still showed **0.8.0** because Latest is the last *tag*, not HEAD. Source was already 0.9.0. Hero copy was right but the coral board sat under the nav. Must-see Beats used a sticky 100dvh pan, so the SVGs looked unordered and a blank band followed the cards. Dual heading still said **MAINNET only**.
+- **Discovery:** Tag `v0.9.0` with the NSIS we just built. Center the hero board in the coral viewport. Replace the Beats pin with a numbered 2+3 grid. Dual heading is **MAINNET**.
+- **Candidate:** NSIS `PIT_0.9.0_x64-setup.exe`, overlay `D:\PIT`, annotated tag, Vercel + Render. Same coral, cream, ink.
+- **Kill:** Second accent. Em-dash flourish. Fake fills. Web arming. Flatten OID 529167222216. Remint PIT-4bbee556. Authenticode claim.
+- **Next:** Push, tag, deploy. Do not remint. Do not flatten. Do not start a live trade.
+
+DATE/TIME: 2026-08-30 23:15+03
+PHASE: Installer + landing fit. Chat never authorizes.
+GOAL: Latest on GitHub is 0.9.0. Hero text and iris sit in the middle of the coral block. Must-see Beats shows five ordered diagrams without a void after them.
+RESULT:
+- **IMPLEMENTED:** Companion/desktop/web stay **0.9.0**. Windows installer built and installed over `D:\PIT`. DisplayVersion 0.9.0. `pit.exe version` = PIT 0.9.0. `pit-desktop.exe` FileVersion 0.9.0. Landing: hero uses a 1fr/auto/1fr grid so the kicker, line, and iris sit in the vertical middle. Must-see Beats is 01–05, equal diagram band, no scroll pin. Dual heading is **MAINNET**.
+- **TESTED:** `go test ./...` PASS. Playwright 29/29. Installed NSIS silent `/S` exit 0. SHA256 `F140599E1F3B263E9C2A2B6209184F03AC0862EC183DE1083E02D146CFC86DEB`.
+- **LIVE:** After this push, tag `v0.9.0`, Vercel, Render. No new MAINNET fill. ETH OID `529167222216` untouched.
+- **BLOCKED:** Authenticode still absent. macOS/Linux not packaged. `go test -race` skipped (CGO_ENABLED=0). iTransfer still not live on Aristotle. PITAutonomyReceiptRegistry still skipped.
+
+SECURITY RESULT: Arm still desktop-only. Web, chat, MCP, SDK still cannot arm. Chat never authorizes. Kill switch still does not flatten.
+TX HASH / OID: Historical OID `529167222216` unchanged.
+CLASSIFICATION:
+- GitHub Latest 0.9.0 installer: **IMPLEMENTED + TESTED locally; LIVE after tag**
+- Hero center + Beats grid + Dual MAINNET: **IMPLEMENTED + TESTED**
+PRODUCTION READY: Public installer matches source 0.9.0 once the tag is on GitHub. Stay-awake remains on the story beat.
+NEXT STEP: `python _scripts/push_head.py`. `python _scripts/tag_push.py v0.9.0`. Deploy web.
+
+---
+
 ## M120 — Hero, story, Automation desk fit any size
 
 - **Source:** Production hero clipped PRIVATE ALPHA OS, stacked two small paragraphs, duplicate Explore, and a leftover coral pin. Story used a 100dvh pin that clipped Authorized. Desktop rail became a wrapping row under 1100px. Automation was three giant cards plus red essay boxes.

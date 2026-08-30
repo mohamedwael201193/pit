@@ -8,8 +8,10 @@ export function Hero() {
   return (
     <section className="guide-coral isolate relative min-h-[100dvh] overflow-x-clip">
       <div className="guide-grain" aria-hidden="true" />
-      <div className="container-pit relative grid min-h-[100dvh] grid-rows-[auto_1fr] pt-[5.75rem] pb-8 md:pt-24 md:pb-10">
-        <div className="hero-board grid items-center gap-8 lg:grid-cols-[minmax(0,1.15fr)_minmax(12rem,22rem)] lg:gap-10">
+      <div className="relative z-[1] grid min-h-[100dvh] grid-rows-[1fr_auto_1fr]">
+        <div aria-hidden="true" />
+        <div className="container-pit w-full py-6">
+        <div className="hero-board grid w-full items-center gap-8 lg:grid-cols-[minmax(0,1.15fr)_minmax(12rem,22rem)] lg:gap-12">
           <motion.div
             initial={reduce ? false : { opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
@@ -27,7 +29,7 @@ export function Hero() {
             <HeroCtas />
           </motion.div>
           <motion.div
-            className="hero-wire relative mx-auto grid size-[min(42vw,18rem)] place-items-center lg:size-[min(42vh,22rem)] lg:justify-self-end"
+            className="hero-wire relative mx-auto grid size-[min(42vw,18rem)] place-items-center lg:size-[min(46vh,22rem)] lg:justify-self-end"
             initial={reduce ? false : { opacity: 0, scale: 0.94 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.9, delay: 0.08, ease: [0.16, 1, 0.3, 1] }}
@@ -38,6 +40,8 @@ export function Hero() {
             <WireIris className={`pointer-events-none absolute inset-[22%] ${reduce ? "" : "guide-spin-rev"}`} />
           </motion.div>
         </div>
+        </div>
+        <div aria-hidden="true" />
       </div>
     </section>
   );

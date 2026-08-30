@@ -16,7 +16,7 @@ const COINS = [
 
 export function TokenRow() {
   return (
-    <ul className="mt-10 flex flex-wrap gap-3">
+    <ul className="mt-10 flex flex-wrap justify-center gap-3">
       {COINS.map(({ symbol, Icon }) => (
         <li
           key={symbol}
