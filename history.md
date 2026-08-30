@@ -2341,6 +2341,34 @@ CLASSIFICATION:
 PRODUCTION READY: Landing looks like PIT again. Product routes still discover/prove only.
 NEXT STEP: Push and alias pit0g.vercel.app.
 
+---
+
+## M109 — Unify product pages on /app desk chrome (2026-08-30)
+
+DATE/TIME: 2026-08-30 08:17+03
+PHASE: UI/UX. Do not flatten OID 529167222216. Do not remint PIT-4bbee556. Do not invent fills or APR. Landing `/` stays coral.
+GOAL: `/radar` and the other public product routes must use the same ordered sidebar as `/app`. Kill the cream landing navbar that sat on top of radar copy. Pair is a late tab. Sign in / Protect my strategy stay ordered. Chat must answer the starters, not a one-letter ticker.
+RESULT:
+- **IMPLEMENTED:** Still **0.8.0**. No new installer.
+  1. Shared `DeskFrame` for PublicShell and AppShell: Look (Radar, Missions, Proof, Agent, Capital, How it works), This computer (Pair, Download), Your desk when signed in (Overview, My Missions, My Agent, My Proof, My Capital, Protect, Policy).
+  2. `/pair` is a rail tab. Protect my strategy stays visible after pairing, and from the signed-in desk. Sign in is in the top bar and rail, not the first public goal.
+  3. Ask PIT is a rail/top-bar drawer (`.desk-chat`), not a FAB stacked on Download. Landing `/` keeps the coral nav and floating Ask PIT.
+  4. Chat coin match uses word boundaries. "What is happening?" no longer matches ticker `W`. Authorize still refused.
+- **TESTED:** Playwright 23/23 PASS (landing, radar Pair+Ask PIT, capital SIMULATION, missions, proof, agent iTransfer, download unsigned, pair, chat refuse authorize, radar chat scanned not `W mark`).
+- **LIVE VERIFIED (Chrome, local :3000, 1440×900):** `/radar` heading below header, no cream overlay, RESEARCH 6, Ask PIT answers 232 scanned / 6 eligible / actionable 0, SOL interesting, authorize refused. `/pair` Pair tab + Protect my strategy. `/proof` `/agent` `/capital` `/missions` `/how-it-works` `/download` `/radar/SOL` `/missions/historical-eth/replay` share the same rail. `/signin` and unauthenticated `/app` are wallet gate + Browse radar first. `/` stays coral landing.
+- **LIVE VERIFIED (Chrome, 390×844):** Radar uses sticky header + horizontal tabs. Heading below header. Pair in the tab row. No overlapping Download FAB.
+- **UNVERIFIED:** Production pit0g.vercel.app until this commit is aliased. Signed-in `/app` Overview on this Chrome session (wallet not connected here).
+- **BLOCKED:** iTransfer UNAVAILABLE. Authenticode absent. macOS/Linux not packaged.
+
+SECURITY RESULT: Browser still cannot receive session keys, Direct token plaintext, private prompts, or private memory. Chat still cannot authorize, pin, or enable autonomy.
+TX HASH / OID: Historical OID `529167222216` unchanged.
+CLASSIFICATION:
+- Desk chrome on product routes: **IMPLEMENTED + TESTED**
+- Landing overlay on `/radar`: **REMOVED**
+- Chat ticker substring bug: **FIXED**
+PRODUCTION READY: Public product pages match the desk. Landing remains the coral story.
+NEXT STEP: Commit, push, Vercel alias pit0g.vercel.app.
+
 
 
 

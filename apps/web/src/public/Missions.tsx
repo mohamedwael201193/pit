@@ -1,15 +1,14 @@
 import { Link } from "react-router-dom";
 import { HISTORICAL_FILL } from "./facts";
+import { PageHead } from "../ui/PageHead";
 
 export function MissionsPage() {
   return (
-    <div>
-      <p className="intel-kicker">Public missions</p>
-      <h1 className="intel-title mt-2">Public-safe PIT missions</h1>
-      <p className="intel-lede">
-        The public site only lists missions that have a public-safe receipt. Private research stays on desktop. This
-        page will not invent Mission IDs, OIDs, or fills.
-      </p>
+    <div className="mx-auto max-w-[80rem]">
+      <PageHead
+        title="Public-safe PIT missions"
+        lede="The public site only lists missions that have a public-safe receipt. Private research stays on desktop. This page will not invent Mission IDs, OIDs, or fills."
+      />
 
       <div className="mt-10 border border-[rgb(240_231_212/0.14)] px-5 py-6">
         <p className="text-[0.6875rem] tracking-[0.16em] text-[rgb(240_231_212/0.45)]">LIVE</p>

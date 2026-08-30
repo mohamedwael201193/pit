@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { actionableCoins, blockedCoins, eligibleCoins, useWatch, watchCoins } from "./Watch";
 import { MarketHead, MarketRow } from "./MarketRow";
 import type { PublicCoin } from "./types";
+import { PageHead } from "../ui/PageHead";
 
 const TABS = ["ACTIONABLE", "RESEARCH", "WATCH", "BLOCKED"] as const;
 type Tab = (typeof TABS)[number];
@@ -22,13 +23,11 @@ export function RadarPage() {
   const rows: PublicCoin[] = groups[tab];
 
   return (
-    <div>
-      <p className="intel-kicker">Radar</p>
-      <h1 className="intel-title mt-2">What is happening right now?</h1>
-      <p className="intel-lede">
-        Public market intelligence from Hyperliquid via PIT health. This browser cannot size your account. Actionable
-        here means the public feed marked executionFeasible — website origins do not receive buying power.
-      </p>
+    <div className="mx-auto max-w-[80rem]">
+      <PageHead
+        title="What is happening right now?"
+        lede="Public market intelligence from Hyperliquid via PIT health. This browser cannot size your account. Actionable here means the public feed marked executionFeasible. Website origins do not receive buying power."
+      />
       {error ? <p className="mt-4 text-[#ff8a8a]">{error}</p> : null}
       <div className="mt-8 flex flex-wrap gap-1" role="tablist" aria-label="Radar tabs">
         {TABS.map((t) => (
@@ -62,3 +61,4 @@ export function RadarPage() {
     </div>
   );
 }
+

@@ -15,6 +15,15 @@ export const STARTERS = [
   "How does PIT use 0G?",
 ] as const;
 
+function mentionedCoin(q: string, coins: { coin: string }[]) {
+  const ordered = [...coins].sort((a, b) => b.coin.length - a.coin.length);
+  return ordered.find((c) => {
+    const token = c.coin.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    if (token.length < 2) return false;
+    return new RegExp(`(?:^|[^a-z0-9])${token}(?:$|[^a-z0-9])`).test(q);
+  });
+}
+
 export function answerChat(raw: string, watch: WatchView | null): string {
   const q = raw.trim().toLowerCase();
   if (!q) return "Ask what is happening, why a market is watched, or how to verify. This chat cannot authorize, pin policy, or enable autonomy.";
@@ -31,7 +40,7 @@ export function answerChat(raw: string, watch: WatchView | null): string {
     return `Open /proof. TEE verification recovers a signer from Direct evidence and compares it to the registered signer — there is no live public receipt on this page to recover, so it will not badge Verified. A historical Hyperliquid fill exists: ${HISTORICAL_FILL.market} size ${HISTORICAL_FILL.sz} OID ${HISTORICAL_FILL.oid}, labeled HISTORICAL. Paste a 0G Chain transaction hash to read it from Aristotle RPC in this browser.`;
   }
 
-  if (q.includes("last mission") || q.includes("happened") && q.includes("mission")) {
+  if (q.includes("last mission") || (q.includes("happened") && q.includes("mission"))) {
     return `There is no live public mission stream. A historical fill is on record: ${HISTORICAL_FILL.market} ${HISTORICAL_FILL.sz} @ ${HISTORICAL_FILL.px}, OID ${HISTORICAL_FILL.oid}. That is HISTORICAL, not a live replay of private research. Open /missions/historical-eth/replay.`;
   }
 
@@ -48,11 +57,18 @@ export function answerChat(raw: string, watch: WatchView | null): string {
   }
 
   const coins = watch?.coins ?? [];
-  const eligible = coins.filter((c) => c.eligible);
   const sol = coins.find((c) => c.coin?.toUpperCase() === "SOL");
-  const asked = coins.find((c) => q.includes(c.coin.toLowerCase()));
 
-  if (q.includes("sol") || (asked && asked.coin === "SOL") || (sol && q.includes("interesting"))) {
+  if (q.includes("happening") || q.includes("now") || q.includes("radar") || (q.includes("market") && !mentionedCoin(q, coins))) {
+    if (!watch) {
+      return "Public health is not loaded yet. If it stays empty, the watch process is down — this site will not invent scanned counts.";
+    }
+    return `Live public watch: ${watch.scanned ?? 0} Hyperliquid perps scanned, ${watch.count ?? 0} policy-eligible. Account-actionable count on this public feed is ${coins.filter((c) => c.executionFeasible).length} — buying power is not attached for website origins. Best public-eligible: ${watch.best?.coin ?? "none"}. ${watch.bestWhy ?? ""} Agent ${PIT_AGENT.name} executes only from desktop.`;
+  }
+
+  const asked = mentionedCoin(q, coins);
+
+  if (/\bsol\b/.test(q) || (asked && asked.coin === "SOL") || (sol && q.includes("interesting") && !asked)) {
     if (!sol) {
       return "SOL is not in the current public watch payload. PIT will not invent a mark.";
     }
@@ -63,13 +79,6 @@ export function answerChat(raw: string, watch: WatchView | null): string {
   if (asked) {
     const min = coinMin(asked);
     return `${asked.coin} mark $${markLabel(asked.mark)}, funding ${fundingLabel(asked.funding)}, OI ${compact(asked.openInterest)}, min ${usd(min)}. ${asked.eligible ? "Policy-eligible on the public default list." : "Not on the public eligible list."} No private thesis. Open /radar/${asked.coin} for the public market sheet.`;
-  }
-
-  if (q.includes("happening") || q.includes("now") || q.includes("radar") || q.includes("market")) {
-    if (!watch) {
-      return "Public health is not loaded yet. If it stays empty, the watch process is down — this site will not invent scanned counts.";
-    }
-    return `Live public watch: ${watch.scanned ?? 0} Hyperliquid perps scanned, ${watch.count ?? 0} policy-eligible. Account-actionable count on this public feed is ${coins.filter((c) => c.executionFeasible).length} — buying power is not attached for website origins. Best public-eligible: ${watch.best?.coin ?? "none"}. ${watch.bestWhy ?? ""} Agent ${PIT_AGENT.name} executes only from desktop.`;
   }
 
   return "This chat answers public intelligence only. Try: what is happening, why SOL is watched, how 0G is used, or show me proof. For private command, open PIT Desktop.";

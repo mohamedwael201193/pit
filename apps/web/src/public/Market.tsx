@@ -1,4 +1,5 @@
 import { Link, useParams } from "react-router-dom";
+import { PageHead } from "../ui/PageHead";
 import { compact, fundingLabel, markLabel, usd } from "./format";
 import { coinMin } from "./venue";
 import { findCoin, useWatch } from "./Watch";
@@ -13,10 +14,11 @@ export function MarketPage() {
   if (error) return <p className="text-[#ff8a8a]">{error}</p>;
   if (!c) {
     return (
-      <div>
-        <p className="intel-kicker">Public market</p>
-        <h1 className="intel-title mt-2">{coin.toUpperCase() || "Unknown"}</h1>
-        <p className="intel-lede">This asset is not in the current public watch payload. PIT will not invent a mark.</p>
+      <div className="mx-auto max-w-[80rem]">
+        <PageHead
+          title={coin.toUpperCase() || "Unknown"}
+          lede="This asset is not in the current public watch payload. PIT will not invent a mark."
+        />
         <Link to="/radar" className="intel-ghost mt-6 inline-flex">
           Back to radar
         </Link>
@@ -28,13 +30,11 @@ export function MarketPage() {
   const st = statusOf(c);
 
   return (
-    <div>
+    <div className="mx-auto max-w-[80rem]">
       <Link to="/radar" className="intel-ghost">
         ← Radar
       </Link>
-      <p className="intel-kicker mt-6">Public market</p>
-      <h1 className="intel-title mt-2">{c.coin}</h1>
-      <p className="mt-2 text-[0.75rem] tracking-[0.14em] text-[#d82f2f]">{st.label}</p>
+      <PageHead title={c.coin} lede={st.label} />
 
       <dl className="intel-metrics mt-8">
         <Item k="Price" v={`$${markLabel(c.mark)}`} />

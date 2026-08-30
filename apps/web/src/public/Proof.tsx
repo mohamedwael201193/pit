@@ -8,6 +8,7 @@ import {
   PIT_AGENT,
   STORAGE_INDEXER,
 } from "./facts";
+import { PageHead } from "../ui/PageHead";
 import { shortAddr } from "./format";
 import { readAristotleTx } from "./chain";
 import { useWatch } from "./Watch";
@@ -33,13 +34,11 @@ export function ProofPage() {
   };
 
   return (
-    <div>
-      <p className="intel-kicker">Proof center</p>
-      <h1 className="intel-title mt-2">What was verified, and how</h1>
-      <p className="intel-lede">
-        This page will not say Verified unless this browser can show the check. Health process {health?.version ?? "—"}.
-        Sign is always false on this feed.
-      </p>
+    <div className="mx-auto max-w-[80rem]">
+      <PageHead
+        title="What was verified, and how"
+        lede={`This page will not say Verified unless this browser can show the check. Health process ${health?.version ?? "—"}. Sign is always false on this feed.`}
+      />
 
       <div className="mt-10 divide-y divide-[rgb(240_231_212/0.12)] border-y border-[rgb(240_231_212/0.12)]">
         <ProofRow

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { PageHead } from "../ui/PageHead";
 import { RELEASES, REPO } from "./facts";
 
 type Release = {
@@ -52,13 +53,11 @@ export function DownloadPage() {
   }, []);
 
   return (
-    <div>
-      <p className="intel-kicker">Download PIT</p>
-      <h1 className="intel-title mt-2">Windows x64. Verify the bytes.</h1>
-      <p className="intel-lede">
-        PIT Desktop is the private brain. This website will not claim a Windows signature that does not exist. macOS and
-        Linux are not claimed until they are packaged and tested.
-      </p>
+    <div className="mx-auto max-w-[80rem]">
+      <PageHead
+        title="Windows x64. Verify the bytes."
+        lede="PIT Desktop is the private brain. This website will not claim a Windows signature that does not exist. macOS and Linux are not claimed until they are packaged and tested."
+      />
 
       <dl className="intel-metrics mt-8">
         <div className="intel-metric">

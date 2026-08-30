@@ -4,6 +4,7 @@ import { CAPITAL_PRESETS } from "./facts";
 import { markLabel, usd } from "./format";
 import type { SimRow } from "./types";
 import { coinMin } from "./venue";
+import { PageHead } from "../ui/PageHead";
 import { eligibleCoins, useWatch } from "./Watch";
 
 export function CapitalPage() {
@@ -39,13 +40,11 @@ export function CapitalPage() {
   const waitN = rows.filter((r) => r.kind === "WAIT").length;
 
   return (
-    <div>
-      <p className="intel-kicker">Capital intelligence · simulation</p>
-      <h1 className="intel-title mt-2">What could PIT do with this capital?</h1>
-      <p className="intel-lede">
-        This is a host-style check of public Hyperliquid venue floors against the number you type. It is not a return
-        forecast. It does not execute. It does not use Zia pools or APR.
-      </p>
+    <div className="mx-auto max-w-[80rem]">
+      <PageHead
+        title="What could PIT do with this capital?"
+        lede="This is a host-style check of public Hyperliquid venue floors against the number you type. It is not a return forecast. It does not execute. It does not use Zia pools or APR."
+      />
       <p className="mt-3 inline-block border border-[#d82f2f]/50 px-2 py-1 text-[0.6875rem] font-semibold tracking-[0.16em] text-[#d82f2f]">
         SIMULATION
       </p>

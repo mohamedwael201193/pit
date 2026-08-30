@@ -1,14 +1,13 @@
 import { Link } from "react-router-dom";
+import { PageHead } from "../ui/PageHead";
 
 export function HowPage() {
   return (
-    <div>
-      <p className="intel-kicker">How it works</p>
-      <h1 className="intel-title mt-2">The web discovers and proves. The desktop protects and acts.</h1>
-      <p className="intel-lede">
-        MAINNET only. Aristotle 16661 and Hyperliquid mainnet. The laboratory exists for CI and developers, not for
-        the public desk.
-      </p>
+    <div className="mx-auto max-w-[80rem]">
+      <PageHead
+        title="The web discovers and proves. The desktop protects and acts."
+        lede="MAINNET only. Aristotle 16661 and Hyperliquid mainnet. The laboratory exists for CI and developers, not for the public desk."
+      />
 
       <ol className="intel-steps mt-10">
         <li>
@@ -36,7 +35,7 @@ export function HowPage() {
       </ol>
 
       <section className="intel-section" id="og">
-        <h2 className="intel-title">0G is the private OS</h2>
+        <h2 className="text-[1.5rem] font-semibold tracking-[-0.03em] text-[var(--guide-cream)]">0G is the private OS</h2>
         <dl className="intel-grid-2 mt-8">
           <div className="intel-pair">
             <dt>0G Compute</dt>
@@ -62,7 +61,7 @@ export function HowPage() {
       </section>
 
       <section className="intel-section">
-        <h2 className="intel-title">Safer than giving a bot a wallet</h2>
+        <h2 className="text-[1.5rem] font-semibold tracking-[-0.03em] text-[var(--guide-cream)]">Safer than giving a bot a wallet</h2>
         <p className="intel-lede">
           A session agent can order or cancel. It cannot withdraw. Chat, this website, and the model cannot authorize, pin
           policy, or enable Guarded Autonomy. Duplicate clicks do not send a second order.

@@ -17,6 +17,8 @@ test("radar copy is public-safe", async ({ page }) => {
   await page.goto("/radar");
   await expect(page.getByRole("heading", { name: "What is happening right now?" })).toBeVisible();
   await expect(page.getByRole("tab", { name: /RESEARCH/ })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Pair" }).first()).toBeVisible();
+  await expect(page.getByRole("button", { name: "Ask PIT" }).first()).toBeVisible();
 });
 
 test("capital is labeled simulation", async ({ page }) => {

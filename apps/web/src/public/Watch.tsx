@@ -63,6 +63,10 @@ export function useWatch(): WatchState {
   return ctx;
 }
 
+export function useWatchSafe(): WatchState | null {
+  return useContext(WatchCtx);
+}
+
 export function eligibleCoins(watch: WatchView | null): PublicCoin[] {
   return (watch?.coins ?? []).filter((c) => c.eligible);
 }

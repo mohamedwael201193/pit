@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { PitMark } from "./brand/PitMark";
+import { PageHead } from "./ui/PageHead";
+import { Bezel } from "./ui/Surface";
 
 const COMPANION = "http://127.0.0.1:17373";
 
@@ -83,115 +84,118 @@ export function PairPage() {
   }
 
   return (
-    <div className="guide-shell min-h-[100dvh] bg-[#0a0a0a] px-6 py-16 text-[#f0e7d4]">
-      <div className="mx-auto grid max-w-[64rem] gap-10 lg:grid-cols-[minmax(0,1fr)_20rem]">
-        <div>
-          <PitMark />
-          <p className="mt-10 font-mono text-[0.75rem] tracking-[0.14em] text-[rgb(240_231_212/0.45)]">
-            Pairing is a late step. Explore radar and proof first.
-          </p>
-          <p className="mt-10 font-mono text-[0.75rem] tracking-[0.14em] text-[#d82f2f]">LOCAL PAIRING</p>
-          <h1 className="mt-3 text-[2.5rem] font-semibold tracking-[-0.04em]">Pair this browser with PIT on this machine.</h1>
-          <p className="mt-4 max-w-[46ch] text-[1.0625rem] leading-7 text-[rgb(240_231_212/0.7)]">
-            PIT never asks for a seed phrase. The one-time code lives on your desktop. This site never receives your
-            session key. After pairing, sign Protect my strategy from the bound wallet.
-          </p>
-          <ol className="mt-8 grid gap-3 text-[0.975rem] leading-6 text-[rgb(240_231_212/0.75)]">
-            <li>1. Open PIT Desktop on this computer. A pairing code appears there with an expiry.</li>
-            <li>2. Type the code shown in PIT Desktop. It expires in two minutes and works once. Use Regenerate on desktop if it expired.</li>
-            <li>3. If Chrome asks to access other apps on this device, choose Allow. That is loopback only.</li>
-            <li>4. After pairing, this browser can view. It cannot sign orders or hold a session key.</li>
-          </ol>
-          <p className={`mt-6 text-[0.975rem] ${deskOk ? "text-[#7dffb3]" : "text-[#ff7a7a]"}`} role="status">
-            {desk}
-          </p>
-          <div className="mt-6 flex flex-wrap gap-3">
-            {deskOk ? (
-              <button
-                type="button"
-                className="rounded-full bg-[#d82f2f] px-6 py-3 font-semibold text-[#f0e7d4]"
-                onClick={() => document.querySelector<HTMLInputElement>('input[aria-label="pairing code"]')?.focus()}
-              >
-                Pair this browser
-              </button>
-            ) : (
-              <a
-                className="rounded-full bg-[#d82f2f] px-6 py-3 font-semibold text-[#f0e7d4]"
-                href="https://github.com/mohamedwael201193/pit/releases/latest"
-              >
-                Download PIT
-              </a>
-            )}
+    <div className="mx-auto grid max-w-[80rem] gap-10 lg:grid-cols-[minmax(0,1fr)_20rem]">
+      <div>
+        <PageHead
+          title="Pair this browser with PIT on this machine."
+          lede="PIT never asks for a seed phrase. The one-time code lives on your desktop. This site never receives your session key. After pairing, sign Protect my strategy from the bound wallet."
+        />
+        <p className="mt-6 text-[0.875rem] text-[rgb(240_231_212/0.5)]">
+          Pairing is a late step. Explore radar and proof first.
+        </p>
+        <ol className="mt-8 grid gap-3 text-[0.975rem] leading-6 text-[rgb(240_231_212/0.75)]">
+          <li>1. Open PIT Desktop on this computer. A pairing code appears there with an expiry.</li>
+          <li>2. Type the code shown in PIT Desktop. It expires in two minutes and works once. Use Regenerate on desktop if it expired.</li>
+          <li>3. If Chrome asks to access other apps on this device, choose Allow. That is loopback only.</li>
+          <li>4. After pairing, this browser can view. It cannot sign orders or hold a session key.</li>
+        </ol>
+        <p className={`mt-6 text-[0.975rem] ${deskOk ? "text-[#7dffb3]" : "text-[#ff7a7a]"}`} role="status">
+          {desk}
+        </p>
+        <div className="mt-6 flex flex-wrap gap-3">
+          {deskOk ? (
             <button
               type="button"
-              className="rounded-full border border-[rgb(240_231_212/0.35)] px-6 py-3 font-semibold text-[#f0e7d4]"
-              onClick={() => void probeDesktop()}
+              className="rounded-full bg-[#d82f2f] px-6 py-3 font-semibold text-[#f0e7d4]"
+              onClick={() => document.querySelector<HTMLInputElement>('input[aria-label="pairing code"]')?.focus()}
             >
-              Open PIT Desktop
+              Pair this browser
             </button>
-            {deskOk ? (
-              <a
-                className="rounded-full border border-[rgb(240_231_212/0.35)] px-6 py-3 font-semibold text-[#f0e7d4]"
-                href="https://github.com/mohamedwael201193/pit/releases/latest"
-              >
-                Download PIT
-              </a>
-            ) : null}
-          </div>
-          <label className="mt-10 block">
-            <span className="text-[0.75rem] tracking-[0.12em] text-[rgb(240_231_212/0.5)]">ONE-TIME CODE</span>
-            <input
-              className="mt-2 w-full border border-[rgb(240_231_212/0.25)] bg-[#141414] px-4 py-3 font-mono text-[1.25rem] tracking-[0.2em] outline-none focus:border-[#d82f2f]"
-              autoComplete="off"
-              spellCheck={false}
-              value={code}
-              onChange={(e) => setCode(e.target.value.toUpperCase())}
-              placeholder="ABCD-EFGH"
-              aria-label="pairing code"
-            />
-          </label>
+          ) : (
+            <a
+              className="rounded-full bg-[#d82f2f] px-6 py-3 font-semibold text-[#f0e7d4]"
+              href="https://github.com/mohamedwael201193/pit/releases/latest"
+            >
+              Download PIT
+            </a>
+          )}
           <button
             type="button"
-            className="mt-6 rounded-full bg-[#d82f2f] px-6 py-3 font-semibold text-[#f0e7d4] disabled:opacity-50"
-            disabled={busy}
-            onClick={() => void pair()}
+            className="rounded-full border border-[rgb(240_231_212/0.35)] px-6 py-3 font-semibold text-[#f0e7d4]"
+            onClick={() => void probeDesktop()}
           >
-            {busy ? "Pairing…" : "Pair this browser"}
+            Open PIT Desktop
           </button>
-          {msg ? (
-            <div className="mt-6">
-              <p className="text-[0.975rem] text-[#f0e7d4]">{msg}</p>
-              <p className="mt-2 text-[0.975rem] leading-6 text-[rgb(240_231_212/0.75)]">
-                Your browser is read-only. The private authorization stays on this computer.
-              </p>
-              <Link className="mt-4 inline-block rounded-full bg-[#d82f2f] px-6 py-3 font-semibold text-[#f0e7d4]" to="/app">
-                Protect my strategy
-              </Link>
-            </div>
-          ) : null}
-          {err ? (
-            <p className="mt-4 text-[0.975rem] text-[#ff7a7a]" role="alert">
-              {err}
-            </p>
+          {deskOk ? (
+            <a
+              className="rounded-full border border-[rgb(240_231_212/0.35)] px-6 py-3 font-semibold text-[#f0e7d4]"
+              href="https://github.com/mohamedwael201193/pit/releases/latest"
+            >
+              Download PIT
+            </a>
           ) : null}
         </div>
-        <aside className="rounded-2xl border border-[rgb(240_231_212/0.12)] bg-[#111111] p-6">
-          <p className="font-mono text-[0.7rem] tracking-[0.14em] text-[rgb(240_231_212/0.45)]">WHAT THIS SITE CANNOT DO</p>
-          <ul className="mt-4 grid gap-2 text-[0.95rem] leading-6 text-[rgb(240_231_212/0.7)]">
-            <li>Sign orders</li>
-            <li>Hold a session key</li>
-            <li>Authorize a trade</li>
-            <li>Change policy</li>
-          </ul>
-          <p className="mt-8 text-[0.875rem] text-[rgb(240_231_212/0.5)]">
-            macOS and Linux installers are not claimed until they are packaged and tested. Source build is documented in
-            the README.
+        <label className="mt-10 block">
+          <span className="text-[0.75rem] tracking-[0.12em] text-[rgb(240_231_212/0.5)]">ONE-TIME CODE</span>
+          <input
+            className="mt-2 w-full border border-[rgb(240_231_212/0.25)] bg-[#141414] px-4 py-3 font-mono text-[1.25rem] tracking-[0.2em] outline-none focus:border-[#d82f2f]"
+            autoComplete="off"
+            spellCheck={false}
+            value={code}
+            onChange={(e) => setCode(e.target.value.toUpperCase())}
+            placeholder="ABCD-EFGH"
+            aria-label="pairing code"
+          />
+        </label>
+        <button
+          type="button"
+          className="mt-6 rounded-full bg-[#d82f2f] px-6 py-3 font-semibold text-[#f0e7d4] disabled:opacity-50"
+          disabled={busy}
+          onClick={() => void pair()}
+        >
+          {busy ? "Pairing…" : "Pair this browser"}
+        </button>
+        {msg ? (
+          <div className="mt-6">
+            <p className="text-[0.975rem] text-[#f0e7d4]">{msg}</p>
+            <p className="mt-2 text-[0.975rem] leading-6 text-[rgb(240_231_212/0.75)]">
+              Your browser is read-only. The private authorization stays on this computer.
+            </p>
+            <Link className="mt-4 inline-block rounded-full bg-[#d82f2f] px-6 py-3 font-semibold text-[#f0e7d4]" to="/app/start">
+              Protect my strategy
+            </Link>
+          </div>
+        ) : (
+          <p className="mt-6 text-[0.875rem] text-[rgb(240_231_212/0.5)]">
+            After pairing, open{" "}
+            <Link className="text-[#d82f2f]" to="/app/start">
+              Protect my strategy
+            </Link>
+            .
           </p>
-          <Link className="mt-6 inline-block text-[#d82f2f]" to="/app">
-            Protect private research
-          </Link>
-        </aside>
+        )}
+        {err ? (
+          <p className="mt-4 text-[0.975rem] text-[#ff7a7a]" role="alert">
+            {err}
+          </p>
+        ) : null}
       </div>
+      <Bezel>
+        <p className="font-mono text-[0.7rem] tracking-[0.14em] text-[rgb(240_231_212/0.45)]">WHAT THIS SITE CANNOT DO</p>
+        <ul className="mt-4 grid gap-2 text-[0.95rem] leading-6 text-[rgb(240_231_212/0.7)]">
+          <li>Sign orders</li>
+          <li>Hold a session key</li>
+          <li>Authorize a trade</li>
+          <li>Change policy</li>
+        </ul>
+        <p className="mt-8 text-[0.875rem] text-[rgb(240_231_212/0.5)]">
+          macOS and Linux installers are not claimed until they are packaged and tested. Source build is documented in
+          the README.
+        </p>
+        <Link className="mt-6 inline-block text-[#d82f2f]" to="/app/start">
+          Protect my strategy
+        </Link>
+      </Bezel>
     </div>
   );
 }

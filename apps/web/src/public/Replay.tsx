@@ -1,4 +1,5 @@
 import { Link, useParams } from "react-router-dom";
+import { PageHead } from "../ui/PageHead";
 import { HISTORICAL_FILL } from "./facts";
 import type { EvidenceKind } from "./types";
 
@@ -21,13 +22,11 @@ export function ReplayPage() {
   const { id = "" } = useParams();
   if (id !== HISTORICAL_FILL.id) {
     return (
-      <div>
-        <p className="intel-kicker">Mission replay</p>
-        <h1 className="intel-title mt-2">{id || "Unknown"}</h1>
-        <p className="intel-lede">
-          No public-safe mission with that id. PIT will not invent a timeline. If a desktop run ended with no trade,
-          that is a successful stand-down, not a system failure — the public reason lives on the desktop receipt.
-        </p>
+      <div className="mx-auto max-w-[80rem]">
+        <PageHead
+          title={id || "Unknown"}
+          lede="No public-safe mission with that id. PIT will not invent a timeline. If a desktop run ended with no trade, that is a successful stand-down, not a system failure. The public reason lives on the desktop receipt."
+        />
         <Link to="/missions" className="intel-ghost mt-6 inline-flex">
           Back to missions
         </Link>
@@ -36,15 +35,14 @@ export function ReplayPage() {
   }
 
   return (
-    <div>
+    <div className="mx-auto max-w-[80rem]">
       <Link to="/missions" className="intel-ghost">
         ← Missions
       </Link>
-      <p className="intel-kicker mt-6">Replay · {HISTORICAL_FILL.kind}</p>
-      <h1 className="intel-title mt-2">
-        {HISTORICAL_FILL.market} {HISTORICAL_FILL.oid}
-      </h1>
-      <p className="intel-lede">{HISTORICAL_FILL.note}</p>
+      <PageHead
+        title={`${HISTORICAL_FILL.market} ${HISTORICAL_FILL.oid}`}
+        lede={HISTORICAL_FILL.note}
+      />
       <ol className="mt-10 divide-y divide-[rgb(240_231_212/0.12)] border-y border-[rgb(240_231_212/0.12)]">
         {HISTORICAL_BEATS.map((b) => (
           <li key={b.title} className="grid gap-1 py-4 sm:grid-cols-[1fr_7rem_2fr] sm:items-baseline">

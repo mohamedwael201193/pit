@@ -1,34 +1,59 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { answerChat, STARTERS, type ChatTurn } from "./chat";
-import { useWatch } from "./Watch";
+import { useWatchSafe } from "./Watch";
 
-export function ChatPanel() {
-  const { watch } = useWatch();
-  const [open, setOpen] = useState(false);
+export function ChatPanel({
+  floating = true,
+  open: openProp,
+  onOpenChange,
+}: {
+  floating?: boolean;
+  open?: boolean;
+  onOpenChange?: (v: boolean) => void;
+}) {
+  const watch = useWatchSafe();
+  const [inner, setInner] = useState(false);
   const [input, setInput] = useState("");
   const [turns, setTurns] = useState<ChatTurn[]>([]);
+  const open = openProp ?? inner;
+
+  const setOpen = (v: boolean) => {
+    onOpenChange?.(v);
+    if (openProp === undefined) setInner(v);
+  };
 
   const ask = (q: string) => {
     const text = q.trim();
     if (!text) return;
-    setTurns((t) => [...t, { q: text, a: answerChat(text, watch) }]);
+    setTurns((t) => [...t, { q: text, a: answerChat(text, watch?.watch ?? null) }]);
     setInput("");
     setOpen(true);
   };
 
   return (
     <>
-      <button type="button" className="intel-ask" onClick={() => setOpen((v) => !v)} aria-expanded={open}>
-        {open ? "Close" : "Ask PIT"}
-      </button>
+      {floating ? (
+        <button type="button" className="intel-ask" onClick={() => setOpen(!open)} aria-expanded={open}>
+          {open ? "Close" : "Ask PIT"}
+        </button>
+      ) : null}
       {open ? (
-        <aside className="intel-chat" aria-label="Public intelligence chat">
-          <header className="mb-4">
-            <p className="intel-kicker">Public intelligence</p>
-            <p className="mt-1 text-[0.875rem] leading-5 text-[rgb(240_231_212/0.6)]">
-              Informational. No wallet signing. No authorize. No policy pin. No autonomy.
-            </p>
+        <aside className={floating ? "intel-chat" : "desk-chat"} aria-label="Public intelligence chat">
+          <header className="mb-4 flex items-start justify-between gap-3">
+            <div>
+              <p className="text-[0.75rem] tracking-[0.14em] text-[rgb(240_231_212/0.45)] uppercase">Public intelligence</p>
+              <p className="mt-1 text-[0.875rem] leading-5 text-[rgb(240_231_212/0.6)]">
+                Informational. No wallet signing. No authorize. No policy pin. No autonomy.
+              </p>
+            </div>
+            <button
+              type="button"
+              className="rounded-full border border-[rgb(240_231_212/0.28)] px-3 py-1 text-[0.75rem] text-[var(--guide-cream)]"
+              onClick={() => setOpen(false)}
+            >
+              Close
+            </button>
           </header>
           <div className="flex flex-wrap gap-1.5">
             {STARTERS.map((s) => (

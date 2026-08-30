@@ -10,6 +10,7 @@ import {
   PIT_AGENT,
   REPUTATION_8004,
 } from "./facts";
+import { PageHead } from "../ui/PageHead";
 import { shortAddr } from "./format";
 import { read8004Owner, readDesk, type AgentRead, type DeskRead } from "./chain";
 
@@ -23,13 +24,11 @@ export function AgentPage() {
   }, []);
 
   return (
-    <div>
-      <p className="intel-kicker">PIT agent passport</p>
-      <h1 className="intel-title mt-2">{PIT_AGENT.name}</h1>
-      <p className="intel-lede">
-        Wallet is the human. Desk ID is the agent. The Hyperliquid API wallet is a permission, not identity. The
-        session key never enters the browser. Mint and authorizeUsage stay on desktop.
-      </p>
+    <div className="mx-auto max-w-[80rem]">
+      <PageHead
+        title={PIT_AGENT.name}
+        lede="Wallet is the human. Desk ID is the agent. The Hyperliquid API wallet is a permission, not identity. The session key never enters the browser. Mint and authorizeUsage stay on desktop."
+      />
 
       <dl className="intel-metrics mt-8">
         <div className="intel-metric">

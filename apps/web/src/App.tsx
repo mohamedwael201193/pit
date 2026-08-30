@@ -35,9 +35,9 @@ export function App() {
         <Route path="/agent" element={<AgentPage />} />
         <Route path="/how-it-works" element={<HowPage />} />
         <Route path="/download" element={<DownloadPage />} />
+        <Route path="/pair" element={<PairPage />} />
         <Route path="/watch" element={<Navigate to="/radar" replace />} />
       </Route>
-      <Route path="/pair" element={<PairPage />} />
       <Route path="/signin" element={<WalletGate />} />
       <Route path="/app" element={<AppShell />}>
         <Route index element={<Home />} />

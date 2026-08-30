@@ -52,7 +52,10 @@ export function WalletGate() {
                   <p className="mt-2 font-mono break-all text-[0.9375rem]">{addr}</p>
                   <div className="mt-5 flex flex-wrap gap-3">
                     <ButtonLink as={Link} to="/app" trailingArrow size="lg">
-                      Continue
+                      Overview
+                    </ButtonLink>
+                    <ButtonLink as={Link} to="/app/start" variant="secondary" size="lg">
+                      Protect my strategy
                     </ButtonLink>
                     <Button variant="secondary" type="button" onClick={logout}>
                       Disconnect
@@ -68,8 +71,8 @@ export function WalletGate() {
                   >
                     Connect your wallet
                   </button>
-                  <ButtonLink as={Link} to="/" variant="ghost" size="lg" className="w-full">
-                    Browse first
+                  <ButtonLink as={Link} to="/radar" variant="ghost" size="lg" className="w-full">
+                    Browse radar first
                   </ButtonLink>
                 </div>
               )}

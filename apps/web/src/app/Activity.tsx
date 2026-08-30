@@ -8,7 +8,7 @@ export function Activity() {
   return (
     <div className="mx-auto max-w-[80rem]">
       <PageHead
-        title="Activity"
+        title="My Missions"
         lede="This browser cannot hold a session or invent an OID. Exact orders live on PIT Desktop."
       />
       <figure className="mt-10 max-w-[36rem] overflow-hidden border border-[rgb(240_231_212/0.28)]">
