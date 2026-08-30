@@ -6,7 +6,7 @@ import { Reveal } from "../ui/Reveal";
 const BEATS = [
   {
     title: "Sealed,",
-    body: "Your private book is sealed to 0G Direct TeeML. The Router never sees it.",
+    body: "Your book goes into Direct TeeML. The Router never sees it.",
   },
   {
     title: "Challenged,",
@@ -14,7 +14,7 @@ const BEATS = [
   },
   {
     title: "Authorized.",
-    body: "Manual: you type AUTHORIZE on the exact preview. Guarded Autonomy is optional and only turns on from this computer. Chat and this website cannot enable it. The agent can order or cancel. It cannot withdraw.",
+    body: "You type AUTHORIZE on the exact preview. Chat and this website cannot.",
   },
 ] as const;
 
@@ -26,25 +26,23 @@ export function Story() {
   const y2 = useTransform(scrollYProgress, [0.25, 0.65], [56, 0]);
   const y3 = useTransform(scrollYProgress, [0.35, 0.75], [72, 0]);
   const opacities = [
-    useTransform(scrollYProgress, [0.1, 0.35], [0.15, 1]),
-    useTransform(scrollYProgress, [0.2, 0.45], [0.15, 1]),
-    useTransform(scrollYProgress, [0.3, 0.55], [0.15, 1]),
+    useTransform(scrollYProgress, [0.1, 0.35], [0.18, 1]),
+    useTransform(scrollYProgress, [0.2, 0.45], [0.18, 1]),
+    useTransform(scrollYProgress, [0.3, 0.55], [0.18, 1]),
   ];
   const ys = [y1, y2, y3];
 
   return (
     <section id="story" className="relative border-t border-[rgb(240_231_212/0.25)]">
-      <div className="container-pit py-20 md:py-28">
+      <div className="container-pit py-16 md:py-24">
         <Reveal>
-          <p className="text-[1.25rem] font-medium text-[var(--guide-cream)]">Story</p>
-          <p className="mt-6 max-w-[52ch] text-[1.35rem] leading-9 text-[rgb(240_231_212/0.85)]">
-            The web discovers and proves. The desktop protects and acts. PIT hunts without spending, seals the
-            book, and waits for you.
+          <p className="max-w-[28ch] text-[1.65rem] leading-9 font-medium tracking-[-0.03em] text-[var(--guide-cream)] md:text-[2rem] md:leading-10">
+            The web discovers. The desktop acts.
           </p>
         </Reveal>
       </div>
-      <div ref={pinRef} className="relative min-h-[140vh]">
-        <div className="sticky top-0 flex min-h-[100svh] items-center overflow-hidden bg-[#1a1a1a]">
+      <div ref={pinRef} className="relative min-h-[150vh]">
+        <div className="sticky top-0 flex min-h-[100dvh] items-center overflow-hidden bg-[#1a1a1a]">
           <div className="container-pit w-full py-16">
             <div className="flex flex-col gap-2 md:gap-3">
               {BEATS.map((b, i) => (
@@ -57,14 +55,14 @@ export function Story() {
                 </motion.h2>
               ))}
             </div>
-            <div className="mt-16 grid gap-8 border-t border-[rgb(240_231_212/0.25)] pt-10 md:grid-cols-3">
+            <div className="mt-14 grid gap-8 border-t border-[rgb(240_231_212/0.25)] pt-10 md:grid-cols-3">
               {BEATS.map((b) => (
-                <p key={b.title} className="max-w-[36ch] text-[1.0625rem] leading-7 text-[rgb(240_231_212/0.72)]">
+                <p key={b.title} className="max-w-[32ch] text-[1.125rem] leading-7 text-[rgb(240_231_212/0.78)]">
                   {b.body}
                 </p>
               ))}
             </div>
-            <figure className="mt-14 max-w-xl border border-[rgb(240_231_212/0.35)]">
+            <figure className="mt-12 max-w-xl overflow-hidden border border-[rgb(240_231_212/0.35)]">
               <DiagramPrivate className="aspect-[16/10] w-full" />
             </figure>
           </div>

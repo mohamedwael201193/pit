@@ -120,16 +120,19 @@ export function DiagramHeroPostcard({ className = "" }: { className?: string }) 
 export function DiagramPrivate({ className = "" }: { className?: string }) {
   return (
     <Frame className={className} label="Your private book is sealed">
-      <Face x="40" y="56" fill={C.coral} size={14} letterSpacing="0.18em">
+      <rect x="40" y="36" width="28" height="8" fill={C.coral} />
+      <Face x="76" y="48" fill={C.coral} size={13} letterSpacing="0.2em">
         PRIVATE
       </Face>
-      <path d="M80 150 H560 L560 360 L80 360 Z" fill={C.ink} />
-      <path d="M80 150 L320 270 L560 150" fill={C.coral} />
-      <circle cx="320" cy="248" r="54" fill={C.cream} />
-      <Face x="320" y="244" textAnchor="middle" fill={C.ink} size={13} weight="700" letterSpacing="0.12em">
+      <path d="M88 148 H552 L560 168 V348 H80 V168 Z" fill={C.ink} />
+      <path d="M80 168 L320 286 L560 168" fill={C.coral} />
+      <path d="M80 168 L320 286 L560 168" fill="none" stroke={C.black} strokeWidth="1.5" />
+      <circle cx="320" cy="252" r="58" fill={C.cream} />
+      <circle cx="320" cy="252" r="58" fill="none" stroke={C.black} strokeWidth="1.5" />
+      <Face x="320" y="244" textAnchor="middle" fill={C.ink} size={13} weight="700" letterSpacing="0.14em">
         BOOK
       </Face>
-      <Face x="320" y="266" textAnchor="middle" fill={C.ink} size={16} weight="800">
+      <Face x="320" y="268" textAnchor="middle" fill={C.ink} size={18} weight="800">
         sealed
       </Face>
       <Face x="40" y="430" fill={C.ink} size={16} weight="500">
@@ -144,28 +147,30 @@ export function DiagramSealed({ className = "" }: { className?: string }) {
   const roles = ["RESEARCH", "CHALLENGE", "RISK"];
   return (
     <Frame className={className} label="Three sealed envelopes" fill={C.ink}>
-      <Face x="40" y="52" fill={C.cream} size={14} letterSpacing="0.18em">
+      <rect x="40" y="32" width="28" height="8" fill={C.coral} />
+      <Face x="76" y="44" fill={C.cream} size={13} letterSpacing="0.2em">
         COMMITTEE
       </Face>
       {roles.map((role, i) => (
-        <g key={role} transform={`translate(${48 + i * 190} 110)`}>
-          <rect width="164" height="220" fill={i === 1 ? C.coral : C.cream} />
-          <rect x="18" y="28" width="128" height="90" fill={i === 1 ? C.cream : C.ink} />
+        <g key={role} transform={`translate(${48 + i * 190} 96)`}>
+          <rect width="168" height="248" fill={i === 1 ? C.coral : C.cream} />
+          <rect x="16" y="24" width="136" height="108" fill={i === 1 ? C.cream : C.ink} />
           <Face
-            x="82"
-            y="78"
+            x="84"
+            y="86"
             textAnchor="middle"
             fill={i === 1 ? C.ink : C.cream}
-            size={12}
+            size={13}
             weight="800"
-            letterSpacing="0.08em"
+            letterSpacing="0.1em"
           >
             {role}
           </Face>
-          <circle cx="82" cy="160" r="16" fill={i === 1 ? C.ink : C.coral} />
+          <circle cx="84" cy="188" r="18" fill={i === 1 ? C.ink : C.coral} />
+          <circle cx="84" cy="188" r="6" fill={i === 1 ? C.cream : C.ink} />
         </g>
       ))}
-      <Face x="40" y="430" fill="rgb(240 231 212 / 0.7)" size={15}>
+      <Face x="40" y="430" fill="rgb(240 231 212 / 0.72)" size={15}>
         Same provider is labeled as role separation. Not three TEEs.
       </Face>
     </Frame>
@@ -425,22 +430,27 @@ export function DiagramWideBanner({ className = "" }: { className?: string }) {
   return (
     <svg viewBox="0 0 1280 360" className={className} role="img" aria-label="Market to proof pipeline">
       <rect width="1280" height="360" fill={C.ink} />
+      <path d="M76 140 H1204" stroke={C.coral} strokeWidth="2" opacity="0.55" />
       {PIPELINE.map((label, i) => {
         const x = 40 + i * 112;
         const lit = label === "AUTHORIZE";
         return (
           <g key={label}>
-            <circle cx={x + 36} cy={140} r={lit ? 28 : 18} fill={lit ? C.coral : "none"} stroke={C.cream} strokeWidth="2" />
-            <Face x={x + 36} y={200} textAnchor="middle" fill={C.cream} size={11} weight="700" letterSpacing="0.08em">
+            <circle cx={x + 36} cy={140} r={lit ? 30 : 20} fill={lit ? C.coral : C.ink} stroke={C.cream} strokeWidth="2" />
+            {lit ? (
+              <circle cx={x + 36} cy={140} r="12" fill={C.cream} />
+            ) : (
+              <Face x={x + 36} y={145} textAnchor="middle" fill={C.cream} size={11} weight="700">
+                {i + 1}
+              </Face>
+            )}
+            <Face x={x + 36} y={204} textAnchor="middle" fill={C.cream} size={12} weight="700" letterSpacing="0.08em">
               {label}
             </Face>
-            {i < PIPELINE.length - 1 ? (
-              <path d={`M${x + 58} 140 H${x + 108}`} stroke={C.coral} strokeWidth="2" />
-            ) : null}
           </g>
         );
       })}
-      <Face x="40" y="300" fill="rgb(240 231 212 / 0.7)" size={16}>
+      <Face x="40" y="300" fill="rgb(240 231 212 / 0.72)" size={18} weight="600">
         Live books in. You in the middle. Proof out.
       </Face>
     </svg>

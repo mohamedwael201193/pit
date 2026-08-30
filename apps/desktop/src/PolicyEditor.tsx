@@ -86,11 +86,8 @@ export function PolicyEditor({
 
   return (
     <section className="policy-editor">
-      <p className="label">Policy studio</p>
-      <p className="fine">You edit. You pin. The model cannot. Leverage is locked at 1x. Withdraw stays impossible. Chat cannot pin.</p>
-      <p className="lead">
-        PIT can trade {draft.allowedAssets.join(", ")} up to ${draft.maxClipUsd} at 1x with {draft.maxOpenPositions} open
-        position{draft.maxOpenPositions === 1 ? "" : "s"} and stops after ${draft.dailyLossUsd} realized loss.
+      <p className="sec-summary">
+        {draft.allowedAssets.join(", ")} · ${draft.maxClipUsd} clip · 1x · {draft.maxOpenPositions} open · halt ${draft.dailyLossUsd}
       </p>
       <div className="policy-cat">
         <p className="label">Size</p>
@@ -98,17 +95,17 @@ export function PolicyEditor({
           <label className="policy-cell">
             Max trade / position (USD)
             <input type="number" min={clipFloor} max={clipCeil} step={1} value={draft.maxClipUsd} onChange={(e) => set("maxClipUsd", Number(e.target.value))} />
-            <span className="fine">Pinned {current?.maxClipUsd ?? "—"} · draft {draft.maxClipUsd}. Host ceiling. Preview then pin. Live Hyperliquid mins are per-book after size decimals — often a few cents above $10.</span>
+            <span className="fine">Host ceiling. Live mins are per-book, often a few cents above $10.</span>
           </label>
           <div className="policy-cell">
             Max leverage
             <strong>1x</strong>
-            <span className="fine">Locked. Session cannot change venue leverage.</span>
+            <span className="fine">Locked.</span>
           </div>
           <div className="policy-cell">
             Venue
             <strong>hyperliquid</strong>
-            <span className="fine">Perps only. Spot is not a PIT market type.</span>
+            <span className="fine">Perps only.</span>
           </div>
         </div>
       </div>
@@ -118,27 +115,27 @@ export function PolicyEditor({
           <label className="policy-cell">
             Daily loss halt (USD)
             <input type="number" min={1} max={500} step={1} value={draft.dailyLossUsd} onChange={(e) => set("dailyLossUsd", Number(e.target.value))} />
-            <span className="fine">Realized loss ceiling. If hit: Guarded Autonomy stops. Positions are not flattened.</span>
+            <span className="fine">Stops new entries. Does not flatten.</span>
           </label>
           <label className="policy-cell">
             Max open positions
             <input type="number" min={1} max={5} step={1} value={draft.maxOpenPositions} onChange={(e) => set("maxOpenPositions", Number(e.target.value))} />
-            <span className="fine">How many live positions PIT may hold. If hit: new entries are refused.</span>
+            <span className="fine">New entries refuse at the cap.</span>
           </label>
           <label className="policy-cell">
             Consecutive loss limit
             <input type="number" min={1} max={10} step={1} value={draft.maxConsecutiveLosses} onChange={(e) => set("maxConsecutiveLosses", Number(e.target.value))} />
-            <span className="fine">Losing-streak halt. The model cannot raise this.</span>
+            <span className="fine">Losing-streak halt.</span>
           </label>
           <label className="policy-cell">
             Max slippage (bps)
             <input type="number" min={10} max={500} step={1} value={draft.maxSlippageBps} onChange={(e) => set("maxSlippageBps", Number(e.target.value))} />
-            <span className="fine">Estimated impact ceiling. If hit: the order is refused.</span>
+            <span className="fine">Refuse above this impact.</span>
           </label>
           <label className="policy-cell">
             Liquidity floor (USD)
             <input type="number" min={0} max={1000000} step={1} value={draft.minLiquidityUsd} onChange={(e) => set("minLiquidityUsd", Number(e.target.value))} />
-            <span className="fine">Skip thin books. If hit: the candidate is refused.</span>
+            <span className="fine">Skip thin books.</span>
           </label>
         </div>
       </div>
@@ -177,40 +174,24 @@ export function PolicyEditor({
           </label>
         </div>
       </details>
-      <article className="card" style={{ marginTop: 12 }}>
-        <p className="label">If you pin this</p>
+      <details className="sec-fold">
+        <summary>What pinning writes</summary>
         {note.map((line) => (
           <p key={line}>{line}</p>
         ))}
-        {allowed && allowed.length ? (
-          <>
-            <p className="label">What PIT will be allowed to do</p>
-            {allowed.map((line) => (
-              <p key={line}>{line}</p>
-            ))}
-          </>
-        ) : null}
-        {refused && refused.length ? (
-          <>
-            <p className="label">What PIT will refuse</p>
-            {refused.map((line) => (
-              <p key={line}>{line}</p>
-            ))}
-          </>
-        ) : null}
-      </article>
+        {allowed?.map((line) => (
+          <p key={line}>{line}</p>
+        ))}
+        {refused?.map((line) => (
+          <p key={`r-${line}`}>{line}</p>
+        ))}
+      </details>
       {pinned && policyHash ? (
-        <article className="card" style={{ marginTop: 12 }}>
-          <p className="label">PINNED HOST LAW</p>
-          <p className="fine">HASH: {policyHash}</p>
-          <p className="fine">The model cannot modify it. Autonomy cannot. Chat cannot. Web cannot.</p>
-        </article>
+        <p className="fine">Pinned {policyHash.slice(0, 18)}… Chat cannot change it.</p>
       ) : (
-        <p className="fine" style={{ marginTop: 12 }}>
-          LIVE PREVIEW until you pin. Pinning writes host law on this computer.
-        </p>
+        <p className="fine">Preview until you pin. Pinning writes host law on this computer.</p>
       )}
-      <div className="cta-row">
+      <div className="cta-row sec-pin">
         <button
           type="button"
           className="linkish"

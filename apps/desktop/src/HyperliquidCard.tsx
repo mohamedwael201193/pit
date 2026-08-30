@@ -34,62 +34,60 @@ export function HyperliquidCard({
   onRevoke?: () => void;
   onRefreshApproval?: () => void;
 }) {
-  const session = sessionAlive ? "Active" : agent ? "Needs session" : "Not created";
   const ttl =
     sessionExpires && sessionExpires > 0 ? new Date(sessionExpires).toISOString().replace(".000Z", "Z") : "";
+  const canOrder = Boolean(sessionAlive && approved);
   return (
-    <section>
+    <section className="hl-card">
       <p className="label">
         <span className="asset">
           <BrandMark symbol="HL" />
           Hyperliquid
         </span>
       </p>
-      <dl className="status-grid hl-grid">
-        <dt>Connected account</dt>
-        <dd>{account ? `${account.slice(0, 6)}…${account.slice(-4)}` : "no"}</dd>
-        <dt>Trading capital</dt>
-        <dd>{tradingCapital || "—"}</dd>
-        <dt>PIT Agent</dt>
-        <dd>
-          {agentName || "none"}
-          {agent ? ` · ${agent.slice(0, 6)}…${agent.slice(-4)}` : ""}
-        </dd>
-        <dt>Session</dt>
-        <dd>
-          {session}
-          {ttl ? ` · until ${ttl}` : ""}
-        </dd>
-        <dt>Expiration</dt>
-        <dd>{ttl || "—"}</dd>
-        <dt>Order</dt>
-        <dd>{sessionAlive && approved ? "yes" : "no"}</dd>
-        <dt>Cancel</dt>
-        <dd>{sessionAlive && approved ? "yes" : "no"}</dd>
-        <dt>Withdraw</dt>
-        <dd>no</dd>
-        <dt>Approval</dt>
-        <dd>{approved ? "Approved" : "Needs approval"}</dd>
-      </dl>
-      {approvedDetail ? <p className="fine">{approvedDetail}</p> : null}
-      <p className="fine">Account is your wallet. PIT Agent can order and cancel only. Trading capital is not private compute.</p>
+      <div className="sec-metrics">
+        <div>
+          <span>Capital</span>
+          <strong>{tradingCapital || "—"}</strong>
+        </div>
+        <div>
+          <span>Session</span>
+          <strong>{sessionAlive ? "live" : "none"}</strong>
+        </div>
+        <div>
+          <span>Order / cancel</span>
+          <strong>{canOrder ? "yes" : "no"}</strong>
+        </div>
+        <div>
+          <span>Withdraw</span>
+          <strong>no</strong>
+        </div>
+      </div>
+      <p className="sec-meta">
+        {account ? `${account.slice(0, 6)}…${account.slice(-4)}` : "no wallet"}
+        {agentName ? ` · ${agentName}` : ""}
+        {agent ? ` · ${agent.slice(0, 6)}…${agent.slice(-4)}` : ""}
+        {ttl ? ` · until ${ttl}` : ""}
+      </p>
       <div className="cta-row">
-        <ExternalLink className="primary" href={hyperliquidApp(net)}>
-          Connect Hyperliquid
-        </ExternalLink>
+        {!sessionAlive ? (
+          <button type="button" className="primary" onClick={onCreateSession} disabled={busy}>
+            Create session
+          </button>
+        ) : !approved ? (
+          <ExternalLink className="primary" href={hyperliquidAPI(net)}>
+            Approve PIT
+          </ExternalLink>
+        ) : (
+          <ExternalLink className="primary" href={hyperliquidApp(net)}>
+            Open Hyperliquid
+          </ExternalLink>
+        )}
         <ExternalLink className="linkish" href={hyperliquidAPI(net)}>
           Open Hyperliquid API
         </ExternalLink>
-        <ExternalLink className="linkish" href={hyperliquidAPI(net)}>
-          Approve PIT
-        </ExternalLink>
-        {!agent || !sessionAlive ? (
-          <button type="button" className="linkish" onClick={onCreateSession} disabled={busy}>
-            Create secure session
-          </button>
-        ) : null}
         <button type="button" className="linkish" onClick={onRefreshApproval || onCheck} disabled={busy}>
-          Refresh status
+          Refresh
         </button>
         {onRevoke && agent ? (
           <button type="button" className="linkish" onClick={onRevoke} disabled={busy}>
@@ -97,10 +95,10 @@ export function HyperliquidCard({
           </button>
         ) : null}
       </div>
+      {approvedDetail ? <p className="fine">{approvedDetail}</p> : null}
       <p className="fine">
-        Compute money lives at{" "}
-        <ExternalLink href={LINKS.pcAdvanced}>0G Private Compute</ExternalLink>
-        . That is not Hyperliquid.
+        Compute money lives at <ExternalLink href={LINKS.pcAdvanced}>0G Private Compute</ExternalLink>. That is not
+        Hyperliquid.
       </p>
     </section>
   );

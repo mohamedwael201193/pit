@@ -2,6 +2,36 @@
 
 ---
 
+## M116 — Security is a next-action desk. Landing hero is one line.
+
+- **Source:** Desktop Security was pairing-first, then a wall of ready chips, then tiny Hyperliquid rows, then policy. Users could not see what to do. Landing hero repeated the story in two paragraphs plus a second mega PIT.
+- **Discovery:** One next-action card, then Session / Policy / optional Browser / Compute / Halt. Landing keeps coral + WireTurn. One line: "It hunts in private. You authorize on this computer."
+- **Candidate:** Same brand. Larger type. Fewer words. Scroll-driven beats.
+- **Kill:** Chip dump. Pairing as the Security hero. Wallet-first landing. Authorize on the web.
+- **Next:** Deploy web. Desktop source is this commit (NSIS still 0.8.0).
+
+DATE/TIME: 2026-08-30 20:47+03
+PHASE: UI honesty. Do not flatten OID 529167222216. Do not remint PIT-4bbee556. Chat never authorizes. Direct TeeML only for the private book.
+GOAL: Security has one obvious next step. Landing hero is one line. Diagrams and scroll still tell Sealed / Challenged / Authorized.
+RESULT:
+- **IMPLEMENTED:** Still **0.8.0**. No new installer.
+  1. Desktop Security: next-action banner from `nextFix`, 4-step spine, Session metrics, Policy with short helpers, pairing folded unless it is the next step, Halt/Revoke, identity in details.
+  2. Landing hero: coral field, rotating WireTurn, one line, Explore + Download. Story line: "The web discovers. The desktop acts." Beats pin on scroll. Moments pan horizontally. SVGs tightened.
+- **TESTED:** Desktop `tsc -b` pass. `npx tsx e2e/run.ts` pass. Web `tsc -b` pass. Playwright home/authorize/network/routes 21/21.
+- **UNVERIFIED until this deploy:** Production landing at pit0g.vercel.app showing the new hero. Tauri Security screenshot after a desktop rebuild (source is in this commit; installed NSIS is still the 0.8.0 binary until next installer).
+- **BLOCKED:** iTransfer not live. No new live trade. Authenticode still absent.
+
+SECURITY RESULT: Chat still cannot AUTHORIZE. Web still has no Authorize control. Historical OID unchanged.
+TX HASH / OID: Historical OID `529167222216` unchanged.
+CLASSIFICATION:
+- Desktop Security reorder: **IMPLEMENTED + TESTED**
+- Landing hero one-line: **IMPLEMENTED + TESTED**
+- Production landing: **SHIPPED THIS PASS AFTER PUSH**
+PRODUCTION READY: Unsigned Windows x64. Verify SHA256. Do not treat RESTING as a fill.
+NEXT STEP: `python _scripts/push_head.py`. Vercel web. Chrome `/`.
+
+---
+
 ## M115 — GitHub Latest was the last tag, not HEAD. Ship Windows 0.8.0.
 
 - **Source:** GitHub still showed **PIT v0.7.6 Latest** because Releases/Latest is the last *tag*, not commit `3add5c0`. Go companion and Render `/health` were already **0.8.0**. Desktop `package.json` / Tauri / NSIS still said 0.7.6. Public `/download` fetched `api.github.com` from the browser and failed CORS/rate-limit.

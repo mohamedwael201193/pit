@@ -1446,6 +1446,7 @@ export function App() {
             updateNote={updateNote}
             restartAllowed={restartAllowed}
             busy={bindBusy}
+            attention={attention}
             onSession={() => void onSession()}
             onPolicyPreview={(p) => {
               void previewPolicy(p).then((r) => {

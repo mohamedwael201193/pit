@@ -42,8 +42,8 @@ export function PipelineRing() {
           <br />
           Pipeline.
         </h2>
-        <p className="mt-6 max-w-[42ch] text-[1.2rem] leading-8 text-[rgb(240_231_212/0.75)]">
-          Eleven beats. One lit seat is yours. Tap a seat.
+        <p className="mt-6 max-w-[36ch] text-[1.2rem] leading-8 text-[rgb(240_231_212/0.75)]">
+          Eleven beats. One lit seat is yours.
         </p>
 
         <div className="relative mx-auto mt-16 aspect-square w-full max-w-[30rem]">

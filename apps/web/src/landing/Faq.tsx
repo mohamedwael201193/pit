@@ -5,7 +5,7 @@ import { SectionHeading } from "../ui/SectionHeading";
 const QUESTIONS: readonly { q: string; a: string }[] = [
   {
     q: "Who holds my money?",
-    a: "You do. PIT never custody. The session agent can order or cancel on Hyperliquid. It cannot withdraw.",
+    a: "You do. PIT never takes custody. The session agent can order or cancel on Hyperliquid. It cannot withdraw.",
   },
   {
     q: "Where does signing happen?",

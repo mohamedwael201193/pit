@@ -53,6 +53,6 @@ function remaining(expires: string) {
   const t = Date.parse(expires);
   if (Number.isNaN(t)) return expires;
   const sec = Math.max(0, Math.round((t - Date.now()) / 1000));
-  if (sec <= 0) return "now — regenerate";
+  if (sec <= 0) return "now - regenerate";
   return `${sec}s`;
 }

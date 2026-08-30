@@ -8,9 +8,11 @@ export function Dual() {
         <Reveal>
           <p className="text-[1.125rem] text-[rgb(240_231_212/0.7)]">The product is</p>
           <h2 className="guide-display mt-3 max-w-[16ch]">MAINNET only</h2>
-          <p className="mt-6 max-w-[46ch] text-[1.2rem] leading-8 text-[rgb(240_231_212/0.78)]">
-            Aristotle 16661 and Hyperliquid mainnet. Direct TeeML for the private book. Transfer of Agentic ID is not live.
+          <p className="mt-4 max-w-[40ch] text-[1.05rem] leading-7 text-[rgb(240_231_212/0.62)]">
             The laboratory exists for CI and developers, not for the public desk.
+          </p>
+          <p className="mt-6 max-w-[40ch] text-[1.25rem] leading-8 text-[rgb(240_231_212/0.78)]">
+            Aristotle 16661 and Hyperliquid mainnet. Direct TeeML for the private book. Transfer of Agentic ID is not live.
           </p>
         </Reveal>
         <div className="mt-12 min-h-[16rem] bg-[#d82f2f] p-8 text-black md:p-12">
