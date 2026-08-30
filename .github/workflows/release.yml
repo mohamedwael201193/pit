@@ -44,19 +44,22 @@ jobs:
             Verify SHA256 against the attached checksums. Session keys never leave this machine.
             Pair at https://pit0g.vercel.app/pair after launch.
           releaseDraft: false
-          prerelease: true
+          prerelease: false
       - name: Checksums
         if: startsWith(github.ref, 'refs/tags/')
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          Get-ChildItem -Recurse -Include *.exe,*.msi | ForEach-Object {
-            $h = Get-FileHash $_.FullName -Algorithm SHA256
-            "{0}  {1}" -f $h.Hash.ToLower(), $_.Name
-          } | Out-File -Encoding ascii SHA256SUMS.txt
-          if (Test-Path SHA256SUMS.txt) {
-            gh release upload ${{ github.ref_name }} SHA256SUMS.txt --clobber
+          $nsis = Get-ChildItem -Path apps/desktop/src-tauri/target/release/bundle/nsis -Filter "*.exe" -ErrorAction SilentlyContinue
+          if (-not $nsis) {
+            throw "NSIS installer missing; refusing to publish a recursive hash of the runner"
           }
+          $lines = foreach ($f in $nsis) {
+            $h = Get-FileHash $f.FullName -Algorithm SHA256
+            "{0}  {1}" -f $h.Hash.ToUpperInvariant(), $f.Name
+          }
+          $lines | Out-File -Encoding ascii SHA256SUMS.txt
+          gh release upload ${{ github.ref_name }} SHA256SUMS.txt --clobber
       - uses: actions/upload-artifact@v4
         with:
           name: windows-installer

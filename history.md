@@ -2137,6 +2137,24 @@ CLASSIFICATION:
 PRODUCTION READY: 0.7.3 is production-ready for honest memory, capital isolation, and MAINNET-only chrome. It is **not** production-ready for a new MAINNET clip until YOU pin a clip that meets a book's rounded min.
 NEXT STEP: Close PIT Desktop and relaunch to pick up the 0.7.3 window. On Security, preview then pin a clip above the candidate min if you want a clip. Do not flatten. Do not remint.
 
+---
+
+## M101 — 0.7.3 installer + production verify + honest checksums (2026-08-30)
+
+DATE/TIME: 2026-08-30 04:35+03
+PHASE: 0.7.3. Do not flatten OID 529167222216. Do not remint. Do not invent size. Do not enable Guarded Autonomy. Do not auto-pin.
+GOAL: Ship the NSIS installer, prove production landing, replace the GitHub Actions checksum dump that hashed every `.exe` on the runner.
+RESULT:
+- **IMPLEMENTED:** `release.yml` checksums only the NSIS installer. Web Home no longer double-labels Watch. Actions `prerelease` is false.
+- **TESTED:** Overlay `D:\PIT\pit.exe` + `pit-desktop.exe` after stop/restart. Companion `/health` **0.7.3**. CLI `pit version` **PIT 0.7.3**. `pit memory` **NOT ENOUGH DATA (0/5)**. Website Origin `/watch` has no `buyingPower`. Desktop Origin buying power **$16.18**, best **DOGE**, all six books `below_min_notional`.
+- **LIVE VERIFIED:** Commit `2265ef1`. Tag **v0.7.3**. GitHub release https://github.com/mohamedwael201193/pit/releases/tag/v0.7.3 is **Latest** with `PIT_0.7.3_x64-setup.exe` (17,195,846 bytes). Chrome `https://pit0g.vercel.app/?v=073`: hero “Your trading desk doesn’t sleep.”, **MAINNET only**, no TESTNET switcher, Download → `/releases/latest`. `/app/start` MAINNET production only; laboratory behind Help seven clicks. `/app` Watch table SOL…BTC last, “this site cannot trade”, no buying power. `/app/activity` execution on desktop. Render `https://pit-health.onrender.com/health` **0.7.3**.
+- **INSTALLER:** `PIT_0.7.3_x64-setup.exe` SHA256 `CACF16FACA0E014E2250481A181B370F7C40AA79E96D2C85679BDC9ABA97C3FB`. Overlay desktop `E831A3AB74536D381E71D1F43DCED368F70F0EEDDA69D543EB258597DF934D11`. Sidecar `B9FB3E37D8847A212AE3BE6EFF76C5FC8C8929A29C5A2E0A52DF7C5103088B10`. Sealer `882BA359E510135DBCB12B8CE84DE1D4F1690310D05119410F9340266E87BDA0`.
+- **UNVERIFIED:** Guarded live order. New 0G Storage/chain proof this pass. Pairing ceremony this pass. GitHub Actions Windows NSIS (separate from the local installer).
+- **BLOCKED:** New MAINNET clip unchanged: pinned $10 clip vs rounded per-book mins. iTransfer UNAVAILABLE on Aristotle.
+
+SECURITY RESULT: Chat/web/MCP still cannot authorize, pin, or enable autonomy.
+TX HASH / OID: Historical OID `529167222216` unchanged.
+
 
 
 

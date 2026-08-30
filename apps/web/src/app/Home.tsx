@@ -40,9 +40,6 @@ export function Home() {
       </Bezel>
 
       <section aria-labelledby="watch-heading">
-        <h2 id="watch-heading" className="sr-only">
-          Watch
-        </h2>
         <EmptyWatch network={net} />
       </section>
 
