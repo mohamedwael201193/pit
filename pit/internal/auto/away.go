@@ -37,6 +37,8 @@ func HumanWhy(code string) string {
 		return "This account cannot clear that book's Hyperliquid floor. PIT will not invent size."
 	case "below_min_notional", "below_minimum":
 		return "This market's rounded Hyperliquid minimum is above this account's buying power. PIT will not invent size."
+	case "policy_clip_tight":
+		return "Pinned max trade cannot meet this book's rounded Hyperliquid minimum. The account can. Raise clip, preview, pin. PIT will not invent size."
 	case "policy_denied", "policy_fail", "asset_blocked":
 		return "Pinned policy does not allow this market."
 	case "asset_not_allowed":

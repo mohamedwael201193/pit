@@ -217,6 +217,9 @@ export function App() {
   const [openConfirm, setOpenConfirm] = useState(false);
   const [bestWhy, setBestWhy] = useState("");
   const [scanned, setScanned] = useState(0);
+  const [watchGate, setWatchGate] = useState("");
+  const [watchWhy, setWatchWhy] = useState("");
+  const [routes, setRoutes] = useState<Array<{ action: string; coin?: string; reason: string; execution: string }>>([]);
   const fillKey = useRef("");
   const lastNotify = useRef(0);
 
@@ -420,6 +423,9 @@ export function App() {
             if (body.capitalNote) setCapitalNote(body.capitalNote);
             if (typeof body.buyingPower === "number") setBuyingPower(body.buyingPower);
             if (body.powerSource) setPowerSource(body.powerSource);
+            setWatchGate(body.execGate || "");
+            setWatchWhy(body.execWhy || "");
+            setRoutes(Array.isArray(body.routes) ? body.routes : []);
           })
           .catch(() => {
             if (!gone) setCoins([]);
@@ -626,10 +632,12 @@ export function App() {
     [checks, status, companionUp, researchRoles],
   );
   const eligible = coins.filter((c) => c.eligible);
+  const execGate = watchGate || summary.execGate;
+  const execWhy = watchWhy || summary.execWhy;
   const attention = nextFix(companionUp, status, checks, items, sessionAlive, net, {
     buyingPower: buyingPower ?? Number(summary.buyingPower || 0),
-    execGate: summary.execGate,
-    execWhy: summary.execWhy,
+    execGate,
+    execWhy,
   });
   const showChat = view === "chat";
   const protectedOk = Boolean(checks.find((c) => c.name === "direct_auth")?.ok);
@@ -1205,12 +1213,13 @@ export function App() {
               mode={status?.mode || mission.mode}
               exposure={summary.totalNtlPos || summary.accountValue}
               buyingPower={buyingPower ?? Number(summary.buyingPower || 0)}
-              execWhy={summary.execWhy}
-              execGate={summary.execGate}
+              execWhy={execWhy}
+              execGate={execGate}
               capitalNote={capitalNote || summary.capitalNote}
               powerSource={powerSource || summary.powerSource}
               fundHref={hyperliquidApp(net)}
               experienceWhy={experienceWhy}
+              routes={routes}
               onResearch={(c) => void researchThis(c)}
               onGo={(v) => setView(v)}
             />
@@ -1221,8 +1230,8 @@ export function App() {
             coins={coins}
             bestWhy={bestWhy}
             scanned={scanned}
-            execGate={summary.execGate}
-            execWhy={summary.execWhy}
+            execGate={execGate}
+            execWhy={execWhy}
             computeReady={protectedOk && computeReady}
             researchBusy={researchBusy}
             capitalNote={capitalNote || summary.capitalNote}
@@ -1232,6 +1241,7 @@ export function App() {
             pinned={pinned}
             onPin={() => setView("security")}
             onResearch={(c) => void researchThis(c)}
+            routes={routes}
           />
         ) : null}
 
@@ -1347,8 +1357,8 @@ export function App() {
             onOpenHistory={() => setView("activity")}
             net={net}
             wallet={status?.wallet}
-            execGate={summary.execGate}
-            execWhy={summary.execWhy}
+            execGate={execGate}
+            execWhy={execWhy}
           />
         ) : null}
 

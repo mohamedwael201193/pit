@@ -1,6 +1,7 @@
 package watch
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/mohamedwael201193/pit/internal/feasibility"
@@ -25,6 +26,37 @@ func TestApplyCapitalPrefersExecutableOverSignal(t *testing.T) {
 	}
 	if view.ExecGate != "insufficient_margin" {
 		t.Fatalf("%s", view.ExecGate)
+	}
+}
+
+func TestApplyCapitalPolicyClipTightLiveEth(t *testing.T) {
+	p := policy.Default()
+	cands := []Candidate{
+		{Coin: "ETH", Eligible: true, Book: hl.BookSnapshot{Coin: "ETH", MarkPx: 2459, OraclePx: 2460, OpenInterest: 1e8, SzDecimals: 4}},
+	}
+	view := Public(cands, "mainnet")
+	acct := feasibility.Account{BuyingPower: 16.18, PowerSource: "unified_spot"}
+	view = ApplyCapital(view, acct, p, true, true)
+	if view.ExecFeasibleN != 0 {
+		t.Fatal("must not invent size")
+	}
+	if view.ExecGate != "policy_clip_tight" {
+		t.Fatalf("gate %s why %s", view.ExecGate, view.ExecWhy)
+	}
+	if !strings.Contains(view.ExecWhy, "too tight") || strings.Contains(strings.ToLower(view.ExecWhy), "fund") {
+		t.Fatal(view.ExecWhy)
+	}
+	wait := false
+	for _, r := range view.Routes {
+		if r.Action == "wait" && r.Execution == "selected" {
+			wait = true
+		}
+		if (r.Action == "swap" || r.Action == "lp") && r.Execution != "unavailable" {
+			t.Fatalf("%+v", r)
+		}
+	}
+	if !wait {
+		t.Fatalf("WAIT must be selected: %+v", view.Routes)
 	}
 }
 

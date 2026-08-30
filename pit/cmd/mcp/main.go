@@ -19,24 +19,36 @@ func main() {
 	}
 	mcp.LiveOpportunities = func() map[string]any {
 		net := config.Mainnet
-		if dir, err := cli.DefaultDir(); err == nil {
+		dir := ""
+		pol := watch.PolicyForWatch()
+		if d, err := cli.DefaultDir(); err == nil {
+			dir = d
 			if st, lerr := cli.Load(dir); lerr == nil {
 				if n, perr := config.ParseNetwork(st.Network); perr == nil {
 					net = n
 				}
+				pol = cli.ActivePolicy(dir)
 			}
 		}
 		view := watch.EmptyPublic(string(net))
-		cands, err := watch.Live(hl.New(config.For(net)), watch.PolicyForWatch())
+		cands, err := watch.LiveUniverse(hl.New(config.For(net)), pol)
 		if err == nil {
 			view = watch.Public(cands, string(net))
+			if dir != "" {
+				view = cli.SizeWatch(dir, view, pol)
+			}
 		}
 		return map[string]any{
-			"count": view.Count,
-			"copy":  view.Copy,
-			"coins": view.Coins,
-			"trade": false,
-			"sign":  false,
+			"count":             view.Count,
+			"copy":              view.Copy,
+			"coins":             view.Coins,
+			"execGate":          view.ExecGate,
+			"execWhy":           view.ExecWhy,
+			"executionFeasible": view.ExecFeasibleN,
+			"routes":            view.Routes,
+			"trade":             false,
+			"sign":              false,
+			"authorize":         false,
 		}
 	}
 	dec := json.NewDecoder(os.Stdin)

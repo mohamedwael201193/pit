@@ -67,35 +67,90 @@ export function nearestVenueMin(coins: Array<{ minNotional?: number }>): number 
   return Math.min(...mins);
 }
 
-export function accountSizeGate(have?: number, min = 10, executable = 0) {
-  const h = typeof have === "number" && Number.isFinite(have) ? have : 0;
-  const m = min > 0 ? min : 10;
-  const shortfall = Math.max(0, Number((m - h).toFixed(2)));
-  const canOpen = executable > 0 && h >= m;
-  if (canOpen) {
+export function nearestPolicyClip(coins: Array<{ policyClip?: number }>): number {
+  const clips = coins.map((c) => c.policyClip).filter((n): n is number => typeof n === "number" && n > 0);
+  if (!clips.length) return 10;
+  return clips[0];
+}
+
+export type AccountSizeGate = {
+  have: number;
+  min: number;
+  shortfall: number;
+  policyGap: number;
+  canOpen: boolean;
+  cta: "open" | "policy" | "fund";
+  headline: string;
+  detail: string;
+};
+
+export function accountSizeGate(opts: {
+  have?: number;
+  venueMin?: number;
+  executable?: number;
+  execGate?: string;
+  execWhy?: string;
+  policyClip?: number;
+}): AccountSizeGate {
+  const h = typeof opts.have === "number" && Number.isFinite(opts.have) ? opts.have : 0;
+  const m = opts.venueMin && opts.venueMin > 0 ? opts.venueMin : 10;
+  const execN = opts.executable ?? 0;
+  const clip = opts.policyClip && opts.policyClip > 0 ? opts.policyClip : 10;
+  const fundShort = Math.max(0, Number((m - h).toFixed(2)));
+  const policyGap = Math.max(0, Number((m - clip).toFixed(2)));
+  const namedTight = opts.execGate === "policy_clip_tight";
+  const inferredTight = execN === 0 && h + 1e-9 >= m && h > 0 && clip + 1e-9 < m;
+  if (execN > 0) {
     return {
       have: h,
       min: m,
       shortfall: 0,
-      canOpen: true as const,
-      headline: `${executable} book${executable === 1 ? "" : "s"} can open`,
-      detail: `This account has ${compactUsd(h)}. Hyperliquid's open minimum is ${compactUsd(m)}. Host sized executable books without inventing size.`,
+      policyGap: 0,
+      canOpen: true,
+      cta: "open",
+      headline: `${execN} book${execN === 1 ? "" : "s"} can open`,
+      detail: `This account has ${compactUsd(h)}. Host sized executable books without inventing size.`,
+    };
+  }
+  if (namedTight || inferredTight) {
+    return {
+      have: h,
+      min: m,
+      shortfall: 0,
+      policyGap,
+      canOpen: false,
+      cta: "policy",
+      headline: "Policy cap is too tight",
+      detail:
+        opts.execWhy ||
+        `Policy cap is ${compactUsd(policyGap)} too tight for a ${compactUsd(m)} venue minimum. This account has ${compactUsd(h)}. Raise max trade on Security, preview, then pin. PIT will not invent size.`,
     };
   }
   return {
     have: h,
     min: m,
-    shortfall,
-    canOpen: false as const,
+    shortfall: fundShort,
+    policyGap: 0,
+    canOpen: false,
+    cta: "fund",
     headline: "Nothing can open yet",
-    detail: `Hyperliquid needs ${compactUsd(m)} to open a position. This account has ${compactUsd(h)}${shortfall > 0 ? ` — ${compactUsd(shortfall)} short of that floor` : ""}. PIT will not invent size.`,
+    detail: `Hyperliquid needs ${compactUsd(m)} to open a position. This account has ${compactUsd(h)}${fundShort > 0 ? ` — ${compactUsd(fundShort)} short of that floor` : ""}. PIT will not invent size.`,
   };
 }
 
-export function marketSizeGate(coin: string, have?: number, min?: number, feasible?: boolean) {
+export function marketSizeGate(
+  coin: string,
+  have?: number,
+  min?: number,
+  feasible?: boolean,
+  execGate?: string,
+  policyClip?: number,
+) {
   const m = min && min > 0 ? min : 10;
   const h = typeof have === "number" && Number.isFinite(have) ? have : 0;
+  const clip = policyClip && policyClip > 0 ? policyClip : 10;
   const shortfall = Math.max(0, Number((m - h).toFixed(2)));
+  const policyGap = Math.max(0, Number((m - clip).toFixed(2)));
   if (feasible) {
     return {
       chip: "Can open",
@@ -112,6 +167,12 @@ export function marketSizeGate(coin: string, have?: number, min?: number, feasib
     return {
       chip: "No margin",
       detail: `No available venue margin. ${coin} still needs ${compactUsd(m)} to open. PIT will not invent size.`,
+    };
+  }
+  if (execGate === "policy_clip_tight" || clip + 1e-9 < m) {
+    return {
+      chip: `Policy ${compactUsd(policyGap)} tight`,
+      detail: `Policy cap is ${compactUsd(policyGap)} too tight for ${coin} min ${compactUsd(m)}. This account has ${compactUsd(h)}. Raise max trade on Security, preview, then pin. PIT will not invent size.`,
     };
   }
   return {

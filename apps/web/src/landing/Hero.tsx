@@ -43,7 +43,7 @@ export function Hero() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.7, delay: 0.16, ease: [0.16, 1, 0.3, 1] }}
               >
-                PIT watches live Hyperliquid markets, researches privately through 0G Direct TeeML, and obeys a policy you pin. When you enable Guarded Autonomy on this computer, it can execute inside that envelope while you are away.
+                PIT sizes to your real buying power and the policy you pin. A $10 clip is not every book's Hyperliquid minimum. PIT will not invent size. Private research runs on 0G Direct TeeML. Guarded Autonomy, if you enable it on this computer, stays inside that envelope.
               </motion.p>
               <motion.p
                 className="mt-4 max-w-[40ch] text-[1.0625rem] leading-7 text-black/75"

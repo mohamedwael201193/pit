@@ -371,6 +371,7 @@ type WatchView = {
   capitalNote?: string;
   buyingPower?: number;
   powerSource?: string;
+  routes?: Array<{ action: string; coin?: string; reason: string; execution: string }>;
   sign?: boolean;
   trade?: boolean;
 };

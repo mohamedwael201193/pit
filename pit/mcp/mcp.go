@@ -7,7 +7,7 @@ import (
 
 var AllowedTools = []string{
 	"market", "opportunities", "watch", "forecast", "status", "card", "verify", "preview",
-	"receipts", "calibration", "policy", "security", "research", "experience",
+	"receipts", "calibration", "policy", "security", "research", "experience", "memory",
 }
 
 var ForbiddenTools = []string{
@@ -99,6 +99,9 @@ func Handle(req Request) Response {
 			"copy": "Verified experience lives on PIT Desktop. MCP can only say NOT ENOUGH DATA. No memory key. No authorize.",
 			"n":    0, "sign": false, "trade": false, "authorize": false,
 		}}
+	case "memory":
+		req.Tool = "experience"
+		return Handle(req)
 	default:
 		return Response{OK: true, Body: map[string]any{"tool": req.Tool, "note": "bind a workspace first"}}
 	}

@@ -45,6 +45,7 @@ type PublicCoin struct {
 	RequiredMargin    float64          `json:"requiredMargin,omitempty"`
 	AvailableMargin   float64          `json:"availableMargin,omitempty"`
 	PolicyClip        float64          `json:"policyClip,omitempty"`
+	PolicyGap         float64          `json:"policyGap,omitempty"`
 	HostNotional      float64          `json:"hostNotional,omitempty"`
 	HostSz            float64          `json:"hostSz,omitempty"`
 	EstimatedSlippage string           `json:"estimatedSlippage,omitempty"`
@@ -57,27 +58,28 @@ type PublicCoin struct {
 }
 
 type PublicView struct {
-	OK            bool         `json:"ok"`
-	Sign          bool         `json:"sign"`
-	Trade         bool         `json:"trade"`
-	Count         int          `json:"count"`
-	Scanned       int          `json:"scanned"`
-	Copy          string       `json:"copy"`
-	Coins         []PublicCoin `json:"coins"`
-	Best          *PublicCoin  `json:"best,omitempty"`
-	BestWhy       string       `json:"bestWhy,omitempty"`
-	ExecGate      string       `json:"execGate,omitempty"`
-	ExecWhy       string       `json:"execWhy,omitempty"`
-	PreviewReadyN int          `json:"previewReady,omitempty"`
-	ExecFeasibleN int          `json:"executionFeasible,omitempty"`
-	BuyingPower   float64      `json:"buyingPower,omitempty"`
-	PowerSource   string       `json:"powerSource,omitempty"`
-	SpotUSDC      float64      `json:"spotUsdc,omitempty"`
-	PerpEquity    float64      `json:"perpEquity,omitempty"`
-	Withdrawable  float64      `json:"withdrawable,omitempty"`
-	CapitalNote   string       `json:"capitalNote,omitempty"`
-	Source        string       `json:"source"`
-	Network       string       `json:"network"`
+	OK            bool           `json:"ok"`
+	Sign          bool           `json:"sign"`
+	Trade         bool           `json:"trade"`
+	Count         int            `json:"count"`
+	Scanned       int            `json:"scanned"`
+	Copy          string         `json:"copy"`
+	Coins         []PublicCoin   `json:"coins"`
+	Best          *PublicCoin    `json:"best,omitempty"`
+	BestWhy       string         `json:"bestWhy,omitempty"`
+	ExecGate      string         `json:"execGate,omitempty"`
+	ExecWhy       string         `json:"execWhy,omitempty"`
+	PreviewReadyN int            `json:"previewReady,omitempty"`
+	ExecFeasibleN int            `json:"executionFeasible,omitempty"`
+	BuyingPower   float64        `json:"buyingPower,omitempty"`
+	PowerSource   string         `json:"powerSource,omitempty"`
+	SpotUSDC      float64        `json:"spotUsdc,omitempty"`
+	PerpEquity    float64        `json:"perpEquity,omitempty"`
+	Withdrawable  float64        `json:"withdrawable,omitempty"`
+	CapitalNote   string         `json:"capitalNote,omitempty"`
+	Routes        []CapitalRoute `json:"routes,omitempty"`
+	Source        string         `json:"source"`
+	Network       string         `json:"network"`
 }
 
 func toPublic(c Candidate, net, now string) PublicCoin {
@@ -186,6 +188,9 @@ func attachFit(row PublicCoin, f feasibility.Fit) PublicCoin {
 	row.RequiredMargin = f.RequiredMargin
 	row.AvailableMargin = f.AvailableMargin
 	row.PolicyClip = f.PolicyClip
+	if f.MinNotionalUSD > 0 && f.PolicyClip > 0 {
+		row.PolicyGap = f.MinNotionalUSD - f.PolicyClip
+	}
 	row.HostNotional = f.HostNotional
 	row.HostSz = f.HostSz
 	row.EstimatedSlippage = f.EstimatedSlippage
@@ -232,6 +237,15 @@ func ApplyCapital(view PublicView, acct feasibility.Account, p policy.Policy, se
 	}
 	view.ExecGate = block
 	view.ExecWhy = why
+	if view.ExecGate == "" && execN == 0 {
+		for i := range view.Coins {
+			if view.Coins[i].ExecGate == "policy_clip_tight" {
+				view.ExecGate = "policy_clip_tight"
+				view.ExecWhy = view.Coins[i].ExecWhy
+				break
+			}
+		}
+	}
 	var best *PublicCoin
 	for i := range view.Coins {
 		row := view.Coins[i]
@@ -254,8 +268,13 @@ func ApplyCapital(view PublicView, acct feasibility.Account, p policy.Policy, se
 	if best != nil && (best.PreviewReady || best.ExecutionFeasible) {
 		view.BestWhy = "Highest host rank among books this account can actually size under pinned policy, venue minimum, and available margin. BTC is not auto-first. Side is not decided here."
 	} else if best != nil {
-		view.BestWhy = "Highest host rank among policy-eligible live books. None are execution-feasible for this account right now. " + why
+		extra := view.ExecWhy
+		if extra == "" {
+			extra = why
+		}
+		view.BestWhy = "Highest host rank among policy-eligible live books. None are execution-feasible for this account right now. " + extra
 	}
+	view.Routes = DecideRoutes(view)
 	return view
 }
 

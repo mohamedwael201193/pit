@@ -2171,6 +2171,36 @@ RESULT:
 SECURITY RESULT: Chat still cannot AUTHORIZE.
 TX HASH / OID: Historical OID `529167222216` unchanged.
 
+---
+
+## M103 — War room 0.7.4: policy-clip honesty + capital router (2026-08-30)
+
+DATE/TIME: 2026-08-30 05:35+03
+PHASE: 0.7.4. Do not flatten OID 529167222216. Do not remint PIT-4bbee556. Do not invent size. Do not enable Guarded Autonomy. Do not auto-pin.
+GOAL: Screenshots showed THIS ACCOUNT $16.18, THIS MARKET MIN $10, SHORTFALL $0, and still “Nothing can open yet” + Fund. That is a lie. The account clears the venue floor. The pinned $10 clip cannot meet rounded per-book mins. Fix the gate, add a host-deterministic capital router, do not clone Zia, do not fake SWAP/LP.
+RESULT:
+- **IMPLEMENTED:** Version **0.7.4**.
+  1. `policy_clip_tight` when buying power ≥ book min and pinned clip cannot size. Copy: “Policy cap is $X.XX too tight… Raise max trade on Security, preview, then pin.” Fund CTA only when buying power is actually short of the venue floor.
+  2. Capital router (not a smart contract): TRADE / WAIT / HOLD / SWAP / LP. SWAP and LP stay **unavailable**. Zia APR is advertising, not a PIT return. No swap/LP transaction is invented.
+  3. Desk, Markets, nextFix, Chat floors, CLI `pit opportunities`, local MCP Watch, policy preview all name the clip gap. Website Origin `/watch` still omits this account’s capital.
+  4. Model picker rows label PRIVATE / TEE-VERIFIED / CATALOG ONLY / NOT PRIVATE. Catalog listings stay disabled.
+  5. Landing hero says a $10 clip is not every book’s Hyperliquid minimum.
+- **TESTED:** `go test ./...` PASS including `TestApplyCapitalPolicyClipTightLiveEth`, `TestLiveEthMarkMakesDefaultClipTight`, `TestDecideRoutesPolicyClipSelectsWaitNotSwap`, `TestFormatBookFloorsPolicyClipTightNotFund`. Desktop `tsc -b` PASS. Web `tsc --noEmit` PASS. NSIS `PIT_0.7.4_x64-setup.exe`.
+- **LIVE VERIFIED:** Overlay companion `D:\PIT\pit.exe` `/health` **0.7.4**. Desktop Origin `/watch` buying power **$16.181269**, gate **policy_clip_tight**, WAIT selected, SWAP/LP unavailable. Tightest book **DOGE** min **$10.02**, gap **$0.02**. ETH min $10.06, BTC $10.14, SOL $10.52, HYPE $10.80. Website Origin `/watch` `buyingPower` empty. SHA256 pit.exe `4CE04BA48A889E01A8494DC2CA1207F44E23EBA30DDBA669EA1B2CC8D7F0B558`. pit-desktop.exe `7488C0B5FCE3A22824AFB66AE873C5EBEFEB2F4DD1A66469BA99835456989D3C`. sealer `8DC5D76DD8803BED2F0C756C0D7A9A19EFBF16CAA3C67DFB583EAE8F80A78EBC`. installer `61A52E738BD9758918DFD327857180038EE0EE7161FF105E0151BDA47AECF620`.
+- **UNVERIFIED:** Guarded live order. New 0G Storage/chain proof this pass. Pairing ceremony this pass. Production Vercel/Render until this commit deploys.
+- **BLOCKED:** New MAINNET clip until YOU raise max trade above the candidate min, preview, then pin. iTransfer UNAVAILABLE on Aristotle. Zia/DEX SWAP and LP execution unavailable (no verified rail).
+
+SECURITY RESULT: Chat/web/MCP still cannot authorize, pin, or enable autonomy. Policy is not auto-raised. SWAP/LP cannot execute.
+TX HASH / OID: Historical OID `529167222216` unchanged.
+CLASSIFICATION:
+- policy_clip_tight vs Fund lie: **IMPLEMENTED + LIVE VERIFIED**
+- Capital router TRADE/WAIT/HOLD: **IMPLEMENTED + LIVE VERIFIED**
+- SWAP/LP execution: **NOT IMPLEMENTED** (labeled unavailable)
+- Zia clone: **NOT IMPLEMENTED** (deliberate)
+PRODUCTION READY: 0.7.4 is production-ready for honest capital gates. It is **not** production-ready for a new MAINNET clip until YOU pin a clip that meets a book’s rounded min.
+NEXT STEP: Close extra PIT windows if two opened. On Security, preview then pin a clip above the candidate min if you want a clip. Do not flatten. Do not remint.
+
+
 
 
 

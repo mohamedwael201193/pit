@@ -126,6 +126,26 @@ func TestFitPerAssetMinBTCExceedsETH(t *testing.T) {
 	}
 }
 
+func TestLiveEthMarkMakesDefaultClipTight(t *testing.T) {
+	p := policy.Default()
+	acct := Account{BuyingPower: 16.18, PowerSource: "unified_spot"}
+	eth := FitBook(hl.BookSnapshot{Coin: "ETH", MarkPx: 2459, OraclePx: 2460, SzDecimals: 4}, p, acct, true, true)
+	if eth.ExecutionFeasible {
+		t.Fatalf("16.18 meets venue; $10 clip must not size ETH @ 2459: %+v", eth)
+	}
+	if eth.Gate != "policy_clip_tight" {
+		t.Fatalf("gate %s why %s", eth.Gate, eth.Why)
+	}
+	if !strings.Contains(eth.Why, "too tight") || strings.Contains(strings.ToLower(eth.Why), "fund") {
+		t.Fatal(eth.Why)
+	}
+	p.MaxClipUSD = 12
+	ok := FitBook(hl.BookSnapshot{Coin: "ETH", MarkPx: 2459, OraclePx: 2460, SzDecimals: 4}, p, acct, true, true)
+	if !ok.ExecutionFeasible {
+		t.Fatalf("clip 12 should size ETH: %+v", ok)
+	}
+}
+
 func TestFitDefaultClipCannotSizeBTC(t *testing.T) {
 	p := policy.Default()
 	acct := Account{BuyingPower: 40, PowerSource: "perp_withdrawable"}

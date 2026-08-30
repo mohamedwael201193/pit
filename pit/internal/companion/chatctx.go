@@ -211,6 +211,14 @@ func formatBookFloors(bp float64, coins []watch.PublicCoin) string {
 			parts = append(parts, fmt.Sprintf("%s executable at min $%.2f", c.Coin, min))
 			continue
 		}
+		if c.ExecGate == "policy_clip_tight" || (bp+1e-9 >= min && c.PolicyClip > 0 && c.PolicyClip+1e-9 < min) {
+			gap := min - c.PolicyClip
+			if gap < 0 {
+				gap = 0
+			}
+			parts = append(parts, fmt.Sprintf("%s policy cap $%.2f too tight for min $%.2f (account $%.2f)", c.Coin, gap, min, bp))
+			continue
+		}
 		parts = append(parts, fmt.Sprintf("%s min $%.2f", c.Coin, min))
 	}
 	if n == 0 {

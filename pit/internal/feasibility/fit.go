@@ -148,6 +148,10 @@ func FitBook(b hl.BookSnapshot, p policy.Policy, acct Account, sessionAlive, pin
 		f.Layer = LayerBlocked
 		f.Gate = err.Error()
 		f.Why = fmt.Sprintf("%s cannot be sized under this account and policy (%s). PIT will not invent size.", f.Coin, err.Error())
+		if err.Error() == "below_min_notional" && acct.BuyingPower+1e-9 >= minN && p.MaxClipUSD+1e-9 < minN {
+			f.Gate = "policy_clip_tight"
+			f.Why = venue.WhyPolicyTight(f.Coin, p.MaxClipUSD, minN, acct.BuyingPower)
+		}
 		f.WhyExecutable = f.Why
 		return f
 	}

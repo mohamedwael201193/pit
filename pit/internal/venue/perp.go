@@ -61,3 +61,19 @@ func WhyThisMarket(coin string, available, minNotional float64) string {
 		available, coin, minNotional,
 	)
 }
+
+// WhyPolicyTight is for when buying power meets the book min but the pinned clip cannot.
+func WhyPolicyTight(coin string, clip, minNotional, available float64) string {
+	coin = strings.ToUpper(strings.TrimSpace(coin))
+	if coin == "" {
+		coin = "This market"
+	}
+	gap := minNotional - clip
+	if gap < 0 {
+		gap = 0
+	}
+	return fmt.Sprintf(
+		"Policy cap is $%.2f too tight for %s min $%.2f. This account has $%.2f. Raise max trade on Security, preview, then pin. PIT will not invent size.",
+		gap, coin, minNotional, available,
+	)
+}

@@ -9,6 +9,7 @@ func TestHumanWhyNeverEmptyForKnownCodes(t *testing.T) {
 		"liquidity_insufficient", "slippage_too_high", "committee_disagreement",
 		"research_stood_down", "TEE_VERIFY_FAIL", "session_expired", "kill_switch",
 		"opportunity_expired", "need_pin", "user_stop", "no_opportunity",
+		"policy_clip_tight",
 	} {
 		if HumanWhy(code) == "" || HumanWhy(code) == code {
 			t.Fatalf("%s", code)

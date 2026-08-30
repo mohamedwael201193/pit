@@ -413,9 +413,10 @@ func cmdPolicy() {
 }
 
 func cmdOpportunities() {
-	p := policy.Default()
+	dir := stateDir()
+	p := cli.ActivePolicy(dir)
 	net := config.Mainnet
-	if st, err := cli.Load(stateDir()); err == nil {
+	if st, err := cli.Load(dir); err == nil {
 		if n, err := config.ParseNetwork(st.Network); err == nil {
 			net = n
 		}
@@ -426,19 +427,28 @@ func cmdOpportunities() {
 		os.Exit(1)
 	}
 	view := watch.Public(all, string(net))
+	view = cli.SizeWatch(dir, view, p)
 	fmt.Println(view.Copy)
-	fmt.Printf("scanned %d live Hyperliquid perps\n", view.Scanned)
-	if view.Best != nil {
-		fmt.Printf("best %s mark=%g policy=%s\n", view.Best.Coin, view.Best.Mark, view.Best.PolicyFit)
-		fmt.Println(view.BestWhy)
+	fmt.Printf("scanned %d live Hyperliquid perps · executable %d · gate %s\n", view.Scanned, view.ExecFeasibleN, view.ExecGate)
+	if view.ExecWhy != "" {
+		fmt.Println(view.ExecWhy)
 	}
-	fmt.Println("Markets does not place orders.")
+	if view.Best != nil {
+		fmt.Printf("best %s mark=%g policy=%s exec=%v gate=%s\n", view.Best.Coin, view.Best.Mark, view.Best.PolicyFit, view.Best.ExecutionFeasible, view.Best.ExecGate)
+		if view.BestWhy != "" {
+			fmt.Println(view.BestWhy)
+		}
+	}
+	for _, r := range view.Routes {
+		fmt.Printf("route %s %s %s\n", r.Action, r.Execution, r.Reason)
+	}
+	fmt.Println("Markets does not place orders. Chat cannot AUTHORIZE.")
 	shown := 0
-	for _, c := range all {
-		if !c.Eligible {
+	for _, c := range view.Coins {
+		if !c.PolicyEligible && !c.Eligible {
 			continue
 		}
-		fmt.Printf("%s  %s  mark=%g  fit=PASS\n", c.Coin, c.Reason, c.Book.MarkPx)
+		fmt.Printf("%s  mark=%g  min=$%.2f  clip=$%.2f  exec=%v  gate=%s\n", c.Coin, c.Mark, c.MinNotional, c.PolicyClip, c.ExecutionFeasible, c.ExecGate)
 		shown++
 		if shown >= 12 {
 			break

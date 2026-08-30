@@ -111,7 +111,7 @@ func (h *Hub) opportunityConsequences(draft policy.Policy) []string {
 	if lerr != nil {
 		return lines
 	}
-	exec, research := []string{}, []string{}
+	exec, research, tight := []string{}, []string{}, []string{}
 	sess, pin := h.sessionAliveNow(), true
 	for _, c := range cands {
 		f := feasibility.FitBook(c.Book, policy.Clamp(draft), acct, sess, pin)
@@ -119,6 +119,9 @@ func (h *Hub) opportunityConsequences(draft policy.Policy) []string {
 			exec = append(exec, c.Coin)
 		} else if f.PolicyEligible || f.ResearchEligible {
 			research = append(research, c.Coin)
+		}
+		if f.Gate == "policy_clip_tight" {
+			tight = append(tight, c.Coin)
 		}
 	}
 	if len(exec) > 12 {
@@ -128,7 +131,9 @@ func (h *Hub) opportunityConsequences(draft policy.Policy) []string {
 		research = research[:12]
 	}
 	if len(exec) == 0 {
-		if !h.policyPinnedNow() {
+		if len(tight) > 0 {
+			lines = append(lines, "This account can clear those books' Hyperliquid floors. This clip cannot: "+strings.Join(tight, ", ")+". Raise max trade, preview, then pin. PIT will not invent size.")
+		} else if !h.policyPinnedNow() {
 			lines = append(lines, "No current live book is execution-feasible under this draft and this account. Research will not spend 0G until you pin host law. PIT will not invent size.")
 		} else {
 			lines = append(lines, "No current live book is execution-feasible under this draft and this account. PIT will not invent size.")

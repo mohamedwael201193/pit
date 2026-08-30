@@ -194,7 +194,7 @@ export function CommandChat({
           </button>
           {modelOpen ? (
             <div className="model-menu wide" role="listbox">
-              <p className="label">Private + verified</p>
+              <p className="label">Private research</p>
               {privateModels.length === 0 ? (
                 <p className="fine">No verified Direct SKU on this network.</p>
               ) : (
@@ -389,12 +389,16 @@ function ModelRow({
   onPick: () => void;
   disabled?: boolean;
 }) {
+  const privacy = m.private_book && m.proven_e2ee ? "PRIVATE · TEE-VERIFIED" : m.private_book ? "PRIVATE" : m.path === "catalog-listing" ? "CATALOG ONLY" : "NOT PRIVATE";
   return (
     <button type="button" className={picked?.model === m.model ? "on" : "linkish"} onClick={onPick} disabled={disabled}>
-      {m.model}
+      <span className="model-row-head">
+        {m.label || m.model}
+        <span className="layer-chip">{privacy}</span>
+      </span>
       <span className="fine" style={{ display: "block", marginTop: 2 }}>
-        {m.path || "Direct"} · {m.private_book ? "Private" : "not private"} · {m.proven_e2ee ? "Verified" : "unproven"}
-        {m.capability ? ` · ${m.capability}` : ""}
+        {m.provider || m.path || "Direct"} · {m.latency || "speed not sampled"} · {m.capability || "general"}
+        {m.cost ? ` · ${m.cost}` : ""}
       </span>
       {m.note ? (
         <span className="fine" style={{ display: "block" }}>

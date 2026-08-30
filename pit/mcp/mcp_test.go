@@ -54,6 +54,14 @@ func TestOpportunitiesDoNotTrade(t *testing.T) {
 	if Handle(Request{Tool: "authorize"}).OK {
 		t.Fatal("research must not unlock authorize")
 	}
+	mem := Handle(Request{Tool: "memory"})
+	if !mem.OK {
+		t.Fatal(mem)
+	}
+	mb, _ := mem.Body.(map[string]any)
+	if mb["authorize"] != false || mb["trade"] != false {
+		t.Fatal(mb)
+	}
 	cal := Handle(Request{Tool: "calibration"})
 	if !cal.OK {
 		t.Fatal(cal)

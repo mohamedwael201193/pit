@@ -1,7 +1,7 @@
 import { BrandMark } from "./BrandMark";
 import { EvidenceStrip } from "./EvidenceStrip";
 import { ExternalLink } from "./ExternalLink";
-import { accountSizeGate, compactNum, compactUsd, marketSizeGate, nearestVenueMin } from "./format";
+import { accountSizeGate, compactNum, compactUsd, marketSizeGate, nearestPolicyClip, nearestVenueMin } from "./format";
 import type { NextFix } from "./nextFix";
 import type { Probe } from "./readiness";
 
@@ -15,6 +15,8 @@ type Coin = {
   previewReady?: boolean;
   rankGroup?: number;
   minNotional?: number;
+  execGate?: string;
+  policyClip?: number;
 };
 
 function Chip({ ok, label, value }: { ok: boolean; label: string; value: string }) {
@@ -56,6 +58,7 @@ export function DeskHome({
   powerSource,
   fundHref,
   experienceWhy,
+  routes,
   onResearch,
   onGo,
 }: {
@@ -89,6 +92,7 @@ export function DeskHome({
   powerSource?: string;
   fundHref?: string;
   experienceWhy?: string;
+  routes?: Array<{ action: string; coin?: string; reason: string; execution: string }>;
   onResearch: (coin: string) => void;
   onGo: (view: "markets" | "research" | "security" | "chat" | "automation" | "portfolio" | "activity") => void;
 }) {
@@ -102,7 +106,14 @@ export function DeskHome({
   const modeLabel = mode === "guarded" ? "Guarded Autonomy" : mode === "research_only" ? "Research Only" : "Manual";
   const venueMin = nearestVenueMin(coins);
   const execN = coins.filter((c) => c.executionFeasible).length;
-  const gate = accountSizeGate(buyingPower, venueMin, execN);
+  const gate = accountSizeGate({
+    have: buyingPower,
+    venueMin,
+    executable: execN,
+    execGate,
+    execWhy,
+    policyClip: nearestPolicyClip(coins),
+  });
   const nearest = [...coins].filter((c) => (c.minNotional || 0) > 0).sort((a, b) => (a.minNotional || 0) - (b.minNotional || 0))[0];
   const heroTitle = researchBusy
     ? doing
@@ -110,7 +121,9 @@ export function DeskHome({
       ? "Waiting for you"
       : researchKind === "READY_STOOD_DOWN"
         ? "Committee stood down. Checking next."
-        : ready && !gate.canOpen
+        : ready && gate.cta === "policy"
+          ? "Policy cap is too tight"
+          : ready && !gate.canOpen
           ? "Watching. Nothing can open."
           : ready
             ? "Watching the live book"
@@ -170,13 +183,28 @@ export function DeskHome({
           <p className="capital-line" role="status">
             This account {compactUsd(gate.have)}
             {nearest ? ` · nearest floor ${nearest.coin} ${compactUsd(nearest.minNotional)}` : ` · this market min ${compactUsd(gate.min)}`}
-            {gate.canOpen ? "" : ` · ${compactUsd(gate.shortfall)} short`}
+            {gate.canOpen ? "" : gate.cta === "policy" ? ` · policy gap ${compactUsd(gate.policyGap)}` : ` · ${compactUsd(gate.shortfall)} short`}
             {powerSource ? ` · ${powerSource.replaceAll("_", " ")}` : ""}
             {execGate ? ` · ${execGate.replaceAll("_", " ")}` : ""}
           </p>
           <p>{execWhy || capitalNote || gate.detail}</p>
           {experienceWhy ? <p className="fine">{experienceWhy}</p> : null}
-          {!gate.canOpen && fundHref ? (
+          {routes && routes.length ? (
+            <p className="route-rail" aria-label="Capital router">
+              {routes.map((r) => (
+                <span key={r.action} className={`route-pill ${r.execution}`} title={r.reason}>
+                  {r.action.toUpperCase()} {r.execution}
+                </span>
+              ))}
+            </p>
+          ) : null}
+          {gate.cta === "policy" ? (
+            <p className="fine">
+              <button type="button" className="linkish" onClick={() => onGo("security")}>
+                Open Policy
+              </button>
+            </p>
+          ) : !gate.canOpen && fundHref ? (
             <p className="fine">
               <ExternalLink className="linkish" href={fundHref}>
                 Fund this Hyperliquid account
@@ -292,11 +320,11 @@ export function DeskHome({
                     <BrandMark symbol={c.coin} size={16} />
                     <strong>{c.coin}</strong>
                     <span className={`layer-chip ${c.executionFeasible ? "ok" : "pass"}`}>
-                      {c.executionFeasible ? "Can open" : marketSizeGate(c.coin, buyingPower, c.minNotional, c.executionFeasible).chip}
+                      {c.executionFeasible ? "Can open" : marketSizeGate(c.coin, buyingPower, c.minNotional, c.executionFeasible, c.execGate, c.policyClip).chip}
                     </span>
                   </span>
                   <span className="tile-mark">{compactNum(c.mark)}</span>
-                  <span className="tile-meta">{marketSizeGate(c.coin, buyingPower, c.minNotional, c.executionFeasible).detail}</span>
+                  <span className="tile-meta">{marketSizeGate(c.coin, buyingPower, c.minNotional, c.executionFeasible, c.execGate, c.policyClip).detail}</span>
                 </button>
               </li>
             ))}

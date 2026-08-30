@@ -16,3 +16,7 @@ func (c Client) LawCards() []policy.Card {
 func (c Client) WatchMayTrade() bool {
 	return false
 }
+
+func (c Client) SwapOrLPAvailable() bool {
+	return false
+}

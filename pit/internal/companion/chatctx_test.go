@@ -67,6 +67,18 @@ func TestFormatBookFloorsListsPerMarketShortfall(t *testing.T) {
 	}
 }
 
+func TestFormatBookFloorsPolicyClipTightNotFund(t *testing.T) {
+	got := formatBookFloors(16.18, []watch.PublicCoin{
+		{Coin: "ETH", PolicyEligible: true, MinNotional: 10.08, PolicyClip: 10, ExecGate: "policy_clip_tight"},
+	})
+	if !strings.Contains(got, "policy cap $0.08 too tight") {
+		t.Fatal(got)
+	}
+	if strings.Contains(strings.ToLower(got), "fund") || strings.Contains(got, "short of") {
+		t.Fatal(got)
+	}
+}
+
 func TestLocalModelsDirectOnly(t *testing.T) {
 	old := fetchOfficialCatalog
 	fetchOfficialCatalog = func(ctx context.Context) ([]compute.CatalogEntry, error) {

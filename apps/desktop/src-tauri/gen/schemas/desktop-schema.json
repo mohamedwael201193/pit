@@ -273,6 +273,12 @@
           "markdownDescription": "Read doctor checks over a native loopback GET with no Origin."
         },
         {
+          "description": "Read verified-experience metadata. Never the memory key.",
+          "type": "string",
+          "const": "allow-local-experience",
+          "markdownDescription": "Read verified-experience metadata. Never the memory key."
+        },
+        {
           "description": "Read research explanation without the sealed prompt.",
           "type": "string",
           "const": "allow-local-explain",

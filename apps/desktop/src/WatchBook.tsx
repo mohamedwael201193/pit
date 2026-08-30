@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { BrandMark } from "./BrandMark";
-import { accountSizeGate, compactNum, compactUsd, marketSizeGate, nearestVenueMin, pctFunding, powerSourceLabel } from "./format";
+import { accountSizeGate, compactNum, compactUsd, marketSizeGate, nearestPolicyClip, nearestVenueMin, pctFunding, powerSourceLabel } from "./format";
 import { ExternalLink } from "./ExternalLink";
 
 export type MarketCoin = {
@@ -37,6 +37,7 @@ export type MarketCoin = {
   policyClip?: number;
   hostNotional?: number;
   hostSz?: number;
+  policyGap?: number;
   estimatedSlippage?: string;
   whyExecutable?: string;
   expectedEdge?: string;
@@ -67,6 +68,7 @@ export function WatchBook({
   coins,
   bestWhy,
   scanned,
+  execGate,
   execWhy,
   computeReady,
   researchBusy,
@@ -77,6 +79,7 @@ export function WatchBook({
   pinned,
   onPin,
   onResearch,
+  routes,
 }: {
   coins: MarketCoin[];
   bestWhy?: string;
@@ -92,16 +95,18 @@ export function WatchBook({
   pinned?: boolean;
   onPin?: () => void;
   onResearch: (coin: string) => void;
+  routes?: Array<{ action: string; coin?: string; reason: string; execution: string }>;
 }) {
   const [sel, setSel] = useState("");
   const [q, setQ] = useState("");
-  const [filter, setFilter] = useState<"all" | "pass" | "exec" | "research" | "blocked">("pass");
+  const [filter, setFilter] = useState<"all" | "pass" | "exec" | "research" | "capital" | "blocked">("pass");
   const filtered = useMemo(() => {
     const n = q.trim().toLowerCase();
     return coins.filter((c) => {
       if (filter === "exec" && !c.executionFeasible) return false;
       if (filter === "pass" && !c.eligible) return false;
       if (filter === "research" && !c.researchEligible) return false;
+      if (filter === "capital" && c.execGate !== "policy_clip_tight" && c.execGate !== "insufficient_margin") return false;
       if (filter === "blocked" && (c.executionFeasible || c.eligible)) return false;
       if (!n) return true;
       return c.coin.toLowerCase().includes(n) || (c.why || "").toLowerCase().includes(n);
@@ -111,7 +116,14 @@ export function WatchBook({
   const passN = coins.filter((c) => c.eligible).length;
   const venueMin = nearestVenueMin(coins);
   const have = typeof buyingPower === "number" ? buyingPower : coins[0]?.availableMargin;
-  const gate = accountSizeGate(have, venueMin, execN);
+  const gate = accountSizeGate({
+    have,
+    venueMin,
+    executable: execN,
+    execGate,
+    execWhy,
+    policyClip: nearestPolicyClip(coins),
+  });
   const row = filtered.find((c) => c.coin === sel);
   const useTiles = false;
   const counts = {
@@ -119,6 +131,7 @@ export function WatchBook({
     pass: passN,
     exec: execN,
     research: coins.filter((c) => c.researchEligible).length,
+    capital: coins.filter((c) => c.execGate === "policy_clip_tight" || c.execGate === "insufficient_margin").length,
     blocked: coins.filter((c) => !c.executionFeasible && !c.eligible).length,
   };
 
@@ -134,9 +147,9 @@ export function WatchBook({
         </p>
       </div>
 
-      <section className={`capital-gate ${gate.canOpen ? "open" : "short"}`} role="status">
+      <section className={`capital-gate ${gate.canOpen ? "open" : gate.cta === "policy" ? "policy" : "short"}`} role="status">
         <div className="gate-copy">
-          <p className="label">{gate.canOpen ? "Executable" : "Capital gate"}</p>
+          <p className="label">{gate.canOpen ? "Executable" : gate.cta === "policy" ? "Policy gate" : "Capital gate"}</p>
           <h2>{gate.headline}</h2>
           <p>{gate.detail}</p>
           {capitalNote ? <p className="fine">{capitalNote}</p> : null}
@@ -146,6 +159,15 @@ export function WatchBook({
             {scanned ? `${scanned} scanned` : `${coins.length} books`} · {passN} policy eligible · {execN} executable
             {powerSource ? ` · ${powerSourceLabel(powerSource)}` : ""}
           </p>
+          {routes && routes.length ? (
+            <p className="route-rail" aria-label="Capital router">
+              {routes.map((r) => (
+                <span key={r.action} className={`route-pill ${r.execution}`} title={r.reason}>
+                  {r.action.toUpperCase()} {r.execution}
+                </span>
+              ))}
+            </p>
+          ) : null}
         </div>
         <div className="gate-stats">
           <div>
@@ -157,8 +179,10 @@ export function WatchBook({
             <strong>{compactUsd(gate.min)}</strong>
           </div>
           <div>
-            <span>{gate.canOpen ? "Headroom" : "Shortfall"}</span>
-            <strong>{compactUsd(gate.canOpen ? Math.max(0, gate.have - gate.min) : gate.shortfall)}</strong>
+            <span>{gate.canOpen ? "Headroom" : gate.cta === "policy" ? "Policy gap" : "Shortfall"}</span>
+            <strong>
+              {compactUsd(gate.canOpen ? Math.max(0, gate.have - gate.min) : gate.cta === "policy" ? gate.policyGap : gate.shortfall)}
+            </strong>
           </div>
           <div className="gate-meter" aria-label={`${compactUsd(gate.have)} of ${compactUsd(gate.min)}`}>
             <span style={{ width: `${Math.min(100, gate.min > 0 ? (gate.have / gate.min) * 100 : 0)}%` }} />
@@ -168,7 +192,11 @@ export function WatchBook({
               <button type="button" className="primary" onClick={onPin}>
                 Pin a trading policy
               </button>
-            ) : execN === 0 && fundHref ? (
+            ) : gate.cta === "policy" && onPin ? (
+              <button type="button" className="primary" onClick={onPin}>
+                Open Policy
+              </button>
+            ) : execN === 0 && gate.cta === "fund" && fundHref ? (
               <ExternalLink className="primary" href={fundHref}>
                 Fund this Hyperliquid account
               </ExternalLink>
@@ -193,8 +221,9 @@ export function WatchBook({
           {(
             [
               ["pass", `Policy ${counts.pass}`],
-              ["exec", `Executable ${counts.exec}`],
+              ["exec", `Actionable ${counts.exec}`],
               ["research", `Research ${counts.research}`],
+              ["capital", `Capital ${counts.capital}`],
               ["blocked", `Blocked ${counts.blocked}`],
               ["all", `All ${counts.all}`],
             ] as const
@@ -223,7 +252,7 @@ export function WatchBook({
         <ul className="book-grid" aria-label="Markets">
           {filtered.map((c) => {
             const chip = layerChip(c);
-            const gap = marketSizeGate(c.coin, c.availableMargin ?? have, c.minNotional || venueMin, c.executionFeasible);
+            const gap = marketSizeGate(c.coin, c.availableMargin ?? have, c.minNotional || venueMin, c.executionFeasible, c.execGate, c.policyClip);
             return (
               <li key={c.coin}>
                 <button
@@ -247,9 +276,18 @@ export function WatchBook({
         </ul>
       ) : (
         <ul className="book-list" aria-label="Markets">
+          <li className="book-head" aria-hidden="true">
+            <span className="book-row head">
+              <span>Asset</span>
+              <span>Price</span>
+              <span>Status</span>
+              <span>Min / clip / gap</span>
+            </span>
+          </li>
           {filtered.map((c) => {
             const chip = layerChip(c);
-            const gap = marketSizeGate(c.coin, c.availableMargin ?? have, c.minNotional || venueMin, c.executionFeasible);
+            const gap = marketSizeGate(c.coin, c.availableMargin ?? have, c.minNotional || venueMin, c.executionFeasible, c.execGate, c.policyClip);
+            const policyGap = Math.max(0, (c.minNotional || 0) - (c.policyClip || 0));
             return (
               <li key={c.coin} className={c.coin === sel ? "on" : ""}>
                 <button type="button" className="book-row" onClick={() => setSel((cur) => (cur === c.coin ? "" : c.coin))}>
@@ -260,7 +298,9 @@ export function WatchBook({
                   <span className="tile-mark">{compactNum(c.mark)}</span>
                   <span className={`layer-chip ${chip.k}`}>{chip.t}</span>
                   <span className="fine" style={{ margin: 0 }}>
-                    {gap.chip}
+                    {compactUsd(c.minNotional || venueMin)} · clip {compactUsd(c.policyClip || 0)}
+                    {c.executionFeasible ? "" : ` · ${gap.chip}`}
+                    {c.execGate === "policy_clip_tight" ? ` · gap ${compactUsd(policyGap)}` : ""}
                   </span>
                 </button>
               </li>
@@ -303,7 +343,7 @@ function InspectCard({
   researchBusy: boolean;
   onResearch: (coin: string) => void;
 }) {
-  const gap = marketSizeGate(coin.coin, have, venueMin, coin.executionFeasible);
+  const gap = marketSizeGate(coin.coin, have, venueMin, coin.executionFeasible, coin.execGate, coin.policyClip);
   const chip = layerChip(coin);
   return (
     <article className="inspect-card">
@@ -347,8 +387,13 @@ function InspectCard({
             This market min {compactUsd(coin.minNotional || 10)} · required {compactUsd(coin.requiredMargin || 0)} · available{" "}
             {compactUsd(coin.availableMargin || 0)}
           </li>
-          <li>Policy clip {compactUsd(coin.policyClip || 0)} · host-sized {coin.hostSz ? `${coin.hostSz} / ${compactUsd(coin.hostNotional || 0)}` : "unsized"}</li>
-          <li>{coin.estimatedSlippage || "Slippage ceiling is host policy, not a live L2 estimate."}</li>
+          <li>
+            Policy clip {compactUsd(coin.policyClip || 0)}
+            {coin.policyGap && coin.policyGap > 0 ? ` · policy gap ${compactUsd(coin.policyGap)}` : ""} · host-sized{" "}
+            {coin.hostSz ? `${coin.hostSz} / ${compactUsd(coin.hostNotional || 0)}` : "unsized"}
+          </li>
+          <li>Funding {pctFunding(coin.funding)} · OI {compactNum(coin.openInterest)} · 24h vol {coin.volume ? compactUsd(coin.volume) : "not sampled"}</li>
+          <li>Liquidity not sampled · {coin.estimatedSlippage || "Slippage ceiling is host policy, not a live L2 estimate."}</li>
           <li>Chat cannot AUTHORIZE. Host sizes after sealed research.</li>
         </ul>
         <p className="fine">

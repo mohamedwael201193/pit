@@ -126,7 +126,18 @@ export function nextFix(
   }
   const power = capital?.buyingPower;
   const gate = String(capital?.execGate || "");
-  if (gate === "insufficient_margin" || (typeof power === "number" && power > 0 && power < 10)) {
+  if (gate === "policy_clip_tight") {
+    return {
+      title: "Policy cap is too tight",
+      why:
+        capital?.execWhy ||
+        "This account can clear the venue floor. The pinned max trade cannot. Raise max trade, preview, then pin. PIT will not invent size.",
+      fix: "Open Security. Raise max trade to cover this book's rounded Hyperliquid minimum. Preview. Pin. Chat cannot pin.",
+      go: "security",
+      goLabel: "Open Policy",
+    };
+  }
+  if (gate === "insufficient_margin" || (typeof power === "number" && power > 0 && power < 10 && gate !== "policy_clip_tight")) {
     return {
       title: "Watching. Nothing can open.",
       why: `This account has ${typeof power === "number" ? `$${power.toFixed(2)}` : "less than the venue floor"}. PIT will not invent size. 0G compute credit is a different pile of money.`,

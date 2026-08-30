@@ -39,3 +39,13 @@ func TestWhyThisMarketNamesTheAsset(t *testing.T) {
 		t.Fatal(s)
 	}
 }
+
+func TestWhyPolicyTightDoesNotAskToFund(t *testing.T) {
+	s := WhyPolicyTight("ETH", 10, 10.08, 16.18)
+	if !strings.Contains(s, "ETH") || !strings.Contains(s, "0.08") || !strings.Contains(s, "16.18") {
+		t.Fatal(s)
+	}
+	if strings.Contains(strings.ToLower(s), "fund") {
+		t.Fatal(s)
+	}
+}

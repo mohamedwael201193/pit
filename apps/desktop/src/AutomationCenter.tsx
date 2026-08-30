@@ -487,6 +487,7 @@ function humanStop(s: string) {
   if (s === "duplicate_preview") return "Duplicate preview";
   if (s === "preview_before_guarded") return "Preview started before enable";
   if (s === "insufficient_margin") return "This account cannot clear that book's Hyperliquid floor. PIT will not invent size.";
+  if (s === "policy_clip_tight") return "Pinned max trade cannot meet this book's rounded Hyperliquid minimum. The account can. Raise clip, preview, pin. PIT will not invent size.";
   if (s === "below_min_notional") return "This book's rounded Hyperliquid minimum is above this account and policy. PIT will not invent size.";
   if (s === "no_opportunity") return "Nothing qualifies under your law right now.";
   return s.replaceAll("_", " ");
