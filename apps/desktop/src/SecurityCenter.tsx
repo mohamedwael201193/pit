@@ -189,6 +189,51 @@ export function SecurityCenter({
         />
       </section>
 
+      <section className="sec-block" id="authority">
+        <h2>Machine authority</h2>
+        <p className="sec-line">Spending authority never leaves this computer. Chat, web, MCP, and SDK cannot arm a Sleep Mission.</p>
+        <table className="desk-table">
+          <thead>
+            <tr>
+              <th>Surface</th>
+              <th>May</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Browser</td>
+              <td>read-only</td>
+            </tr>
+            <tr>
+              <td>Chat</td>
+              <td>prepare, explain, research</td>
+            </tr>
+            <tr>
+              <td>MCP</td>
+              <td>read-only</td>
+            </tr>
+            <tr>
+              <td>SDK</td>
+              <td>read-only</td>
+            </tr>
+            <tr>
+              <td>Desktop</td>
+              <td>policy, session, authorize, execute</td>
+            </tr>
+            <tr>
+              <td>Mission</td>
+              <td>bounded host execution after ARM SLEEP MISSION</td>
+            </tr>
+          </tbody>
+        </table>
+        <p className="fine">
+          Session {sessionAlive ? "live" : "none"}
+          {status?.sessionExpires ? ` · expires ${new Date(status.sessionExpires).toISOString().replace(".000Z", "Z")}` : ""}
+          {policyHash ? ` · policy ${policyHash.slice(0, 10)}` : ""}
+          {status?.kill ? " · kill switch on" : ""}
+        </p>
+      </section>
+
       {code !== undefined ? (
         <section className="sec-block" id="pairing">
           <h2>Browser</h2>

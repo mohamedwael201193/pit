@@ -764,6 +764,8 @@ export type MissionState = {
   pause_uncertain?: boolean;
   assets?: string[];
   stage?: string;
+  sleep_state?: string;
+  mission_id?: string;
   block_reason?: string;
   scan_count?: number;
   scanned?: number;
@@ -812,6 +814,32 @@ export type MissionPublic = {
   search_note?: string;
   skip_coins?: Record<string, string>;
   last_order?: { oid?: string; status?: string; market?: string; side?: string; sz?: number; hash?: string };
+  sleep_state?: string;
+  mission_id?: string;
+  events?: {
+    opportunities_detected?: number;
+    private_researches?: number;
+    challenger_rejects?: number;
+    risk_rejects?: number;
+    policy_blocks?: number;
+    executions?: number;
+    fills?: number;
+    proofs?: number;
+    lessons?: number;
+    events?: Array<{
+      unix?: number;
+      node?: string;
+      status?: string;
+      reason?: string;
+      human?: string;
+      job_id?: string;
+      oid?: string;
+      coin?: string;
+      no_trade?: boolean;
+    }>;
+  };
+  proof?: { oid?: string; fill_state?: string; private_strategy?: string };
+  skillbook?: { copy?: string; n?: number };
 };
 
 export async function fetchAutomation(): Promise<AutoPrefs> {

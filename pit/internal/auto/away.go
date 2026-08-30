@@ -70,11 +70,31 @@ func HumanWhy(code string) string {
 	case "need_pin", "policy_changed":
 		return "Your policy changed. Re-pin it before trading."
 	case "user_stop", "chat_stop":
-		return "You stopped Guarded Autonomy."
-	case "deadline":
-		return "The confirmed duration ended."
-	case "max_trades":
+		return "You stopped the Sleep Mission. Existing positions were not flattened."
+	case "deadline", "autonomy_expired":
+		return "The confirmed Sleep Mission duration ended."
+	case "tee_unverified":
+		return "TEE verification is not complete. No order was placed."
+	case "research_unverified":
+		return "Private research is not verified. No order was placed."
+	case "skill_ineligible":
+		return "NOT ENOUGH DATA. This skill is not eligible for autonomous spend."
+	case "workspace_mismatch":
+		return "Workspace does not match the armed envelope."
+	case "venue_mismatch":
+		return "Venue does not match the armed envelope."
+	case "extra_agent_missing":
+		return "Hyperliquid extraAgents does not list this PIT session."
+	case "stale_market_data":
+		return "Market data is older than the mission freshness limit."
+	case "stale_preview":
+		return "Preview hash no longer matches the armed envelope."
+	case "stale_capital":
+		return "Account capital changed after the envelope was armed."
+	case "max_trades", "max_autonomy_trades":
 		return "Today's autonomous trade ceiling was reached."
+	case "daily_loss_limit":
+		return "Daily loss limit is reached. Positions are not flattened."
 	case "duplicate_preview":
 		return "That exact preview was already used."
 	case "preview_before_guarded":

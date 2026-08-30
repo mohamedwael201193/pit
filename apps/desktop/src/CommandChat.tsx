@@ -14,15 +14,16 @@ import { openExternal } from "./open";
 const PROMPTS = [
   "What is happening with BTC?",
   "Why is ETH moving?",
-  "Find the best opportunity right now.",
+  "Find the best opportunity.",
   "Research SOL.",
-  "Why didn't you trade?",
-  "What positions do I have?",
-  "What is my current risk?",
-  "Show me the last research.",
-  "Compare BTC and ETH.",
+  "What happened overnight?",
+  "Why didn't PIT trade?",
+  "Show my current risk.",
+  "Show open positions.",
   "Show my policy.",
-  "Start private research on BTC.",
+  "Compare BTC and ETH.",
+  "Start a sleep mission.",
+  "How did last night's mission perform?",
 ];
 
 export function CommandChat({
@@ -232,7 +233,7 @@ export function CommandChat({
           <article className="chat-live" aria-label="Live desk state">
             <p className="label">Live</p>
             <p>
-              {live.running ? "Guarded Autonomy on" : "Manual"} · {live.coin || "no opportunity"} ·{" "}
+              {live.running ? "Sleep Mission on" : "Manual"} · {live.coin || "no opportunity"} ·{" "}
               {(live.stage || "idle").replaceAll("_", " ")}
               {live.gate ? ` · gate ${live.gate.replaceAll("_", " ")}` : ""}
               {live.awaiting ? " · awaiting AUTHORIZE" : ""}
@@ -505,10 +506,10 @@ function ChatCard({
   if (tool === "mission.enable_required") {
     return (
       <article className="chat-card">
-        <p className="label">Guarded Autonomy</p>
-        <p>Review the host limits on Automation, then confirm. Chat cannot enable it.</p>
+        <p className="label">Sleep Mission</p>
+        <p>Review the host limits on Automation, then arm it on this computer. Chat cannot arm it.</p>
         <button type="button" className="primary" onClick={() => onNavigate("automation")}>
-          Review and enable
+          Review limits
         </button>
       </article>
     );

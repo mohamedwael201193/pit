@@ -108,7 +108,7 @@ func (h *Hub) replyDeskStatus() string {
 	m := auto.LoadMission(h.Dir)
 	mode := "Manual"
 	if m.Mode == auto.ModeGuarded && m.Running {
-		mode = "Guarded Autonomy"
+		mode = "Sleep Mission"
 	} else if m.Mode == auto.ModeResearch {
 		mode = "Research Only"
 	}
@@ -292,7 +292,7 @@ func (h *Hub) replyWhyNotTrade() string {
 }
 
 func (h *Hub) replyMissionEnable() string {
-	return "Chat cannot enable Guarded Autonomy. Open Automation, review the host limits, then confirm ENABLE GUARDED AUTONOMY on this computer. The model cannot change those limits."
+	return "Chat cannot arm a Sleep Mission. Open Automation, review the host limits, then confirm ARM SLEEP MISSION on this computer. ENABLE GUARDED AUTONOMY is still accepted. The model cannot change those limits."
 }
 
 func (h *Hub) replyMissionStop() string {
@@ -301,12 +301,13 @@ func (h *Hub) replyMissionStop() string {
 	if why == "" {
 		why = "stopped"
 	}
-	return "Guarded Autonomy is stopped (" + why + "). PIT will not place further orders until you enable it again on Automation. Chat cannot AUTHORIZE."
+	return "Sleep Mission is stopped (" + why + "). PIT will not place further autonomous orders until you arm it again on Automation. Positions were not flattened. Chat cannot AUTHORIZE."
 }
 
 func (h *Hub) replyMissionStatus() string {
 	m := auto.LoadMission(h.Dir)
-	return fmt.Sprintf("Mode %s. Running %v. Best %s. Last action %s. Stop reason %s. Trades today %d. Chat cannot enable Guarded Autonomy.", m.Mode, m.Running, m.BestCoin, m.LastAction, m.LastStop, m.TradesToday)
+	log := auto.LoadEvents(h.Dir)
+	return fmt.Sprintf("Sleep state %s. Mode %s. Running %v. Mission %s. Detected %d, researched %d, challenger rejects %d, executions %d, fills %d. Chat cannot arm a Sleep Mission. Confirm ARM SLEEP MISSION or ENABLE GUARDED AUTONOMY on Automation.", m.SleepState, m.Mode, m.Running, m.MissionID, log.Detected, log.Researched, log.Challenger, log.Executions, log.Fills)
 }
 
 func (h *Hub) replyPolicy() string {

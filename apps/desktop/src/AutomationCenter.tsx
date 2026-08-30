@@ -6,7 +6,7 @@ import { explorerAddress, explorerTx, hyperliquidAPI, hyperliquidApp, hyperliqui
 import { ExternalLink } from "./ExternalLink";
 import type { AutoPrefs, MissionPublic } from "./companion";
 
-const ENABLE_TOKEN = "ENABLE GUARDED AUTONOMY";
+const ARM_TOKEN = "ARM SLEEP MISSION";
 
 const CADENCE = [
   { value: "1", label: "Every minute" },
@@ -167,7 +167,7 @@ export function AutomationCenter({
     setPhase("enabling");
     setErr(null);
     try {
-      const r = await onEnable(ENABLE_TOKEN, hours);
+      const r = await onEnable(ARM_TOKEN, hours);
       if (r?.error) {
         setErr(r.explain || (r.error === "need_pin" ? "Your policy changed. Re-pin it before trading." : r.error));
         setPhase("idle");
@@ -206,7 +206,7 @@ export function AutomationCenter({
       <div className="page-head">
         <div>
           <p className="eyebrow">Automation</p>
-          <h1>{live ? "Autonomy running" : status === "STOPPED" ? "Autonomy stopped" : "Host-enforced modes"}</h1>
+          <h1>{live ? "Sleep Mission armed" : status === "STOPPED" ? "Sleep Mission stopped" : "Host-enforced modes"}</h1>
         </div>
         <div className="halt-rail">
           <span className={`status-chip ${status.toLowerCase()}`}>{status}</span>
@@ -216,11 +216,11 @@ export function AutomationCenter({
             onClick={() => void stop()}
             disabled={busy || phase !== "idle" || (mode === "manual" && !live)}
           >
-            {live ? "Stop autonomy now" : "Kill switch"}
+            {live ? "STOP" : "Kill switch"}
           </button>
         </div>
       </div>
-      <p className="lead">Host-enforced. The model cannot change these limits. Chat cannot enable Guarded Autonomy or AUTHORIZE.</p>
+      <p className="lead">Arm once. PIT hunts within your rules. Chat cannot arm a Sleep Mission or AUTHORIZE.</p>
       {mission.search_note || m.search_note || m.last_result ? (
         <p className="search-note" role="status">
           {mission.search_note || m.search_note || m.last_result}
@@ -234,7 +234,7 @@ export function AutomationCenter({
           <p>Scan and research on your command. Every order waits for AUTHORIZE.</p>
         </button>
         <button type="button" className={mode === "research_only" ? "on" : ""} disabled={busy || phase !== "idle"} onClick={() => onMode("research_only")}>
-          <p className="label">Research only</p>
+          <p className="label">Research</p>
           <p>Scan, research, notify, and prepare. Never execute.</p>
         </button>
         <button
@@ -247,18 +247,28 @@ export function AutomationCenter({
             setReviewed(false);
           }}
         >
-          <p className="label">Guarded Autonomy</p>
-          <p>Research and execute only inside the pinned policy after you confirm on this computer.</p>
+          <p className="label">Sleep Mission</p>
+          <p>Arm once. PIT hunts within your rules while you are away.</p>
         </button>
       </div>
+      <button
+        type="button"
+        className="linkish"
+        onClick={() => {
+          setConfirm(true);
+          setReviewed(false);
+        }}
+        disabled={busy || phase !== "idle" || live}
+      >
+        REVIEW LIMITS
+      </button>
 
       {live ? (
         <section className="live-banner" role="status">
-          <p className="label">LIVE AUTONOMY</p>
-          <h2>Guarded Autonomy is on for {remain}</h2>
+          <p className="label">SLEEP MISSION</p>
+          <h2>Armed for {remain}</h2>
           <p>
-            PIT may research the best eligible book and, after host gates, execute only inside the pinned policy. Chat
-            cannot AUTHORIZE. Withdraw and transfer stay impossible.
+            State {String(mission.sleep_state || m.sleep_state || "WATCHING")}. PIT may watch live Hyperliquid books, research privately through 0G, and execute only if every host invariant passes. Chat cannot AUTHORIZE. Withdraw and transfer stay impossible.
           </p>
           {mission.block_reason || mission.why_not ? (
             <p className="err" role="status">
@@ -270,13 +280,13 @@ export function AutomationCenter({
         <section className="stop-banner" role="status">
           <p className="label">Autonomy stopped</p>
           <h2>{humanStop(m.last_stop)}</h2>
-          <p>{mission.explain || "PIT will not place further orders until you enable Guarded Autonomy again on this computer."}</p>
+          <p>{mission.explain || "PIT will not place further autonomous orders until you arm a Sleep Mission again on this computer."}</p>
         </section>
       ) : (
         <p className="fine">
           {mode === "research_only"
-            ? "Research Only is selected. Confirm Guarded Autonomy only after you review the envelope. Chat cannot send the enable phrase."
-            : "Manual is selected. Confirm Guarded Autonomy on this computer after you review the envelope. Chat cannot enable it."}
+            ? "Research is selected. Arm a Sleep Mission only after you review the envelope. Chat cannot send the arm phrase."
+            : "Manual is selected. Arm a Sleep Mission on this computer after you review the envelope. Chat cannot arm it."}
         </p>
       )}
 
@@ -287,7 +297,14 @@ export function AutomationCenter({
       ) : null}
       {kill ? <p className="err">Kill switch is on. New orders are halted.</p> : null}
 
+      <GoodMorning
+        live={live}
+        elapsed={elapsedLabel(m.guarded_enabled_unix, mission.now || now)}
+        events={mission.events}
+        stop={m.last_stop}
+      />
       <AwayBoard away={mission.away} whyNot={mission.why_not} whyCode={mission.why_not_code || mission.block_reason} />
+      <NightReplay events={mission.events} />
 
       <section className="envelope">
         <p className="label">Host envelope</p>
@@ -323,7 +340,7 @@ export function AutomationCenter({
             options={CADENCE}
             onChange={(v) => onSavePrefs({ ...prefs, cadence_minutes: Number(v) })}
           />
-          <p className="fine">Compute money is not trading capital. Best eligible books move into Research automatically in Research Only and Guarded Autonomy.</p>
+          <p className="fine">Compute money is not trading capital. Best eligible books move into Research automatically in Research and Sleep Mission.</p>
         </div>
       </section>
 
@@ -416,8 +433,8 @@ export function AutomationCenter({
         <div className="overlay" role="dialog" aria-modal="true" aria-labelledby="enable-title">
           <div className="confirm">
             <p className="label">Confirm</p>
-            <h2 id="enable-title">Enable Guarded Autonomy</h2>
-            <p>Review the host limits. Then confirm exactly what this window may do.</p>
+            <h2 id="enable-title">Arm Sleep Mission</h2>
+            <p>Review the host limits. The mission cannot weaken pinned policy. Then confirm exactly what this window may do.</p>
             <div className="policy-grid compact">
               {limitRows(limits)
                 .slice(0, 8)
@@ -442,7 +459,7 @@ export function AutomationCenter({
             <Select label="Duration" value={String(hours)} options={HOURS} onChange={(v) => setHours(Number(v))} disabled={busy || phase !== "idle"} />
             <label className="check-row">
               <input type="checkbox" checked={reviewed} onChange={(e) => setReviewed(e.target.checked)} />
-              I reviewed these limits and understand Guarded Autonomy stays inside them.
+              I reviewed these limits. The Sleep Mission stays inside them. It cannot withdraw, transfer, or raise policy.
             </label>
             {err ? (
               <p className="err" role="alert">
@@ -463,7 +480,7 @@ export function AutomationCenter({
                 Cancel
               </button>
               <button type="button" className="primary" disabled={!reviewed || busy || phase === "enabling" || kill} onClick={() => void enable()}>
-                {phase === "enabling" ? "Enabling…" : "Enable Guarded Autonomy"}
+                {phase === "enabling" ? "Arming…" : "ARM SLEEP MISSION"}
               </button>
             </div>
           </div>
@@ -477,7 +494,7 @@ function humanStop(s: string) {
   if (s === "chat_stop") return "Stopped from Chat";
   if (s === "user_stop") return "user_stop";
   if (s === "kill_switch") return "Kill switch";
-  if (s === "deadline") return "Duration ended";
+  if (s === "deadline" || s === "autonomy_expired") return "Duration ended";
   if (s === "session_expired") return "Hyperliquid session permissions no longer match this desk.";
   if (s === "max_open_positions") return "Open position ceiling";
   if (s === "daily_loss") return "Daily loss";
@@ -532,9 +549,9 @@ function AwayBoard({
   return (
     <section className="away-board">
       <p className="label">While you were away</p>
-      <h2>What PIT did without asking again</h2>
+      <h2>GOOD MORNING</h2>
       <p className="fine">
-        {whyNot || (whyCode ? humanStop(whyCode) : "No named refusal yet.")} Guarded Autonomy never raises your limits.
+        {whyNot || (whyCode ? humanStop(whyCode) : "No named refusal yet.")} A Sleep Mission never raises your limits.
       </p>
       <dl className="mission-grid">
         <div>
@@ -575,6 +592,118 @@ function AwayBoard({
     </section>
   );
 }
+
+function GoodMorning({
+  live,
+  elapsed,
+  events,
+  stop,
+}: {
+  live: boolean;
+  elapsed: string;
+  events?: MissionLog;
+  stop?: string;
+}) {
+  if (live || (!stop && !(events?.events || []).length)) return null;
+  return (
+    <section className="away-board" role="status">
+      <p className="label">GOOD MORNING</p>
+      <h2>Your desk ran for {elapsed === "—" ? "the armed window" : elapsed}.</h2>
+      <p className="fine">Every count is a persisted mission event. Empty is honest.</p>
+      <dl className="mission-grid">
+        <div>
+          <dt>Opportunities</dt>
+          <dd>{events?.opportunities_detected ?? 0}</dd>
+        </div>
+        <div>
+          <dt>Private researches</dt>
+          <dd>{events?.private_researches ?? 0}</dd>
+        </div>
+        <div>
+          <dt>Challenger rejects</dt>
+          <dd>{events?.challenger_rejects ?? 0}</dd>
+        </div>
+        <div>
+          <dt>Risk rejects</dt>
+          <dd>{events?.risk_rejects ?? 0}</dd>
+        </div>
+        <div>
+          <dt>Policy blocks</dt>
+          <dd>{events?.policy_blocks ?? 0}</dd>
+        </div>
+        <div>
+          <dt>Executions</dt>
+          <dd>{events?.executions ?? 0}</dd>
+        </div>
+        <div>
+          <dt>Fills</dt>
+          <dd>{events?.fills ?? 0}</dd>
+        </div>
+        <div>
+          <dt>Proofs</dt>
+          <dd>{events?.proofs ?? 0}</dd>
+        </div>
+        <div>
+          <dt>Lessons</dt>
+          <dd>{events?.lessons ?? 0}</dd>
+        </div>
+      </dl>
+      <a className="linkish" href="#night-replay">
+        VIEW NIGHT
+      </a>
+    </section>
+  );
+}
+
+function NightReplay({ events }: { events?: MissionLog }) {
+  const rows = events?.events || [];
+  return (
+    <section className="away-board" id="night-replay">
+      <p className="label">Night Replay</p>
+      <h2>Committed timeline</h2>
+      <p className="fine">A no-trade is success when the thesis did not survive challenge. Replay is not a new trade.</p>
+      {rows.length === 0 ? (
+        <p className="empty">Empty is honest until this computer records a watch, research, or refusal.</p>
+      ) : (
+        <ol className="night-replay">
+          {rows.map((ev, i) => (
+            <li key={`${ev.unix}-${ev.node}-${i}`}>
+              <strong>{ev.node || "NODE"}</strong>
+              {ev.no_trade || ev.status === "NO-TRADE" ? " NO-TRADE" : ` ${ev.status || ""}`}
+              {ev.coin ? ` · ${ev.coin}` : ""}
+              {ev.oid ? ` · OID ${ev.oid}` : ""}
+              {ev.job_id ? ` · job ${ev.job_id}` : ""}
+              {ev.reason ? ` · ${ev.human || ev.reason}` : ""}
+            </li>
+          ))}
+        </ol>
+      )}
+    </section>
+  );
+}
+
+type MissionLog = {
+  opportunities_detected?: number;
+  private_researches?: number;
+  challenger_rejects?: number;
+  risk_rejects?: number;
+  policy_blocks?: number;
+  executions?: number;
+  fills?: number;
+  proofs?: number;
+  lessons?: number;
+  events?: Array<{
+    unix?: number;
+    node?: string;
+    status?: string;
+    reason?: string;
+    human?: string;
+    job_id?: string;
+    oid?: string;
+    coin?: string;
+    no_trade?: boolean;
+  }>;
+};
 
 function coinFromMarket(market?: string) {
   const m = String(market || "");

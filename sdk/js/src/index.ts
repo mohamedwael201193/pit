@@ -21,3 +21,4 @@ export function refuseSessionExport(): never {
 
 export { refuseAuthorize } from "./authorize";
 export { canPostExchange, refuseUnsignedPost } from "./post";
+export { refuseArm, canArm } from "./mission";

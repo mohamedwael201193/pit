@@ -12,7 +12,7 @@ export function Home() {
     <div className="mx-auto flex max-w-[80rem] flex-col gap-10">
       <PageHead
         title="Observe here. Act on the machine."
-        lede="This browser can inspect public books and verify receipts. It cannot pin policy, enable Guarded Autonomy, or hold a session key."
+        lede="This browser can inspect public books and verify receipts. It cannot pin policy, arm a Sleep Mission, or hold a session key."
       />
 
       <p className="font-mono text-[0.875rem] text-[rgb(240_231_212/0.6)]">

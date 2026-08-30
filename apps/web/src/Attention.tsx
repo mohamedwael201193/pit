@@ -10,7 +10,7 @@ export function Attention({ scanned, count }: { scanned: number; count: number }
       </h2>
       <p className="mt-3 max-w-[52ch] text-[1.0625rem] text-[rgb(240_231_212/0.85)]">{copy}</p>
       <p className="mt-2 max-w-[52ch] text-[0.875rem] text-[rgb(240_231_212/0.55)]">
-        This website has no session and no buying power. Execution sizing, AUTHORIZE, and Guarded Autonomy stay on PIT Desktop.
+        This website has no session and no buying power. Execution sizing, AUTHORIZE, and Sleep Missions stay on PIT Desktop.
       </p>
     </div>
   );

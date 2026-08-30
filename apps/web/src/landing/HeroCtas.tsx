@@ -27,11 +27,14 @@ export function HeroCtas() {
     >
       <motion.div style={reduce ? undefined : { x, y }}>
         <Link to="/radar" className="pill pill-ink">
-          Explore live PIT
+          Explore PIT
         </Link>
       </motion.div>
       <Link to="/download" className="pill pill-ghost">
         Download PIT Desktop
+      </Link>
+      <Link to="/missions" className="text-[0.9375rem] font-medium text-black underline-offset-4 hover:underline">
+        See Sleep Missions
       </Link>
     </motion.div>
   );

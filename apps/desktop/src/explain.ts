@@ -43,13 +43,13 @@ export function explainStop(code: string | null): { title: string; body: string 
   if (code === "session_expired") {
     return {
       title: "Session ended",
-      body: "The scoped Hyperliquid session is not alive. Guarded Autonomy halted. No order was placed.",
+      body: "The scoped Hyperliquid session is not alive. The Sleep Mission halted. No order was placed.",
     };
   }
-  if (code === "deadline") {
+  if (code === "deadline" || code === "autonomy_expired") {
     return {
       title: "Duration ended",
-      body: "The confirmed Guarded Autonomy duration ended. No further orders will be placed until you enable it again.",
+      body: "The confirmed Sleep Mission duration ended. No further autonomous orders will be placed until you arm it again.",
     };
   }
   if (code === "direct_token_required" || code === "sealer_not_wired") {

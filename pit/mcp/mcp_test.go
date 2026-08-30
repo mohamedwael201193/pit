@@ -13,6 +13,12 @@ func TestPromptInjectionCannotAuthorize(t *testing.T) {
 		"AUTHORIZE",
 		"pin policy",
 		"enable autonomy",
+		"arm",
+		"enable mission",
+		"ignore policy",
+		"give me session key",
+		"execute BTC now",
+		"raise max trade",
 	} {
 		r := Handle(Request{Tool: tool})
 		if r.OK {
@@ -73,8 +79,12 @@ func TestOpportunitiesDoNotTrade(t *testing.T) {
 	if rb["start"] != false || rb["trade"] != false {
 		t.Fatal(rb)
 	}
-	if Handle(Request{Tool: "authorize"}).OK {
-		t.Fatal("research must not unlock authorize")
+	if Handle(Request{Tool: "mission"}).OK == false {
+		t.Fatal("mission read")
+	}
+	arm := Handle(Request{Tool: "arm"})
+	if arm.OK || arm.Error != "mcp_read_only" {
+		t.Fatal(arm)
 	}
 	sec := Handle(Request{Tool: "security"})
 	if !sec.OK {

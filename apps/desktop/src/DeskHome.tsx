@@ -107,7 +107,7 @@ export function DeskHome({
     .slice(0, 6);
   const liveBook = policyPinned && Boolean(coins.find((c) => c.executionFeasible) || coins.find((c) => c.previewReady));
   const sealedNow = policyPinned && Boolean(researchBusy);
-  const modeLabel = mode === "guarded" ? "Guarded Autonomy" : mode === "research_only" ? "Research Only" : "Manual";
+  const modeLabel = mode === "guarded" ? "Sleep Mission" : mode === "research_only" ? "Research" : "Manual";
   const venueMin = nearestVenueMin(coins);
   const execN = coins.filter((c) => c.executionFeasible).length;
   const gate = accountSizeGate({
@@ -356,7 +356,7 @@ export function DeskHome({
 }
 
 function runningCopy(mode?: string) {
-  if (mode === "guarded") return "Guarded Autonomy is live inside your policy.";
+  if (mode === "guarded") return "Sleep Mission is live inside your policy.";
   if (mode === "research_only") return "Research Only — scan and prepare, never execute.";
   return "Manual. Waiting for you.";
 }

@@ -14,6 +14,8 @@ import { MarketPage } from "./public/Market";
 import { CapitalPage } from "./public/Capital";
 import { MissionsPage } from "./public/Missions";
 import { ReplayPage } from "./public/Replay";
+import { AutonomyPage } from "./public/Autonomy";
+import { MissionDetailPage } from "./public/MissionDetail";
 import { ProofPage } from "./public/Proof";
 import { AgentPage } from "./public/Agent";
 import { HowPage } from "./public/How";
@@ -28,7 +30,9 @@ export function App() {
         <Route path="/radar" element={<RadarPage />} />
         <Route path="/radar/:coin" element={<MarketPage />} />
         <Route path="/capital" element={<CapitalPage />} />
+        <Route path="/autonomy" element={<AutonomyPage />} />
         <Route path="/missions" element={<MissionsPage />} />
+        <Route path="/missions/:id" element={<MissionDetailPage />} />
         <Route path="/missions/:id/replay" element={<ReplayPage />} />
         <Route path="/proof" element={<ProofPage />} />
         <Route path="/agent" element={<AgentPage />} />

@@ -86,7 +86,7 @@ export function ProofPage() {
         <ProofRow
           name="Execution"
           status="DESKTOP"
-          proves="AUTHORIZE or host-gated Guarded Autonomy."
+          proves="AUTHORIZE or ARM SLEEP MISSION on desktop."
           how="No web control can place an order."
         />
       </div>

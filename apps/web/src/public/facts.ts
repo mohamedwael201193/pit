@@ -42,6 +42,7 @@ export const CAPITAL_PRESETS = [10, 25, 50, 100, 500, 1000] as const;
 export const PUBLIC_NAV = [
   { to: "/", label: "PIT", end: true },
   { to: "/radar", label: "Radar", end: false },
+  { to: "/autonomy", label: "Autonomy", end: false },
   { to: "/missions", label: "Missions", end: false },
   { to: "/proof", label: "Proof", end: false },
   { to: "/agent", label: "Agent", end: false },

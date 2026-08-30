@@ -25,7 +25,7 @@ export function Hero() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.85, ease: [0.16, 1, 0.3, 1] }}
               >
-                PIT
+                PRIVATE ALPHA OS
               </motion.p>
               <motion.h1
                 className="mt-8 max-w-5xl text-[clamp(1.85rem,4.4vw,3.35rem)] leading-[1.12] font-semibold tracking-[-0.035em] text-black"
@@ -33,8 +33,18 @@ export function Hero() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.75, delay: 0.08, ease: [0.16, 1, 0.3, 1] }}
               >
-                It hunts in private. You authorize on this computer.
+                It hunts while you sleep.
+                <br />
+                Your keys never leave your machine.
               </motion.h1>
+              <motion.p
+                className="mt-6 max-w-[42ch] text-[1.15rem] leading-7 text-black/75"
+                initial={reduce ? false : { opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.7, delay: 0.12, ease: [0.16, 1, 0.3, 1] }}
+              >
+                PIT watches live markets, researches your private strategy through 0G, challenges every idea, enforces your policy on the host, and when you explicitly arm a bounded Sleep Mission, can act within those limits while you are away.
+              </motion.p>
               <HeroCtas />
             </motion.div>
             <motion.div

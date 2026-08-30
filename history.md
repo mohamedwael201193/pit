@@ -2,6 +2,40 @@
 
 ---
 
+## M118 — PIT 0.9 proof-carrying Sleep Missions
+
+- **Source:** Guarded Autonomy existed as a typed enable phrase and host tick, but it was not a first-class Sleep Mission with a host AutonomyEnvelope, named refusals, night replay, Skillbook, or public-safe mission pages.
+- **Discovery:** Keep Hyperliquid + Direct TeeML + host sizing. Arm only on this computer. Chat, web, MCP, and SDK prepare or inspect. They cannot arm. ENABLE GUARDED AUTONOMY stays as a compatibility phrase.
+- **Candidate:** Proof-carrying bounded Sleep Missions. Envelope revalidated before exchange POST. No-trade is success. Public pages redacted.
+- **Kill:** Unrestricted bot. Router private-book fallback. Fake fills, fake TEE, fake Storage proof, invented calibration. Flatten OID 529167222216. Remint PIT-4bbee556. New on-chain registry without a verifiable mainnet tx.
+- **Next:** Vercel + Render. GitHub Latest stays the last tag (v0.8.0 NSIS) until a 0.9 installer is built and tagged.
+
+DATE/TIME: 2026-08-30 22:12+03
+PHASE: Sleep Missions. Do not flatten OID 529167222216. Do not remint PIT-4bbee556. Chat never authorizes. Direct TeeML only for the private book.
+GOAL: User arms a bounded mission on desktop. Every autonomous action is envelope-gated. Public site explains and proves.
+RESULT:
+- **IMPLEMENTED:** Companion/desktop/web source **0.9.0**. No new NSIS this pass. GitHub Latest remains **v0.8.0**.
+  1. Host `AutonomyEnvelope` + sleep state machine + mission-events.json + hash-only `MissionProof` + encrypted Skillbook.
+  2. Desktop Automation: MANUAL / RESEARCH / SLEEP MISSION, ARM SLEEP MISSION, STOP, REVIEW LIMITS, Good Morning, Night Replay.
+  3. Chat cannot arm. CLI `pit mission arm` is TTY-only. MCP/SDK `arm:false`.
+  4. Web `/autonomy`, `/missions/:id` redacted. Landing: "It hunts while you sleep."
+- **TESTED:** `go test ./...` PASS. `pit.exe version` = PIT 0.9.0. Desktop `tsc -b` pass. Desktop e2e copy harness pass. Web `tsc -b` pass. `npx vite build` pass. Playwright 28/28 then routes + autonomy specs.
+- **LIVE:** No new MAINNET fill. ETH OID `529167222216` untouched. Honest demo is a named host block when max open is full. Frozen Direct glm-5.2 SKU unchanged. iTransfer still not live on Aristotle.
+- **BLOCKED:** New PITAutonomyReceiptRegistry not deployed (hash-only receipts already exist). Authenticode absent. macOS/Linux not packaged. GitHub Latest installer still 0.8.0 until NSIS + tag. `go test -race` skipped (CGO_ENABLED=0). 0G Memory upstream not copied; PIT-native Skillbook uses official Storage path only when the existing security model already supports it.
+
+SECURITY RESULT: Chat cannot AUTHORIZE or ARM. Web cannot arm. MCP/SDK cannot arm. Kill switch still does not flatten. Duplicate preview remains ledger-gated.
+TX HASH / OID: Historical OID `529167222216` unchanged. No new chain write.
+CLASSIFICATION:
+- Sleep Mission + Autonomy Envelope: **IMPLEMENTED + TESTED**
+- Night Replay / Skillbook / public proof: **IMPLEMENTED + TESTED**
+- Desktop arm + chat/web/MCP/SDK refusal: **IMPLEMENTED + TESTED**
+- 0.9 Windows installer / GitHub Latest: **NOT THIS PASS**
+- Live MAINNET fill: **NOT THIS PASS** (unsafe while max open is full)
+PRODUCTION READY: Source 0.9.0 is production-ready as bounded Sleep Missions on desktop. It is **not** an unrestricted trader. Public web still discovers and proves.
+NEXT STEP: `python _scripts/push_head.py`. Upsert env. Deploy Vercel + Render. Do not tag until a 0.9 NSIS exists.
+
+---
+
 ## M117 — Landing fills the void. Beats pan. Four doors.
 
 - **Source:** Production landing still showed empty black chapters after the coral hero, Must-see Beats stopped at three cards, and MAINNET carried a second paragraph. CLI, MCP, SDK, and Desktop were missing as a product surface.

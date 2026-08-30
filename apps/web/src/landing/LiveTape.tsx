@@ -30,7 +30,7 @@ export function LiveTape() {
             <Stat k="Actionable (public)" v={String(actionable.length)} note="Account size is not on this feed" />
             <Stat k="Verified proofs" v="0 live" note="No public receipt object on this site" />
             <Stat k="Live execution" v="0" note={`Historical fill OID ${HISTORICAL_FILL.oid} is not live`} />
-            <Stat k="Autonomy" v="desktop" note="This site cannot read or enable Guarded Autonomy" />
+            <Stat k="Autonomy" v="desktop" note="This site cannot arm a Sleep Mission" />
             <Stat k="Health" v={health?.version ?? (loading ? "…" : "—")} />
           </dl>
         )}

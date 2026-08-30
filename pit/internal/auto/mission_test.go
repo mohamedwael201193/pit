@@ -105,7 +105,7 @@ func TestResearchOnlyNeverExecutes(t *testing.T) {
 
 func TestStopReasonDeadline(t *testing.T) {
 	m := Mission{Mode: ModeGuarded, GuardedUntilUnix: 10, DeadlineUnix: 10}
-	if StopReason(m, 11, false, true, 0, 0, policy.Default()) != "deadline" {
+	if StopReason(m, 11, false, true, 0, 0, policy.Default()) != "autonomy_expired" {
 		t.Fatal("deadline")
 	}
 	if StopReason(m, 5, true, true, 0, 0, policy.Default()) != "kill_switch" {

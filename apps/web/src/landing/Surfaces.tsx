@@ -18,7 +18,7 @@ const SURFACES = [
     name: "MCP",
     Icon: Plugs,
     tone: "ink" as const,
-    body: "Cursor can read markets and status. It cannot order, cancel, pin, or enable autonomy.",
+    body: "Cursor can read markets and status. It cannot order, cancel, pin, or arm a Sleep Mission.",
   },
   {
     name: "SDK",

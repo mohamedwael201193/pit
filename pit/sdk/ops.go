@@ -17,6 +17,17 @@ func (c Client) WatchMayTrade() bool {
 	return false
 }
 
+func (c Client) CanArmMission() bool {
+	return false
+}
+
+func (c Client) MissionStatus() map[string]any {
+	return map[string]any{
+		"arm": false, "authorize": false, "sign": false, "trade": false,
+		"copy": "SDK is read-only. Arm a Sleep Mission on PIT Desktop or CLI TTY.",
+	}
+}
+
 func (c Client) SwapOrLPAvailable() bool {
 	return false
 }

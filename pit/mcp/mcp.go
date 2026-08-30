@@ -7,11 +7,12 @@ import (
 
 var AllowedTools = []string{
 	"market", "opportunities", "watch", "forecast", "status", "card", "verify", "preview",
-	"receipts", "calibration", "policy", "security", "research", "experience", "memory",
+	"receipts", "calibration", "policy", "security", "research", "experience", "memory", "mission",
 }
 
 var ForbiddenTools = []string{
 	"authorize", "order", "cancel", "transfer", "withdraw", "export_session", "key", "sealer", "auth_file", "post",
+	"arm", "enable mission", "enable_autonomy", "pin", "raise max trade", "execute BTC now",
 }
 
 func IsAllowed(name string) bool {
@@ -104,6 +105,11 @@ func Handle(req Request) Response {
 	case "memory":
 		req.Tool = "experience"
 		return Handle(req)
+	case "mission":
+		return Response{OK: true, Body: map[string]any{
+			"copy": "Sleep Mission status is on PIT Desktop. MCP cannot arm, stop, or authorize.",
+			"arm": false, "authorize": false, "sign": false, "trade": false,
+		}}
 	default:
 		return Response{OK: true, Body: map[string]any{"tool": req.Tool, "note": "bind a workspace first"}}
 	}

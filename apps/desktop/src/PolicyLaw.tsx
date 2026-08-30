@@ -17,7 +17,7 @@ export function PolicyLaw({
     {
       k: "Max position",
       v: "Same as max trade",
-      why: "Same ceiling as the clip. Guarded Autonomy cannot grow past it. Venue min is per book after szDecimals.",
+      why: "Same ceiling as the clip. A Sleep Mission cannot grow past it. Venue min is per book after szDecimals.",
       hit: "A larger book is refused.",
     },
     {
@@ -47,20 +47,20 @@ export function PolicyLaw({
     {
       k: "Max open positions",
       v: "1",
-      why: "Guarded Autonomy cannot add a market while this ceiling is full.",
+      why: "A Sleep Mission cannot add a market while this ceiling is full.",
       hit: "A new order is refused. Existing positions are not flattened.",
     },
     {
       k: "Consecutive losses",
       v: "3",
       why: "A losing streak stops the mission. The model cannot raise this.",
-      hit: "Guarded Autonomy stands down until you enable it again.",
+      hit: "The Sleep Mission stands down until you arm it again.",
     },
     {
       k: "Daily loss",
       v: "$50",
       why: "Realized loss beyond this stops the mission.",
-      hit: "Guarded Autonomy stops. Positions are not flattened.",
+      hit: "The Sleep Mission stops. Positions are not flattened.",
     },
     {
       k: "Withdraw / transfer",

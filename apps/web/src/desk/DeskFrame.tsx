@@ -4,6 +4,7 @@ import { usePrivy } from "@privy-io/react-auth";
 import {
   Broadcast,
   DownloadSimple,
+  Flag,
   Gear,
   House,
   Info,
@@ -27,6 +28,8 @@ interface NavItem {
 
 const LOOK: readonly NavItem[] = [
   { to: "/radar", label: "Radar", icon: Broadcast, end: false },
+  { to: "/missions", label: "Missions", icon: Flag, end: false },
+  { to: "/autonomy", label: "Autonomy", icon: ShieldCheck, end: true },
   { to: "/proof", label: "Proof", icon: ShieldCheck, end: true },
   { to: "/agent", label: "Agent", icon: User, end: true },
 ];

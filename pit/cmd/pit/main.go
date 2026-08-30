@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"encoding/json"
 	"fmt"
 	"net"
@@ -57,7 +58,13 @@ Session
 Research
   pit watch
   pit scan
-  pit mission
+  pit mission status
+  pit mission arm
+  pit mission stop
+  pit mission replay
+  pit mission proof
+  pit mission events
+
   pit opportunities
   pit chat "what is happening?"
   pit positions
@@ -147,7 +154,7 @@ func main() {
 	case "scan":
 		cmdScan()
 	case "mission", "mode":
-		cmdMission()
+		cmdMission(rest[1:])
 	case "chat":
 		cmdChat(rest[1:])
 	case "positions":
@@ -460,20 +467,108 @@ func cmdScan() {
 	cmdOpportunities()
 }
 
-func cmdMission() {
+func cmdMission(args []string) {
 	dir := stateDir()
-	m := auto.LoadMission(dir)
+	sub := "status"
+	if len(args) > 0 {
+		sub = strings.ToLower(strings.TrimSpace(args[0]))
+	}
+	switch sub {
+	case "arm":
+		cmdMissionArm()
+		return
+	case "stop":
+		m := auto.Stop(dir, "user_stop")
+		if asJSON {
+			_ = json.NewEncoder(os.Stdout).Encode(auto.Public(dir))
+			return
+		}
+		fmt.Println("stopped", m.LastStop)
+		return
+	case "replay":
+		if asJSON {
+			_ = json.NewEncoder(os.Stdout).Encode(auto.StrategyReplay(dir))
+			return
+		}
+		r := auto.StrategyReplay(dir)
+		fmt.Println(r.Note)
+		fmt.Println("policy", r.PolicyHash)
+		fmt.Println("live", r.Live)
+		return
+	case "proof":
+		if asJSON {
+			_ = json.NewEncoder(os.Stdout).Encode(auto.PublicProof(dir))
+			return
+		}
+		p := auto.LoadProof(dir)
+		fmt.Println("mission", p.MissionID)
+		fmt.Println("oid", p.OID)
+		fmt.Println("fill_state", p.FillState)
+		fmt.Println("private strategy remains on desktop")
+		return
+	case "events":
+		log := auto.LoadEvents(dir)
+		if asJSON {
+			_ = json.NewEncoder(os.Stdout).Encode(log)
+			return
+		}
+		fmt.Println("detected", log.Detected)
+		fmt.Println("researched", log.Researched)
+		fmt.Println("challenger_rejects", log.Challenger)
+		fmt.Println("executions", log.Executions)
+		fmt.Println("fills", log.Fills)
+		for _, ev := range log.Events {
+			fmt.Println(ev.Node, ev.Status, ev.Reason, ev.OID)
+		}
+		return
+	default:
+		m := auto.LoadMission(dir)
+		pub := auto.Public(dir)
+		if asJSON {
+			_ = json.NewEncoder(os.Stdout).Encode(pub)
+			return
+		}
+		fmt.Println("mode", m.Mode)
+		fmt.Println("sleep_state", pub["sleep_state"])
+		fmt.Println("running", m.Running)
+		fmt.Println("mission_id", m.MissionID)
+		fmt.Println("best", m.BestCoin)
+		fmt.Println("last_action", m.LastAction)
+		fmt.Println("last_stop", m.LastStop)
+		fmt.Println("trades_today", m.TradesToday)
+		fmt.Println("Chat cannot arm a Sleep Mission.")
+	}
+}
+
+func cmdMissionArm() {
+	if !stdinTTY() {
+		fmt.Fprintln(os.Stderr, "arm refused: piped confirmation is not allowed")
+		os.Exit(2)
+	}
+	fmt.Fprintln(os.Stderr, "Type ARM SLEEP MISSION to arm a bounded mission on this computer:")
+	typed, _ := bufio.NewReader(os.Stdin).ReadString('\n')
+	typed = strings.TrimSpace(typed)
+	st, err := cli.Load(stateDir())
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "arm requires pit init first")
+		os.Exit(2)
+	}
+	if err := cli.CheckPinned(stateDir(), st.WorkspaceID, policy.Peek(stateDir())); err != nil {
+		fmt.Fprintln(os.Stderr, "need_pin")
+		os.Exit(2)
+	}
+	hash, _ := policy.Peek(stateDir()).Hash()
+	m, err := auto.EnableGuarded(stateDir(), typed, 8, hash)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(2)
+	}
 	if asJSON {
-		_ = json.NewEncoder(os.Stdout).Encode(auto.Public(dir))
+		_ = json.NewEncoder(os.Stdout).Encode(auto.Public(stateDir()))
 		return
 	}
-	fmt.Println("mode", m.Mode)
-	fmt.Println("running", m.Running)
-	fmt.Println("best", m.BestCoin)
-	fmt.Println("last_action", m.LastAction)
-	fmt.Println("last_stop", m.LastStop)
-	fmt.Println("trades_today", m.TradesToday)
-	fmt.Println("Chat cannot enable Guarded Autonomy.")
+	fmt.Println("armed", m.MissionID)
+	fmt.Println("Chat cannot arm a Sleep Mission.")
 }
 
 func cmdChat(args []string) {

@@ -16,41 +16,45 @@ const (
 	ModeResearch = "research_only"
 	ModeGuarded  = "guarded"
 	EnableToken  = "ENABLE GUARDED AUTONOMY"
+	ArmToken     = "ARM SLEEP MISSION"
 	StopToken    = "STOP AUTONOMY"
 )
 
 type Mission struct {
-	Mode               string   `json:"mode"`
-	Running            bool     `json:"running"`
-	Hours              int      `json:"hours,omitempty"`
-	DeadlineUnix       int64    `json:"deadline_unix,omitempty"`
-	GuardedEnabledUnix int64    `json:"guarded_enabled_unix,omitempty"`
-	GuardedUntilUnix   int64    `json:"guarded_until_unix,omitempty"`
-	PolicyHash         string   `json:"policy_hash,omitempty"`
-	MaxTrades          int      `json:"max_trades,omitempty"`
-	StopLossUSD        float64  `json:"stop_loss_usd,omitempty"`
-	MinLiquidityUSD    float64  `json:"min_liquidity_usd,omitempty"`
-	PauseUncertain     bool     `json:"pause_uncertain,omitempty"`
-	Assets             []string `json:"assets,omitempty"`
-	TradesToday        int      `json:"trades_today"`
-	TradesDay          string   `json:"trades_day,omitempty"`
-	ConsecutiveLosses  int      `json:"consecutive_losses"`
-	LastAction         string   `json:"last_action,omitempty"`
-	LastStop           string   `json:"last_stop,omitempty"`
-	LastPreviewHash    string   `json:"last_preview_hash,omitempty"`
-	LastOID            string   `json:"last_oid,omitempty"`
-	BestCoin           string   `json:"best_coin,omitempty"`
-	BestWhy            string   `json:"best_why,omitempty"`
-	NextScanUnix       int64    `json:"next_scan_unix,omitempty"`
-	CurrentPosition    string   `json:"current_position,omitempty"`
-	Stage              string   `json:"stage,omitempty"`
-	BlockReason        string   `json:"block_reason,omitempty"`
-	ScanCount          int      `json:"scan_count,omitempty"`
-	Scanned            int      `json:"scanned,omitempty"`
-	Eligible           int      `json:"eligible,omitempty"`
-	LastResult         string   `json:"last_result,omitempty"`
-	SearchNote         string   `json:"search_note,omitempty"`
-	OpenPositions      int      `json:"open_positions,omitempty"`
+	Mode               string           `json:"mode"`
+	Running            bool             `json:"running"`
+	Hours              int              `json:"hours,omitempty"`
+	DeadlineUnix       int64            `json:"deadline_unix,omitempty"`
+	GuardedEnabledUnix int64            `json:"guarded_enabled_unix,omitempty"`
+	GuardedUntilUnix   int64            `json:"guarded_until_unix,omitempty"`
+	PolicyHash         string           `json:"policy_hash,omitempty"`
+	MissionID          string           `json:"mission_id,omitempty"`
+	SleepState         string           `json:"sleep_state,omitempty"`
+	Envelope           AutonomyEnvelope `json:"envelope,omitempty"`
+	MaxTrades          int              `json:"max_trades,omitempty"`
+	StopLossUSD        float64          `json:"stop_loss_usd,omitempty"`
+	MinLiquidityUSD    float64          `json:"min_liquidity_usd,omitempty"`
+	PauseUncertain     bool             `json:"pause_uncertain,omitempty"`
+	Assets             []string         `json:"assets,omitempty"`
+	TradesToday        int              `json:"trades_today"`
+	TradesDay          string           `json:"trades_day,omitempty"`
+	ConsecutiveLosses  int              `json:"consecutive_losses"`
+	LastAction         string           `json:"last_action,omitempty"`
+	LastStop           string           `json:"last_stop,omitempty"`
+	LastPreviewHash    string           `json:"last_preview_hash,omitempty"`
+	LastOID            string           `json:"last_oid,omitempty"`
+	BestCoin           string           `json:"best_coin,omitempty"`
+	BestWhy            string           `json:"best_why,omitempty"`
+	NextScanUnix       int64            `json:"next_scan_unix,omitempty"`
+	CurrentPosition    string           `json:"current_position,omitempty"`
+	Stage              string           `json:"stage,omitempty"`
+	BlockReason        string           `json:"block_reason,omitempty"`
+	ScanCount          int              `json:"scan_count,omitempty"`
+	Scanned            int              `json:"scanned,omitempty"`
+	Eligible           int              `json:"eligible,omitempty"`
+	LastResult         string           `json:"last_result,omitempty"`
+	SearchNote         string           `json:"search_note,omitempty"`
+	OpenPositions      int              `json:"open_positions,omitempty"`
 }
 
 func DefaultMission() Mission {
@@ -115,7 +119,8 @@ func SaveMission(dir string, m Mission) error {
 }
 
 func ConfirmEnable(typed string) error {
-	if strings.TrimSpace(typed) != EnableToken {
+	t := strings.TrimSpace(typed)
+	if t != EnableToken && t != ArmToken {
 		return fmt.Errorf("need_ENABLE_GUARDED_AUTONOMY")
 	}
 	return nil
@@ -140,9 +145,12 @@ func EnableGuarded(dir, typed string, hours int, policyHash string) (Mission, er
 	m.GuardedEnabledUnix = now
 	m.GuardedUntilUnix = m.DeadlineUnix
 	m.PolicyHash = policyHash
+	m.Envelope = SnapshotEnvelope(dir, hours, now, policyHash, "", "")
+	m.MissionID = m.Envelope.MissionID
+	m.SleepState = SleepArmed
 	m.LastStop = ""
 	m.BlockReason = ""
-	m.LastAction = "guarded_enabled"
+	m.LastAction = "sleep_armed"
 	m.Stage = "starting"
 	m.NextScanUnix = now
 	m.ScanCount = 0
@@ -150,6 +158,8 @@ func EnableGuarded(dir, typed string, hours int, policyHash string) (Mission, er
 	if err := SaveMission(dir, m); err != nil {
 		return m, err
 	}
+	_ = ResetEvents(dir, m.MissionID)
+	_ = AppendEvent(dir, MissionEvent{Node: "WATCH", Status: "ARMED", Reason: "armed"})
 	p := Load(dir)
 	p.Watch = true
 	p.Notify = true
@@ -207,8 +217,10 @@ func Stop(dir, why string) Mission {
 	m.LastStop = why
 	m.LastAction = "stopped:" + why
 	m.Stage = "stopped"
+	m.SleepState = SleepFromStage("stopped", "STOPPED", why)
 	m.BlockReason = ""
 	_ = SaveMission(dir, m)
+	_ = AppendEvent(dir, MissionEvent{Node: "WATCH", Status: m.SleepState, Reason: why})
 	p := Load(dir)
 	p.AutoResearch = false
 	p.Execute = false
@@ -236,23 +248,26 @@ func MissionHaltReason(m Mission, now int64, kill bool, sessionAlive bool, reali
 		return "session_expired"
 	}
 	if m.GuardedUntilUnix > 0 && now >= m.GuardedUntilUnix {
-		return "deadline"
+		return "autonomy_expired"
 	}
 	if m.DeadlineUnix > 0 && now >= m.DeadlineUnix {
-		return "deadline"
+		return "autonomy_expired"
 	}
 	hash, _ := pol.Hash()
 	if m.PolicyHash != "" && hash != "" && m.PolicyHash != hash {
 		return "policy_changed"
 	}
 	if m.MaxTrades > 0 && m.TradesToday >= m.MaxTrades {
-		return "max_trades"
+		return "max_autonomy_trades"
+	}
+	if m.Envelope.MaxAutonomyTrades > 0 && m.TradesToday >= m.Envelope.MaxAutonomyTrades {
+		return "max_autonomy_trades"
 	}
 	if m.StopLossUSD > 0 && realizedPnL <= -m.StopLossUSD {
-		return "daily_loss"
+		return "daily_loss_limit"
 	}
 	if pol.DailyLossUSD > 0 && realizedPnL <= -pol.DailyLossUSD {
-		return "daily_loss"
+		return "daily_loss_limit"
 	}
 	if pol.MaxConsecutiveLosses > 0 && m.ConsecutiveLosses >= pol.MaxConsecutiveLosses {
 		return "consecutive_loss_limit"
@@ -273,21 +288,41 @@ func Explain(code string) string {
 	case "max_open_positions":
 		return "A new order is refused because an open position already fills the host ceiling. Scan and private research continue. Existing positions are not flattened."
 	case "kill_switch":
-		return "Kill switch is on. Guarded Autonomy halted. No order was placed."
+		return "Kill switch is on. Sleep Mission halted. No order was placed."
 	case "session_expired":
-		return "The scoped Hyperliquid session is not alive. Guarded Autonomy halted. No order was placed."
-	case "deadline":
-		return "The confirmed duration ended. Guarded Autonomy halted."
+		return "The scoped Hyperliquid session is not alive. Sleep Mission halted. No order was placed."
+	case "deadline", "autonomy_expired":
+		return "The confirmed duration ended. Sleep Mission halted."
 	case "policy_changed":
-		return "Pinned policy hash changed. Guarded Autonomy halted until you enable it again."
-	case "max_trades":
-		return "Today's trade ceiling was reached. Guarded Autonomy halted."
-	case "daily_loss":
-		return "Daily loss ceiling was reached. Guarded Autonomy halted. Positions were not flattened."
+		return "Pinned policy hash changed. Sleep Mission halted until you arm it again."
+	case "max_trades", "max_autonomy_trades":
+		return "Today's autonomous trade ceiling was reached. Sleep Mission halted."
+	case "daily_loss", "daily_loss_limit":
+		return "Daily loss ceiling was reached. Sleep Mission halted. Positions were not flattened."
 	case "consecutive_loss_limit":
 		return "Consecutive-loss ceiling was reached. Guarded Autonomy halted."
 	case "user_stop", "chat_stop":
-		return "You stopped Guarded Autonomy. PIT will not place further orders until you enable it again."
+		return "You stopped the Sleep Mission. PIT will not place further orders until you arm it again."
+	case "stale_market_data":
+		return "Market data is older than the armed freshness ceiling. No order was placed."
+	case "stale_preview":
+		return "The preview no longer matches the armed envelope."
+	case "stale_capital":
+		return "Account capital changed after arm. Sleep Mission refused the order."
+	case "max_autonomy_notional":
+		return "The order is above the armed mission notional."
+	case "tee_unverified":
+		return "TEE verification failed. No order was placed."
+	case "research_unverified":
+		return "Research verification failed. No order was placed."
+	case "skill_ineligible":
+		return "NOT ENOUGH DATA. This skill is not eligible for autonomous spend."
+	case "workspace_mismatch":
+		return "Workspace does not match the armed envelope."
+	case "venue_mismatch":
+		return "Venue does not match the armed envelope."
+	case "extra_agent_missing":
+		return "Hyperliquid extraAgents does not list this PIT session."
 	case "duplicate_preview":
 		return "This exact preview was already used. A new preview is required."
 	case "preview_before_guarded":
@@ -321,15 +356,32 @@ func Explain(code string) string {
 }
 
 type ExecGate struct {
-	PreviewHash string
-	StartedUnix int64
-	OpenCount   int
-	RealizedPnL float64
-	SessionOK   bool
-	Kill        bool
-	Now         int64
-	Policy      policy.Policy
-	Coin        string
+	PreviewHash         string
+	StartedUnix         int64
+	OpenCount           int
+	RealizedPnL         float64
+	SessionOK           bool
+	Kill                bool
+	Now                 int64
+	Policy              policy.Policy
+	Coin                string
+	WorkspaceID         string
+	SessionID           string
+	Venue               string
+	AccountHash         string
+	PositionHash        string
+	MarketUnix          int64
+	RequestedUSD        float64
+	TradesToday         int
+	ResearchRequired    bool
+	ResearchVerified    bool
+	TEERequired         bool
+	TEEVerified         bool
+	SkillRequired       bool
+	SkillEligible       bool
+	ExtraAgentsMissing  bool
+	BelowMin            bool
+	InsufficientMargin  bool
 }
 
 func AllowHostExecute(dir string, g ExecGate) error {
@@ -354,6 +406,13 @@ func AllowHostExecute(dir string, g ExecGate) error {
 	}
 	if !g.SessionOK {
 		return fmt.Errorf("session_expired")
+	}
+	g.TradesToday = m.TradesToday
+	if g.RequestedUSD <= 0 {
+		g.RequestedUSD = g.Policy.MaxClipUSD
+	}
+	if err := m.Envelope.RefuseIfStale(g.Policy, g); err != nil {
+		return err
 	}
 	ctx := policy.Context{
 		RequestedUSD:      g.Policy.MaxClipUSD,
@@ -395,6 +454,8 @@ func RecordStage(dir, stage, action, result, coin string) {
 	m := LoadMission(dir)
 	if stage != "" {
 		m.Stage = stage
+		life := Life(m, false, time.Now().Unix())
+		m.SleepState = SleepFromStage(stage, life, m.LastStop)
 	}
 	if action != "" {
 		m.LastAction = action
@@ -423,6 +484,7 @@ func RecordAction(dir, action, coin, preview, oid, stop string) {
 		m.LastOID = oid
 		m.TradesToday++
 		m.Stage = "executed"
+		m.SleepState = SleepReconciling
 		m.LastResult = "oid:" + oid
 	}
 	if stop != "" {
@@ -498,10 +560,21 @@ func Public(dir string) map[string]any {
 	if view.Running && view.NextScanUnix > 0 && view.NextScanUnix < now {
 		view.NextScanUnix = now
 	}
+	life := Life(view, pol.KillSwitch, now)
+	sleep := SleepFromStage(view.Stage, life, m.LastStop)
 	return map[string]any{
-		"ok": true, "mission": view, "prefs": p, "execute": false, "sign": false, "trade": false,
+		"ok": true, "mission": view, "prefs": p, "execute": false, "sign": false, "trade": false, "arm": false,
 		"mode": view.Mode, "running": view.Running && view.Mode != ModeManual,
-		"status":                       Life(view, pol.KillSwitch, now),
+		"status":                       life,
+		"sleep_state":                  sleep,
+		"mission_id":                  view.MissionID,
+		"envelope":                    view.Envelope,
+		"envelope_digest":              view.Envelope.Digest(),
+		"events":                      LoadEvents(dir),
+		"away":                         LoadAway(dir),
+		"proof":                        LoadProof(dir),
+		"skillbook":                    PublicSkillbook(dir),
+		"replay":                       StrategyReplay(dir),
 		"policy_hash":                  hash,
 		"now":                          now,
 		"elapsed_seconds":              elapsed,
@@ -535,11 +608,10 @@ func Public(dir string) map[string]any {
 			"policy_mutation":        false,
 			"permission_escalation":  false,
 		},
-		"away":         LoadAway(dir),
 		"why_not_code": m.BlockReason,
 		"why_not":      HumanWhy(m.BlockReason),
 		"search_note":  m.SearchNote,
 		"skip_coins":   Load(dir).SkipSet(now),
-		"note":         "Guarded Autonomy executes only after ENABLE GUARDED AUTONOMY is confirmed on this computer. Chat cannot enable it. The model cannot change these limits.",
+		"note":         "Sleep Mission executes only after ARM SLEEP MISSION or ENABLE GUARDED AUTONOMY is confirmed on this computer. Chat cannot enable it. The model cannot change these limits.",
 	}
 }

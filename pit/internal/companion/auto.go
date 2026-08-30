@@ -264,6 +264,7 @@ func (h *Hub) autoTick() {
 		m.BlockReason = why
 	} else {
 		auto.AppendAway(h.Dir, auto.AwayEvent{Kind: "detected", Coin: pick.Coin, Why: pick.Reason})
+		auto.AppendEvent(h.Dir, auto.MissionEvent{Node: "CANDIDATE", Status: "seen", Coin: pick.Coin, Reason: pick.Reason})
 		m.BlockReason = ""
 	}
 	m.BestCoin = pick.Coin
@@ -401,10 +402,30 @@ func (h *Hub) maybeGuardedExecute(hash, coin string, started time.Time) {
 		Now:         time.Now().Unix(),
 		Policy:      pol,
 		Coin:        coin,
+		WorkspaceID: workspaceID(h.Dir),
+		Venue:       "hyperliquid",
+		ResearchRequired: true,
+		ResearchVerified: h.jobVerifiedLocked(),
+		TEERequired: true,
+		TEEVerified: h.jobVerifiedLocked(),
+	}
+	if sf, serr := cli.LoadSession(h.Dir); serr == nil {
+		g.SessionID = sf.ID
+		if st.Wallet != "" {
+			ok, _, lerr := cli.LookupAgent(st.Network, st.Wallet, st.WorkspaceID, sf.AgentAddr, time.Now().UnixMilli())
+			if lerr != nil || !ok {
+				g.ExtraAgentsMissing = true
+			}
+		} else {
+			g.ExtraAgentsMissing = true
+		}
+	} else {
+		g.ExtraAgentsMissing = true
 	}
 	if err := auto.AllowHostExecute(h.Dir, g); err != nil {
 		auto.RecordBlock(h.Dir, err.Error(), coin)
 		auto.AppendAway(h.Dir, auto.AwayEvent{Kind: "rejected", Coin: coin, Why: err.Error()})
+		auto.AppendEvent(h.Dir, auto.MissionEvent{Node: "POLICY", Status: "NO-TRADE", Reason: err.Error(), Coin: coin, NoTrade: true})
 		appendActivity(h.Dir, activityEvent{
 			WorkspaceID: workspaceID(h.Dir), Kind: "mission.refused", Market: coin,
 			Action: "guarded", Status: err.Error(), PreviewHash: hash, Reason: err.Error(), Autonomous: true,
@@ -424,7 +445,9 @@ func (h *Hub) maybeGuardedExecute(hash, coin string, started time.Time) {
 	}
 	auto.RecordAction(h.Dir, "executed", coin, hash, got.OID, "")
 	auto.RecordStage(h.Dir, "executed", "executed", "oid:"+got.OID, coin)
-	auto.AppendAway(h.Dir, auto.AwayEvent{Kind: "traded", Coin: coin, Why: "guarded_autonomy", OID: got.OID})
+	auto.AppendAway(h.Dir, auto.AwayEvent{Kind: "traded", Coin: coin, Why: "sleep_mission", OID: got.OID})
+	auto.AppendEvent(h.Dir, auto.MissionEvent{Node: "EXECUTION", Status: got.Status, OID: got.OID, Coin: coin, JobID: h.currentJobID()})
+	_ = auto.AssembleProof(h.Dir, auto.MissionProof{OID: got.OID, PreviewHash: hash, FillState: got.Status, ResearchJob: h.currentJobID()})
 	link := venueTradeLink(workspaceNetwork(h.Dir), got.Market)
 	appendActivity(h.Dir, activityEvent{
 		WorkspaceID: workspaceID(h.Dir), Kind: "order.submitted", Market: got.Market,
@@ -456,7 +479,25 @@ func (h *Hub) recoverGuardedExecute() {
 		h.recoverOIDFromVenue(last)
 		return
 	}
+	if st, err := cli.Load(h.Dir); err == nil && cli.PreviewAttempted(h.Dir, st.Network, st.WorkspaceID, hash) {
+		auto.RecordStage(h.Dir, "recovering", "ledger_has_preview", "duplicate_click", coin)
+		h.recoverOIDFromVenue(last)
+		return
+	}
 	h.maybeGuardedExecute(hash, coin, started)
+}
+
+func (h *Hub) jobVerifiedLocked() bool {
+	h.researchMu.Lock()
+	defer h.researchMu.Unlock()
+	ok := 0
+	for _, r := range h.job.roles {
+		v, _ := r["verify_e2ee"].(string)
+		if strings.EqualFold(strings.TrimSpace(v), "OK") {
+			ok++
+		}
+	}
+	return h.job.eligible && ok >= 3
 }
 
 func guardedAlreadyAttempted(last map[string]any, hash string) bool {
@@ -520,7 +561,7 @@ func (h *Hub) localAutomation(w http.ResponseWriter, r *http.Request) {
 		p.Execute = false
 		body := auto.Public(h.Dir)
 		body["prefs"] = p
-		body["note"] = "Watch, discover, research, notify, and prepare. Execute requires Guarded Autonomy on Automation."
+		body["note"] = "Watch, discover, research, notify, and prepare. Execute requires ARM SLEEP MISSION on Automation."
 		writeLocal(w, http.StatusOK, body)
 		return
 	}
@@ -566,6 +607,9 @@ func (h *Hub) localMission(w http.ResponseWriter, r *http.Request) {
 		Mode            string   `json:"mode"`
 		Hours           int      `json:"hours"`
 		MaxTrades       int      `json:"max_trades"`
+		MaxNotional     float64  `json:"max_mission_notional"`
+		MaxOpen         int      `json:"max_open_positions"`
+		MaxAge          int64    `json:"max_data_age_sec"`
 		StopLossUSD     float64  `json:"stop_loss_usd"`
 		MinLiquidityUSD float64  `json:"min_liquidity_usd"`
 		PauseUncertain  bool     `json:"pause_uncertain"`
@@ -593,19 +637,34 @@ func (h *Hub) localMission(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 		hash, _ := policy.Peek(h.Dir).Hash()
-		m, err := auto.EnableGuarded(h.Dir, body.Typed, body.Hours, hash)
+		pol := policy.Peek(h.Dir)
+		hours, maxTrades, maxNotional, dailyLoss, maxOpen, assets := auto.ClampMissionLimits(body.Hours, body.MaxTrades, body.MaxNotional, body.StopLossUSD, body.MaxOpen, body.Assets, pol)
+		m, err := auto.EnableGuarded(h.Dir, body.Typed, hours, hash)
 		if err != nil {
-			writeLocal(w, http.StatusOK, map[string]any{"ok": false, "error": err.Error(), "execute": false, "sign": false, "trade": false})
+			writeLocal(w, http.StatusOK, map[string]any{"ok": false, "error": err.Error(), "execute": false, "sign": false, "trade": false, "arm": false})
 			return
 		}
-		m.MaxTrades = body.MaxTrades
-		m.StopLossUSD = body.StopLossUSD
+		m.MaxTrades = maxTrades
+		m.StopLossUSD = dailyLoss
 		m.MinLiquidityUSD = body.MinLiquidityUSD
 		m.PauseUncertain = body.PauseUncertain
-		m.Assets = body.Assets
+		m.Assets = assets
+		m.Envelope.MaxAutonomyTrades = maxTrades
+		m.Envelope.MaxAutonomyNotional = maxNotional
+		m.Envelope.MaxDailyAutonomyLoss = dailyLoss
+		m.Envelope.MaxOpenPositions = maxOpen
+		m.Envelope.AllowedAssets = assets
+		m.Envelope.WorkspaceID = workspaceID(h.Dir)
+		if body.MaxAge > 0 && body.MaxAge <= 3600 {
+			m.Envelope.MaxOpportunityAgeSec = body.MaxAge
+		}
+		if sf, serr := cli.LoadSession(h.Dir); serr == nil {
+			m.Envelope.SessionID = sf.ID
+			m.Envelope.SessionExpiryUnix = sf.Expires
+		}
 		_ = auto.SaveMission(h.Dir, m)
 		appendActivity(h.Dir, activityEvent{
-			WorkspaceID: workspaceID(h.Dir), Kind: "mission.enabled", Action: "guarded", Status: "running", Reason: "ENABLE GUARDED AUTONOMY", Autonomous: true,
+			WorkspaceID: workspaceID(h.Dir), Kind: "mission.enabled", Action: "sleep", Status: "armed", Reason: "ARM SLEEP MISSION", Autonomous: true,
 		})
 		go h.autoTick()
 		writeLocal(w, http.StatusOK, h.missionPublic())

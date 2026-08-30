@@ -264,7 +264,7 @@ export function SetupWizard({
       {step === 8 ? (
         <>
           <h1>Choose how PIT should work.</h1>
-          <p className="lead">You pick the mode. Chat cannot. Guarded Autonomy still requires a typed confirm on Automation.</p>
+          <p className="lead">You pick the mode. Chat cannot. A Sleep Mission still requires ARM SLEEP MISSION on Automation.</p>
           <div className="mode-grid">
             <article>
               <p className="label">Manual</p>
@@ -275,8 +275,8 @@ export function SetupWizard({
               <p>Scan, research, explain. Never execute.</p>
             </article>
             <article>
-              <p className="label">Guarded Autonomy</p>
-              <p>Research and execute only inside pinned policy after you enable it on this computer.</p>
+              <p className="label">Sleep Mission</p>
+              <p>Arm once. PIT hunts within your pinned policy while you are away.</p>
             </article>
           </div>
         </>

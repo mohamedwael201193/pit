@@ -43,3 +43,12 @@ func LookupAction(dir, network, workspace, cloid string) (ledger.Record, error) 
 	defer st.Close()
 	return st.Get(workspace, cloid)
 }
+
+func PreviewAttempted(dir, network, workspace, preview string) bool {
+	st, err := ledger.Open(LedgerDir(dir), network, workspace)
+	if err != nil {
+		return false
+	}
+	defer st.Close()
+	return st.HasPreview(workspace, preview)
+}

@@ -83,6 +83,20 @@ func (s *Store) Get(workspace, cloid string) (Record, error) {
 	return r, err
 }
 
+func (s *Store) HasPreview(workspace, preview string) bool {
+	if strings.TrimSpace(preview) == "" {
+		return false
+	}
+	if err := s.RefuseForeign(workspace); err != nil {
+		return false
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	var n int
+	err := s.db.QueryRow(`SELECT COUNT(1) FROM actions WHERE workspace=? AND preview=?`, workspace, preview).Scan(&n)
+	return err == nil && n > 0
+}
+
 func isUnique(err error) bool {
 	if err == nil {
 		return false

@@ -17,8 +17,10 @@ export function Dual() {
         <div className="mt-12 min-h-[16rem] bg-[#d82f2f] p-8 text-black md:p-12">
           <p className="text-[0.8125rem] tracking-[0.16em] uppercase opacity-70">Production</p>
           <p className="mt-6 text-[1.75rem] leading-9 font-bold tracking-[-0.03em] md:text-[2.35rem] md:leading-10">
-            Live Hyperliquid. Private 0G research. Host-enforced policy. Proof you can verify. Execution stays on
-            desktop.
+            Live Hyperliquid. Private 0G research. Host-enforced policy. Bounded Sleep Missions on desktop. Proof you can verify. Execution stays on your machine.
+          </p>
+          <p className="mt-8 text-[0.8125rem] tracking-[0.14em] uppercase opacity-80">
+            Watch · Private research · 0G verify · Bounded autonomy · Real execution · Proof · Memory
           </p>
         </div>
         <figure className="mt-14 overflow-hidden border border-[rgb(240_231_212/0.3)]">

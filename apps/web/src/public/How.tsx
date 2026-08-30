@@ -64,7 +64,7 @@ export function HowPage() {
         <h2 className="text-[1.5rem] font-semibold tracking-[-0.03em] text-[var(--guide-cream)]">Safer than giving a bot a wallet</h2>
         <p className="intel-lede">
           A session agent can order or cancel. It cannot withdraw. Chat, this website, and the model cannot authorize, pin
-          policy, or enable Guarded Autonomy. Duplicate clicks do not send a second order.
+          policy, or arm a Sleep Mission. Duplicate clicks do not send a second order.
         </p>
       </section>
 

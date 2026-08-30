@@ -6,6 +6,7 @@ test("web cannot present an authorize control", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByRole("button", { name: "Authorize" })).toHaveCount(0);
   await expect(page.getByRole("button", { name: /enable guarded/i })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: /arm sleep/i })).toHaveCount(0);
   await page.goto("/radar");
   await expect(page.getByRole("button", { name: "Authorize" })).toHaveCount(0);
   await page.goto("/pair");

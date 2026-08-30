@@ -50,18 +50,24 @@ func Parse(text string) Result {
 		out.Reply = "PIT will not flatten from chat. Prepare a reduce-only close on this computer, then type AUTHORIZE there."
 		return out
 	}
+	if wantsOvernight(low) {
+		out.Tool = "mission.status"
+		out.Navigate = "automation"
+		out.Reply = "Overnight results are on Automation. Chat cannot arm a Sleep Mission. Confirm ARM SLEEP MISSION or ENABLE GUARDED AUTONOMY on this computer."
+		return out
+	}
 	if wantsStopAutonomy(low) {
 		out.Tool = "mission.stop"
 		out.Mutate = true
 		out.Navigate = "automation"
-		out.Reply = "Stopping Guarded Autonomy. PIT will not place further orders until you enable it again on Automation. Chat cannot AUTHORIZE."
+		out.Reply = "Stopping the Sleep Mission. PIT will not place further autonomous orders. Positions are not flattened. Chat cannot AUTHORIZE."
 		return out
 	}
 	if wantsEnableAutonomy(low) {
 		out.Tool = "mission.enable_required"
 		out.Navigate = "automation"
 		out.Hours = parseAutonomyHours(low)
-		out.Reply = "Chat cannot enable Guarded Autonomy. Open Automation, review the host limits, then confirm ENABLE GUARDED AUTONOMY on this computer."
+		out.Reply = "Chat cannot arm a Sleep Mission. Open Automation, review the host limits, then confirm ARM SLEEP MISSION on this computer. ENABLE GUARDED AUTONOMY is still accepted."
 		return out
 	}
 	if wantsTradesToday(low) {
@@ -99,7 +105,7 @@ func Parse(text string) Result {
 		out.StartResearch = true
 		out.Mutate = true
 		out.Navigate = "research"
-		out.Reply = "I will start a sealed Direct research pass on the strongest policy-eligible setup. Chat cannot AUTHORIZE. In Manual mode you still type AUTHORIZE. Guarded Autonomy may execute only after you enable it on Automation and policy passes."
+		out.Reply = "I will start a sealed Direct research pass on the strongest policy-eligible setup. Chat cannot AUTHORIZE. In Manual mode you still type AUTHORIZE. A Sleep Mission may execute only after you arm it on Automation and policy passes."
 		return out
 	}
 	execAsk := wantsExecute(low)
@@ -444,10 +450,21 @@ func wantsStopAutonomy(low string) bool {
 		(strings.Contains(low, "stop") && strings.Contains(low, "autonom"))
 }
 
+func wantsOvernight(low string) bool {
+	return strings.Contains(low, "overnight") ||
+		strings.Contains(low, "while i was away") ||
+		strings.Contains(low, "while you were away") ||
+		strings.Contains(low, "last night") ||
+		strings.Contains(low, "good morning")
+}
+
 func wantsEnableAutonomy(low string) bool {
 	return strings.Contains(low, "run autonom") ||
 		strings.Contains(low, "guarded autonomy") ||
 		strings.Contains(low, "enable guarded") ||
+		strings.Contains(low, "sleep mission") ||
+		strings.Contains(low, "arm sleep") ||
+		strings.Contains(low, "start a sleep") ||
 		strings.Contains(low, "run this strategy") ||
 		(strings.Contains(low, "24 hour") && strings.Contains(low, "autonom"))
 }

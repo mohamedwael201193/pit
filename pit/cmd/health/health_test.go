@@ -75,7 +75,7 @@ func TestWatchCORSForProductionOrigin(t *testing.T) {
 
 func TestReleaseNeverSigns(t *testing.T) {
 	fetchGH = func() (publicRelease, error) {
-		return publicRelease{Tag: "v0.8.0", Name: "PIT 0.8.0", HTML: "https://github.com/mohamedwael201193/pit/releases/tag/v0.8.0", SHA: "ABCD", Unsigned: true}, nil
+		return publicRelease{Tag: "v0.9.0", Name: "PIT 0.9.0", HTML: "https://github.com/mohamedwael201193/pit/releases/tag/v0.9.0", SHA: "ABCD", Unsigned: true}, nil
 	}
 	t.Cleanup(func() { fetchGH = fetchGitHubLatest })
 	relMu.Lock()
@@ -94,7 +94,7 @@ func TestReleaseNeverSigns(t *testing.T) {
 	if body["sign"] != false || body["trade"] != false {
 		t.Fatalf("%+v", body)
 	}
-	if body["tag"] != "v0.8.0" {
+	if body["tag"] != "v0.9.0" {
 		t.Fatal(body)
 	}
 }

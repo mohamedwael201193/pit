@@ -182,6 +182,21 @@ func TestAutonomyIntents(t *testing.T) {
 	if r.Execute || r.Tool != "mission.stop" {
 		t.Fatalf("%+v", r)
 	}
+	r = Parse("Start a sleep mission.")
+	if r.Execute || r.Tool != "mission.enable_required" || r.Navigate != "automation" {
+		t.Fatalf("%+v", r)
+	}
+	if !strings.Contains(r.Reply, "ENABLE GUARDED AUTONOMY") || !strings.Contains(r.Reply, "ARM SLEEP MISSION") {
+		t.Fatalf("%s", r.Reply)
+	}
+	r = Parse("What happened overnight?")
+	if r.Execute || r.Tool != "mission.status" || r.Navigate != "automation" {
+		t.Fatalf("%+v", r)
+	}
+	r = Parse("How did last night's mission perform?")
+	if r.Execute || r.Tool != "mission.status" {
+		t.Fatalf("%+v", r)
+	}
 	r = Parse("Show every trade PIT made today.")
 	if r.Execute || r.Tool != "activity.today" {
 		t.Fatalf("%+v", r)

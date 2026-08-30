@@ -6,6 +6,7 @@ import { PitMark } from "../brand/PitMark";
 
 const LINKS = [
   { to: "/radar", label: "Radar" },
+  { to: "/missions", label: "Missions" },
   { to: "/proof", label: "Proof" },
   { to: "/how-it-works", label: "How it works" },
   { to: "/download", label: "Download" },

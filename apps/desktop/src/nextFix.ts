@@ -151,7 +151,7 @@ export function nextFix(
   return {
     title: "Desk is ready",
     why: "Markets is public marks. Research stays sealed. Authorize stays on this computer.",
-    fix: "Pick a market, run research, then type AUTHORIZE on the exact preview — or enable Guarded Autonomy on Automation.",
+    fix: "Pick a market, run research, then type AUTHORIZE on the exact preview, or arm a Sleep Mission on Automation.",
     go: "markets",
     goLabel: "Open Markets",
   };

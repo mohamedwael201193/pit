@@ -627,6 +627,20 @@ func (h *Hub) execResearch(coin string) {
 	}
 	auto.RecordStage(h.Dir, "researched", "research_done:"+kind, kind, h.job.coin)
 	h.rememberResearchOutcome(h.job.coin, h.job.err, h.job.deny, h.job.eligible, h.job.previewHash)
+	noTrade := h.job.deny == "no_side" || h.job.deny == "challenger_killed" || h.job.deny == "risk_killed" || strings.Contains(kind, "STOOD_DOWN")
+	if noTrade {
+		node := "CHALLENGER"
+		if h.job.deny == "risk_killed" {
+			node = "RISK"
+		}
+		auto.AppendEvent(h.Dir, auto.MissionEvent{
+			Node: node, Status: "NO-TRADE", Reason: h.job.deny, Coin: h.job.coin, JobID: h.job.ID, NoTrade: true,
+		})
+	} else {
+		auto.AppendEvent(h.Dir, auto.MissionEvent{
+			Node: "PRIVATE RESEARCH", Status: kind, Coin: h.job.coin, JobID: h.job.ID, Reason: h.job.deny,
+		})
+	}
 	model, provider := researchModels()
 	h.fileResearch(h.job.ID, h.job.coin, kind, h.job.deny, h.job.previewHash, h.job.roles, model, provider)
 	if h.job.eligible && h.job.previewHash != "" && mayHostGuardedExecute(h.job.source) {

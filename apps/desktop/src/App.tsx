@@ -661,7 +661,7 @@ export function App() {
       ? "Awaiting AUTHORIZE"
       : mission.status === "ACTIVE" || status?.missionRunning || mission.running
         ? mission.mode === "guarded"
-          ? "Guarded Autonomy live"
+          ? "Sleep Mission live"
           : `Mission ${status?.mode || mission.mode}`
         : attention.title === "Desk is ready" || attention.title.startsWith("Watching")
           ? "Idle"
@@ -997,7 +997,7 @@ export function App() {
           {
             id: "mode",
             label: "Mode",
-            value: mission.mode === "guarded" && mission.running ? "guarded" : mission.mode === "research_only" ? "research" : "manual",
+            value: mission.mode === "guarded" && mission.running ? "sleep" : mission.mode === "research_only" ? "research" : "manual",
           },
         ]}
       />

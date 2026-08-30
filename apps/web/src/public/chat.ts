@@ -28,8 +28,8 @@ export function answerChat(raw: string, watch: WatchView | null): string {
   const q = raw.trim().toLowerCase();
   if (!q) return "Ask what is happening, why a market is watched, or how to verify. This chat cannot authorize, pin policy, or enable autonomy.";
 
-  if (/(authori[sz]e|enable autonomy|pin policy|sign this|session key|seed phrase)/.test(q)) {
-    return "This chat is informational. It cannot authorize, pin policy, enable autonomy, or hold keys. Open PIT Desktop for those actions.";
+  if (/(authori[sz]e|enable autonomy|arm sleep|sleep mission|pin policy|sign this|session key|seed phrase|raise max trade|execute btc now)/.test(q)) {
+    return "This chat is informational. It cannot authorize, pin policy, arm a Sleep Mission, or hold keys. Open PIT Desktop for those actions.";
   }
 
   if (q.includes("0g") || q.includes("tee") || q.includes("storage") || q.includes("compute")) {
@@ -45,7 +45,7 @@ export function answerChat(raw: string, watch: WatchView | null): string {
   }
 
   if (q.includes("protect") || q.includes("strategy") || q.includes("private") || q.includes("sealed")) {
-    return "Private reasoning is sealed with 0G Direct. This browser never receives the private book, session key, Direct token plaintext, or memory. Policy, AUTHORIZE, and Guarded Autonomy stay on PIT Desktop. 0G lets PIT prove the machine without exposing the intelligence.";
+    return "Private reasoning is sealed with 0G Direct. This browser never receives the private book, session key, Direct token plaintext, or memory. Policy, AUTHORIZE, and Sleep Missions stay on PIT Desktop. 0G lets PIT prove the machine without exposing the intelligence.";
   }
 
   if (q.includes("didn't trade") || q.includes("did not trade") || q.includes("no trade") || q.includes("stand-down") || q.includes("stood down")) {
