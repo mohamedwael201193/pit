@@ -87,6 +87,9 @@ export function PairPage() {
       <div className="mx-auto grid max-w-[64rem] gap-10 lg:grid-cols-[minmax(0,1fr)_20rem]">
         <div>
           <PitMark />
+          <p className="mt-10 font-mono text-[0.75rem] tracking-[0.14em] text-[rgb(240_231_212/0.45)]">
+            Pairing is a late step. Explore radar and proof first.
+          </p>
           <p className="mt-10 font-mono text-[0.75rem] tracking-[0.14em] text-[#d82f2f]">LOCAL PAIRING</p>
           <h1 className="mt-3 text-[2.5rem] font-semibold tracking-[-0.04em]">Pair this browser with PIT on this machine.</h1>
           <p className="mt-4 max-w-[46ch] text-[1.0625rem] leading-7 text-[rgb(240_231_212/0.7)]">
@@ -104,38 +107,36 @@ export function PairPage() {
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
             {deskOk ? (
-              <>
-                <button
-                  type="button"
-                  className="rounded-full bg-[#d82f2f] px-6 py-3 font-semibold text-[#f0e7d4]"
-                  onClick={() => document.querySelector<HTMLInputElement>('input[aria-label="pairing code"]')?.focus()}
-                >
-                  Pair this browser
-                </button>
-                <a
-                  className="rounded-full border border-[rgb(240_231_212/0.35)] px-6 py-3 font-semibold text-[#f0e7d4]"
-                  href="https://github.com/mohamedwael201193/pit/releases/latest"
-                >
-                  Download PIT
-                </a>
-              </>
+              <button
+                type="button"
+                className="rounded-full bg-[#d82f2f] px-6 py-3 font-semibold text-[#f0e7d4]"
+                onClick={() => document.querySelector<HTMLInputElement>('input[aria-label="pairing code"]')?.focus()}
+              >
+                Pair this browser
+              </button>
             ) : (
-              <>
-                <a
-                  className="rounded-full bg-[#d82f2f] px-6 py-3 font-semibold text-[#f0e7d4]"
-                  href="https://github.com/mohamedwael201193/pit/releases/latest"
-                >
-                  Download PIT
-                </a>
-                <button
-                  type="button"
-                  className="rounded-full border border-[rgb(240_231_212/0.35)] px-6 py-3 font-semibold text-[#f0e7d4]"
-                  onClick={() => void probeDesktop()}
-                >
-                  Open PIT Desktop
-                </button>
-              </>
+              <a
+                className="rounded-full bg-[#d82f2f] px-6 py-3 font-semibold text-[#f0e7d4]"
+                href="https://github.com/mohamedwael201193/pit/releases/latest"
+              >
+                Download PIT
+              </a>
             )}
+            <button
+              type="button"
+              className="rounded-full border border-[rgb(240_231_212/0.35)] px-6 py-3 font-semibold text-[#f0e7d4]"
+              onClick={() => void probeDesktop()}
+            >
+              Open PIT Desktop
+            </button>
+            {deskOk ? (
+              <a
+                className="rounded-full border border-[rgb(240_231_212/0.35)] px-6 py-3 font-semibold text-[#f0e7d4]"
+                href="https://github.com/mohamedwael201193/pit/releases/latest"
+              >
+                Download PIT
+              </a>
+            ) : null}
           </div>
           <label className="mt-10 block">
             <span className="text-[0.75rem] tracking-[0.12em] text-[rgb(240_231_212/0.5)]">ONE-TIME CODE</span>

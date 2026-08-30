@@ -1,68 +1,54 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { usePrivy } from "@privy-io/react-auth";
 import { PageHead } from "../ui/PageHead";
-import { Bezel } from "../ui/Surface";
-import { ChoiceCard } from "../ui/ChoiceCard";
-import { EmptyWatch } from "../EmptyWatch";
-import { NetworkToggle } from "../NetworkToggle";
-import { NetworkBanner } from "../NetworkBanner";
-import { BindDesk } from "../BindDesk";
-import { DirectSign } from "../DirectSign";
-import { DiagramPolicy, DiagramSession } from "../diagrams/pitGuide";
-
-type Net = "mainnet" | "testnet";
+import { ButtonLink } from "../ui/Button";
+import { WatchHome } from "../WatchHome";
 
 export function Home() {
   const { user } = usePrivy();
-  const navigate = useNavigate();
-  const [net, setNet] = useState<Net>("mainnet");
   const addr = user?.wallet?.address;
 
   return (
     <div className="mx-auto flex max-w-[80rem] flex-col gap-10">
       <PageHead
-        title="Inspect on the web. Pin and AUTHORIZE stay on desktop."
-        lede="This browser can pair, sign Protect, and show public books. It cannot pin policy, enable Guarded Autonomy, or hold a session key."
+        title="Observe here. Act on the machine."
+        lede="This browser can inspect public books and verify receipts. It cannot pin policy, enable Guarded Autonomy, or hold a session key."
       />
 
-      <Bezel>
-        <p className="text-[1.0625rem] leading-7 text-[rgb(240_231_212/0.78)]">
-          Connected as{" "}
-          <span className="font-mono text-[var(--guide-cream)]">
-            {addr ? `${addr.slice(0, 8)}...${addr.slice(-4)}` : "wallet"}
-          </span>
-        </p>
-        <NetworkToggle net={net} onChange={setNet} />
-        <NetworkBanner net={net} />
-        <BindDesk network={net} />
-        <DirectSign />
-      </Bezel>
+      <p className="font-mono text-[0.875rem] text-[rgb(240_231_212/0.6)]">
+        Connected as {addr ? `${addr.slice(0, 8)}…${addr.slice(-4)}` : "wallet"} · identity only
+      </p>
 
-      <section aria-labelledby="watch-heading">
-        <EmptyWatch network={net} />
+      <div className="flex flex-wrap gap-2">
+        <ButtonLink as={Link} to="/radar" size="lg">
+          Live radar
+        </ButtonLink>
+        <ButtonLink as={Link} to="/proof" variant="secondary" size="lg">
+          Proof
+        </ButtonLink>
+        <ButtonLink as={Link} to="/download" variant="secondary" size="lg">
+          Download desktop
+        </ButtonLink>
+      </div>
+
+      <section>
+        <WatchHome network="mainnet" />
       </section>
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <ChoiceCard
-          title="Finish setup"
-          body="Twelve beats. Wallet, network, policy, then a session on the machine."
-          Diagram={DiagramSession}
-          onClick={() => navigate("/app/start")}
-        />
-        <ChoiceCard
-          title="Pair this computer"
-          body="One-time code. The browser never holds a session key."
-          Diagram={DiagramSession}
-          onClick={() => navigate("/pair")}
-        />
-        <ChoiceCard
-          title="Read the law"
-          body="Clip, assets, kill. The model cannot raise them."
-          Diagram={DiagramPolicy}
-          onClick={() => navigate("/app/policy")}
-        />
-      </div>
+      <p className="text-[0.875rem] text-[rgb(240_231_212/0.5)]">
+        Pairing is a late step, after you have seen live intelligence.{" "}
+        <Link to="/pair" className="text-[#d82f2f]">
+          Pair this computer
+        </Link>
+        {" · "}
+        <Link to="/app/start" className="text-[#d82f2f]">
+          Setup
+        </Link>
+        {" · "}
+        <Link to="/app/policy" className="text-[#d82f2f]">
+          Read the law
+        </Link>
+      </p>
     </div>
   );
 }

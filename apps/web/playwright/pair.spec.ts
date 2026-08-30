@@ -1,6 +1,6 @@
 // MOCK TEST HARNESS — public UI copy. Never stub VerifyE2EE, AUTHORIZE, or a live order.
 
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixture";
 
 test("pair page never asks for a seed or authorize", async ({ page }) => {
   await page.goto("/pair");

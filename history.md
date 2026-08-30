@@ -2257,6 +2257,38 @@ CLASSIFICATION:
 PRODUCTION READY: 0.7.6 is production-ready for an honest executable desk at clip $13. It is **not** production-ready to claim a new fill until YOU authorize a preview.
 NEXT STEP: On Desk, Research the ranked book privately, then type AUTHORIZE on the exact preview if you want a clip. Do not flatten. Do not remint.
 
+---
+
+## M106 — PIT WEB 2.0: intelligence + proof network (2026-08-30)
+
+DATE/TIME: 2026-08-30 07:15+03
+PHASE: Public website rebuild. Do not flatten OID 529167222216. Do not remint PIT-4bbee556. Do not invent fills, APR, TEE, or mission 8C91. Do not enable Guarded Autonomy. Pairing is a late step.
+GOAL: The web discovers and proves. The desktop protects and acts. Replace the coral marketing / wallet-first landing with a public intelligence product: radar, missions, proof, agent, capital simulation, download.
+RESULT:
+- **IMPLEMENTED:** Version **0.8.0** (Go health + companion). Desktop NSIS remains **0.7.6** (no new installer this pass).
+  1. Public IA: `/` `/radar` `/radar/:coin` `/capital` `/missions` `/missions/:id/replay` `/proof` `/agent` `/how-it-works` `/download`. Pairing stays `/pair` after public value. Connected nav: Overview / My Missions / My Agent / My Proof / My Capital.
+  2. Hero: "Your trading agent doesn't sleep. Your keys don't leave your machine." CTAs: Explore live PIT, Download PIT Desktop, Verify a mission. Live PIT strip from `pit-health` `/watch` + `/health` only. Actionable on the public feed is 0 unless `executionFeasible` is set — website origins do not receive buying power.
+  3. Public `/watch` now includes venue `minNotional` without attaching capital. Radar tabs ACTIONABLE / RESEARCH / WATCH / BLOCKED. Market detail seals private reasoning.
+  4. Capital simulator is labeled SIMULATION. TRADE / WAIT / HOLD from public mins. LIQUIDITY unavailable. No Zia APR.
+  5. Missions: empty live stream is honest. Historical ETH fill OID `529167222216` is labeled HISTORICAL. Unknown ids do not invent a timeline.
+  6. Proof center says WHAT and HOW. TEE is NO LIVE RECEIPT. Aristotle tx hashes are read in-browser via `evmrpc.0g.ai`. Agent passport: iTransfer NOT LIVE ON MAINNET. ERC-8004 `ownerOf` is a chain read, not a ranking.
+  7. Public chat is informational. It cannot authorize, pin, or enable autonomy.
+- **TESTED:** `go test ./...` PASS. Web `tsc --noEmit` PASS (~195s). `vite build` PASS. Playwright 22/22 PASS (home, radar, capital SIMULATION, missions, proof, agent iTransfer, download unsigned, pair, chat refuse authorize, no Authorize controls).
+- **LIVE VERIFIED:** Overlay `D:\PIT\pit.exe` SHA256 `FA84F9A1E816AC90D2D19561A11875CFF19747F7DAF5DFBE80135C3CA5EDF7A4`. Installer SHA unchanged `1B2C5D11045E6505D9953C2074D001F074AC6E8FE47976BC21CA233A8F431A59`. Health minNotional ships when Render rebuilds this commit.
+- **UNVERIFIED until deploy:** Vercel production HTML, Render health `0.8.0` + public minNotional.
+- **BLOCKED:** iTransfer UNAVAILABLE. SWAP/LP execution unavailable. Authenticode absent. macOS/Linux not packaged. No public live mission receipt. DA not claimed.
+
+SECURITY RESULT: Browser still cannot receive session keys, Direct token plaintext, private prompts, or private memory. No web control authorizes, pins, or enables autonomy. Public health refuses `trade`/`sign`. Capital simulation is not a fill.
+TX HASH / OID: Historical OID `529167222216` unchanged.
+CLASSIFICATION:
+- Public intelligence IA: **IMPLEMENTED + TESTED**
+- Proof WHAT/HOW: **IMPLEMENTED + TESTED**
+- Capital SIMULATION: **IMPLEMENTED + TESTED**
+- Fake Zia APR / fake missions: **NOT IMPLEMENTED** (deliberate)
+PRODUCTION READY: 0.8.0 is production-ready as a public discover/verify surface. It is **not** an execution UI.
+NEXT STEP: Deploy Vercel + Render. Judge path: hero → radar → public/private split → proof → historical replay → download.
+
+
 
 
 

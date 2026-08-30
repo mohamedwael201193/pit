@@ -3,6 +3,8 @@ import { Link, NavLink, Outlet } from "react-router-dom";
 import { usePrivy } from "@privy-io/react-auth";
 import {
   ClockCounterClockwise,
+  Coins,
+  DownloadSimple,
   Gear,
   House,
   Plus,
@@ -22,10 +24,11 @@ interface NavItem {
 }
 
 const ITEMS: readonly NavItem[] = [
-  { to: "/app", label: "Home", icon: House, end: true },
-  { to: "/app/activity", label: "Activity", icon: ClockCounterClockwise, end: false },
-  { to: "/app/policy", label: "Policy", icon: ShieldCheck, end: false },
-  { to: "/app/account", label: "Account", icon: User, end: false },
+  { to: "/app", label: "Overview", icon: House, end: true },
+  { to: "/app/activity", label: "My Missions", icon: ClockCounterClockwise, end: false },
+  { to: "/app/account", label: "My Agent", icon: User, end: false },
+  { to: "/app/verify", label: "My Proof", icon: ShieldCheck, end: false },
+  { to: "/capital", label: "My Capital", icon: Coins, end: false },
 ];
 
 export function AppShell() {
@@ -74,11 +77,17 @@ function Rail() {
         <PitMark />
       </Link>
       <Link
-        to="/app/start"
-        className="mb-4 inline-flex items-center justify-center gap-2 rounded-full bg-[#d82f2f] px-3 py-2.5 text-[0.9375rem] font-semibold text-[#f0e7d4] no-underline transition-transform active:scale-[0.98]"
+        to="/radar"
+        className="mb-2 inline-flex items-center justify-center gap-2 rounded-full border border-[rgb(240_231_212/0.28)] px-3 py-2.5 text-[0.9375rem] font-medium text-[var(--guide-cream)] no-underline"
       >
-        <Plus size={16} weight="bold" aria-hidden="true" />
-        Start
+        Radar
+      </Link>
+      <Link
+        to="/download"
+        className="mb-4 inline-flex items-center justify-center gap-2 rounded-full bg-[#d82f2f] px-3 py-2.5 text-[0.9375rem] font-semibold text-[#f0e7d4] no-underline"
+      >
+        <DownloadSimple size={16} weight="bold" aria-hidden="true" />
+        Download
       </Link>
       <nav aria-label="Main" className="flex flex-col gap-1">
         {ITEMS.map((item) => (
@@ -144,10 +153,10 @@ function TopBar({ address, onSignOut }: { address?: string; onSignOut: () => voi
         <div className="flex items-center gap-2">
           <Link
             to="/app/start"
-            className="inline-flex items-center gap-1 rounded-full bg-[#d82f2f] px-3 py-1.5 text-[0.8125rem] font-semibold text-[#f0e7d4] no-underline lg:hidden"
+            className="inline-flex items-center gap-1 rounded-full border border-[rgb(240_231_212/0.28)] px-3 py-1.5 text-[0.8125rem] font-medium text-[var(--guide-cream)] no-underline lg:hidden"
           >
             <Plus size={14} weight="bold" aria-hidden="true" />
-            Start
+            Setup
           </Link>
           {address ? (
             <span

@@ -39,22 +39,38 @@ const STEPS = [
   },
   {
     id: 2,
-    title: "Get started",
+    title: "MAINNET only",
     why: "This flagship product is MAINNET: Aristotle 16661 and Hyperliquid mainnet. The laboratory stays behind developer mode.",
-    action: "Tap a card. One workspace. Never both.",
+    action: "Stay on production. Never both networks.",
     fail: namedState("WRONG_NETWORK"),
     Diagram: DiagramMainnet,
   },
   {
     id: 3,
-    title: "Protect my strategy",
-    why: "Pair this browser at /pair, then sign. PIT sends your private strategy only through 0G’s verified sealed path. The website never receives the token.",
-    action: "Open pairing, then sign the Direct message from the bound wallet.",
-    fail: namedState("SIGNATURE_DECLINED"),
-    Diagram: DiagramSealed,
+    title: "Download PIT Desktop",
+    why: "The private brain, policy, keys, and AUTHORIZE live on Windows. This browser cannot hold a session key.",
+    action: "Install the x64 installer. Verify SHA256. Authenticode is not claimed.",
+    fail: namedState("BACKEND_UNREACHABLE"),
+    Diagram: DiagramPrivate,
   },
   {
     id: 4,
+    title: "See live intelligence",
+    why: "Radar is public Hyperliquid marks. It is not your private thesis.",
+    action: "Open radar, then come back.",
+    fail: namedState("BACKEND_UNREACHABLE"),
+    Diagram: DiagramLearn,
+  },
+  {
+    id: 5,
+    title: "Verify a mission",
+    why: "Proof says what was checked and how. This site will not badge Verified without evidence.",
+    action: "Open the proof center. Paste a chain hash if you have one.",
+    fail: namedState("BACKEND_UNREACHABLE"),
+    Diagram: DiagramSealed,
+  },
+  {
+    id: 6,
     title: "Connect Hyperliquid",
     why: "PIT needs YOUR trading account. Spot USDC counts as funded.",
     action: "Open Hyperliquid in your wallet, then open Hyperliquid API to approve the PIT agent. PIT reads public state only from the web.",
@@ -62,7 +78,7 @@ const STEPS = [
     Diagram: DiagramHyperliquid,
   },
   {
-    id: 5,
+    id: 7,
     title: "Choose capital",
     why: "You decide what this desk may touch. PIT does not size from a model.",
     action: "Keep clip at 10 USD until you raise it on purpose.",
@@ -70,7 +86,7 @@ const STEPS = [
     Diagram: DiagramPolicy,
   },
   {
-    id: 6,
+    id: 8,
     title: "Set first policy",
     why: "The law is readable. The model cannot raise clip, leverage, or permissions.",
     action: "Read the cards. Change them on desktop or CLI if needed.",
@@ -78,7 +94,7 @@ const STEPS = [
     Diagram: DiagramPolicy,
   },
   {
-    id: 7,
+    id: 9,
     title: "Create local session",
     why: "The 24-hour agent lives in the OS keychain. Not here. If Hyperliquid still lists it, PIT reuses the same address.",
     action: "Create the session in PIT Desktop, then approve the printed agent on Hyperliquid API.",
@@ -86,7 +102,7 @@ const STEPS = [
     Diagram: DiagramSession,
   },
   {
-    id: 8,
+    id: 10,
     title: "Approve scoped agent",
     why: "Your wallet must approveAgent the printed address. Withdraw stays denied.",
     action: "Approve on Hyperliquid API. Hyperliquid must list PIT. Withdraw stays denied.",
@@ -94,34 +110,18 @@ const STEPS = [
     Diagram: DiagramAuthorize,
   },
   {
-    id: 9,
-    title: "Permissions review",
-    why: "Order yes. Cancel yes. Withdraw no. Leverage no.",
-    action: "Read the card. Walk away if it is wrong.",
-    fail: namedState("AUTHORIZE_WEB_DENIED"),
-    Diagram: DiagramAuthorize,
-  },
-  {
-    id: 10,
-    title: "Research-only test",
-    why: "Watch and ask can run without sending an order.",
-    action: "Open Home. Empty Watch is honest if nothing matches.",
-    fail: namedState("BACKEND_UNREACHABLE"),
-    Diagram: DiagramPrivate,
-  },
-  {
     id: 11,
-    title: "Optional tiny test trade",
-    why: "A dust fill is YOUR AUTHORIZE on desktop. This browser cannot sign it.",
-    action: "Open PIT desktop. Type AUTHORIZE on the exact preview.",
-    fail: namedState("AUTHORIZE_WEB_DENIED"),
-    Diagram: DiagramAuthorize,
+    title: "Pair this browser",
+    why: "Pairing is a late step. It only binds this browser as a viewer. The website never receives the session key.",
+    action: "Open pairing, then sign the Direct message from the bound wallet on desktop.",
+    fail: namedState("SIGNATURE_DECLINED"),
+    Diagram: DiagramSealed,
   },
   {
     id: 12,
     title: "Ready",
-    why: "The desk hunts. You authorize. Receipts verify.",
-    action: "Go to Home.",
+    why: "The desk hunts. You authorize. Receipts verify. Chat cannot enable autonomy.",
+    action: "Go to Overview, then open PIT Desktop.",
     fail: namedState("BACKEND_UNREACHABLE"),
     Diagram: DiagramLearn,
   },
@@ -211,15 +211,22 @@ export function StartFlow() {
 
           {current.id === 3 ? (
             <div className="mt-10">
-              <ButtonLink as={Link} to="/pair" size="lg">
-                Pair PIT Desktop
+              <ButtonLink as={Link} to="/download" size="lg">
+                Download PIT Desktop
               </ButtonLink>
-              <DirectSign />
-              <div className="mt-6">
-                <ButtonLink href="https://pc.0g.ai/sdk/dashboard/funds" target="_blank" rel="noreferrer" variant="secondary" size="lg">
-                  Open 0G Private Compute
-                </ButtonLink>
+              <div className="mt-8">
+                <Button type="button" trailingArrow size="lg" onClick={next}>
+                  Continue
+                </Button>
               </div>
+            </div>
+          ) : null}
+
+          {current.id === 4 ? (
+            <div className="mt-10">
+              <ButtonLink as={Link} to="/radar" size="lg">
+                Open live radar
+              </ButtonLink>
               <div className="mt-8">
                 <Button type="button" trailingArrow size="lg" onClick={next}>
                   Continue
@@ -229,6 +236,19 @@ export function StartFlow() {
           ) : null}
 
           {current.id === 5 ? (
+            <div className="mt-10">
+              <ButtonLink as={Link} to="/proof" size="lg">
+                Open proof center
+              </ButtonLink>
+              <div className="mt-8">
+                <Button type="button" trailingArrow size="lg" onClick={next}>
+                  Continue
+                </Button>
+              </div>
+            </div>
+          ) : null}
+
+          {current.id === 7 ? (
             <div className="mt-10 grid gap-4 sm:grid-cols-2">
               <ChoiceCard
                 title="10 USD clip"
@@ -245,19 +265,38 @@ export function StartFlow() {
             </div>
           ) : null}
 
-          {current.id === 6 ? (
+          {current.id === 8 ? (
             <div className="mt-10">
               <PolicyPanel />
+              <div className="mt-8">
+                <Button type="button" trailingArrow size="lg" onClick={next}>
+                  Continue
+                </Button>
+              </div>
             </div>
           ) : null}
 
-          {current.id !== 2 && current.id !== 3 && current.id !== 5 ? (
+          {current.id === 11 ? (
+            <div className="mt-10">
+              <ButtonLink as={Link} to="/pair" size="lg">
+                Pair PIT Desktop
+              </ButtonLink>
+              <DirectSign />
+              <div className="mt-8">
+                <Button type="button" trailingArrow size="lg" onClick={next}>
+                  Continue
+                </Button>
+              </div>
+            </div>
+          ) : null}
+
+          {current.id !== 2 && current.id !== 3 && current.id !== 4 && current.id !== 5 && current.id !== 7 && current.id !== 8 && current.id !== 11 ? (
             <figure className="mt-10 max-w-[36rem] overflow-hidden border border-[rgb(240_231_212/0.28)]">
               <Diagram className="aspect-[16/10] w-full" />
             </figure>
           ) : null}
 
-          {current.id !== 2 && current.id !== 3 && current.id !== 5 ? (
+          {current.id !== 2 && current.id !== 3 && current.id !== 4 && current.id !== 5 && current.id !== 7 && current.id !== 8 && current.id !== 11 ? (
             <Bezel className="mt-8 max-w-[36rem]">
               <p className="text-[0.8125rem] text-[rgb(240_231_212/0.55)]">{current.id} of 12</p>
               <p className="mt-4 text-[1.0625rem] leading-7 text-[rgb(240_231_212/0.8)]">
@@ -270,9 +309,9 @@ export function StartFlow() {
             </Bezel>
           ) : null}
 
-          {current.id !== 2 && current.id !== 3 && current.id !== 5 ? (
+          {current.id !== 2 && current.id !== 3 && current.id !== 4 && current.id !== 5 && current.id !== 7 && current.id !== 8 && current.id !== 11 ? (
             <div className="mt-10">
-              {current.id === 4 || current.id === 7 || current.id === 8 ? (
+              {current.id === 6 || current.id === 9 || current.id === 10 ? (
                 <div className="mb-4">
                   <ButtonLink href="https://app.hyperliquid.xyz/API" target="_blank" rel="noreferrer" size="lg">
                     Open Hyperliquid API
@@ -285,7 +324,7 @@ export function StartFlow() {
                 </Button>
               ) : (
                 <ButtonLink as={Link} to="/app" trailingArrow size="lg">
-                  Open Home
+                  Open Overview
                 </ButtonLink>
               )}
             </div>

@@ -51,7 +51,7 @@ export function WalletGate() {
                   <p className="text-[0.75rem] tracking-[0.16em] text-[rgb(240_231_212/0.55)]">YOUR WALLET</p>
                   <p className="mt-2 font-mono break-all text-[0.9375rem]">{addr}</p>
                   <div className="mt-5 flex flex-wrap gap-3">
-                    <ButtonLink as={Link} to="/app/start" trailingArrow size="lg">
+                    <ButtonLink as={Link} to="/app" trailingArrow size="lg">
                       Continue
                     </ButtonLink>
                     <Button variant="secondary" type="button" onClick={logout}>

@@ -277,3 +277,375 @@ html[data-theme="guide"] body {
   opacity: 0.45;
   pointer-events: none;
 }
+
+.intel-shell {
+  min-height: 100dvh;
+  background: #0b0b0c;
+  color: #ece8e1;
+  padding-bottom: 5.5rem;
+}
+
+@media (min-width: 640px) {
+  .intel-shell {
+    padding-bottom: 0;
+  }
+}
+
+.intel-nav {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  border-bottom: 1px solid rgb(236 232 225 / 0.12);
+  background: rgb(11 11 12 / 0.92);
+  backdrop-filter: blur(12px);
+}
+
+.intel-nav-inner {
+  margin-inline: auto;
+  display: flex;
+  max-width: 1120px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem 1.25rem;
+}
+
+.intel-link {
+  border-radius: 999px;
+  padding: 0.4rem 0.7rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: rgb(236 232 225 / 0.62);
+  text-decoration: none;
+}
+
+.intel-link:hover,
+.intel-link-on {
+  color: #ece8e1;
+  background: rgb(236 232 225 / 0.06);
+}
+
+.intel-main {
+  margin-inline: auto;
+  max-width: 1120px;
+  padding: 2.5rem 1.25rem 4rem;
+}
+
+.intel-hero {
+  padding-top: 1.5rem;
+  padding-bottom: 2rem;
+}
+
+.intel-kicker {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgb(236 232 225 / 0.45);
+}
+
+.intel-display {
+  margin-top: 1rem;
+  font-size: clamp(2.25rem, 7vw, 4.5rem);
+  font-weight: 650;
+  letter-spacing: -0.05em;
+  line-height: 0.98;
+}
+
+.intel-title {
+  font-size: clamp(1.5rem, 4vw, 2.25rem);
+  font-weight: 650;
+  letter-spacing: -0.04em;
+  line-height: 1.1;
+}
+
+.intel-lede {
+  margin-top: 1rem;
+  max-width: 52ch;
+  font-size: 1.0625rem;
+  line-height: 1.65;
+  color: rgb(236 232 225 / 0.68);
+}
+
+.intel-cta,
+.intel-secondary,
+.intel-ghost,
+.intel-chip,
+.intel-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.5rem;
+  border-radius: 999px;
+  padding: 0.4rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+  border: 1px solid transparent;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.intel-cta {
+  background: #d82f2f;
+  color: #fff;
+}
+
+.intel-secondary {
+  border-color: rgb(236 232 225 / 0.28);
+  color: #ece8e1;
+}
+
+.intel-ghost {
+  color: rgb(236 232 225 / 0.7);
+}
+
+.intel-chip {
+  border-color: rgb(236 232 225 / 0.16);
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: rgb(236 232 225 / 0.75);
+}
+
+.intel-icon-btn {
+  width: 2.5rem;
+  justify-content: center;
+  padding: 0;
+  border-color: rgb(236 232 225 / 0.2);
+}
+
+.intel-input {
+  width: 100%;
+  border: 1px solid rgb(236 232 225 / 0.18);
+  background: #111;
+  padding: 0.7rem 0.85rem;
+  color: #ece8e1;
+  outline: none;
+}
+
+.intel-input:focus {
+  border-color: #d82f2f;
+}
+
+.intel-section {
+  margin-top: 3.5rem;
+  padding-top: 2rem;
+}
+
+.intel-metrics {
+  display: grid;
+  gap: 1px;
+  margin-top: 1.25rem;
+  background: rgb(236 232 225 / 0.12);
+  border: 1px solid rgb(236 232 225 / 0.12);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+@media (min-width: 768px) {
+  .intel-metrics {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.intel-metric {
+  background: #0b0b0c;
+  padding: 1rem 1rem 1.1rem;
+}
+
+.intel-metric dt {
+  font-size: 0.6875rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgb(236 232 225 / 0.45);
+}
+
+.intel-metric dd {
+  margin-top: 0.4rem;
+  font-size: 1.35rem;
+  font-weight: 650;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+}
+
+.intel-metric p {
+  margin-top: 0.35rem;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  color: rgb(236 232 225 / 0.42);
+}
+
+.intel-table {
+  border: 1px solid rgb(236 232 225 / 0.12);
+}
+
+.intel-row {
+  display: grid;
+  grid-template-columns: 4.5rem 1fr 1fr auto;
+  gap: 0.5rem 0.75rem;
+  align-items: baseline;
+  padding: 0.85rem 0.9rem;
+  border-top: 1px solid rgb(236 232 225 / 0.1);
+  color: inherit;
+  text-decoration: none;
+}
+
+@media (min-width: 640px) {
+  .intel-row {
+    grid-template-columns: 5rem 1fr 1fr 1fr 1fr auto;
+  }
+}
+
+.intel-row:first-child {
+  border-top: 0;
+}
+
+.intel-row-head {
+  font-size: 0.6875rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgb(236 232 225 / 0.4);
+}
+
+a.intel-row:hover {
+  background: rgb(236 232 225 / 0.04);
+}
+
+.intel-num {
+  font-variant-numeric: tabular-nums;
+  font-size: 0.875rem;
+}
+
+.intel-steps {
+  display: grid;
+  gap: 0.9rem;
+  margin-top: 1.5rem;
+  padding-left: 1.2rem;
+}
+
+.intel-steps li {
+  max-width: 56ch;
+  font-size: 1rem;
+  line-height: 1.6;
+  color: rgb(236 232 225 / 0.72);
+}
+
+.intel-grid-2 {
+  display: grid;
+  gap: 1.25rem;
+}
+
+@media (min-width: 768px) {
+  .intel-grid-2 {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.intel-pair dt {
+  font-weight: 650;
+}
+
+.intel-pair dd {
+  margin-top: 0.35rem;
+  font-size: 0.9375rem;
+  line-height: 1.55;
+  color: rgb(236 232 225 / 0.62);
+}
+
+.intel-list {
+  display: grid;
+  gap: 0.45rem;
+  margin-top: 0.75rem;
+  padding-left: 1.1rem;
+  font-size: 0.9375rem;
+  line-height: 1.55;
+  color: rgb(236 232 225 / 0.72);
+}
+
+.intel-seal {
+  margin-top: 2.5rem;
+  border: 1px dashed rgb(236 232 225 / 0.22);
+  padding: 1.25rem 1.35rem;
+}
+
+.intel-banner {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  border-bottom: 1px solid rgb(236 232 225 / 0.1);
+  padding: 0.55rem 1.25rem;
+  font-size: 0.75rem;
+  color: rgb(236 232 225 / 0.7);
+}
+
+.intel-drawer {
+  display: grid;
+  padding: 0.5rem 1.25rem 1rem;
+}
+
+.intel-drawer-link {
+  border-bottom: 1px solid rgb(236 232 225 / 0.1);
+  padding: 0.85rem 0;
+  color: #ece8e1;
+  text-decoration: none;
+}
+
+.intel-dock {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 30;
+  display: flex;
+  gap: 0.5rem;
+  border-top: 1px solid rgb(236 232 225 / 0.12);
+  background: #0b0b0c;
+  padding: 0.65rem 1rem calc(0.65rem + env(safe-area-inset-bottom));
+}
+
+.intel-ask {
+  position: fixed;
+  right: 1rem;
+  bottom: 4.75rem;
+  z-index: 35;
+  border-radius: 999px;
+  background: #ece8e1;
+  color: #0b0b0c;
+  padding: 0.55rem 0.95rem;
+  font-size: 0.8125rem;
+  font-weight: 650;
+}
+
+@media (min-width: 640px) {
+  .intel-ask {
+    bottom: 1.25rem;
+  }
+}
+
+.intel-chat {
+  position: fixed;
+  right: 1rem;
+  bottom: 7.5rem;
+  z-index: 36;
+  width: min(24rem, calc(100vw - 2rem));
+  border: 1px solid rgb(236 232 225 / 0.16);
+  background: #111113;
+  padding: 1.1rem;
+}
+
+@media (min-width: 640px) {
+  .intel-chat {
+    bottom: 4.25rem;
+  }
+}
+
+.intel-pipe {
+  display: grid;
+  gap: 0.35rem;
+  font-size: 0.8125rem;
+  letter-spacing: 0.08em;
+}
+
+.intel-pipe-arrow {
+  display: block;
+  color: rgb(236 232 225 / 0.35);
+}
+

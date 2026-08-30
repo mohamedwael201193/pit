@@ -1,7 +1,5 @@
-// MOCK TEST HARNESS — public UI copy only. Never stub iTransfer or AUTHORIZE.
-
 export function assertVerifyNav(href: string) {
-  if (href !== "#verify") {
+  if (href !== "/proof") {
     throw new Error("verify nav");
   }
 }

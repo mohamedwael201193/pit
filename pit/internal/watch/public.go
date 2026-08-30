@@ -9,6 +9,7 @@ import (
 	"github.com/mohamedwael201193/pit/internal/hl"
 	"github.com/mohamedwael201193/pit/internal/policy"
 	"github.com/mohamedwael201193/pit/internal/skills"
+	"github.com/mohamedwael201193/pit/internal/venue"
 )
 
 type PublicCoin struct {
@@ -89,29 +90,33 @@ func toPublic(c Candidate, net, now string) PublicCoin {
 	}
 	facts := skills.Apply(c.Book, nil)
 	return PublicCoin{
-		Coin:         c.Coin,
-		Venue:        "hyperliquid",
-		Reason:       c.Reason,
-		Why:          WhyHuman(c),
-		Trend:        Trend(c.Book),
-		Rank:         Rank(c),
-		Freshness:    "live",
-		Mark:         c.Book.MarkPx,
-		Oracle:       c.Book.OraclePx,
-		Funding:      c.Book.Funding,
-		OpenInterest: c.Book.OpenInterest,
-		Volume:       c.Book.DayNtlVlm,
-		SzDecimals:   c.Book.SzDecimals,
-		Timestamp:    now,
-		Provenance:   "hyperliquid.info metaAndAssetCtxs",
-		Source:       "hyperliquid",
-		Network:      net,
-		Eligible:     c.Eligible,
-		PolicyFit:    fit,
-		RiskFlags:    c.Risk,
-		Block:        c.Block,
-		Skills:       facts,
-		SkillIDs:     skills.IDs(facts),
+		Coin:              c.Coin,
+		Venue:             "hyperliquid",
+		Reason:            c.Reason,
+		Why:               WhyHuman(c),
+		Trend:             Trend(c.Book),
+		Rank:              Rank(c),
+		Freshness:         "live",
+		Mark:              c.Book.MarkPx,
+		Oracle:            c.Book.OraclePx,
+		Funding:           c.Book.Funding,
+		OpenInterest:      c.Book.OpenInterest,
+		Volume:            c.Book.DayNtlVlm,
+		SzDecimals:        c.Book.SzDecimals,
+		Timestamp:         now,
+		Provenance:        "hyperliquid.info metaAndAssetCtxs",
+		Source:            "hyperliquid",
+		Network:           net,
+		Eligible:          c.Eligible,
+		PolicyFit:         fit,
+		ResearchEligible:  c.Eligible,
+		PolicyEligible:    c.Eligible,
+		ExecutionFeasible: false,
+		MinNotional:       venue.PerpMinNotionalUSD(c.Book.MarkPx, c.Book.SzDecimals),
+		RiskFlags:         c.Risk,
+		Block:             c.Block,
+		Skills:            facts,
+		SkillIDs:          skills.IDs(facts),
 	}
 }
 
