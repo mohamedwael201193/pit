@@ -2,6 +2,34 @@
 
 ---
 
+## M122 — Pair strip on the desk. Agent chat. PIT 0.9.1
+
+- **Source:** Pair token lived inside a collapsed Security fold. Chat was a linear transcript. Users asked it to research the market, pick the best book, explain why to enter, show 0G progress, show txs, and enter when they accept.
+- **Discovery:** Chat stays host-parsed. It still cannot AUTHORIZE, pin, or arm. Accept means type AUTHORIZE on Research. Pair code belongs on every desk page.
+- **Candidate:** Persistent pair strip. Agent timeline with Watch → 0G Direct → committee → why → preview → AUTHORIZE on this computer. Honest ledger cards. Version **0.9.1**.
+- **Kill:** Chat signing. Invented fills. Second landing accent. Flatten OID 529167222216. Remint PIT-4bbee556. Authenticode claim.
+- **Next:** Tag `v0.9.1`, NSIS, Vercel + Render. Do not remint. Do not flatten. Do not start a live trade.
+
+DATE/TIME: 2026-08-30 23:49+03
+PHASE: Agent desk. Chat never authorizes.
+GOAL: Pair token visible. Chat can run a research job by text and show 0G progress. User still types AUTHORIZE on this computer.
+RESULT:
+- **IMPLEMENTED:** Companion/desktop **0.9.1**. Pair strip under the title bar. Security pairing is open, not folded. Chat agent run: live book, 0G stage track, committee marks, preview, Accept on this computer, desk ledger. Host-parsed intents for research-the-best, why enter, show txs, I accept, AUTHORIZE-in-chat refused.
+- **TESTED:** `go test ./...` PASS. Desktop `tsc -b` pass. `npx tsx e2e/run.ts` including chat-agent harness (no authorizePreview in CommandChat).
+- **LIVE:** After tag and installer. No new MAINNET fill. ETH OID `529167222216` untouched.
+- **BLOCKED:** Authenticode still absent. Chat still cannot authorize. iTransfer still not live on Aristotle.
+
+SECURITY RESULT: Chat cannot AUTHORIZE. Accept opens Research. Arm still desktop-only. Kill switch still does not flatten.
+TX HASH / OID: Historical OID `529167222216` unchanged.
+CLASSIFICATION:
+- Pair strip: **IMPLEMENTED + TESTED**
+- Agent chat + 0G progress + honest txs: **IMPLEMENTED + TESTED**
+- AUTHORIZE remains Research-only: **UNCHANGED**
+PRODUCTION READY: 0.9.1 installer after tag. Public claim unchanged.
+NEXT STEP: `python _scripts/push_head.py`. `python _scripts/tag_push.py v0.9.1`. Deploy web.
+
+---
+
 ## M121 — GitHub Latest 0.9.0. Hero centered. Beats ordered.
 
 - **Source:** GitHub Releases still showed **0.8.0** because Latest is the last *tag*, not HEAD. Source was already 0.9.0. Hero copy was right but the coral board sat under the nav. Must-see Beats used a sticky 100dvh pan, so the SVGs looked unordered and a blank band followed the cards. Dual heading still said **MAINNET only**.

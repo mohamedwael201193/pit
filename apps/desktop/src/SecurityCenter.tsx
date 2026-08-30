@@ -99,7 +99,6 @@ export function SecurityCenter({
   const hl = checkNamed(checks, "hl_agent");
   const ready =
     attention.title === "Desk is ready" || attention.title.startsWith("Watching");
-  const pairNow = /pair|wallet/i.test(attention.title);
   const spine = [
     probeOf(items, "local"),
     probeOf(items, "session"),
@@ -238,28 +237,14 @@ export function SecurityCenter({
         <section className="sec-block" id="pairing">
           <h2>Browser</h2>
           <p className="sec-line">Optional. Orders still sign on this computer if the site is unpaired.</p>
-          {pairNow ? (
-            <PairingDock
-              code={code}
-              expires={expires}
-              companionUp={Boolean(companionUp)}
-              paired={paired}
-              devices={pairingDevices}
-              onRotate={onRotatePair}
-            />
-          ) : (
-            <details className="sec-fold">
-              <summary>{paired ? "Browser paired" : "Pair a browser"}</summary>
-              <PairingDock
-                code={code}
-                expires={expires}
-                companionUp={Boolean(companionUp)}
-                paired={paired}
-                devices={pairingDevices}
-                onRotate={onRotatePair}
-              />
-            </details>
-          )}
+          <PairingDock
+            code={code}
+            expires={expires}
+            companionUp={Boolean(companionUp)}
+            paired={paired}
+            devices={pairingDevices}
+            onRotate={onRotatePair}
+          />
         </section>
       ) : null}
 

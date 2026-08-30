@@ -27,6 +27,7 @@ import {
   mutateChatThread,
   pairCode,
   rotatePairCode,
+  prettyCode,
   pinLocalPolicy,
   fetchPolicy,
   previewPolicy,
@@ -59,6 +60,7 @@ import { probes } from "./readiness";
 import { committeeVerified } from "./honesty";
 import { AutomationCenter } from "./AutomationCenter";
 import { CommandChat } from "./CommandChat";
+import { PairingDock } from "./PairingDock";
 import { ActivityTimeline } from "./ActivityTimeline";
 import { ProofTimeline } from "./ProofTimeline";
 import { PositionsPanel } from "./PositionsPanel";
@@ -999,6 +1001,12 @@ export function App() {
             label: "Mode",
             value: mission.mode === "guarded" && mission.running ? "sleep" : mission.mode === "research_only" ? "research" : "manual",
           },
+          {
+            id: "pair",
+            label: "Browser",
+            value: status?.paired ? "paired" : code ? prettyCode(code) : "unpaired",
+            ok: Boolean(status?.paired),
+          },
         ]}
       />
       <BootGate
@@ -1139,6 +1147,17 @@ export function App() {
             ) : null}
           </div>
         </header>
+        {setupDone ? (
+          <PairingDock
+            compact
+            code={code}
+            expires={expires}
+            companionUp={companionUp}
+            paired={Boolean(status?.paired)}
+            devices={status?.pairingDevices}
+            onRotate={() => void onRotatePair()}
+          />
+        ) : null}
         {companionUp && status?.version && String(status.version) !== DESKTOP_VERSION ? (
           <article className="card stop" role="status">
             <p className="label">COMPANION VERSION</p>
@@ -1242,6 +1261,9 @@ export function App() {
                 roles: researchRoles,
                 kind: researchKind,
               }}
+              coins={coins}
+              activity={activity}
+              preview={preview}
             />
             ) : null}
             {showChat ? null : (

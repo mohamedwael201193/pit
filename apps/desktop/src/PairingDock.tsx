@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { prettyCode } from "./companion";
 import { LINKS } from "./links";
 import { ExternalLink } from "./ExternalLink";
@@ -10,6 +11,7 @@ export function PairingDock({
   devices,
   busy,
   onRotate,
+  compact,
 }: {
   code: string;
   expires?: string;
@@ -18,11 +20,24 @@ export function PairingDock({
   devices?: number;
   busy?: boolean;
   onRotate?: () => void;
+  compact?: boolean;
 }) {
   const display = code ? prettyCode(code) : companionUp ? "rotating…" : "waiting for local PIT";
-  const left = expires ? remaining(expires) : "";
+  const [left, setLeft] = useState(() => (expires ? remaining(expires) : ""));
+
+  useEffect(() => {
+    if (!expires) {
+      setLeft("");
+      return;
+    }
+    const tick = () => setLeft(remaining(expires));
+    tick();
+    const id = window.setInterval(tick, 1000);
+    return () => window.clearInterval(id);
+  }, [expires]);
+
   return (
-    <section className="pairing-dock" aria-label="Browser pairing">
+    <section className={compact ? "pairing-dock pair-strip" : "pairing-dock"} aria-label="Browser pairing">
       <div>
         <p className="label">Pair this browser</p>
         <p className="pair-chip" aria-label="pairing code">

@@ -4,26 +4,24 @@ import {
   pickChatModel,
   fetchChatLog,
   fetchModelCatalog,
+  type ActivityEvent,
   type ChatMessage,
   type ChatReply,
   type DirectModel,
 } from "./companion";
 import { ExternalLink } from "./ExternalLink";
 import { openExternal } from "./open";
+import { AgentRun, CHAT_AGENT_COPY } from "./AgentRun";
 
 const PROMPTS = [
-  "What is happening with BTC?",
-  "Why is ETH moving?",
+  "Research the market. Choose the best opportunity now. Tell me why to enter.",
   "Find the best opportunity.",
-  "Research SOL.",
-  "What happened overnight?",
+  "Show all txs.",
   "Why didn't PIT trade?",
-  "Show my current risk.",
+  "What is happening with BTC?",
   "Show open positions.",
   "Show my policy.",
-  "Compare BTC and ETH.",
   "Start a sleep mission.",
-  "How did last night's mission perform?",
 ];
 
 export function CommandChat({
@@ -35,6 +33,9 @@ export function CommandChat({
   onConfirmAutonomy,
   live,
   island,
+  coins,
+  activity,
+  preview,
 }: {
   thread: string;
   onNavigate: (view: string) => void;
@@ -59,6 +60,24 @@ export function CommandChat({
     roles: Array<{ role?: string; verify_e2ee?: string }>;
     kind?: string;
   };
+  coins?: Array<{
+    coin: string;
+    why?: string;
+    mark?: number;
+    eligible?: boolean;
+    executionFeasible?: boolean;
+    previewReady?: boolean;
+  }>;
+  activity?: ActivityEvent[];
+  preview?: {
+    market?: string;
+    side?: string;
+    sz?: number;
+    hash?: string;
+    notionalUsd?: number;
+    reasons?: string[];
+    eligible?: boolean;
+  } | null;
 }) {
   const [draft, setDraft] = useState("");
   const [busy, setBusy] = useState(false);
@@ -164,7 +183,11 @@ export function CommandChat({
       onConfirmAutonomy?.(r.hours || 8);
       return;
     }
-    if (r.start_research) onResearch(r.coin || "");
+    if (r.start_research) {
+      onResearch(r.coin || "");
+      return;
+    }
+    if (r.tool === "preview.show" || r.tool === "refuse_execute") onOpenPreview();
   }
 
   const researchSku = privateModels[0];
@@ -182,7 +205,7 @@ export function CommandChat({
           <p className="label">Chat</p>
           <div className="honesty-row">
             <span className="honesty-chip">Host-parsed</span>
-            <span className="honesty-chip">Cannot AUTHORIZE</span>
+            <span className="honesty-chip">{CHAT_AGENT_COPY.cannotAuthorize}</span>
             <span className="honesty-chip">Cannot pin</span>
           </div>
           <p className="fine">
@@ -229,6 +252,15 @@ export function CommandChat({
         </div>
       </div>
       <div className="transcript" role="log">
+        <AgentRun
+          coins={coins || []}
+          island={island}
+          awaiting={live?.awaiting}
+          preview={preview}
+          activity={activity || []}
+          onOpenPreview={onOpenPreview}
+          onResearch={onResearch}
+        />
         {live ? (
           <article className="chat-live" aria-label="Live desk state">
             <p className="label">Live</p>
@@ -236,24 +268,13 @@ export function CommandChat({
               {live.running ? "Sleep Mission on" : "Manual"} · {live.coin || "no opportunity"} ·{" "}
               {(live.stage || "idle").replaceAll("_", " ")}
               {live.gate ? ` · gate ${live.gate.replaceAll("_", " ")}` : ""}
-              {live.awaiting ? " · awaiting AUTHORIZE" : ""}
+              {live.awaiting ? " · awaiting AUTHORIZE on Research" : ""}
             </p>
-            <div className="cta-row">
-              <button type="button" className="linkish" onClick={() => onNavigate("markets")}>
-                Opportunity
-              </button>
-              <button type="button" className="linkish" onClick={onOpenPreview}>
-                Research
-              </button>
-              <button type="button" className="linkish" onClick={() => onNavigate("activity")}>
-                Proof
-              </button>
-            </div>
           </article>
         ) : null}
         {lines.length === 0 ? (
           <div className="chat-empty">
-            <p>Ask this computer. Answers are host-parsed desk state, not a sealed model stream.</p>
+            <p>Ask this computer like an operator. It watches live books, runs 0G Direct research, and shows the ledger. Chat cannot AUTHORIZE.</p>
             <div className="prompt-chips">
               {PROMPTS.map((p) => (
                 <button key={p} type="button" className="chip-btn" onClick={() => void ask(p)}>
@@ -289,23 +310,6 @@ export function CommandChat({
             <p>Host is reading live desk state. This is not a sealed model stream.</p>
           </article>
         ) : null}
-        {island?.busy ? (
-          <article className="chat-card" role="status">
-            <p className="label">Researching {island.coin}</p>
-            <p>
-              {island.stage.replaceAll("_", " ")} · {(island.elapsedMs / 1000).toFixed(1)}s elapsed
-            </p>
-            {island.pollMiss ? <p role="status">Live view delayed — research is still running.</p> : null}
-            <p className="fine">
-              Researcher {roleMark(island.roles, "researcher")} · Challenger {roleMark(island.roles, "challenger")} · Risk{" "}
-              {roleMark(island.roles, "risk")}
-            </p>
-            {island.jobId ? <p className="fine">Job {island.jobId}</p> : null}
-            <button type="button" className="linkish" onClick={onOpenPreview}>
-              Open research
-            </button>
-          </article>
-        ) : null}
         {err ? (
           <p className="err" role="alert">
             {err}
@@ -327,7 +331,7 @@ export function CommandChat({
               e.currentTarget.form?.requestSubmit();
             }
           }}
-          placeholder="Ask this computer — host-parsed, not a sealed stream."
+          placeholder="Ask this computer to watch, research on 0G, or show txs. Chat cannot AUTHORIZE."
         />
         <div className="composer-row">
           <p className="fine" style={{ margin: 0 }}>
@@ -412,12 +416,6 @@ function ModelRow({
   );
 }
 
-function roleMark(roles: Array<{ role?: string; verify_e2ee?: string }>, name: string) {
-  return roles.some((r) => String(r.role).toLowerCase() === name && String(r.verify_e2ee).toUpperCase() === "OK")
-    ? "verified"
-    : "pending";
-}
-
 function ChatCard({
   tool,
   coin,
@@ -453,13 +451,13 @@ function ChatCard({
       </article>
     );
   }
-  if (tool === "research.start" || tool === "research.best") {
+  if (tool === "research.start" || tool === "research.best" || tool === "research.status") {
     return (
       <article className="chat-card">
-        <p className="label">Private research</p>
-        <p>Sealed Direct pass for {coin || "the best eligible book"}. Compute money, not trading capital.</p>
+        <p className="label">0G Direct TeeML</p>
+        <p>Sealed pass for {coin || "the best eligible book"}. Compute money, not trading capital. {CHAT_AGENT_COPY.cannotAuthorize}.</p>
         <button type="button" className="primary" onClick={onOpenPreview}>
-          Open research
+          Watch 0G stages
         </button>
       </article>
     );
@@ -467,10 +465,10 @@ function ChatCard({
   if (tool === "preview.show" || tool === "refuse_execute") {
     return (
       <article className="chat-card">
-        <p className="label">Exact preview</p>
-        <p>Review happens on this computer. Chat cannot AUTHORIZE.</p>
+        <p className="label">Accept on this computer</p>
+        <p>{CHAT_AGENT_COPY.cannotAuthorize}. {CHAT_AGENT_COPY.acceptOnDesk}.</p>
         <button type="button" className="primary" onClick={onOpenPreview}>
-          Review preview
+          Open AUTHORIZE
         </button>
       </article>
     );
@@ -537,7 +535,8 @@ function ChatCard({
   if (tool === "activity.list" || tool === "activity.today" || tool === "activity.proof") {
     return (
       <article className="chat-card">
-        <p className="label">Evidence</p>
+        <p className="label">Desk ledger</p>
+        <p>OID, receipt, and explorer links live on Activity. PIT will not invent a fill.</p>
         <button type="button" className="primary" onClick={() => onNavigate("activity")}>
           Open Activity
         </button>

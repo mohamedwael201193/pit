@@ -76,6 +76,24 @@ func Parse(text string) Result {
 		out.Reply = "Today's PIT trades, previews, and fills are on Activity with OID and receipt. Historical fills never appear inside a new preview."
 		return out
 	}
+	if wantsShowTxs(low) {
+		out.Tool = "activity.list"
+		out.Navigate = "activity"
+		out.Reply = "Desk ledger with OID, receipts, and explorer links is on Activity. PIT will not invent a fill. Chat cannot AUTHORIZE."
+		return out
+	}
+	if wantsAcceptPreview(low) {
+		out.Tool = "preview.show"
+		out.Navigate = "research"
+		out.Reply = "Accepting is AUTHORIZE on this computer. Chat cannot AUTHORIZE. Open Research and type AUTHORIZE on the exact preview."
+		return out
+	}
+	if wantsWhyEnter(low) && !wantsResearch(low) {
+		out.Tool = "experience.why"
+		out.Navigate = "research"
+		out.Reply = "Why to enter is host rank plus sealed Direct research. NOT ENOUGH DATA until enough verified cases exist. Chat cannot AUTHORIZE."
+		return out
+	}
 	if wantsOnchainProof(low) {
 		out.Tool = "activity.proof"
 		out.Navigate = "activity"
@@ -338,6 +356,9 @@ func wantsExecute(low string) bool {
 	if strings.HasPrefix(low, "buy ") || strings.HasPrefix(low, "sell ") {
 		return true
 	}
+	if strings.Contains(low, "authorize") || strings.Contains(low, "authorise") {
+		return true
+	}
 	return false
 }
 
@@ -514,7 +535,35 @@ func wantsBest(low string) bool {
 }
 
 func wantsResearchBest(low string) bool {
-	return wantsResearch(low) && (strings.Contains(low, "best") || strings.Contains(low, "strongest"))
+	return wantsResearch(low) && (strings.Contains(low, "best") || strings.Contains(low, "strongest") || strings.Contains(low, "choose") || strings.Contains(low, "pick the"))
+}
+
+func wantsAcceptPreview(low string) bool {
+	t := strings.Trim(low, "!?. ")
+	if t == "accept" || t == "i accept" || t == "yes enter" {
+		return true
+	}
+	return strings.Contains(low, "i accept") ||
+		strings.Contains(low, "accept the preview") ||
+		strings.Contains(low, "accept this") ||
+		strings.Contains(low, "enter the trade") ||
+		strings.Contains(low, "enter this trade") ||
+		strings.Contains(low, "enter it now")
+}
+
+func wantsWhyEnter(low string) bool {
+	return strings.Contains(low, "why should") ||
+		strings.Contains(low, "why enter") ||
+		strings.Contains(low, "should i enter") ||
+		strings.Contains(low, "should we enter")
+}
+
+func wantsShowTxs(low string) bool {
+	return strings.Contains(low, "show all tx") ||
+		strings.Contains(low, "show txs") ||
+		strings.Contains(low, "show tx") ||
+		strings.Contains(low, "show transaction") ||
+		strings.Contains(low, "show the ledger")
 }
 
 func wantsTradeStrongest(low string) bool {

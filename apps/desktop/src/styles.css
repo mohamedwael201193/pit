@@ -221,7 +221,17 @@ a { color: var(--cream); }
   margin: 0 0 16px;
   background: var(--lift);
 }
-.pairing-dock .pair-chip { font-size: 22px; letter-spacing: 0.14em; font-weight: 700; }
+.pairing-dock .pair-chip { font-size: 22px; letter-spacing: 0.14em; font-weight: 700; color: var(--cream); font-variant-numeric: tabular-nums; }
+.pairing-dock.pair-strip {
+  margin: 0;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  padding: 8px clamp(12px, 1.4vw, 20px);
+  background: #101216;
+  flex-shrink: 0;
+}
+.pairing-dock.pair-strip .pair-chip { font-size: 18px; }
 .model-menu.wide { min-width: 360px; max-height: 70vh; overflow: auto; }
 .ready-item.optional .ok, .ready-item.optional .mute { color: var(--mute); }
 .island { margin: 4px 0 0; font-size: 11px; opacity: 0.8; }
@@ -356,7 +366,77 @@ a { color: var(--cream); }
   font-size: 11px;
 }
 .copy-turn:hover { color: var(--cream); }
-.chat-empty { padding: 28px 8px; color: var(--mute); }
+.chat-empty { padding: 20px 8px; color: var(--mute); }
+
+.agent-run {
+  display: grid;
+  gap: 10px;
+  margin: 0 0 14px;
+}
+.agent-steps {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 0;
+  margin: 0;
+}
+.agent-steps li {
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--mute);
+  padding: 4px 8px;
+  border: 1px solid var(--hair);
+}
+.agent-steps li.on {
+  color: #140c0c;
+  background: var(--coral);
+  border-color: var(--coral);
+  font-weight: 700;
+}
+.agent-card {
+  border: 1px solid var(--line);
+  padding: 12px;
+  background: #101216;
+}
+.agent-card.og { box-shadow: inset 3px 0 0 var(--coral); }
+.agent-card.preview { background: #16110f; }
+.agent-coin {
+  font-size: 22px;
+  letter-spacing: -0.04em;
+  margin: 4px 0;
+}
+.agent-stage {
+  font-size: 15px;
+  letter-spacing: -0.03em;
+  margin: 4px 0 8px;
+}
+.og-track {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 3px;
+  margin: 8px 0;
+}
+.og-track span {
+  height: 6px;
+  background: #1c1f24;
+}
+.og-track span.lit { background: var(--coral); }
+.tx-rail {
+  list-style: none;
+  padding: 0;
+  margin: 8px 0;
+  display: grid;
+  gap: 8px;
+}
+.tx-rail li {
+  display: grid;
+  gap: 2px;
+  padding: 8px 0;
+  border-top: 1px solid var(--line);
+}
+.tx-rail li strong { font-size: 12px; letter-spacing: 0.04em; }
 .prompt-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
 .chip-btn {
   border: 1px solid var(--hair);

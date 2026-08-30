@@ -12,6 +12,7 @@ import { assertTeeNeverGreenIdle, assertDirectNotGreenWithoutAuth } from "./read
 import { assertNamedErrors } from "./errors.spec.ts";
 import { assertCapitalFloorIgnoresDust, assertDeskRanksExecutableFirst, assertPolicyClipTightCopy, assertAgenticIdPartial, assertDeskHeadlinePrefersExecutable } from "./capital.spec.ts";
 import { assertShellFilters } from "./shell.spec.ts";
+import { assertChatAgentCopy } from "./chat-agent.spec.ts";
 
 assertOfficialLinks();
 assertHonesty();
@@ -35,4 +36,5 @@ assertPolicyClipTightCopy();
 assertAgenticIdPartial();
 assertDeskHeadlinePrefersExecutable();
 assertShellFilters();
+assertChatAgentCopy();
 console.log("desktop e2e copy harness ok");

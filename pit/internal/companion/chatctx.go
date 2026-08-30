@@ -59,11 +59,11 @@ func (h *Hub) decorateChat(parsed deskcmd.Result) deskcmd.Result {
 			parsed.Navigate = ""
 			parsed.Tool = "research.status"
 			parsed.Coin = jobCoin
-			parsed.Reply = fmt.Sprintf("Already researching %s (job %s, %s). Chat cannot AUTHORIZE. Stay on Chat for live stages, or open Research.", jobCoin, jobID, stage)
+			parsed.Reply = fmt.Sprintf("Already researching %s (job %s, %s). 0G Direct TeeML is still running on this computer. Chat cannot AUTHORIZE. Stay on Chat for live stages.", jobCoin, jobID, stage)
 			break
 		}
 		if live := h.replyWatch(parsed); live != "" {
-			parsed.Reply = live + " " + parsed.Reply
+			parsed.Reply = live + " Starting sealed 0G Direct TeeML on this computer. Stages: read market, seal private book, contact provider, receive sealed response, verify TEE, researcher, challenger, risk, policy, exact preview. Chat cannot AUTHORIZE. When the preview is ready, type AUTHORIZE on Research."
 		}
 	case "policy.get":
 		parsed.Reply = h.replyPolicy()
@@ -418,10 +418,26 @@ func (h *Hub) replyCannotExecute(fallback string) string {
 func (h *Hub) replyActivity(fallback string) string {
 	evs := readActivity(h.Dir, 8)
 	if len(evs) == 0 {
-		return fallback
+		return fallback + " No desk events yet. PIT will not invent a fill."
 	}
-	last := evs[len(evs)-1]
-	return fmt.Sprintf("Last desk event: %s %s %s. Historical fills never appear inside a new preview. Open Activity.", last.Kind, last.Market, last.Status)
+	var b strings.Builder
+	b.WriteString("Desk ledger on this computer:\n")
+	start := 0
+	if len(evs) > 6 {
+		start = len(evs) - 6
+	}
+	for _, ev := range evs[start:] {
+		fmt.Fprintf(&b, "· %s %s %s", ev.Kind, ev.Market, ev.Status)
+		if ev.OID != "" {
+			fmt.Fprintf(&b, " OID %s", ev.OID)
+		}
+		if ev.Tx != "" {
+			fmt.Fprintf(&b, " tx %s", ev.Tx)
+		}
+		b.WriteByte('\n')
+	}
+	b.WriteString("Historical fills never appear inside a new preview. Chat cannot AUTHORIZE.")
+	return b.String()
 }
 
 func roleLine(roles []map[string]any) string {
