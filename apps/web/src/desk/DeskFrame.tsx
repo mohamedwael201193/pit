@@ -35,7 +35,7 @@ const MACHINE: readonly NavItem[] = [{ to: "/pair", label: "Pair", icon: LinkSim
 
 const DESK: readonly NavItem[] = [{ to: "/app", label: "Overview", icon: House, end: true }];
 
-const PROTECT: NavItem = { to: "/signin", label: "Protect my strategy", icon: LockKey, end: true };
+const PROTECT: NavItem = { to: "/protect", label: "Protect my strategy", icon: LockKey, end: true };
 
 export function DeskFrame() {
   const [chat, setChat] = useState(false);
@@ -204,7 +204,7 @@ function TopBar({ chatOpen, onAsk }: { chatOpen: boolean; onAsk: () => void }) {
             </>
           ) : (
             <Link
-              to="/signin"
+              to="/protect"
               className="rounded-full bg-[#d82f2f] px-3 py-1.5 text-[0.8125rem] font-medium text-[#f0e7d4] no-underline"
             >
               Sign in

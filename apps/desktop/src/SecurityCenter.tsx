@@ -138,7 +138,7 @@ export function SecurityCenter({
             <p>{p.detail}</p>
             {p.id === "wallet" && p.state !== "ok" ? <p className="fine">Open Desk first-run or bind this computer.</p> : null}
             {p.id === "direct" && p.state !== "ok" ? (
-              <ExternalLink className="primary" href={LINKS.app}>
+              <ExternalLink className="primary" href={LINKS.protect}>
                 Protect my strategy
               </ExternalLink>
             ) : null}

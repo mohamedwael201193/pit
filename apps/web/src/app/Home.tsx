@@ -41,7 +41,7 @@ export function Home() {
           Pair this computer
         </Link>
         {" · "}
-        <Link to="/signin" className="text-[#d82f2f]">
+        <Link to="/protect" className="text-[#d82f2f]">
           Protect my strategy
         </Link>
         {" · "}

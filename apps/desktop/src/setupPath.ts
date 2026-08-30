@@ -49,8 +49,8 @@ export function setupPath(
       title: "Protect private research",
       why: "One wallet signature stores the sealed-path token on this computer. The website never receives it.",
       tone: direct?.ok ? "READY" : wallet?.ok ? "ACTION" : "BLOCKED",
-      href: LINKS.app,
-      hrefLabel: "Open paired site",
+      href: LINKS.protect,
+      hrefLabel: "Sign in to link desktop",
     },
     {
       id: "hl",

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, Navigate, useLocation } from "react-router-dom";
 import { usePrivy } from "@privy-io/react-auth";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { PitMark } from "../brand/PitMark";
@@ -9,9 +9,14 @@ import { Button, ButtonLink } from "../ui/Button";
 
 export function WalletGate() {
   const { ready, authenticated, login, logout, user } = usePrivy();
+  const location = useLocation();
   const reduce = useReducedMotion();
   const [error, setError] = useState<string | null>(null);
   const addr = user?.wallet?.address;
+
+  if (ready && authenticated && location.pathname === "/signin") {
+    return <Navigate to="/protect" replace />;
+  }
 
   const run = async () => {
     setError(null);
@@ -51,7 +56,10 @@ export function WalletGate() {
                   <p className="text-[0.75rem] tracking-[0.16em] text-[rgb(240_231_212/0.55)]">YOUR WALLET</p>
                   <p className="mt-2 font-mono break-all text-[0.9375rem]">{addr}</p>
                   <div className="mt-5 flex flex-wrap gap-3">
-                    <ButtonLink as={Link} to="/app" trailingArrow size="lg">
+                    <ButtonLink as={Link} to="/protect" trailingArrow size="lg">
+                      Protect my strategy
+                    </ButtonLink>
+                    <ButtonLink as={Link} to="/app" variant="secondary" size="lg">
                       Overview
                     </ButtonLink>
                     <Button variant="secondary" type="button" onClick={logout}>

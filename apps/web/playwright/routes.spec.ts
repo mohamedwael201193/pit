@@ -2,7 +2,7 @@
 
 import { expect, test } from "./fixture";
 
-const ROUTES = ["/", "/radar", "/capital", "/missions", "/proof", "/agent", "/how-it-works", "/download", "/pair"];
+const ROUTES = ["/", "/radar", "/capital", "/missions", "/proof", "/agent", "/how-it-works", "/download", "/pair", "/protect"];
 
 for (const path of ROUTES) {
   test(`${path} renders without authorize`, async ({ page }) => {

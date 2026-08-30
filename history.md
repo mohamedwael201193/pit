@@ -2393,6 +2393,30 @@ CLASSIFICATION:
 PRODUCTION READY: Pairing hands off to wallet identity, not onboarding.
 NEXT STEP: Push and alias pit0g.vercel.app.
 
+---
+
+## M111 — Protect my strategy is desktop wallet-link, not Overview (2026-08-30)
+
+DATE/TIME: 2026-08-30 08:56+03
+PHASE: UI/UX. Do not flatten OID 529167222216. Do not remint PIT-4bbee556. Do not invent fills or APR. Do not enable Guarded. Do not claim iTransfer live.
+GOAL: "Protect my strategy" must open sign-in-wallet to link the browser with desktop (desktop setup Protect private research), not Overview and not get-started.
+RESULT:
+- **IMPLEMENTED:** Still **0.8.0**. No new installer.
+  1. New public `/protect`: Step 1 pair, Step 2 Connect your wallet, bind public address, then DirectSign. Token stays on the computer. Site never holds it.
+  2. Rail, Sign in, Pair CTAs, Home, `/signin`, `/app/start` all land on `/protect`. After connect, the primary action is Protect my strategy, not Overview.
+  3. Desktop catalog `LINKS.protect` = `https://pit0g.vercel.app/protect`. Security, Compute, setup path, next-fix, SetupWizard step "Protect private research", and companion `directDomain` href now open `/protect`. `LINKS.app` remains Overview.
+- **TESTED:** Web `tsc -b` pass. Desktop `tsc -b` pass. `go test ./internal/scan` pass. Playwright 26/26 PASS (protect heading, Connect your wallet, no Overview as Protect destination, `/signin` and `/app/start` redirect to `/protect`).
+- **BLOCKED:** Live Windows installer still compiled with `/app` until the next desktop rebuild. iTransfer UNAVAILABLE. Authenticode absent.
+
+SECURITY RESULT: Browser still cannot receive session keys, Direct token plaintext, private prompts, or private memory. Chat still cannot authorize, pin, or enable autonomy.
+TX HASH / OID: Historical OID `529167222216` unchanged.
+CLASSIFICATION:
+- Protect → wallet-link `/protect`: **IMPLEMENTED + TESTED**
+- Overview as Protect destination: **REMOVED**
+PRODUCTION READY: Web Protect is the desktop pairing signature step.
+NEXT STEP: Push, alias pit0g.vercel.app.
+
+
 
 
 

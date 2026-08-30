@@ -239,8 +239,8 @@ export function SetupWizard({
             receives it.
           </p>
           <p>{checks.find((c) => c.name === "direct_auth")?.ok ? "Protected on this computer." : "Waiting for the wallet signature."}</p>
-          <ExternalLink className="primary" href={LINKS.app}>
-            Open official page
+          <ExternalLink className="primary" href={LINKS.protect}>
+            Sign in to link desktop
           </ExternalLink>
           <button type="button" className="linkish" onClick={onCheck}>
             Check again

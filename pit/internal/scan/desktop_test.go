@@ -23,6 +23,7 @@ func TestOfficialLinkCatalog(t *testing.T) {
 	for _, want := range []string{
 		"https://pit0g.vercel.app/pair",
 		"https://pit0g.vercel.app/app",
+		"https://pit0g.vercel.app/protect",
 		"https://pc.0g.ai/sdk/dashboard/funds",
 		"https://app.hyperliquid.xyz",
 		"https://app.hyperliquid.xyz/API",

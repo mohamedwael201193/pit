@@ -59,7 +59,7 @@ export function ComputeCard({
         </p>
       ) : null}
       <div className="cta-row" style={{ marginTop: 0 }}>
-        <ExternalLink className={protectedOk ? "linkish" : "primary"} href={LINKS.app}>
+        <ExternalLink className={protectedOk ? "linkish" : "primary"} href={LINKS.protect}>
           Protect my strategy
         </ExternalLink>
         {protectedOk && !ready && !sponsor && !(credit?.detail || "").toLowerCase().includes("unread") ? (

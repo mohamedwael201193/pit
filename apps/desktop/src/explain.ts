@@ -3,7 +3,7 @@ import { LINKS } from "./links";
 export function explainStopHref(code: string | null): { href: string; label: string } | null {
   if (!code) return null;
   if (code === "direct_token_required" || code === "DIRECT_NOT_AUTHORIZED" || code === "sealer_not_wired") {
-    return { href: LINKS.app, label: "Protect my strategy" };
+    return { href: LINKS.protect, label: "Protect my strategy" };
   }
   if (
     code === "DIRECT_CREDIT_INSUFFICIENT" ||

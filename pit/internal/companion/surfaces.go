@@ -320,7 +320,7 @@ func directDomain(auth, credit cli.Check) map[string]any {
 		return map[string]any{
 			"id": "direct", "state": "ACTION REQUIRED", "why": auth.Detail,
 			"means": "A 24-hour wallet signature on the paired browser. This is not a funding dashboard and not trading capital.",
-			"do":    "Protect my strategy", "href": "https://pit0g.vercel.app/app", "hrefLabel": "Protect my strategy",
+			"do":    "Protect my strategy", "href": "https://pit0g.vercel.app/protect", "hrefLabel": "Protect my strategy",
 		}
 	}
 	return map[string]any{

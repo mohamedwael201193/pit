@@ -1,5 +1,4 @@
 import { Navigate, Route, Routes } from "react-router-dom";
-import { WalletGate } from "./app/WalletGate";
 import { AppShell } from "./app/AppShell";
 import { Home } from "./app/Home";
 import { Activity } from "./app/Activity";
@@ -19,6 +18,7 @@ import { ProofPage } from "./public/Proof";
 import { AgentPage } from "./public/Agent";
 import { HowPage } from "./public/How";
 import { DownloadPage } from "./public/Download";
+import { ProtectPage } from "./public/Protect";
 
 export function App() {
   return (
@@ -35,12 +35,13 @@ export function App() {
         <Route path="/how-it-works" element={<HowPage />} />
         <Route path="/download" element={<DownloadPage />} />
         <Route path="/pair" element={<PairPage />} />
+        <Route path="/protect" element={<ProtectPage />} />
         <Route path="/watch" element={<Navigate to="/radar" replace />} />
       </Route>
-      <Route path="/signin" element={<WalletGate />} />
+      <Route path="/signin" element={<Navigate to="/protect" replace />} />
       <Route path="/app" element={<AppShell />}>
         <Route index element={<Home />} />
-        <Route path="start" element={<Navigate to="/signin" replace />} />
+        <Route path="start" element={<Navigate to="/protect" replace />} />
         <Route path="activity" element={<Activity />} />
         <Route path="policy" element={<PolicyPage />} />
         <Route path="account" element={<AccountPage />} />

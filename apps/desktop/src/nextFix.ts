@@ -45,8 +45,8 @@ export function nextFix(
       title: "Protect my strategy",
       why: "Sealed research needs a wallet signature on this computer. The website never receives the token.",
       fix: "Pair this browser, then sign Protect my strategy from the bound wallet.",
-      href: LINKS.app,
-      hrefLabel: "Open paired site",
+      href: LINKS.protect,
+      hrefLabel: "Sign in to link desktop",
     };
   }
   if (status?.kill) {

@@ -1,6 +1,7 @@
 export const LINKS = {
   pair: "https://pit0g.vercel.app/pair",
   app: "https://pit0g.vercel.app/app",
+  protect: "https://pit0g.vercel.app/protect",
   pcAdvanced: "https://pc.0g.ai/sdk/dashboard/funds",
   og: "https://0g.ai",
   hl: "https://app.hyperliquid.xyz",

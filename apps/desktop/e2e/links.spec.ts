@@ -4,6 +4,7 @@ import { isAllowedHttps } from "../src/allowedUrl";
 export function assertOfficialLinks() {
   if (LINKS.pair !== "https://pit0g.vercel.app/pair") throw new Error("pair");
   if (LINKS.app !== "https://pit0g.vercel.app/app") throw new Error("app");
+  if (LINKS.protect !== "https://pit0g.vercel.app/protect") throw new Error("protect");
   if (LINKS.pcAdvanced !== "https://pc.0g.ai/sdk/dashboard/funds") throw new Error("pc");
   if (LINKS.og !== "https://0g.ai") throw new Error("og");
   if (LINKS.hl !== "https://app.hyperliquid.xyz") throw new Error("hl");
@@ -20,6 +21,7 @@ export function assertOfficialLinks() {
   if (!explorerAddress("0xabc").startsWith("https://chainscan.0g.ai/address/")) throw new Error("explorer addr");
   if (!explorerTx("0xabc", "mainnet").startsWith("https://chainscan.0g.ai/tx/")) throw new Error("explorer tx");
   if (!isAllowedHttps(LINKS.pair)) throw new Error("allow pair");
+  if (!isAllowedHttps(LINKS.protect)) throw new Error("allow protect");
   if (!isAllowedHttps(LINKS.pcAdvanced)) throw new Error("allow pc");
   if (!isAllowedHttps(hyperliquidTrade("mainnet", "ETH"))) throw new Error("allow trade");
   if (!isAllowedHttps("https://chainscan.0g.ai/tx/0xabc")) throw new Error("allow tx");
