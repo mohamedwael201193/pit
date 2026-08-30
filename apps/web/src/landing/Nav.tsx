@@ -36,12 +36,12 @@ export function LandingNav() {
   return (
     <header className="pointer-events-none fixed inset-x-0 top-0 z-50 pt-4 pb-2">
       <div className="container-pit pointer-events-auto">
-        <nav aria-label="Main" className="flex items-center justify-between gap-3">
+        <nav aria-label="Main" className="grid grid-cols-[auto_1fr_auto] items-center gap-3">
           <Link to="/" className="shrink-0" aria-label="PIT home">
             <PitMark />
           </Link>
 
-          <ul className="hidden items-center gap-0.5 rounded-full bg-[#f0e7d4] px-2 py-1.5 lg:flex">
+          <ul className="hidden items-center justify-self-center gap-0.5 rounded-full bg-[#f0e7d4] px-2 py-1.5 lg:flex">
             {LINKS.map((l) => (
               <li key={l.to}>
                 <NavLink
@@ -56,13 +56,7 @@ export function LandingNav() {
             ))}
           </ul>
 
-          <div className="flex items-center gap-2">
-            <Link
-              to="/radar"
-              className="hidden h-11 items-center rounded-full bg-black px-5 text-[0.9375rem] font-medium text-[#f0e7d4] no-underline transition-opacity hover:opacity-90 sm:inline-flex"
-            >
-              Explore
-            </Link>
+          <div className="flex h-10 w-10 shrink-0 items-center justify-end">
             <button
               type="button"
               aria-expanded={open}

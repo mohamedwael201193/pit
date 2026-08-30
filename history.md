@@ -2,6 +2,33 @@
 
 ---
 
+## M120 — Hero, story, Automation desk fit any size
+
+- **Source:** Production hero clipped PRIVATE ALPHA OS, stacked two small paragraphs, duplicate Explore, and a leftover coral pin. Story used a 100dvh pin that clipped Authorized. Desktop rail became a wrapping row under 1100px. Automation was three giant cards plus red essay boxes.
+- **Discovery:** Same coral, cream, ink. Cut hero body to one line. Move stay-awake to the story beat. Arm CTA on the Automation page, not only in the overlay.
+- **Candidate:** One-viewport coral hero. Compact story split. Segmented Sleep Mission desk. Icon rail on narrow windows. Page max-width so ultrawide does not stretch type.
+- **Kill:** Second accent. Inter. Em-dash flourish. Fake fills. Web arming. Flatten OID 529167222216. Remint PIT-4bbee556.
+- **Next:** Vercel. Do not tag. Do not remint. Do not flatten.
+
+DATE/TIME: 2026-08-30 22:51+03
+PHASE: UI honesty. Same 0.9.0. Chat never authorizes.
+GOAL: Hero and Automation look like a serious product at any window size.
+RESULT:
+- **IMPLEMENTED:** Still **0.9.0**. No installer. Landing hero fits one viewport. Story no longer pins a blank screen. Desktop shell scales. Automation is MANUAL / RESEARCH / SLEEP MISSION with ARM SLEEP MISSION on the page.
+- **TESTED:** Playwright home + autonomy. Desktop typecheck.
+- **LIVE:** After push and Vercel.
+- **BLOCKED:** GitHub Latest installer still v0.8.0. No new MAINNET fill.
+
+SECURITY RESULT: Arm still desktop-only. Web still cannot arm.
+TX HASH / OID: Historical OID `529167222216` unchanged.
+CLASSIFICATION:
+- Landing hero + story: **IMPLEMENTED**
+- Desktop resolution + Automation: **IMPLEMENTED**
+PRODUCTION READY: Source 0.9.0. Public claim unchanged. Stay-awake remains on the story beat.
+NEXT STEP: `python _scripts/push_head.py`. Deploy web.
+
+---
+
 ## M119 — Sleep Mission honesty: this computer must stay awake
 
 - **Source:** Live 0G re-fetch still matches frozen Direct glm-5.2. Competitive scan: hosted 24/7 bots hide laptop-sleep as a skip. PIT hero said "while you sleep" without the bound.

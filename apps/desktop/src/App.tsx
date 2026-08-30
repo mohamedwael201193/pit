@@ -1060,7 +1060,10 @@ export function App() {
                 setView(item.id);
               }}
             >
-              {railCollapsed ? item.glyph : <span>{item.label}</span>}
+              <span className="rail-glyph" aria-hidden="true">
+                {item.glyph}
+              </span>
+              <span className="rail-label">{item.label}</span>
             </button>
           ))}
         </nav>

@@ -41,7 +41,7 @@ function limitRows(limits: Record<string, unknown>): { k: string; v: string }[] 
     { k: "Cooldown", v: `${String(limits.cooldown_seconds ?? 0)}s` },
     { k: "Uncertainty threshold", v: String(limits.max_uncertainty ?? 1) },
     { k: "Session expiry", v: `${String(limits.session_ttl_seconds ?? limits.session_expiry ?? 3600)}s` },
-    { k: "Kill switch", v: limits.kill_switch ? "On — new orders halted" : "Off" },
+    { k: "Kill switch", v: limits.kill_switch ? "On - new orders halted" : "Off" },
     { k: "Withdraw", v: "Forbidden" },
     { k: "Transfer", v: "Forbidden" },
     { k: "Policy mutation", v: "Forbidden" },
@@ -150,7 +150,6 @@ export function AutomationCenter({
   const m = mission.mission || {};
   const mode = mission.mode || m.mode || "manual";
   const limits = mission.limits || {};
-  const running = Boolean(mission.status === "ACTIVE" && (mode === "guarded" || mode === "research_only"));
   const status = lifeOf({
     kill,
     phase,
@@ -198,15 +197,18 @@ export function AutomationCenter({
     : mission.why_not
       ? mission.why_not
       : execGate
-        ? `${humanStop(execGate)}${execWhy ? ` — ${execWhy}` : ""}`
+        ? `${humanStop(execGate)}${execWhy ? ` - ${execWhy}` : ""}`
         : "clear";
 
+  const sleepState = String(mission.sleep_state || m.sleep_state || (live ? "WATCHING" : "STOPPED"));
+
   return (
-    <main className="page dense mission-page">
+    <main className="page mission-page">
       <div className="page-head">
         <div>
           <p className="eyebrow">Automation</p>
-          <h1>{live ? "Sleep Mission armed" : status === "STOPPED" ? "Sleep Mission stopped" : "Host-enforced modes"}</h1>
+          <h1>{live ? "Sleep Mission armed" : status === "STOPPED" ? "Sleep Mission stopped" : "Sleep Mission"}</h1>
+          <p className="lead">Arm once. PIT hunts within your rules. Chat cannot arm or AUTHORIZE.</p>
         </div>
         <div className="halt-rail">
           <span className={`status-chip ${status.toLowerCase()}`}>{status}</span>
@@ -220,26 +222,27 @@ export function AutomationCenter({
           </button>
         </div>
       </div>
-      <p className="lead">Arm once. PIT hunts within your rules. Chat cannot arm a Sleep Mission or AUTHORIZE.</p>
+
       {mission.search_note || m.search_note || m.last_result ? (
         <p className="search-note" role="status">
           {mission.search_note || m.search_note || m.last_result}
         </p>
       ) : null}
 
-      <p className="label">Mode</p>
-      <div className="mode-grid">
-        <button type="button" className={mode === "manual" ? "on" : ""} disabled={busy || phase !== "idle"} onClick={() => onMode("manual")}>
-          <p className="label">Manual</p>
-          <p>Scan and research on your command. Every order waits for AUTHORIZE.</p>
+      <div className="mode-switch" role="tablist" aria-label="Desk mode">
+        <button type="button" role="tab" aria-selected={mode === "manual"} className={mode === "manual" ? "on" : ""} disabled={busy || phase !== "idle"} onClick={() => onMode("manual")}>
+          <strong>Manual</strong>
+          <span>Every order waits for AUTHORIZE.</span>
         </button>
-        <button type="button" className={mode === "research_only" ? "on" : ""} disabled={busy || phase !== "idle"} onClick={() => onMode("research_only")}>
-          <p className="label">Research</p>
-          <p>Scan, research, notify, and prepare. Never execute.</p>
+        <button type="button" role="tab" aria-selected={mode === "research_only"} className={mode === "research_only" ? "on" : ""} disabled={busy || phase !== "idle"} onClick={() => onMode("research_only")}>
+          <strong>Research</strong>
+          <span>Scan and prepare. Never execute.</span>
         </button>
         <button
           type="button"
-          className={mode === "guarded" && running ? "on" : ""}
+          role="tab"
+          aria-selected={mode === "guarded"}
+          className={mode === "guarded" ? "on" : ""}
           disabled={busy || phase !== "idle"}
           onClick={() => {
             if (live) return;
@@ -247,105 +250,121 @@ export function AutomationCenter({
             setReviewed(false);
           }}
         >
-          <p className="label">Sleep Mission</p>
-          <p>Arm once. PIT hunts within your rules while you are away. This computer must stay awake for the bound.</p>
+          <strong>Sleep Mission</strong>
+          <span>Hunt while this computer stays awake.</span>
         </button>
       </div>
-      <button
-        type="button"
-        className="linkish"
-        onClick={() => {
-          setConfirm(true);
-          setReviewed(false);
-        }}
-        disabled={busy || phase !== "idle" || live}
-      >
-        REVIEW LIMITS
-      </button>
 
-      {live ? (
-        <section className="live-banner" role="status">
-          <p className="label">SLEEP MISSION</p>
-          <h2>Armed for {remain}</h2>
-          <p>
-            State {String(mission.sleep_state || m.sleep_state || "WATCHING")}. PIT may watch live Hyperliquid books, research privately through 0G, and execute only if every host invariant passes. This computer must stay awake. If it sleeps, the mission stops. Chat cannot AUTHORIZE. Withdraw and transfer stay impossible.
-          </p>
-          {mission.block_reason || mission.why_not ? (
-            <p className="err" role="status">
-              Why PIT did not trade: {mission.why_not || humanStop(mission.block_reason || "")}. {mission.block_explain || "The mission stays alive. Scan and research continue. Existing positions are not flattened."}
+      <div className="mission-desk">
+        <section className="mission-primary">
+          {live ? (
+            <div className="mission-status" role="status">
+              <p className="label">Remaining</p>
+              <h2>{remain}</h2>
+              <dl className="mission-strip">
+                <div>
+                  <dt>State</dt>
+                  <dd>{sleepState}</dd>
+                </div>
+                <div>
+                  <dt>Gate</dt>
+                  <dd>{gateLine}</dd>
+                </div>
+                <div>
+                  <dt>Stage</dt>
+                  <dd>{humanStage(mission.stage || m.stage || (mission.research_running ? "researching" : status))}</dd>
+                </div>
+              </dl>
+              {mission.block_reason || mission.why_not ? (
+                <p className="err" role="status">
+                  Why PIT did not trade: {mission.why_not || humanStop(mission.block_reason || "")}. {mission.block_explain || "Scan continues. Positions are not flattened."}
+                </p>
+              ) : (
+                <p className="fine">This computer must stay awake for the bound. If it sleeps, the mission stops.</p>
+              )}
+            </div>
+          ) : (
+            <div className="mission-status">
+              <p className="label">{m.last_stop ? "Last stop" : "Ready to arm"}</p>
+              <h2>{m.last_stop ? humanStop(m.last_stop) : mode === "research_only" ? "Research only" : "Manual"}</h2>
+              <p className="fine">
+                {m.last_stop
+                  ? mission.explain || "No further autonomous orders until you arm again on this computer."
+                  : "Chat cannot send the arm phrase. Review limits, then arm on this computer."}
+              </p>
+            </div>
+          )}
+
+          {err || mission.error ? (
+            <p className="err" role="alert">
+              {err || mission.error}
             </p>
           ) : null}
-        </section>
-      ) : m.last_stop ? (
-        <section className="stop-banner" role="status">
-          <p className="label">Autonomy stopped</p>
-          <h2>{humanStop(m.last_stop)}</h2>
-          <p>{mission.explain || "PIT will not place further autonomous orders until you arm a Sleep Mission again on this computer."}</p>
-        </section>
-      ) : (
-        <p className="fine">
-          {mode === "research_only"
-            ? "Research is selected. Arm a Sleep Mission only after you review the envelope. Chat cannot send the arm phrase."
-            : "Manual is selected. Arm a Sleep Mission on this computer after you review the envelope. Chat cannot arm it."}
-        </p>
-      )}
+          {kill ? <p className="err">Kill switch is on. New orders are halted.</p> : null}
 
-      {err || mission.error ? (
-        <p className="err" role="alert">
-          {err || mission.error}
-        </p>
-      ) : null}
-      {kill ? <p className="err">Kill switch is on. New orders are halted.</p> : null}
-
-      <GoodMorning
-        live={live}
-        elapsed={elapsedLabel(m.guarded_enabled_unix, mission.now || now)}
-        events={mission.events}
-        stop={m.last_stop}
-      />
-      <AwayBoard away={mission.away} whyNot={mission.why_not} whyCode={mission.why_not_code || mission.block_reason} />
-      <NightReplay events={mission.events} />
-
-      <section className="envelope">
-        <p className="label">Host envelope</p>
-        <p className="fine">Immutable by the model. Chat cannot raise clip, leverage, or permissions.</p>
-        <ul className="envelope-chips">
-          {env.size.slice(2, 5).map((row) => (
-            <li key={row.k}>
-              <span>{row.k}</span>
-              <strong>{row.v}</strong>
-            </li>
-          ))}
-          <li>
-            <span>Kill switch</span>
-            <strong>{kill || limits.kill_switch ? "On" : "Off"}</strong>
-          </li>
-        </ul>
-        <details>
-          <summary>Size, risk, universe, forbidden</summary>
-          <div className="envelope-groups">
-            <EnvelopeGroup title="Size" rows={env.size} />
-            <EnvelopeGroup title="Risk" rows={env.risk} />
-            <EnvelopeGroup title="Session" rows={env.halt} />
-            <EnvelopeGroup title="Forbidden" rows={env.forbidden} />
+          <div className="mission-actions">
+            <button
+              type="button"
+              className="primary"
+              onClick={() => {
+                setConfirm(true);
+                setReviewed(false);
+              }}
+              disabled={busy || phase !== "idle" || live || kill}
+            >
+              ARM SLEEP MISSION
+            </button>
+            <button
+              type="button"
+              className="linkish"
+              onClick={() => {
+                setConfirm(true);
+                setReviewed(false);
+              }}
+              disabled={busy || phase !== "idle" || live}
+            >
+              REVIEW LIMITS
+            </button>
           </div>
-          <p className="host-enforced">The model can never modify these.</p>
-        </details>
-        <div className="cadence-row">
-          <Select
-            id="scan-cadence"
-            label="Scan cadence"
-            value={String(prefs.cadence_minutes || 15)}
-            disabled={busy}
-            options={CADENCE}
-            onChange={(v) => onSavePrefs({ ...prefs, cadence_minutes: Number(v) })}
-          />
-          <p className="fine">Compute money is not trading capital. Best eligible books move into Research automatically in Research and Sleep Mission.</p>
-        </div>
-      </section>
 
-      <details className="card">
-        <summary>Mission internals</summary>
+          <section className="envelope">
+            <p className="label">Host envelope</p>
+            <ul className="envelope-chips">
+              {env.size.slice(2, 5).map((row) => (
+                <li key={row.k}>
+                  <span>{row.k}</span>
+                  <strong>{row.v}</strong>
+                </li>
+              ))}
+              <li>
+                <span>Kill switch</span>
+                <strong>{kill || limits.kill_switch ? "On" : "Off"}</strong>
+              </li>
+            </ul>
+            <details>
+              <summary>Size, risk, universe, forbidden</summary>
+              <div className="envelope-groups">
+                <EnvelopeGroup title="Size" rows={env.size} />
+                <EnvelopeGroup title="Risk" rows={env.risk} />
+                <EnvelopeGroup title="Session" rows={env.halt} />
+                <EnvelopeGroup title="Forbidden" rows={env.forbidden} />
+              </div>
+              <p className="host-enforced">The model can never modify these.</p>
+            </details>
+            <div className="cadence-row">
+              <Select
+                id="scan-cadence"
+                label="Scan cadence"
+                value={String(prefs.cadence_minutes || 15)}
+                disabled={busy}
+                options={CADENCE}
+                onChange={(v) => onSavePrefs({ ...prefs, cadence_minutes: Number(v) })}
+              />
+            </div>
+          </section>
+
+          <details className="card">
+            <summary>Mission internals</summary>
         <dl className="mission-grid">
           <div>
             <dt>Stage</dt>
@@ -428,6 +447,19 @@ export function AutomationCenter({
           ) : null}
         </div>
       </details>
+        </section>
+
+        <aside className="mission-log">
+          <GoodMorning
+            live={live}
+            elapsed={elapsedLabel(m.guarded_enabled_unix, mission.now || now)}
+            events={mission.events}
+            stop={m.last_stop}
+          />
+          <AwayBoard away={mission.away} whyNot={mission.why_not} whyCode={mission.why_not_code || mission.block_reason} />
+          <NightReplay events={mission.events} />
+        </aside>
+      </div>
 
       {confirm ? (
         <div className="overlay" role="dialog" aria-modal="true" aria-labelledby="enable-title">
@@ -493,7 +525,7 @@ export function AutomationCenter({
 
 function humanStop(s: string) {
   if (s === "chat_stop") return "Stopped from Chat";
-  if (s === "user_stop") return "user_stop";
+  if (s === "user_stop") return "You stopped it";
   if (s === "kill_switch") return "Kill switch";
   if (s === "deadline" || s === "autonomy_expired") return "Duration ended";
   if (s === "session_expired") return "Hyperliquid session permissions no longer match this desk.";
@@ -517,7 +549,7 @@ function humanStage(s: string) {
   if (t === "researching") return "Researching privately";
   if (t === "waiting" || t === "waiting after research") return "Waiting for the next scan";
   if (t === "eligible") return "Ready to trade";
-  if (t === "execution-blocked" || t === "exec blocked") return "Ready to trade — host refused";
+  if (t === "execution-blocked" || t === "exec blocked") return "Ready to trade - host refused";
   if (t === "executing" || t === "executed") return "Submitting to Hyperliquid";
   if (t === "resting") return "Resting on the venue";
   if (t === "cooldown") return "Cooldown";
@@ -550,7 +582,7 @@ function AwayBoard({
   return (
     <section className="away-board">
       <p className="label">While you were away</p>
-      <h2>GOOD MORNING</h2>
+      <h2>What the desk recorded</h2>
       <p className="fine">
         {whyNot || (whyCode ? humanStop(whyCode) : "No named refusal yet.")} A Sleep Mission never raises your limits.
       </p>

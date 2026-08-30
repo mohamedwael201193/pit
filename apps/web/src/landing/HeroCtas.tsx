@@ -10,10 +10,10 @@ export function HeroCtas() {
 
   return (
     <motion.div
-      className="mt-10 flex flex-wrap items-center gap-3"
+      className="hero-ctas mt-8 flex flex-wrap items-center gap-x-4 gap-y-3"
       initial={reduce ? false : { opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.7, delay: 0.16, ease: [0.16, 1, 0.3, 1] }}
+      transition={{ duration: 0.7, delay: 0.12, ease: [0.16, 1, 0.3, 1] }}
       onPointerMove={(e) => {
         if (reduce) return;
         const r = e.currentTarget.getBoundingClientRect();
@@ -25,7 +25,7 @@ export function HeroCtas() {
         my.set(0);
       }}
     >
-      <motion.div style={reduce ? undefined : { x, y }}>
+      <motion.div className="w-full sm:w-auto" style={reduce ? undefined : { x, y }}>
         <Link to="/radar" className="pill pill-ink">
           Explore PIT
         </Link>
@@ -33,7 +33,7 @@ export function HeroCtas() {
       <Link to="/download" className="pill pill-ghost">
         Download PIT Desktop
       </Link>
-      <Link to="/missions" className="text-[0.9375rem] font-medium text-black underline-offset-4 hover:underline">
+      <Link to="/missions" className="pill pill-cream">
         See Sleep Missions
       </Link>
     </motion.div>
