@@ -10,15 +10,15 @@
 - **Kill:** Chip dump. Pairing as the Security hero. Wallet-first landing. Authorize on the web.
 - **Next:** Deploy web. Desktop source is this commit (NSIS still 0.8.0).
 
-DATE/TIME: 2026-08-30 20:47+03
+DATE/TIME: 2026-08-30 20:55+03
 PHASE: UI honesty. Do not flatten OID 529167222216. Do not remint PIT-4bbee556. Chat never authorizes. Direct TeeML only for the private book.
 GOAL: Security has one obvious next step. Landing hero is one line. Diagrams and scroll still tell Sealed / Challenged / Authorized.
 RESULT:
-- **IMPLEMENTED:** Still **0.8.0**. No new installer.
+- **IMPLEMENTED:** Still **0.8.0**. Same tag. New unsigned NSIS for the Security UI (SHA below).
   1. Desktop Security: next-action banner from `nextFix`, 4-step spine, Session metrics, Policy with short helpers, pairing folded unless it is the next step, Halt/Revoke, identity in details.
   2. Landing hero: coral field, rotating WireTurn, one line, Explore + Download. Story line: "The web discovers. The desktop acts." Beats pin on scroll. Moments pan horizontally. SVGs tightened.
 - **TESTED:** Desktop `tsc -b` pass. `npx tsx e2e/run.ts` pass. Web `tsc -b` pass. Playwright home/authorize/network/routes 21/21.
-- **UNVERIFIED until this deploy:** Production landing at pit0g.vercel.app showing the new hero. Tauri Security screenshot after a desktop rebuild (source is in this commit; installed NSIS is still the 0.8.0 binary until next installer).
+- **LIVE:** Chrome https://pit0g.vercel.app/ hero `It hunts in private. You authorize on this computer.` Explore + Download only. No Authorize. MAINNET only. Laboratory sentence. Overlay `D:\PIT\pit-desktop.exe` from this NSIS. SHA256 `106A688275BFCF3D108E5A50A3BDB5F3C5B059E48D9629A1217C6226378FCE5A`.
 - **BLOCKED:** iTransfer not live. No new live trade. Authenticode still absent.
 
 SECURITY RESULT: Chat still cannot AUTHORIZE. Web still has no Authorize control. Historical OID unchanged.
