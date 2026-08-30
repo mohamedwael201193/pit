@@ -2473,6 +2473,32 @@ CLASSIFICATION:
 PRODUCTION READY: Source honesty/security fixes are ready for the next installer. Do not claim the running window already persists streamed chat.
 NEXT STEP: Push. Rebuild desktop only when the operator asks for a new NSIS.
 
+---
+
+## M114 — Direct SKU freeze: live getService must match frozen glm-5.2 (2026-08-30)
+
+DATE/TIME: 2026-08-30 19:38+03
+PHASE: 0G honesty. Do not flatten OID 529167222216. Do not remint PIT-4bbee556. Direct TeeML only for the private book. Do not claim iTransfer or DA live. Do not swap the frozen SKU.
+GOAL: Fail closed if Aristotle `getService` drifts from the proven Direct glm-5.2 SKU. Never auto-swap to GLM-5-FP8, 0GM, or the unacked compute-network-28 twin.
+RESULT:
+- **IMPLEMENTED:** Still **0.8.0**. No new installer. No web deploy.
+  1. Frozen SKU unchanged: provider `0x7DCFe6AEa70350C2090041524c9B4A9262DCe87D`, url `compute-network-19`, model `glm-5.2`, TeeML, teeSigner `0xA46EA4FC5889AD35A1487e1Ed04dCcfa872146B9`.
+  2. `GetService` + `MatchFrozenSKU` refuse unacked providers, TeeTLS, URL/model/signer drift. Sealed ask calls `FreezeLiveSKU` (transport unread keeps the freeze; a live mismatch refuses the ask).
+  3. Doctor check `direct_sku`. Galileo stays unproven. Router catalog listings cannot be `private_book`.
+  4. Snapshot: Router mainnet N=**31** (2026-08-30). TeeML-5 unchanged. Catalog only — not Direct.
+- **TESTED:** `go test ./internal/compute ./internal/cli` pass. **LIVE:** `TestLiveGetServiceMatchesMainnetChat` PASS. `TestLivePubkeyMatchesFrozenTeeSigner` PASS. `TestLiveRouterCatalogNeverPrivateBook` PASS.
+- **UNVERIFIED:** New storage upload/proof this pass (would spend). Independent funded TeeML roles. Galileo VerifyE2EE.
+- **BLOCKED:** iTransfer UNAVAILABLE on Aristotle (`verifier=0`, Foundation attestor still 16602). DA not live on 16661. No new live trade.
+
+SECURITY RESULT: Router remains forbidden for the private book. PIT will not auto-swap Direct providers. iTransfer/DA still not claimed live.
+TX HASH / OID: Historical OID `529167222216` unchanged.
+CLASSIFICATION:
+- Live getService freeze: **IMPLEMENTED + TESTED + LIVE VERIFIED**
+- Frozen glm-5.2 SKU: **UNCHANGED**
+- iTransfer / DA: **NOT LIVE**
+PRODUCTION READY: Freeze test is load-bearing. Do not treat Router N=31 as a second private path.
+NEXT STEP: Push. Do not rebuild NSIS unless asked.
+
 
 
 

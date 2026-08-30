@@ -62,6 +62,9 @@ func ProductAskReportStage(net config.Network, deskAuthorized bool, bin string, 
 	if err := DenyRouter(sku.URL); err != nil && sku.URL != "" {
 		return AskReport{}, err
 	}
+	if err := FreezeLiveSKU(net); err != nil {
+		return AskReport{}, err
+	}
 	if sku.URL == "" {
 		return AskReport{}, fmt.Errorf("provider_url_required")
 	}

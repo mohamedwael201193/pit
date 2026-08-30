@@ -28,14 +28,15 @@ type Check struct {
 }
 
 func Doctor(dir string) []Check {
-	var hlC, rpcC, authC, creditC, agentC Check
+	var hlC, rpcC, authC, creditC, agentC, skuC Check
 	var wg sync.WaitGroup
-	wg.Add(5)
+	wg.Add(6)
 	go func() { defer wg.Done(); hlC = checkHyperliquid(dir) }()
 	go func() { defer wg.Done(); rpcC = checkRPC(dir) }()
 	go func() { defer wg.Done(); authC = checkDirectAuth(dir) }()
 	go func() { defer wg.Done(); creditC = checkDirectCredit(dir) }()
 	go func() { defer wg.Done(); agentC = checkHLAgent(dir) }()
+	go func() { defer wg.Done(); skuC = checkDirectSKU(dir) }()
 	out := []Check{
 		checkVersion(),
 		checkWallet(dir),
@@ -51,6 +52,7 @@ func Doctor(dir string) []Check {
 		checkSealer(),
 		authC,
 		creditC,
+		skuC,
 		checkTee(dir),
 		checkStorage(),
 		checkRegistry(dir),
@@ -166,6 +168,27 @@ func checkSealer() Check {
 		return Check{Name: "direct_sealer", Detail: "PIT_COMMITTEE_BIN empty and sealer/pit-sealer missing"}
 	}
 	return Check{Name: "direct_sealer", OK: true, Detail: "binary present"}
+}
+
+func checkDirectSKU(dir string) Check {
+	net := config.Mainnet
+	if st, err := Load(dir); err == nil {
+		if n, err := config.ParseNetwork(st.Network); err == nil {
+			net = n
+		}
+	}
+	if net != config.Mainnet {
+		return Check{Name: "direct_sku", OK: true, Detail: "Galileo sealed ask stays off. Frozen Direct SKU is Aristotle glm-5.2."}
+	}
+	sku := compute.MainnetChat()
+	got, err := compute.GetService(config.MainnetChain(), sku.Provider)
+	if err != nil {
+		return Check{Name: "direct_sku", OK: true, Detail: "on-chain SKU unread this pass. Frozen Direct glm-5.2 was not replaced."}
+	}
+	if err := compute.MatchFrozenSKU(got, sku); err != nil {
+		return Check{Name: "direct_sku", Detail: "LIVE getService drifted from frozen Direct glm-5.2 (" + err.Error() + "). PIT will not auto-swap."}
+	}
+	return Check{Name: "direct_sku", OK: true, Detail: "LIVE getService matches frozen Direct glm-5.2 TeeML. Router is not this path."}
 }
 
 func checkDirectAuth(dir string) Check {
