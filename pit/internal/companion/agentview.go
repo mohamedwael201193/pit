@@ -15,7 +15,7 @@ func (h *Hub) decorateWatchAgent(parsed deskcmd.Result) deskcmd.Result {
 	agent := &deskcmd.Agent{Kind: kindForTool(parsed.Tool)}
 	st, err := cli.Load(h.Dir)
 	if err != nil || strings.TrimSpace(st.Wallet) == "" {
-		agent.Executive = "This computer is not bound. Connect a wallet on Setup. Chat cannot AUTHORIZE."
+		agent.Executive = "This computer is not bound. Connect a wallet on Setup."
 		parsed.Reply = agent.Executive
 		parsed.Agent = agent
 		return parsed
@@ -117,29 +117,34 @@ func (h *Hub) decorateWatchAgent(parsed deskcmd.Result) deskcmd.Result {
 	switch parsed.Tool {
 	case "watch.scan":
 		agent.Kind = "scan"
-		agent.Executive = fmt.Sprintf("SCAN %d discovered → %d policy eligible → %d execution feasible. Strongest: %s. Buying power $%.2f. Price is the mark, not the order notional.", agent.Scanned, agent.Eligible, agent.Executable, best, agent.BuyingPower)
+		agent.Executive = fmt.Sprintf("SCAN %d discovered, %d policy eligible, %d execution feasible. Strongest: %s. Price is the mark, not the order notional.", agent.Scanned, agent.Eligible, agent.Executable, best)
+		parsed.Reply = agent.Executive
 	case "watch.get":
 		agent.Kind = "book"
 		if parsed.Coin != "" && row.Coin != "" {
-			agent.Executive = fmt.Sprintf("%s mark %s. Venue min $%.2f. Host clip $%.2f. Buying power $%.2f. Price is not the order notional.", row.Coin, watch.Price(row.Mark), row.MinNotional, row.HostNotional, agent.BuyingPower)
+			agent.Executive = fmt.Sprintf("%s mark %s. Venue min $%.2f. Host clip $%.2f. Price is not the order notional.", row.Coin, watch.Price(row.Mark), row.MinNotional, row.HostNotional)
 		} else {
 			agent.Executive = fmt.Sprintf("Scanned %d live Hyperliquid perps. %d executable. Strongest: %s.", agent.Scanned, agent.Executable, best)
 		}
+		parsed.Reply = agent.Executive
 	case "watch.compare":
 		agent.Kind = "compare"
-		agent.Executive = fmt.Sprintf("%s ranks first among %d executable of %d scanned. Host rank uses mark/oracle, funding, and open interest. It is not a model score.", best, agent.Executable, agent.Scanned)
+		agent.Executive = fmt.Sprintf("%s ranks first among %d executable of %d scanned. Host rank uses mark, funding, and open interest. It is not a model score.", best, agent.Executable, agent.Scanned)
+		parsed.Reply = agent.Executive
 	case "watch.why_not":
 		agent.Kind = "no_trade"
-		agent.Executive = fmt.Sprintf("NO TRADE. Scanned %d. Policy eligible %d. Executable %d. Buying power $%.2f. Nothing was executed from chat.", agent.Scanned, agent.Eligible, agent.Executable, agent.BuyingPower)
+		agent.Executive = fmt.Sprintf("NO TRADE. Scanned %d. Policy eligible %d. Executable %d. Nothing was executed from chat.", agent.Scanned, agent.Eligible, agent.Executable)
+		parsed.Reply = agent.Executive
 	default:
 		agent.Kind = "hunt"
 		if agent.Best == "" {
-			agent.Executive = fmt.Sprintf("Scanned %d live Hyperliquid perps. %d policy eligible. %d executable. No book is execution-feasible on this computer right now. Buying power $%.2f.", agent.Scanned, agent.Eligible, agent.Executable, agent.BuyingPower)
+			agent.Executive = fmt.Sprintf("Scanned %d. %d policy eligible. %d executable. No book is execution-feasible on this computer right now.", agent.Scanned, agent.Eligible, agent.Executable)
+			parsed.Reply = "No executable book on this computer right now."
 		} else {
-			agent.Executive = fmt.Sprintf("%s is the strongest executable book among %d of %d live Hyperliquid perps. Mark %s. Venue min $%.2f. Host clip $%.2f. Buying power $%.2f.", agent.Best, agent.Executable, agent.Scanned, watch.Price(agent.Mark), agent.MinNotional, agent.HostNotional, agent.BuyingPower)
+			agent.Executive = fmt.Sprintf("%s is the strongest executable book among %d of %d live Hyperliquid perps. Mark %s. Venue min $%.2f. Host clip $%.2f.", agent.Best, agent.Executable, agent.Scanned, watch.Price(agent.Mark), agent.MinNotional, agent.HostNotional)
+			parsed.Reply = fmt.Sprintf("Researching %s. Live numbers stay on the cards.", agent.Best)
 		}
 	}
-	parsed.Reply = agent.Executive
 	parsed.Agent = agent
 	if parsed.StartResearch && parsed.Coin == "" && agent.Best != "" && agent.Best != "none" {
 		parsed.Coin = agent.Best

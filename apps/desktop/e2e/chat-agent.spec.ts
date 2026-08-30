@@ -4,6 +4,7 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { CHAT_AGENT_COPY } from "../src/AgentRun";
+import { displayTurn } from "../src/CommandChat";
 
 export function assertChatAgentCopy() {
   if (CHAT_AGENT_COPY.cannotAuthorize !== "The model cannot AUTHORIZE") throw new Error("cannot authorize copy");
@@ -24,6 +25,21 @@ export function assertChatAgentCopy() {
   if (run.includes("authorizePreview")) throw new Error("agent run must not import authorizePreview");
   if (!run.includes("PRIVATE 0G RESEARCH")) throw new Error("live pipe");
   if (!run.includes("ORDER SUBMITTED")) throw new Error("execution card");
+  if (!run.includes("oidBelongsToPreview")) throw new Error("stale fill must be gated");
+  if (run.includes('markState === "done" ? "done"')) throw new Error("pipe must not label every row done");
+  if (run.includes("className=\"linkish\"") && run.includes("Show why")) throw new Error("duplicate show why");
+  if (!chat.includes("lines.length === 0")) throw new Error("hero chips hide after the first turn");
+  if (!chat.includes("visibleTurns")) throw new Error("duplicate pit lines must collapse");
+  if (!chat.includes("Live numbers stay on the cards")) throw new Error("old hunt dump must collapse");
+  const collapsed = displayTurn({
+    role: "pit",
+    text: "AVAX is the strongest executable book among 6 of 232 live Hyperliquid perps. Mark 7.32. Venue min $10.02. Host clip $12.95. Buying power $16.18. Starting sealed 0G Direct on this computer. Chat cannot AUTHORIZE.",
+    ts: 1,
+  });
+  if (collapsed !== "Researching AVAX. Live numbers stay on the cards.") throw new Error(collapsed);
+  if (displayTurn({ role: "pit", text: "Still researching AVAX. Watch the stages above.", ts: 2 }) !== "Still researching AVAX. Watch the stages above.") {
+    throw new Error("status line must stay");
+  }
   const dock = readFileSync(join(here, "../src/PairingDock.tsx"), "utf8");
   if (!dock.includes('aria-label="Browser pairing"')) throw new Error("pair dock");
   const app = readFileSync(join(here, "../src/App.tsx"), "utf8");

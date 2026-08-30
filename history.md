@@ -2,6 +2,34 @@
 
 ---
 
+## M125 — Agent chat stops repeating itself. PIT 0.9.4
+
+- **Source:** Desktop Agent stacked the same chips, two Show why controls, an always-on Sleep Mission card, a stale FILLED banner from an old OID, DONE on every pipe row, buying power in the header and the quote, and the same AVAX sentence plus "Chat cannot AUTHORIZE" after every hunt.
+- **Discovery:** Composer PRIMARY chips stayed visible after the first turn and repeated the last question. Follow chips asked "Why didn't you trade?" instead of opening the why panel. lastOrder rendered without oidBelongsToPreview. decorateWatchAgent dumped the executive book line as the chat reply, then chatctx appended the authorize refrain.
+- **Candidate:** One result surface. Short hunt replies. Numbers stay on cards. Version **0.9.4**.
+- **Kill:** Second AUTHORIZE path. Fake fills. Flatten OID 529167222216. Remint PIT-4bbee556. Authenticode claim.
+- **Next:** Tag `v0.9.4`, NSIS, overlay `D:\PIT`, Vercel + Render. Do not remint. Do not flatten. Do not start a live trade unless the user clicks TRADE NOW on an exact preview.
+
+DATE/TIME: 2026-08-31 02:15+03
+PHASE: Agent cockpit de-duplication. Host remains execution authority.
+GOAL: One Show why. One Sleep Mission entry. One order card only when the hash matches. Hunt replies that do not repeat the cards.
+RESULT:
+- **IMPLEMENTED:** PRIMARY chips hide after the first turn. Show why opens the why panel. Sleep Mission is opt-in. Order card gated by oidBelongsToPreview. Pipe marks without a DONE label on every row. Quote drops buying power. Hunt reply is "Researching AVAX. Live numbers stay on the cards." Transcript collapses consecutive identical PIT lines and old executive dumps.
+- **TESTED:** `go test ./...` PASS including find-best no longer dumping "strongest executable book" or "Starting sealed". Desktop `tsc -b` pass. `npx tsx e2e/run.ts` including oidBelongsToPreview, displayTurn collapse, no duplicate Show why. Live localhost:3001 Agent: one Show why, no FILLED, no always-on Sleep, composer only More, WHY panel opens without a new chat turn.
+- **LIVE:** After installer. No new MAINNET fill from this change. ETH OID `529167222216` untouched.
+- **BLOCKED:** Authenticode still absent. iTransfer still not live. TRADE NOW still requires exact preview, live session, pinned policy, capital, venue min.
+
+SECURITY RESULT: The model cannot AUTHORIZE. TRADE NOW is still an explicit desktop confirmation of the existing host path. Stale FILLED cannot impersonate the current preview.
+TX HASH / OID: Historical OID `529167222216` unchanged.
+CLASSIFICATION:
+- Agent duplicate UI: **IMPLEMENTED + TESTED**
+- Short hunt replies: **IMPLEMENTED + TESTED**
+- Stale fill gate on Agent: **IMPLEMENTED + TESTED**
+PRODUCTION READY: 0.9.4 installer after tag.
+NEXT STEP: `python _scripts/push_head.py`. `python _scripts/tag_push.py v0.9.4`. Deploy web.
+
+---
+
 ## M124 — Desktop Agent as trading operator. PIT 0.9.3
 
 - **Source:** 0.9.2 Agent was unreadable: pairing strip ate the canvas, AgentRun sat inside a transcript that auto-scrolled away, answers were tiny, chips while a job ran dumped "Already researching AVAX (job …, CHALLENGER)" twice, and TRADE NOW did not exist.

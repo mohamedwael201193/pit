@@ -2059,7 +2059,7 @@ details.card > summary { cursor: pointer; font-weight: 600; letter-spacing: 0.08
 .cockpit-quote header { display: flex; align-items: baseline; gap: 12px; }
 .cockpit-quote h3, .cockpit-card h3 { margin: 0; font-size: 28px; letter-spacing: -0.04em; }
 .cockpit-quote p { margin: 0; font-size: 24px; font-variant-numeric: tabular-nums; }
-.cockpit-quote dl { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin: 12px 0 0; }
+.cockpit-quote dl { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 12px 0 0; }
 .cockpit-quote dt { font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--mute); }
 .cockpit-quote dd { margin: 4px 0 0; font-size: 16px; font-variant-numeric: tabular-nums; }
 .cockpit-num { font-size: 28px; letter-spacing: -0.05em; font-variant-numeric: tabular-nums; margin: 6px 0; }

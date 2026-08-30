@@ -343,13 +343,13 @@ export function CommandChat({
         {lines.length === 0 ? (
           <p className="chat-empty">Ask PIT what to trade. It will scan live books, research privately, and wait for TRADE NOW on this computer.</p>
         ) : null}
-        {lines.map((m, i) => (
-          <article key={`${m.ts}-${i}`} className={`turn ${m.role === "user" ? "user" : "pit"}`}>
+        {visibleTurns(lines).map((row, i) => (
+          <article key={`${row.m.ts}-${i}`} className={`turn ${row.m.role === "user" ? "user" : "pit"}`}>
             <div className="turn-meta">
-              <span className="who">{m.role === "user" ? "You" : "PIT"}</span>
-              {m.ts ? <time>{new Date(m.ts).toLocaleTimeString()}</time> : null}
+              <span className="who">{row.m.role === "user" ? "You" : "PIT"}</span>
+              {row.m.ts ? <time>{new Date(row.m.ts).toLocaleTimeString()}</time> : null}
             </div>
-            <TurnBody text={displayTurn(m)} />
+            <TurnBody text={row.text} />
           </article>
         ))}
         <div ref={end} />
@@ -357,22 +357,24 @@ export function CommandChat({
 
       <form className="composer" onSubmit={onSubmit}>
         <div className="prompt-chips">
-          {PRIMARY.map((p) => (
-            <button
-              key={p.label}
-              type="button"
-              className="chip-btn"
-              disabled={Boolean(island?.busy && huntLike(p.q))}
-              onClick={() => void ask(p.q)}
-            >
-              {p.label}
-            </button>
-          ))}
+          {lines.length === 0
+            ? PRIMARY.map((p) => (
+                <button
+                  key={p.label}
+                  type="button"
+                  className="chip-btn"
+                  disabled={Boolean(island?.busy && huntLike(p.q))}
+                  onClick={() => void ask(p.q)}
+                >
+                  {p.label}
+                </button>
+              ))
+            : null}
           <button type="button" className="chip-btn" onClick={() => setMoreOpen((v) => !v)}>More</button>
         </div>
         {moreOpen ? (
           <div className="prompt-chips more">
-            {MORE.map((p) => (
+            {MORE.filter((p) => chipFresh(p.q, lastUserText(lines))).map((p) => (
               <button key={p.label} type="button" className="chip-btn" onClick={() => void ask(p.q)}>{p.label}</button>
             ))}
           </div>
@@ -402,10 +404,46 @@ export function CommandChat({
   );
 }
 
-function displayTurn(m: ChatMessage) {
-  const text = String(m.text || "").trim();
+function lastUserText(lines: ChatMessage[]) {
+  for (let i = lines.length - 1; i >= 0; i--) {
+    if (lines[i].role === "user") return String(lines[i].text || "");
+  }
+  return "";
+}
+
+function chipFresh(q: string, lastUser: string) {
+  const a = q.toLowerCase().replace(/[^a-z0-9 ]/g, " ").replace(/\s+/g, " ").trim();
+  const b = lastUser.toLowerCase().replace(/[^a-z0-9 ]/g, " ").replace(/\s+/g, " ").trim();
+  if (!a || !b) return true;
+  if (a === b) return false;
+  if (b.includes(a) || a.includes(b)) return false;
+  return true;
+}
+
+export function displayTurn(m: ChatMessage) {
+  let text = String(m.text || "").trim();
   if (!text) return m.role === "pit" ? "Working…" : "";
-  return text;
+  text = text
+    .replace(/\s*Starting sealed 0G Direct on this computer\.?/gi, "")
+    .replace(/\s*Chat cannot AUTHORIZE\.?/gi, "")
+    .replace(/\s*The model cannot AUTHORIZE\.?/gi, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  const dump = text.match(/^([A-Z0-9]+) is the strongest executable book among .+/i);
+  if (dump) return `Researching ${dump[1]}. Live numbers stay on the cards.`;
+  return text || (m.role === "pit" ? "Working…" : "");
+}
+
+function visibleTurns(lines: ChatMessage[]) {
+  const out: { m: ChatMessage; text: string }[] = [];
+  for (const m of lines) {
+    const text = displayTurn(m);
+    if (!text) continue;
+    const prev = out[out.length - 1];
+    if (prev && prev.m.role === m.role && prev.text === text) continue;
+    out.push({ m, text });
+  }
+  return out;
 }
 
 function TurnBody({ text }: { text: string }) {

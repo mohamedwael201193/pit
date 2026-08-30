@@ -49,7 +49,7 @@ func (h *Hub) decorateChat(parsed deskcmd.Result) deskcmd.Result {
 		if coin == "" {
 			coin = h.pickBestCoin()
 		}
-		parsed.Reply = h.whyThisSetup(coin) + " Chat cannot AUTHORIZE. Private memory never includes the memory key."
+		parsed.Reply = h.whyThisSetup(coin) + " Private memory never includes the memory key."
 		parsed.Navigate = ""
 	case "research.start", "research.best":
 		h.researchMu.Lock()
@@ -71,17 +71,17 @@ func (h *Hub) decorateChat(parsed deskcmd.Result) deskcmd.Result {
 		parsed = h.decorateWatchAgent(parsed)
 		parsed.Navigate = ""
 		if parsed.StartResearch {
-			parsed.Reply = strings.TrimSpace(parsed.Reply) + " Starting sealed 0G Direct on this computer. Chat cannot AUTHORIZE."
+			parsed.Reply = strings.TrimSpace(strings.ReplaceAll(parsed.Reply, " Starting sealed 0G Direct on this computer. Chat cannot AUTHORIZE.", ""))
+			parsed.Reply = strings.TrimSpace(strings.ReplaceAll(parsed.Reply, " Chat cannot AUTHORIZE.", ""))
 			if parsed.Agent != nil {
 				parsed.Agent.Kind = "hunt"
-				parsed.Agent.Executive = parsed.Reply
 			}
 		}
 	case "policy.get":
 		parsed.Reply = h.replyPolicy()
 		parsed.Navigate = ""
 	case "setup.guide":
-		parsed.Reply = h.replyDeskStatus() + " First-run setup walks wallet, network, Hyperliquid, session, Protect, private compute, then policy. Chat cannot AUTHORIZE."
+		parsed.Reply = h.replyDeskStatus() + " First-run setup walks wallet, network, Hyperliquid, session, Protect, private compute, then policy."
 	case "mission.enable_required":
 		parsed.Reply = h.replyMissionEnable()
 	case "mission.stop":
@@ -116,7 +116,7 @@ func (h *Hub) replyDeskStatus() string {
 		}
 	}
 	if running {
-		return fmt.Sprintf("Researching %s — %s still running. Compute money, not trading capital. Chat cannot AUTHORIZE.", strings.ToUpper(coin), strings.ReplaceAll(stage, "_", " "))
+		return fmt.Sprintf("Researching %s. %s still running. Compute money, not trading capital.", strings.ToUpper(coin), strings.ReplaceAll(stage, "_", " "))
 	}
 	m := auto.LoadMission(h.Dir)
 	mode := "Manual"
@@ -126,13 +126,13 @@ func (h *Hub) replyDeskStatus() string {
 		mode = "Research Only"
 	}
 	if eligible && hash != "" {
-		return fmt.Sprintf("Idle. Wallet %s. %s. Mode %s. Exact preview is waiting on this computer. Chat cannot AUTHORIZE.", wallet, sess, mode)
+		return fmt.Sprintf("Idle. Wallet %s. %s. Mode %s. Exact preview is waiting on this computer.", wallet, sess, mode)
 	}
 	best := h.pickBestCoin()
 	if best != "" {
-		return fmt.Sprintf("Idle. Wallet %s. %s. Mode %s. Strongest executable book: %s. Ask me to find the best opportunity. Chat cannot AUTHORIZE.", wallet, sess, mode, best)
+		return fmt.Sprintf("Idle. Wallet %s. %s. Mode %s. Strongest executable book: %s. Ask me to find the best opportunity.", wallet, sess, mode, best)
 	}
-	return fmt.Sprintf("Idle. Wallet %s. %s. Mode %s. Ask me to scan live books. Chat cannot AUTHORIZE.", wallet, sess, mode)
+	return fmt.Sprintf("Idle. Wallet %s. %s. Mode %s. Ask me to scan live books.", wallet, sess, mode)
 }
 
 func (h *Hub) replyWatch(parsed deskcmd.Result) string {

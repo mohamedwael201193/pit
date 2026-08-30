@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { ExternalLink } from "./ExternalLink";
 import { compactUsd, pctFunding, powerSourceLabel } from "./format";
-import { committeeVerified, researchCardTitle } from "./honesty";
+import { committeeVerified, oidBelongsToPreview, researchCardTitle } from "./honesty";
 import { explainStop } from "./explain";
 import { researchWhyCopy } from "./researchWhy";
 import { LINKS } from "./links";
@@ -178,6 +178,7 @@ export function AgentRun({
   const [tech, setTech] = useState(false);
   const [pick, setPick] = useState("");
   const [whyOpen, setWhy] = useState(false);
+  const [sleepOpen, setSleep] = useState(false);
   const verified = committeeVerified(roles);
   const current = stageIndex(stage, roles, busy);
   const executable = coins.filter((c) => c.executionFeasible);
@@ -210,7 +211,7 @@ export function AgentRun({
     if (!root && !tx && !jobId) return null;
     return { root, tx, txLink, digest, jobId };
   }, [activity, evidence, jobId]);
-  const orderState = orderKind(lastOrder);
+  const orderState = oidBelongsToPreview(lastOrder?.hash, previewHash, hash) ? orderKind(lastOrder) : "";
   const elapsed = elapsedMs > 0 ? `${(elapsedMs / 1000).toFixed(1)}s` : "";
   const beat = ageLabel(updatedAt ? Date.now() - updatedAt : undefined);
   const why = researchWhyCopy({
@@ -229,15 +230,15 @@ export function AgentRun({
     ? [
         ["Review details", "Prepare the exact trade"],
         ["Compare candidates", "Compare top opportunities"],
-        ["Why this book?", `Why ${coin || focus?.coin || "this"}?`],
-        ["Set up Sleep Mission", "Trade this while I sleep"],
+        ["Why this book?", "__why"],
+        ["Sleep Mission", "Trade this while I sleep"],
       ]
     : noTrade
       ? [
-          ["Research next opportunity", "Find the best opportunity"],
-          ["Show why", "Why didn't you trade?"],
+          ["Research next", "Find the best opportunity"],
+          ["Show why", "__why"],
           ["Show alternatives", "Compare top opportunities"],
-          ["Watch", "Review Sleep Mission"],
+          ["Sleep Mission", "__sleep"],
         ]
       : policyBlock
         ? [
@@ -251,11 +252,11 @@ export function AgentRun({
             ]
           : busy
             ? [
-                ["Why this book?", `Why ${coin || focus?.coin || "this"}?`],
+                ["Why this book?", "__why"],
                 ["Stop research", "Stop research"],
               ]
             : [
-                ["Find best opportunity", "Find the best opportunity"],
+                ["Find best", "Find the best opportunity"],
                 ["What can I trade?", "What can I trade now?"],
                 ["Compare", "Compare top opportunities"],
               ];
@@ -305,7 +306,6 @@ export function AgentRun({
           <dl>
             <div><dt>Venue min</dt><dd>{compactUsd(focus.minNotional)}</dd></div>
             <div><dt>Host clip</dt><dd>{compactUsd(focus.hostNotional || focus.policyClip)}</dd></div>
-            <div><dt>Buying power</dt><dd>{compactUsd(buyingPower)}</dd></div>
             <div><dt>Funding</dt><dd>{pctFunding(focus.funding)}</dd></div>
           </dl>
           <p className="fine">Mark is the price. Venue min is the order notional. They are not the same number.</p>
@@ -349,7 +349,7 @@ export function AgentRun({
                   <button type="button" onClick={() => setOpenStep(openStep === step.id ? null : step.id)}>
                     <em aria-hidden>{markState === "done" ? "✓" : markState === "on" ? "●" : markState === "fail" ? "✕" : "○"}</em>
                     <strong>{step.label}</strong>
-                    <span>{markState === "on" ? (stage || "live") : markState === "done" ? "done" : ""}</span>
+                    <span>{markState === "on" ? (stage || "live") : ""}</span>
                   </button>
                   {openStep === step.id ? (
                     <p className="fine">
@@ -407,7 +407,7 @@ export function AgentRun({
 
       {noTrade ? (
         <article className="cockpit-card stand">
-          <p className="cockpit-kicker">NO TRADE — VERIFIED</p>
+          <p className="cockpit-kicker">NO TRADE, VERIFIED</p>
           <h3>{coin || focus?.coin || "Candidate"}</h3>
           <p>{title}. Nothing was executed. This is a valid result.</p>
           <ul className="cockpit-checks">
@@ -466,7 +466,7 @@ export function AgentRun({
         </article>
       ) : null}
 
-      {orderState ? (
+      {orderState && lastOrder ? (
         <article className={`cockpit-card ${orderState === "filled" ? "ready" : ""}`}>
           <p className="cockpit-kicker">
             {orderState === "filled" ? "FILLED" : orderState === "resting" ? "ORDER SUBMITTED" : orderState === "cancelled" ? "CANCELLED" : orderState === "failed" ? "FAILED" : "ORDER"}
@@ -484,16 +484,6 @@ export function AgentRun({
         </article>
       ) : null}
 
-      {!busy ? (
-        <article className="cockpit-sleep">
-          <div>
-            <p className="cockpit-kicker">SLEEP MISSION</p>
-            <p>Bound by current policy. Research → challenge → risk → policy → execute. This Agent may prepare it. Desktop still arms.</p>
-          </div>
-          <button type="button" className="ghost" onClick={onOpenAutomation}>Open Sleep Mission</button>
-        </article>
-      ) : null}
-
       <div className="cockpit-follow">
         {follow.map(([label, q]) => (
           <button
@@ -505,8 +495,12 @@ export function AgentRun({
                 onStop();
                 return;
               }
-              if (q === "Review Sleep Mission") {
-                onOpenAutomation();
+              if (q === "__why") {
+                setWhy(true);
+                return;
+              }
+              if (q === "__sleep" || q === "Review Sleep Mission") {
+                setSleep(true);
                 return;
               }
               onAsk(q);
@@ -524,9 +518,17 @@ export function AgentRun({
             <p key={row.q} className="fine"><strong>{row.q}</strong> {row.a}</p>
           ))}
         </article>
-      ) : (
-        <button type="button" className="linkish" onClick={() => setWhy(true)}>Show why</button>
-      )}
+      ) : null}
+
+      {sleepOpen && !busy ? (
+        <article className="cockpit-sleep">
+          <div>
+            <p className="cockpit-kicker">SLEEP MISSION</p>
+            <p>Bound by current policy. Research, challenge, risk, policy, then execute. This Agent may prepare it. Desktop still arms.</p>
+          </div>
+          <button type="button" className="ghost" onClick={onOpenAutomation}>Open Sleep Mission</button>
+        </article>
+      ) : null}
 
       <details className="cockpit-tech" open={tech} onToggle={(e) => setTech((e.target as HTMLDetailsElement).open)}>
         <summary>Technical details</summary>
