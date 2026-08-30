@@ -2288,6 +2288,33 @@ CLASSIFICATION:
 PRODUCTION READY: 0.8.0 is production-ready as a public discover/verify surface. It is **not** an execution UI.
 NEXT STEP: Deploy Vercel + Render. Judge path: hero → radar → public/private split → proof → historical replay → download.
 
+---
+
+## M107 — Passport honesty: live Desk ID vs iTransfer (2026-08-30)
+
+DATE/TIME: 2026-08-30 07:31+03
+PHASE: WEB 2.0 follow-up after winner/0G/web-audit research. Do not flatten OID 529167222216. Do not remint PIT-4bbee556. Do not invent iTransfer, SIWE bind, or Galileo verify.
+GOAL: `/agent` must not treat all of ERC-7857 as dead. PitDeskID mint/own/authorizeUsage is live on Aristotle. iTransfer/iClone stay unavailable. The connected account page must not look like a SIWE or TESTNET verifier.
+RESULT:
+- **IMPLEMENTED:** Still **0.8.0**. No new installer. No companion bump.
+  1. Public `/agent` reads `ownerOf(1)` and `isAuthorized(tokenId, owner)` on PitDeskID `0xfdB3a8D39F1E2b77a8261b359eABaaa2F08f8c35` via `evmrpc.0g.ai`. ERC-8004 `ownerOf(3489333)` stays a chain read, not a ranking.
+  2. iTransfer / iClone labeled **NOT LIVE ON MAINNET**. No transfer button.
+  3. Proof tx check also reads `getTransactionReceipt` (success / reverted / pending). TEE copy stays HISTORICAL recovered signer vs expected listed Direct teeSigner. Browser does not run VerifyE2EE.
+  4. Connected My Agent drops SiweBind. My Proof no longer offers a Galileo toggle. Dead unused landing / SIWE / NetworkToggle / VerifyForm removed.
+- **TESTED:** Playwright 22/22 PASS (agent Desk ID copy, iTransfer not live, no transfer button, no Authorize, capital SIMULATION).
+- **LIVE VERIFIED:** Aristotle `ownerOf(1)` = `0xbdfcee82bd42fefa58ee850b3709636a8b6b0034` (same owner as this desk). iTransfer still unavailable.
+- **UNVERIFIED:** Vercel alias after this commit (deploy next). Browser VerifyE2EE. New fill.
+- **BLOCKED:** iTransfer UNAVAILABLE. Authenticode absent. macOS/Linux not packaged.
+
+SECURITY RESULT: Browser still cannot receive session keys, Direct token plaintext, private prompts, or private memory. Web still cannot authorize, pin, or enable autonomy. Public agent page does not fetch another account's extraAgents.
+TX HASH / OID: Historical OID `529167222216` unchanged.
+CLASSIFICATION:
+- Live Desk ID ownerOf: **IMPLEMENTED + TESTED**
+- iTransfer UI: **NOT IMPLEMENTED** (deliberate; not live)
+- Fake SIWE / Galileo verify: **REMOVED**
+PRODUCTION READY: 0.8.0 passport is honest about what ERC-7857 can do on Aristotle today.
+NEXT STEP: Commit, push, Vercel. Judge can open `/agent` without a wallet.
+
 
 
 

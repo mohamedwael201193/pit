@@ -1,25 +1,25 @@
-import { useState } from "react";
+import { Link } from "react-router-dom";
 import { PageHead } from "../ui/PageHead";
 import { Bezel } from "../ui/Surface";
-import { NetworkToggle } from "../NetworkToggle";
-import { VerifyForm } from "../VerifyForm";
-
-type Net = "mainnet" | "testnet";
+import { ButtonLink } from "../ui/Button";
 
 export function VerifyPage() {
-  const [net, setNet] = useState<Net>("mainnet");
-  const [hash, setHash] = useState("");
-  const [root, setRoot] = useState("");
-  const explorer = net === "mainnet" ? "https://chainscan.0g.ai" : "https://chainscan-galileo.0g.ai";
   return (
     <div className="mx-auto max-w-[40rem]">
       <PageHead
-        title="Verify a receipt"
-        lede="Recompute from chain and storage proof. Not from a screenshot."
+        title="My Proof"
+        lede="Verification runs against Aristotle in the public proof center. This page does not switch to Galileo."
       />
-      <NetworkToggle net={net} onChange={setNet} />
       <Bezel className="mt-8">
-        <VerifyForm hash={hash} root={root} explorer={explorer} net={net} onHash={setHash} onRoot={setRoot} />
+        <p className="max-w-[48ch] text-[0.9375rem] leading-6 text-[rgb(240_231_212/0.7)]">
+          Session keys never live here. This browser does not run VerifyE2EE. Paste a 0G Chain hash on the public
+          proof page and read the receipt yourself.
+        </p>
+        <div className="mt-6">
+          <ButtonLink as={Link} to="/proof" size="lg">
+            Open proof center
+          </ButtonLink>
+        </div>
       </Bezel>
     </div>
   );

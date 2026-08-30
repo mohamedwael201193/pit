@@ -38,10 +38,12 @@ test("proof does not badge verified without a check", async ({ page }) => {
   await expect(page.getByText("NO LIVE RECEIPT")).toBeVisible();
 });
 
-test("agent shows iTransfer not live", async ({ page }) => {
+test("agent shows iTransfer not live and desk id", async ({ page }) => {
   await page.goto("/agent");
   await expect(page.getByRole("heading", { name: "PIT-4bbee556" })).toBeVisible();
   await expect(page.getByText("NOT LIVE ON MAINNET")).toBeVisible();
+  await expect(page.getByText("Desk ID · ERC-7857")).toBeVisible();
+  await expect(page.getByRole("button", { name: /transfer/i })).toHaveCount(0);
 });
 
 test("download does not claim authenticode", async ({ page }) => {

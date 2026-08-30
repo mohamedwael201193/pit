@@ -13,9 +13,10 @@ export const HL_API = "https://app.hyperliquid.xyz/API";
 export const PC_0G = "https://pc.0g.ai";
 export const STORAGE_INDEXER = "https://indexer-storage-turbo.0g.ai";
 
+export const DESK_ID_CONTRACT = "0xfdB3a8D39F1E2b77a8261b359eABaaa2F08f8c35" as const;
+export const DESK_TOKEN_ID = 1n;
 export const IDENTITY_8004 = "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432" as const;
 export const REPUTATION_8004 = "0x8004BAa17C55a88189AE136b182e5fdA19dE9b63" as const;
-export const DESK_ID_CONTRACT = "0xfdB3a8D39F1E2b77a8261b359eABaaa2F08f8c35" as const;
 export const AGENT_8004_ID = 3489333n;
 
 export const PIT_AGENT = {
@@ -34,6 +35,7 @@ export const HISTORICAL_FILL = {
 };
 
 export const HISTORICAL_TEE_SIGNER = "0xA46EA4FC5889AD35A1487e1Ed04dCcfa872146B9";
+export const EXPECTED_TEE_SIGNER = HISTORICAL_TEE_SIGNER;
 
 export const CAPITAL_PRESETS = [10, 25, 50, 100, 500, 1000] as const;
 

@@ -28,7 +28,7 @@ export function ProofPage() {
       return;
     }
     setTxMsg(
-      `MATCH to an Aristotle transaction. From ${shortAddr(got.from)} to ${got.to ? shortAddr(got.to) : "contract-create"} in block ${got.blockNumber}. This browser read https://evmrpc.0g.ai. It did not trust a PIT backend badge.`,
+      `${got.status === "success" ? "MATCH" : got.status.toUpperCase()} on Aristotle. From ${shortAddr(got.from)} to ${got.to ? shortAddr(got.to) : "contract-create"} in block ${got.blockNumber}. Status ${got.status}. This browser read evmrpc.0g.ai getTransaction + getTransactionReceipt. It did not run VerifyE2EE.`,
     );
   };
 
@@ -58,7 +58,7 @@ export function ProofPage() {
           name="TEE"
           status="NO LIVE RECEIPT"
           proves="Recover signer from Direct evidence, compare to the registered signer."
-          how={`Historical recovered signer ${shortAddr(HISTORICAL_TEE_SIGNER)} from a prior sealed job is HISTORICAL, not a live match. Expected on-chain signer is not claimed without that receipt.`}
+          how={`Historical recovered signer ${shortAddr(HISTORICAL_TEE_SIGNER)} from a prior sealed job is HISTORICAL. Expected listed Direct teeSigner is ${shortAddr(HISTORICAL_TEE_SIGNER)}. This page does not run VerifyE2EE.`}
         />
         <ProofRow
           name="0G Storage"
