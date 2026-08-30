@@ -49,7 +49,7 @@ Health (public Watch, `sign: false`): [pit-health.onrender.com](https://pit-heal
 ### How to verify your PIT download
 
 ```powershell
-Get-FileHash .\PIT_0.7.5_x64-setup.exe -Algorithm SHA256
+Get-FileHash .\PIT_0.7.6_x64-setup.exe -Algorithm SHA256
 ```
 
 Compare with `SHA256SUMS` on the same GitHub Release. The source commit is on the release tag.
@@ -295,7 +295,7 @@ Full command set:
 
 `init` `login` `wallet` `pair` `network` `policy` `session` `companion` `approve` `hyperliquid` `agent` `compute` `direct` `ask` `research` `watch` `opportunities` `chat` `positions` `health` `forecast` `calibration` `preview` `authorize` `execute` `orders` `cancel` `status` `resolve` `card` `verify` `proof` `kill` `revoke` `doctor` `activity` `receipt` `logout` `version` `update`
 
-Every command accepts `--json`. `pit version` prints `PIT 0.7.5`. `pit doctor` probes version, wallet, network, OS keychain, memory-key hazard, Hyperliquid, 0G RPC, companion, sealer, Direct token (keychain, operator file, or sponsored compute), Direct credit, TEE evidence, storage client, registry, session, Hyperliquid agent, and policy. It never prints secrets. A global `PIT_MEMORY_KEY` is a doctor failure. The desktop can bind a public wallet, pin policy, and mint a session without a terminal. `pit research [ETH] --hypothesis none|long|short` seals a user hypothesis into the private book. `pit pair`, `pit approve`, `pit execute`, `pit mcp`, `pit scan`, `pit mission`, and `pit calibration` are first-class commands. `pit direct` issues the official wallet-signed Direct challenge and stores the token in the keychain. Discovery ranks books this account can actually size: policy PASS is not the same as execution-feasible. Spot USDC is not silently treated as perp margin unless Hyperliquid reports unified account mode.
+Every command accepts `--json`. `pit version` prints `PIT 0.7.6`. `pit doctor` probes version, wallet, network, OS keychain, memory-key hazard, Hyperliquid, 0G RPC, companion, sealer, Direct token (keychain, operator file, or sponsored compute), Direct credit, TEE evidence, storage client, registry, session, Hyperliquid agent, and policy. It never prints secrets. A global `PIT_MEMORY_KEY` is a doctor failure. The desktop can bind a public wallet, pin policy, and mint a session without a terminal. `pit research [ETH] --hypothesis none|long|short` seals a user hypothesis into the private book. `pit pair`, `pit approve`, `pit execute`, `pit mcp`, `pit scan`, `pit mission`, and `pit calibration` are first-class commands. `pit direct` issues the official wallet-signed Direct challenge and stores the token in the keychain. Discovery ranks books this account can actually size: policy PASS is not the same as execution-feasible. Spot USDC is not silently treated as perp margin unless Hyperliquid reports unified account mode.
 
 Official storage client (not the TypeScript SDK): `upload --url --file --key --encryption-key` and `download --proof --root --file --encryption-key`. `pit proof` requires `--key-file` per workspace and refuses a global memory key.
 

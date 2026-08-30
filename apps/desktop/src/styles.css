@@ -1426,7 +1426,7 @@ details.card > summary { cursor: pointer; font-weight: 600; letter-spacing: 0.08
 .book-row {
   width: 100%;
   display: grid;
-  grid-template-columns: 88px 88px auto 1fr;
+  grid-template-columns: 88px 88px 88px auto 1fr;
   gap: 10px;
   align-items: center;
   text-align: left;
@@ -1549,7 +1549,9 @@ details.card > summary { cursor: pointer; font-weight: 600; letter-spacing: 0.08
   margin: 8px 0;
 }
 .hero-next { border-bottom: 0; padding: 0; }
-.desk-books { margin-top: 8px; }
+.desk-books .book-row {
+  grid-template-columns: 88px 88px auto 1fr;
+}
 
 .honesty-row { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 6px; }
 .honesty-chip {

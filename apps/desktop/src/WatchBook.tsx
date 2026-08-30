@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { BrandMark } from "./BrandMark";
 import { accountSizeGate, compactNum, compactUsd, marketSizeGate, nearestPolicyClip, nearestVenueMin, pctFunding, powerSourceLabel } from "./format";
 import { ExternalLink } from "./ExternalLink";
@@ -100,6 +100,7 @@ export function WatchBook({
   const [sel, setSel] = useState("");
   const [q, setQ] = useState("");
   const [filter, setFilter] = useState<"all" | "pass" | "exec" | "research" | "capital" | "blocked">("pass");
+  const autoExec = useRef(false);
   const filtered = useMemo(() => {
     const n = q.trim().toLowerCase();
     return coins.filter((c) => {
@@ -114,6 +115,12 @@ export function WatchBook({
   }, [coins, q, filter]);
   const execN = coins.filter((c) => c.executionFeasible).length;
   const passN = coins.filter((c) => c.eligible).length;
+  useEffect(() => {
+    if (!autoExec.current && execN > 0) {
+      autoExec.current = true;
+      setFilter("exec");
+    }
+  }, [execN]);
   const venueMin = nearestVenueMin(coins);
   const have = typeof buyingPower === "number" ? buyingPower : coins[0]?.availableMargin;
   const gate = accountSizeGate({
@@ -125,6 +132,7 @@ export function WatchBook({
     policyClip: nearestPolicyClip(coins),
   });
   const row = filtered.find((c) => c.coin === sel);
+  const researchCoin = row || coins.find((c) => c.previewReady) || coins.find((c) => c.executionFeasible);
   const useTiles = false;
   const counts = {
     all: coins.length,
@@ -200,15 +208,15 @@ export function WatchBook({
               <ExternalLink className="primary" href={fundHref}>
                 Fund this Hyperliquid account
               </ExternalLink>
-            ) : row ? (
+            ) : researchCoin ? (
               <button
                 type="button"
                 className="primary"
                 disabled={researchBusy || !computeReady || !pinned}
                 title={researchTitle(pinned, computeReady)}
-                onClick={() => onResearch(row.coin)}
+                onClick={() => onResearch(researchCoin.coin)}
               >
-                Research {row.coin} privately
+                Research {researchCoin.coin} privately
               </button>
             ) : null}
           </div>
@@ -280,8 +288,9 @@ export function WatchBook({
             <span className="book-row head">
               <span>Asset</span>
               <span>Price</span>
+              <span>Funding</span>
               <span>Status</span>
-              <span>Min / clip / gap</span>
+              <span>Min / clip</span>
             </span>
           </li>
           {filtered.map((c) => {
@@ -296,6 +305,9 @@ export function WatchBook({
                     <strong>{c.coin}</strong>
                   </span>
                   <span className="tile-mark">{compactNum(c.mark)}</span>
+                  <span className="fine" style={{ margin: 0 }}>
+                    {pctFunding(c.funding)}
+                  </span>
                   <span className={`layer-chip ${chip.k}`}>{chip.t}</span>
                   <span className="fine" style={{ margin: 0 }}>
                     {compactUsd(c.minNotional || venueMin)} · clip {compactUsd(c.policyClip || 0)}

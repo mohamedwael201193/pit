@@ -110,7 +110,7 @@ export function SetupWizard({
   const last = 9;
   const titles = [
     "Connect wallet",
-    "Choose network",
+    "Production network",
     "Connect Hyperliquid",
     "Create PIT session",
     "Approve PIT",
@@ -173,10 +173,10 @@ export function SetupWizard({
       ) : null}
       {step === 1 ? (
         <>
-          <h1>Choose Mainnet or Testnet.</h1>
+          <h1>MAINNET production.</h1>
           <NetworkToggle net={net} onChange={setNet} />
           <NetworkBanner net={net} />
-          <p className="fine">MAINNET is production. TESTNET is the lab. Mixing compute and venue across worlds is refused.</p>
+          <p className="fine">This desk trades Hyperliquid mainnet and Aristotle. TESTNET stays in developer tooling.</p>
         </>
       ) : null}
       {step === 2 ? (

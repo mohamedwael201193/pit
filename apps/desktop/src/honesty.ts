@@ -27,8 +27,15 @@ export function researchCardTitle(kind?: string | null, verified?: boolean): str
   if (kind === "CANCELED_BY_USER") return "YOU CANCELLED";
   if (kind === "POLICY_DENIED") return "POLICY BLOCKED THIS";
   if (kind === "MARKET_DENIED") return "MARKET NOT USABLE";
+  if (kind === "DIRECT_NOT_AUTHORIZED") return "PRIVATE RESEARCH IS NOT ARMED";
   if (kind === "DIRECT_CREDIT_INSUFFICIENT") return "PRIVATE COMPUTE NEEDS FUNDS";
   if (kind === "DIRECT_PROVIDER_TIMEOUT") return "PROVIDER TIMEOUT";
+  if (kind === "DIRECT_PROVIDER_UNAVAILABLE") return "PRIVATE PROVIDER UNREACHABLE";
+  if (kind === "DIRECT_RATE_LIMITED") return "TOO MANY SEALED REQUESTS";
+  if (kind === "JOB_CRASHED") return "RESEARCH PROCESS STOPPED";
+  if (kind === "POLL_FAILED") return "CONNECTION CHECK MISSED";
+  if (kind === "SPONSOR_QUOTA") return "SPONSORED RESEARCH PAUSED";
+  if (kind === "WRONG_NETWORK") return "WRONG NETWORK";
   if (kind === "COMPANION_NOT_RUNNING" || kind === "companion_down") return "COMPANION FAILURE";
   if (kind === "TEE_SIGNATURE_INVALID" || kind === "TEE_SIGNER_MISMATCH" || kind === "TEE_VERIFY_FAIL") {
     return "TEE VERIFICATION FAILED";

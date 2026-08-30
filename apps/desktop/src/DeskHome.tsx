@@ -1,4 +1,5 @@
 import { BrandMark } from "./BrandMark";
+import { deskHeadline } from "./deskCopy";
 import { EvidenceStrip } from "./EvidenceStrip";
 import { ExternalLink } from "./ExternalLink";
 import { accountSizeGate, compactNum, compactUsd, marketSizeGate, nearestPolicyClip, nearestVenueMin } from "./format";
@@ -114,20 +115,20 @@ export function DeskHome({
     execWhy,
     policyClip: nearestPolicyClip(coins),
   });
-  const nearest = [...coins].filter((c) => (c.minNotional || 0) > 0).sort((a, b) => (a.minNotional || 0) - (b.minNotional || 0))[0];
-  const heroTitle = researchBusy
-    ? doing
-    : awaitingAuth
-      ? "Waiting for you"
-      : researchKind === "READY_STOOD_DOWN"
-        ? "Committee stood down. Checking next."
-        : ready && gate.cta === "policy"
-          ? "Policy cap is too tight"
-          : ready && !gate.canOpen
-          ? "Watching. Nothing can open."
-          : ready
-            ? "Watching the live book"
-            : attention.title;
+  const nearest = [...coins]
+    .filter((c) => (c.executionFeasible || c.eligible) && (c.minNotional || 0) > 0)
+    .sort((a, b) => (a.minNotional || 0) - (b.minNotional || 0))[0];
+  const heroTitle = deskHeadline({
+    researchBusy,
+    doing,
+    awaitingAuth,
+    ready,
+    canOpen: gate.canOpen,
+    execN,
+    researchKind,
+    attentionTitle: attention.title,
+    policyTight: gate.cta === "policy",
+  });
   const path = (
       <ol className="demo-path" aria-label="New user path">
         <li className={items.find((p) => p.id === "wallet")?.state === "ok" ? "on" : ""}>
@@ -179,7 +180,7 @@ export function DeskHome({
         <div>
           <p className="eyebrow">Desk</p>
           <h1>{heroTitle}</h1>
-          <p className="lead">{doing}</p>
+          {doing && doing !== heroTitle ? <p className="lead">{doing}</p> : null}
           <p className="capital-line" role="status">
             This account {compactUsd(gate.have)}
             {nearest ? ` · nearest floor ${nearest.coin} ${compactUsd(nearest.minNotional)}` : ` · this market min ${compactUsd(gate.min)}`}
@@ -187,7 +188,7 @@ export function DeskHome({
             {powerSource ? ` · ${powerSource.replaceAll("_", " ")}` : ""}
             {execGate ? ` · ${execGate.replaceAll("_", " ")}` : ""}
           </p>
-          <p>{execWhy || capitalNote || gate.detail}</p>
+          {gate.canOpen ? <p className="fine">{gate.detail}</p> : <p>{execWhy || capitalNote || gate.detail}</p>}
           {experienceWhy ? <p className="fine">{experienceWhy}</p> : null}
           {routes && routes.length ? (
             <p className="route-rail" aria-label="Capital router">
@@ -198,7 +199,13 @@ export function DeskHome({
               ))}
             </p>
           ) : null}
-          {gate.cta === "policy" ? (
+          {gate.canOpen && best && !researchBusy && !awaitingAuth ? (
+            <p className="fine">
+              <button type="button" className="primary" onClick={() => onResearch(best.coin)}>
+                Research {best.coin} privately
+              </button>
+            </p>
+          ) : gate.cta === "policy" ? (
             <p className="fine">
               <button type="button" className="linkish" onClick={() => onGo("security")}>
                 Open Policy
@@ -214,7 +221,7 @@ export function DeskHome({
         </div>
         <section className="next-row hero-next">
           <div>
-            <p className="label">Needs you</p>
+            <p className="label">{attention.title === "Desk is ready" || gate.canOpen ? "Next" : "Needs you"}</p>
             <h2>{attention.title}</h2>
             <p className="fine" style={{ margin: 0 }}>
               {attention.why}
@@ -222,7 +229,7 @@ export function DeskHome({
           </div>
           <div className="cta-row">
             {ready && !researchBusy && !awaitingAuth ? (
-              <button type="button" className="primary" onClick={() => onGo("markets")}>
+              <button type="button" className={gate.canOpen ? "linkish" : "primary"} onClick={() => onGo("markets")}>
                 Open Markets
               </button>
             ) : null}
@@ -311,23 +318,26 @@ export function DeskHome({
       </dl>
       {ranked.length ? (
         <section>
-          <p className="label">Policy-eligible books</p>
-          <ul className="book-grid desk-books">
-            {ranked.map((c) => (
-              <li key={c.coin}>
-                <button type="button" className="book-tile" onClick={() => onGo("markets")}>
-                  <span className="tile-head">
-                    <BrandMark symbol={c.coin} size={16} />
-                    <strong>{c.coin}</strong>
-                    <span className={`layer-chip ${c.executionFeasible ? "ok" : "pass"}`}>
-                      {c.executionFeasible ? "Can open" : marketSizeGate(c.coin, buyingPower, c.minNotional, c.executionFeasible, c.execGate, c.policyClip).chip}
+          <p className="label">{execN ? "Executable now" : "Policy-eligible books"}</p>
+          <ul className="book-list desk-books" aria-label="Ranked books">
+            {ranked.map((c) => {
+              const chip = marketSizeGate(c.coin, buyingPower, c.minNotional, c.executionFeasible, c.execGate, c.policyClip);
+              return (
+                <li key={c.coin}>
+                  <button type="button" className="book-row" onClick={() => onGo("markets")}>
+                    <span className="asset">
+                      <BrandMark symbol={c.coin} size={14} />
+                      <strong>{c.coin}</strong>
                     </span>
-                  </span>
-                  <span className="tile-mark">{compactNum(c.mark)}</span>
-                  <span className="tile-meta">{marketSizeGate(c.coin, buyingPower, c.minNotional, c.executionFeasible, c.execGate, c.policyClip).detail}</span>
-                </button>
-              </li>
-            ))}
+                    <span className="tile-mark">{compactNum(c.mark)}</span>
+                    <span className={`layer-chip ${c.executionFeasible ? "ok" : "pass"}`}>{chip.chip}</span>
+                    <span className="fine" style={{ margin: 0 }}>
+                      {compactUsd(c.minNotional)} · clip {compactUsd(c.policyClip)}
+                    </span>
+                  </button>
+                </li>
+              );
+            })}
           </ul>
         </section>
       ) : (

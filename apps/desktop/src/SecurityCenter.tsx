@@ -89,7 +89,8 @@ export function SecurityCenter({
   pairingDevices?: number;
   onRotatePair?: () => void;
 }) {
-  const missing = items.filter((p) => p.state !== "ok");
+  const missing = items.filter((p) => p.state !== "ok" && p.state !== "optional");
+  const readyOk = items.filter((p) => p.state === "ok" || p.state === "optional");
   const wallet = status?.wallet || "";
   const hl = checkNamed(checks, "hl_agent");
   return (
@@ -103,7 +104,7 @@ export function SecurityCenter({
           Check again
         </button>
       </div>
-      <p className="lead">What is ready, what is missing, and the one next action. Order and cancel only. Chat cannot authorize or pin policy.</p>
+      <p className="lead">Order and cancel only. Chat cannot authorize or pin policy.</p>
 
       {code !== undefined ? (
         <PairingDock
@@ -116,8 +117,19 @@ export function SecurityCenter({
         />
       ) : null}
 
-      <section className="ready-list" aria-label="Setup readiness">
-        {items.map((p) => (
+      {readyOk.length ? (
+        <div className="chip-row" aria-label="Ready">
+          {readyOk.map((p) => (
+            <span key={p.id} className={p.state === "ok" ? "chip ok" : "chip"}>
+              {p.label} {p.state === "ok" ? "ready" : "optional"}
+            </span>
+          ))}
+        </div>
+      ) : null}
+
+      {missing.length ? (
+      <section className="ready-list" aria-label="Action required">
+        {missing.map((p) => (
           <article key={p.id} className={`ready-item ${p.state}`}>
             <p className="label">{p.label}</p>
             <p className={p.state === "ok" ? "ok" : p.state === "optional" ? "mute" : "bad"}>
@@ -163,6 +175,7 @@ export function SecurityCenter({
           </article>
         ))}
       </section>
+      ) : null}
 
       <HyperliquidCard
         net={net}

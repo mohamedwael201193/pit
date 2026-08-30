@@ -1189,7 +1189,7 @@ export function App() {
 
         {setupDone && view === "home" ? (
             <DeskHome
-              ready={attention.title === "Desk is ready"}
+              ready={protectedOk && sessionAlive && pinned && Boolean(checks.find((c) => c.name === "hl_agent" && c.ok))}
               doing={doing}
               items={items}
               attention={attention}

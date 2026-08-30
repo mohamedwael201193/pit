@@ -2228,6 +2228,36 @@ CLASSIFICATION:
 PRODUCTION READY: 0.7.5 is production-ready for honest policy-eligible floors. It is **not** production-ready for a new MAINNET clip until YOU pin a clip that meets a book’s rounded min.
 NEXT STEP: On Security, preview then pin a clip above the candidate min if you want a clip. Do not flatten. Do not remint.
 
+---
+
+## M105 — Desktop 0.7.6: executable desk, not a stale stand-down (2026-08-30)
+
+DATE/TIME: 2026-08-30 06:29+03
+PHASE: 0.7.6 desktop finalization. Do not flatten OID 529167222216. Do not remint PIT-4bbee556. Do not invent a fill. Do not enable Guarded Autonomy. Clip is already $13 from YOU.
+GOAL: After you pinned $13, Markets correctly showed 6 executable books. Desk still treated a prior committee stand-down as the headline and repeated six TIGHT paragraphs. Security listed every READY domain as a giant card. Finish the live desktop around capital truth, not a new product thesis.
+RESULT:
+- **IMPLEMENTED:** Version **0.7.6**.
+  1. Desk headline prefers live executable count over a stale `READY_STOOD_DOWN`. With 6 books that can open, the title is **6 books can open**. Policy-tight still beats a stand-down when clip cannot size.
+  2. Desk books are one-line rows (asset / mark / chip / min·clip), not six repeated paragraphs. Primary CTA is **Research {best} privately**.
+  3. Markets defaults to Actionable when any book is execution-feasible. Funding column. Research CTA without selecting a row.
+  4. Security READY domains are chips. Only NEEDS ACTION stays as cards. Policy clip cell shows pinned vs draft.
+  5. First-run network step is MAINNET production (TESTNET stays developer-only). Research taxonomy titles for POLL_FAILED / JOB_CRASHED / DIRECT_* / SPONSOR_QUOTA / WRONG_NETWORK.
+- **TESTED:** `go test ./...` PASS. Desktop `tsc -b` PASS. Desktop e2e copy harness ok (`assertDeskHeadlinePrefersExecutable`). `cargo test` allow_official_https PASS. NSIS `PIT_0.7.6_x64-setup.exe`. Web `tsc` not re-run (no `apps/web` change).
+- **LIVE VERIFIED:** Overlay `/health` **0.7.6**. `/watch` buying power **$16.181269**, clip **$13**, **6 executable / 6 preview**, TRADE ready, WAIT blocked, SWAP/LP unavailable. DOGE min $10.03 … HYPE $10.80. Historical OID untouched. No new order. SHA256 pit.exe `299AD0C4AD3B759246A8DC70578411C21E043984D17E5F3DB623ACB43E30A3E0`. pit-desktop.exe `F3E1C87E3FA539A27C1DC65EFAFB5637DDC88052E1EEB5DD05F1E960C6FCF167`. sealer `28EB5AE6190D93FB9D46D3A3B3B1989A57CB897E838C673A178E24ABD0A41254`. installer `1B2C5D11045E6505D9953C2074D001F074AC6E8FE47976BC21CA233A8F431A59`.
+- **UNVERIFIED:** Guarded live order. New 0G Storage/chain proof this pass. Pairing ceremony this pass. Vercel landing (no web change).
+- **BLOCKED:** iTransfer UNAVAILABLE. SWAP/LP execution unavailable. A new MAINNET fill still needs YOUR AUTHORIZE (or Guarded consent) on an exact preview.
+
+SECURITY RESULT: Chat/web/MCP still cannot authorize, pin, or enable autonomy. Policy was not auto-raised this pass.
+TX HASH / OID: Historical OID `529167222216` unchanged.
+CLASSIFICATION:
+- Executable desk vs stale stand-down: **IMPLEMENTED + TESTED** (overlay capital LIVE VERIFIED; desktop window not pixel-clicked this pass)
+- Markets Actionable default + funding column: **IMPLEMENTED + TESTED**
+- Security compact READY chips: **IMPLEMENTED + TESTED**
+- Live MAINNET order: **NOT IMPLEMENTED** (no AUTHORIZE this pass)
+PRODUCTION READY: 0.7.6 is production-ready for an honest executable desk at clip $13. It is **not** production-ready to claim a new fill until YOU authorize a preview.
+NEXT STEP: On Desk, Research the ranked book privately, then type AUTHORIZE on the exact preview if you want a clip. Do not flatten. Do not remint.
+
+
 
 
 

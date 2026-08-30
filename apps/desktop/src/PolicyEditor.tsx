@@ -98,7 +98,7 @@ export function PolicyEditor({
           <label className="policy-cell">
             Max trade / position (USD)
             <input type="number" min={clipFloor} max={clipCeil} step={1} value={draft.maxClipUsd} onChange={(e) => set("maxClipUsd", Number(e.target.value))} />
-            <span className="fine">Host sizes every clip to this ceiling. Live Hyperliquid minimums are per-book after size decimals — often a few cents above $10. If this account can clear a book and this clip cannot, PIT says the policy is too tight. Raise, preview, pin. PIT will not invent size.</span>
+            <span className="fine">Pinned {current?.maxClipUsd ?? "—"} · draft {draft.maxClipUsd}. Host ceiling. Preview then pin. Live Hyperliquid mins are per-book after size decimals — often a few cents above $10.</span>
           </label>
           <div className="policy-cell">
             Max leverage

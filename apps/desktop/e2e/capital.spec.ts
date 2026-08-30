@@ -1,6 +1,8 @@
 import { CAPABILITY } from "../src/CapabilityMatrix";
 import { explainCommittee } from "../src/committee";
+import { deskHeadline } from "../src/deskCopy";
 import { nearestPolicyClip, nearestVenueMin } from "../src/format";
+import { researchCardTitle } from "../src/honesty";
 
 export function assertCapitalFloorIgnoresDust() {
   const coins = [
@@ -28,4 +30,27 @@ export function assertAgenticIdPartial() {
   if (row.mainnet !== "partial") throw new Error("agentic must not be OFF while mint is live");
   if (!/iTransfer/.test(row.note) || !/UNAVAILABLE/.test(row.note)) throw new Error("iTransfer unavailable");
   if (!/mint/i.test(row.note)) throw new Error("mint live");
+}
+
+export function assertDeskHeadlinePrefersExecutable() {
+  const open = deskHeadline({
+    doing: "Manual. Waiting for you.",
+    ready: true,
+    canOpen: true,
+    execN: 6,
+    researchKind: "READY_STOOD_DOWN",
+    attentionTitle: "Desk is ready",
+  });
+  if (open !== "6 books can open") throw new Error(open);
+  const tight = deskHeadline({
+    doing: "Idle",
+    ready: false,
+    canOpen: false,
+    execN: 0,
+    researchKind: "READY_STOOD_DOWN",
+    attentionTitle: "Policy cap is too tight",
+    policyTight: true,
+  });
+  if (tight !== "Policy cap is too tight") throw new Error(tight);
+  if (researchCardTitle("POLL_FAILED") !== "CONNECTION CHECK MISSED") throw new Error("poll taxonomy");
 }

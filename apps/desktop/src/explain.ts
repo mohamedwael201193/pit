@@ -22,6 +22,12 @@ export function explainStopHref(code: string | null): { href: string; label: str
 
 export function explainStop(code: string | null): { title: string; body: string } | null {
   if (!code) return null;
+  if (code === "policy_clip_tight") {
+    return {
+      title: "Policy cap is too tight",
+      body: "This account can clear the venue floor. The pinned max trade cannot. Raise max trade, preview, then pin. PIT will not invent size. No order was placed.",
+    };
+  }
   if (code === "insufficient_margin") {
     return {
       title: "Not enough trading capital",
