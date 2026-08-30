@@ -1,5 +1,6 @@
 import { Reveal } from "../ui/Reveal";
 import { DiagramWideBanner } from "../diagrams/pitGuide";
+import { TokenRow } from "./TokenRow";
 
 export function Dual() {
   return (
@@ -11,10 +12,8 @@ export function Dual() {
           <p className="mt-4 max-w-[40ch] text-[1.05rem] leading-7 text-[rgb(240_231_212/0.62)]">
             The laboratory exists for CI and developers, not for the public desk.
           </p>
-          <p className="mt-6 max-w-[40ch] text-[1.25rem] leading-8 text-[rgb(240_231_212/0.78)]">
-            Aristotle 16661 and Hyperliquid mainnet. Direct TeeML for the private book. Transfer of Agentic ID is not live.
-          </p>
         </Reveal>
+        <TokenRow />
         <div className="mt-12 min-h-[16rem] bg-[#d82f2f] p-8 text-black md:p-12">
           <p className="text-[0.8125rem] tracking-[0.16em] uppercase opacity-70">Production</p>
           <p className="mt-6 text-[1.75rem] leading-9 font-bold tracking-[-0.03em] md:text-[2.35rem] md:leading-10">

@@ -127,8 +127,10 @@ export function DiagramPrivate({ className = "" }: { className?: string }) {
       <path d="M88 148 H552 L560 168 V348 H80 V168 Z" fill={C.ink} />
       <path d="M80 168 L320 286 L560 168" fill={C.coral} />
       <path d="M80 168 L320 286 L560 168" fill="none" stroke={C.black} strokeWidth="1.5" />
+      <circle cx="320" cy="252" r="70" fill="none" stroke={C.ink} strokeWidth="1.2" opacity="0.35" />
       <circle cx="320" cy="252" r="58" fill={C.cream} />
       <circle cx="320" cy="252" r="58" fill="none" stroke={C.black} strokeWidth="1.5" />
+      <circle cx="320" cy="252" r="46" fill="none" stroke={C.ink} strokeWidth="0.8" strokeDasharray="3 4" />
       <Face x="320" y="244" textAnchor="middle" fill={C.ink} size={13} weight="700" letterSpacing="0.14em">
         BOOK
       </Face>
@@ -154,6 +156,7 @@ export function DiagramSealed({ className = "" }: { className?: string }) {
       {roles.map((role, i) => (
         <g key={role} transform={`translate(${48 + i * 190} 96)`}>
           <rect width="168" height="248" fill={i === 1 ? C.coral : C.cream} />
+          <rect x="8" y="8" width="152" height="232" fill="none" stroke={i === 1 ? C.ink : C.ink} strokeWidth="1" opacity="0.18" />
           <rect x="16" y="24" width="136" height="108" fill={i === 1 ? C.cream : C.ink} />
           <Face
             x="84"

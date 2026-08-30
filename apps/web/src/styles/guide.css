@@ -54,7 +54,7 @@ html[data-theme="guide"] body {
 
 .guide-pin {
   position: relative;
-  height: 180vh;
+  height: 118vh;
 }
 
 .guide-pin__sticky {
@@ -149,7 +149,7 @@ html[data-theme="guide"] body {
 
 .guide-track > * {
   scroll-snap-align: start;
-  flex: 0 0 min(82vw, 24rem);
+  flex: 0 0 min(84vw, 24rem);
 }
 
 @keyframes guide-marquee {
@@ -175,6 +175,10 @@ html[data-theme="guide"] body {
 
 .guide-spin {
   animation: guide-spin 28s linear infinite;
+}
+
+.guide-spin-rev {
+  animation: guide-spin 36s linear infinite reverse;
 }
 
 @keyframes collapse-down {
@@ -209,7 +213,8 @@ html[data-theme="guide"] body {
 
 @media (prefers-reduced-motion: reduce) {
   .guide-marquee,
-  .guide-spin {
+  .guide-spin,
+  .guide-spin-rev {
     animation: none;
   }
   .guide-grain {

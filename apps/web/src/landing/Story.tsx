@@ -22,34 +22,29 @@ export function Story() {
   const reduce = useReducedMotion();
   const pinRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({ target: pinRef, offset: ["start end", "end start"] });
-  const y1 = useTransform(scrollYProgress, [0.15, 0.55], [40, 0]);
-  const y2 = useTransform(scrollYProgress, [0.25, 0.65], [56, 0]);
-  const y3 = useTransform(scrollYProgress, [0.35, 0.75], [72, 0]);
-  const opacities = [
-    useTransform(scrollYProgress, [0.1, 0.35], [0.18, 1]),
-    useTransform(scrollYProgress, [0.2, 0.45], [0.18, 1]),
-    useTransform(scrollYProgress, [0.3, 0.55], [0.18, 1]),
-  ];
+  const y1 = useTransform(scrollYProgress, [0.2, 0.55], [24, 0]);
+  const y2 = useTransform(scrollYProgress, [0.28, 0.62], [32, 0]);
+  const y3 = useTransform(scrollYProgress, [0.36, 0.7], [40, 0]);
   const ys = [y1, y2, y3];
 
   return (
     <section id="story" className="relative border-t border-[rgb(240_231_212/0.25)]">
-      <div className="container-pit py-16 md:py-24">
+      <div className="container-pit py-16 md:py-20">
         <Reveal>
           <p className="max-w-[28ch] text-[1.65rem] leading-9 font-medium tracking-[-0.03em] text-[var(--guide-cream)] md:text-[2rem] md:leading-10">
             The web discovers. The desktop acts.
           </p>
         </Reveal>
       </div>
-      <div ref={pinRef} className="relative min-h-[150vh]">
-        <div className="sticky top-0 flex min-h-[100dvh] items-center overflow-hidden bg-[#1a1a1a]">
+      <div ref={pinRef} className="relative">
+        <div className="flex min-h-[100dvh] items-center bg-[#1a1a1a]">
           <div className="container-pit w-full py-16">
             <div className="flex flex-col gap-2 md:gap-3">
               {BEATS.map((b, i) => (
                 <motion.h2
                   key={b.title}
                   className="guide-display"
-                  style={reduce ? undefined : { y: ys[i], opacity: opacities[i] }}
+                  style={reduce ? undefined : { y: ys[i] }}
                 >
                   {b.title}
                 </motion.h2>

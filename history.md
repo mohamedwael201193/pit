@@ -2,6 +2,36 @@
 
 ---
 
+## M117 — Landing fills the void. Beats pan. Four doors.
+
+- **Source:** Production landing still showed empty black chapters after the coral hero, Must-see Beats stopped at three cards, and MAINNET carried a second paragraph. CLI, MCP, SDK, and Desktop were missing as a product surface.
+- **Discovery:** Hero pin was 180vh of leftover coral. Story headlines started at 18 percent opacity. Beats mapped horizontal travel across the unpin, so the last two cards never arrived. MAINNET only needs the laboratory sentence.
+- **Candidate:** Same coral, cream, ink. WireTurn plus inner iris. Token marks from web3icons. One 2x2 of Desktop / CLI / MCP / SDK.
+- **Kill:** Aristotle dump under MAINNET. Empty 150vh story pin. Wallet-first. Authorize on the web.
+- **Next:** Vercel production. Desktop Security stays the M116 next-action desk.
+
+DATE/TIME: 2026-08-30 21:28+03
+PHASE: UI honesty. Do not flatten OID 529167222216. Do not remint PIT-4bbee556. Chat never authorizes. Direct TeeML only for the private book.
+GOAL: Landing has no empty chapter. All five beats are reachable. Surfaces show Desktop, CLI, MCP, SDK.
+RESULT:
+- **IMPLEMENTED:** Still **0.8.0**. No new installer this pass.
+  1. Hero pin 118vh. One line. Magnetic Explore. WireTurn + reverse iris.
+  2. Must-see Beats: ResizeObserver travel, pin height = 100dvh + travel, snap fallback under 768px. All five cards in the tree: Private book, Three envelopes, Policy is law, You authorize, Then it remembers.
+  3. MAINNET only keeps the laboratory sentence. Token row ETH BTC SOL HYPE DOGE AVAX. Four doors section.
+- **TESTED:** Vite build pass. Playwright home/network/authorize/routes 21/21 against Vite with Privy env.
+- **BLOCKED:** iTransfer not live. No new live trade. Authenticode still absent.
+
+SECURITY RESULT: Chat still cannot AUTHORIZE. Web still has no Authorize control. MCP still cannot order. Historical OID unchanged.
+TX HASH / OID: Historical OID `529167222216` unchanged.
+CLASSIFICATION:
+- Landing empty-section + beats pan: **IMPLEMENTED + TESTED**
+- Four doors (Desktop CLI MCP SDK): **IMPLEMENTED + TESTED**
+- Production alias: **SHIP THIS PASS**
+PRODUCTION READY: Unsigned Windows x64. Verify SHA256. Do not treat RESTING as a fill.
+NEXT STEP: `python _scripts/push_head.py`. Vercel web.
+
+---
+
 ## M116 — Security is a next-action desk. Landing hero is one line.
 
 - **Source:** Desktop Security was pairing-first, then a wall of ready chips, then tiny Hyperliquid rows, then policy. Users could not see what to do. Landing hero repeated the story in two paragraphs plus a second mega PIT.

@@ -4,6 +4,7 @@ import { Story } from "./Story";
 import { PipelineRing } from "./PipelineRing";
 import { Moments } from "./Moments";
 import { Dual } from "./Dual";
+import { Surfaces } from "./Surfaces";
 import { LiveTape } from "./LiveTape";
 import { Marquee } from "./Marquee";
 import { Ledger } from "./Ledger";
@@ -27,6 +28,7 @@ export function Landing() {
         <PipelineRing />
         <Moments />
         <Dual />
+        <Surfaces />
         <LiveTape />
         <Marquee />
         <Ledger />
