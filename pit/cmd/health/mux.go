@@ -43,5 +43,21 @@ func newMux() http.Handler {
 		}
 		obs.WriteJSON(w, http.StatusOK, obs.WatchBody(view))
 	})
+	mux.HandleFunc("/release", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet && r.Method != http.MethodHead {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+		if r.Method == http.MethodHead {
+			w.Header().Set("Content-Type", "application/json")
+			return
+		}
+		rel, ok := cachedRelease()
+		if !ok {
+			obs.WriteJSON(w, http.StatusOK, releaseBody(publicRelease{Unsigned: true}))
+			return
+		}
+		obs.WriteJSON(w, http.StatusOK, releaseBody(rel))
+	})
 	return httpx.Public(mux)
 }

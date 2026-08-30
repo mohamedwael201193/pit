@@ -49,7 +49,7 @@ Health (public Watch, `sign: false`): [pit-health.onrender.com](https://pit-heal
 ### How to verify your PIT download
 
 ```powershell
-Get-FileHash .\PIT_0.7.6_x64-setup.exe -Algorithm SHA256
+Get-FileHash .\PIT_0.8.0_x64-setup.exe -Algorithm SHA256
 ```
 
 Compare with `SHA256SUMS` on the same GitHub Release. The source commit is on the release tag.

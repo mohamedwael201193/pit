@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { PageHead } from "../ui/PageHead";
+import { fetchRelease } from "./api";
 import { RELEASES, REPO } from "./facts";
 
 type Release = {
@@ -16,29 +17,14 @@ export function DownloadPage() {
 
   useEffect(() => {
     const ac = new AbortController();
-    fetch("https://api.github.com/repos/mohamedwael201193/pit/releases/latest", { signal: ac.signal })
-      .then((r) => {
-        if (!r.ok) throw new Error("github");
-        return r.json() as Promise<{
-          tag_name?: string;
-          name?: string;
-          html_url?: string;
-          assets?: { name: string; browser_download_url: string }[];
-        }>;
-      })
-      .then(async (body) => {
-        const sums = (body.assets ?? []).find((a) => a.name.toLowerCase().includes("sha256"));
-        let sha: string | null = null;
-        if (sums) {
-          const text = await fetch(sums.browser_download_url, { signal: ac.signal }).then((r) => r.text());
-          const line = text.split(/\r?\n/).find((l) => /setup\.exe/i.test(l) || /PIT_.*x64/i.test(l));
-          sha = line ? line.trim().split(/\s+/)[0] : text.slice(0, 64);
-        }
+    fetchRelease(ac.signal)
+      .then((body) => {
+        if (!body.tag && !body.html) throw new Error("github");
         setRel({
-          tag: body.tag_name,
+          tag: body.tag,
           name: body.name,
-          html: body.html_url,
-          sha,
+          html: body.html,
+          sha: body.sha || null,
           unsigned: true,
         });
         setFail(null);
@@ -46,7 +32,7 @@ export function DownloadPage() {
       .catch(() => {
         if (!ac.signal.aborted) {
           setRel(null);
-          setFail("GitHub Releases could not be read in this browser. Open the latest release and verify SHA256SUMS there.");
+          setFail("GitHub Releases could not be read. Open the latest release and verify SHA256SUMS there.");
         }
       });
     return () => ac.abort();

@@ -72,3 +72,29 @@ func TestWatchCORSForProductionOrigin(t *testing.T) {
 		t.Fatal("evil origin")
 	}
 }
+
+func TestReleaseNeverSigns(t *testing.T) {
+	fetchGH = func() (publicRelease, error) {
+		return publicRelease{Tag: "v0.8.0", Name: "PIT 0.8.0", HTML: "https://github.com/mohamedwael201193/pit/releases/tag/v0.8.0", SHA: "ABCD", Unsigned: true}, nil
+	}
+	t.Cleanup(func() { fetchGH = fetchGitHubLatest })
+	relMu.Lock()
+	relOK = false
+	relMu.Unlock()
+	req := httptest.NewRequest(http.MethodGet, "/release", nil)
+	rec := httptest.NewRecorder()
+	newMux().ServeHTTP(rec, req)
+	if rec.Code != 200 {
+		t.Fatal(rec.Code)
+	}
+	var body map[string]any
+	if err := json.Unmarshal(rec.Body.Bytes(), &body); err != nil {
+		t.Fatal(err)
+	}
+	if body["sign"] != false || body["trade"] != false {
+		t.Fatalf("%+v", body)
+	}
+	if body["tag"] != "v0.8.0" {
+		t.Fatal(body)
+	}
+}

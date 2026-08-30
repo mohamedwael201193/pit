@@ -2,6 +2,39 @@
 
 ---
 
+## M115 — GitHub Latest was the last tag, not HEAD. Ship Windows 0.8.0.
+
+- **Source:** GitHub still showed **PIT v0.7.6 Latest** because Releases/Latest is the last *tag*, not commit `3add5c0`. Go companion and Render `/health` were already **0.8.0**. Desktop `package.json` / Tauri / NSIS still said 0.7.6. Public `/download` fetched `api.github.com` from the browser and failed CORS/rate-limit.
+- **Discovery:** Align desktop to 0.8.0, build the NSIS, tag **v0.8.0**, proxy GitHub Releases through health `/release` (`sign:false` `trade:false`). Do not claim Authenticode. Do not claim macOS/Linux. Do not remint. Do not flatten OID `529167222216`.
+- **Candidate:** Keep frozen Direct glm-5.2 SKU. Public web discovers the installer. Desktop still acts.
+- **Kill:** Leave Latest at 0.7.6 while CLI is 0.8.0. Auto-swap Direct. Invent a fill. Start a live trade this pass.
+- **Next:** Tag + upload after this commit is on `main`. Deploy health so `/download` can read `/release`.
+
+DATE/TIME: 2026-08-30 20:01+03
+PHASE: Desktop 0.8.0 installer. Public `/release`. Local install + companion proof. Do not flatten OID 529167222216. Do not remint PIT-4bbee556. Direct TeeML only for the private book. Chat never authorizes.
+GOAL: GitHub Latest = **v0.8.0**. Companion on this PC = **0.8.0**. `/download` reads health, not the browser GitHub API.
+RESULT:
+- **IMPLEMENTED:** **0.8.0** Windows NSIS.
+  1. Desktop versions: `apps/desktop` package / Tauri / Cargo / `SIDECAR_VERSION` / `DESKTOP_VERSION` = **0.8.0**.
+  2. NSIS `PIT_0.8.0_x64-setup.exe` (17,212,799 bytes). SHA256 `8A1E4F8D54898B3E5C5D5F53C24C15FAD34DD9327073171C6B598102EBEE7749`. Unsigned. No macOS/Linux package.
+  3. Health `GET /release` proxies GitHub latest (5 min cache). Never `sign` or `trade`. `/download` uses `healthBase()/release`.
+  4. Overlay `D:\PIT\pit.exe` + `pit-desktop.exe` from this build. NSIS `/S` exit 128 (PREINSTALL `taskkill` when the process is already gone). `uninstall.exe` written to `D:\PIT` at 19:59+03. Companion launched from `D:\PIT`.
+- **TESTED:** `go test ./cmd/health` PASS. `npx playwright test` 26/26 then download specs 2/2. Cargo `allow_official_https` PASS this session. `D:\PIT\pit.exe version` = **PIT 0.8.0**.
+- **LIVE:** `GET http://127.0.0.1:17373/health` → `version:0.8.0` `sign:false` `trade:false` `ok:true`. pit-desktop PID running. Frozen Direct SKU unchanged (M114). Production health was already 0.8.0 before this Render rebuild.
+- **UNVERIFIED until tag+deploy in this same pass:** GitHub Releases Latest = v0.8.0. Production `/download` showing the tag. Public TEE VerifyE2EE in the browser (still honest: it does not).
+- **BLOCKED:** iTransfer UNAVAILABLE on Aristotle. DA not live on 16661. No new live trade. Authenticode certificate still absent.
+
+SECURITY RESULT: Chat still cannot AUTHORIZE. MCP still cannot order/cancel. `/release` cannot sign. Direct glm-5.2 frozen SKU unchanged. Historical OID `529167222216` unchanged. PIT-4bbee556 not reminted.
+TX HASH / OID: Historical OID `529167222216` unchanged.
+CLASSIFICATION:
+- Desktop 0.8.0 NSIS: **IMPLEMENTED + TESTED + INSTALLED ON THIS PC**
+- GitHub Latest v0.8.0: **SHIPPED THIS PASS AFTER PUSH**
+- iTransfer / DA: **NOT LIVE**
+PRODUCTION READY: Unsigned Windows x64 only. Verify SHA256 before run. SmartScreen may warn. Do not treat RESTING as a fill.
+NEXT STEP: `python _scripts/push_head.py`. Create GitHub `v0.8.0` with the NSIS + SHA256SUMS. Upsert Vercel/Render env. Deploy. Chrome `/download`.
+
+---
+
 ## M1 — Judge + competitor file
 
 - **Source:** `D:\route\0g\03_COMPETITORS_WINNERS_AND_CODE_REVERSE_ENGINEERING.md` entire file (v8).

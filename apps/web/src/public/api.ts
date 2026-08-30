@@ -35,3 +35,17 @@ export async function fetchWatch(network = "mainnet", signal?: AbortSignal): Pro
     scanned: typeof body.scanned === "number" ? body.scanned : 0,
   };
 }
+
+export async function fetchRelease(signal?: AbortSignal): Promise<{
+  tag?: string;
+  name?: string;
+  html?: string;
+  sha?: string;
+  unsigned?: boolean;
+}> {
+  const r = await fetch(`${healthBase()}/release`, { signal });
+  if (!r.ok) throw new Error(`release_${r.status}`);
+  const body = (await r.json()) as { sign?: boolean; trade?: boolean; tag?: string; name?: string; html?: string; sha?: string };
+  if (body.sign || body.trade) throw new UnsafeWatchError("release_refused");
+  return body;
+}
