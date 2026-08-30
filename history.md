@@ -2302,8 +2302,9 @@ RESULT:
   3. Proof tx check also reads `getTransactionReceipt` (success / reverted / pending). TEE copy stays HISTORICAL recovered signer vs expected listed Direct teeSigner. Browser does not run VerifyE2EE.
   4. Connected My Agent drops SiweBind. My Proof no longer offers a Galileo toggle. Dead unused landing / SIWE / NetworkToggle / VerifyForm removed.
 - **TESTED:** Playwright 22/22 PASS (agent Desk ID copy, iTransfer not live, no transfer button, no Authorize, capital SIMULATION).
-- **LIVE VERIFIED:** Aristotle `ownerOf(1)` = `0xbdfcee82bd42fefa58ee850b3709636a8b6b0034` (same owner as this desk). iTransfer still unavailable.
-- **UNVERIFIED:** Vercel alias after this commit (deploy next). Browser VerifyE2EE. New fill.
+- **LIVE VERIFIED:** Aristotle `ownerOf(1)` = `0xbdfcee82bd42fefa58ee850b3709636a8b6b0034`. iTransfer still unavailable.
+- **LIVE VERIFIED (web):** https://pit0g.vercel.app/agent HTTP 200. `ownerOf 0xBDfC…0034`. `isAuthorized(owner)=true`. iTransfer NOT LIVE ON MAINNET. ERC-8004 `ownerOf` same owner, not a ranking. Home Live PIT 232/6, actionable 0, health 0.8.0. Proof TEE NO LIVE RECEIPT, no VerifyE2EE. Capital SIMULATION $100 TRADE 6 / LIQUIDITY unavailable. Commit `981c525`. Aliased pit0g.vercel.app. Render health still 0.8.0 (`dep-da9r5jpf2nfc738cf0sg`).
+- **UNVERIFIED:** Browser VerifyE2EE. New fill. Running companion still reports 0.7.6 until that process is restarted.
 - **BLOCKED:** iTransfer UNAVAILABLE. Authenticode absent. macOS/Linux not packaged.
 
 SECURITY RESULT: Browser still cannot receive session keys, Direct token plaintext, private prompts, or private memory. Web still cannot authorize, pin, or enable autonomy. Public agent page does not fetch another account's extraAgents.
