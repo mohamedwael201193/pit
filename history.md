@@ -2274,8 +2274,8 @@ RESULT:
   6. Proof center says WHAT and HOW. TEE is NO LIVE RECEIPT. Aristotle tx hashes are read in-browser via `evmrpc.0g.ai`. Agent passport: iTransfer NOT LIVE ON MAINNET. ERC-8004 `ownerOf` is a chain read, not a ranking.
   7. Public chat is informational. It cannot authorize, pin, or enable autonomy.
 - **TESTED:** `go test ./...` PASS. Web `tsc --noEmit` PASS (~195s). `vite build` PASS. Playwright 22/22 PASS (home, radar, capital SIMULATION, missions, proof, agent iTransfer, download unsigned, pair, chat refuse authorize, no Authorize controls).
-- **LIVE VERIFIED:** Overlay `D:\PIT\pit.exe` SHA256 `FA84F9A1E816AC90D2D19561A11875CFF19747F7DAF5DFBE80135C3CA5EDF7A4`. Installer SHA unchanged `1B2C5D11045E6505D9953C2074D001F074AC6E8FE47976BC21CA233A8F431A59`. Health minNotional ships when Render rebuilds this commit.
-- **UNVERIFIED until deploy:** Vercel production HTML, Render health `0.8.0` + public minNotional.
+- **LIVE VERIFIED:** Overlay `D:\PIT\pit.exe` SHA256 `FA84F9A1E816AC90D2D19561A11875CFF19747F7DAF5DFBE80135C3CA5EDF7A4` (file). Running companion still reports **0.7.6** until that process is restarted. Installer SHA unchanged `1B2C5D11045E6505D9953C2074D001F074AC6E8FE47976BC21CA233A8F431A59`.
+- **LIVE VERIFIED (web):** https://pit0g.vercel.app HTTP 200. Hero, radar (232/6, ACTIONABLE 0), SOL detail (spread —, reasoning sealed), capital SIMULATION ($100 TRADE 6 / $10 WAIT 6), health `0.8.0` with public minNotional. No Authorize control. iTransfer not live.
 - **BLOCKED:** iTransfer UNAVAILABLE. SWAP/LP execution unavailable. Authenticode absent. macOS/Linux not packaged. No public live mission receipt. DA not claimed.
 
 SECURITY RESULT: Browser still cannot receive session keys, Direct token plaintext, private prompts, or private memory. No web control authorizes, pins, or enables autonomy. Public health refuses `trade`/`sign`. Capital simulation is not a fill.
