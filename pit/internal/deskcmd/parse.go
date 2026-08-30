@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-var namedResearchCoin = regexp.MustCompile(`(?:research|happening with|price of|setup on)\s+([a-z0-9]{2,10})\b`)
+var namedResearchCoin = regexp.MustCompile(`(?:research|happening with|price of|setup on|why is|tell me about)\s+([a-z0-9]{2,10})\b`)
 
 type Result struct {
 	Reply         string `json:"reply"`
@@ -21,6 +21,8 @@ type Result struct {
 	Sign          bool   `json:"sign"`
 	Trade         bool   `json:"trade"`
 	Hours         int    `json:"hours,omitempty"`
+	Hypothesis    string `json:"hypothesis,omitempty"`
+	Agent         *Agent `json:"agent,omitempty"`
 }
 
 func Parse(text string) Result {
@@ -34,8 +36,7 @@ func Parse(text string) Result {
 	}
 	if wantsWhyNotTrade(low) {
 		out.Tool = "watch.why_not"
-		out.Navigate = "automation"
-		out.Reply = "PIT did not invent a fill. Open Automation for the named refusal, or Activity for the forensic ledger."
+		out.Reply = "PIT did not invent a fill. The refusal is named from live capital, policy, and the last committee result."
 		return out
 	}
 	if strings.Contains(low, "why this setup") || strings.Contains(low, "verified experience") || (strings.Contains(low, "memory") && strings.Contains(low, "learn")) {
@@ -52,8 +53,7 @@ func Parse(text string) Result {
 	}
 	if wantsOvernight(low) {
 		out.Tool = "mission.status"
-		out.Navigate = "automation"
-		out.Reply = "Overnight results are on Automation. Chat cannot arm a Sleep Mission. Confirm ARM SLEEP MISSION or ENABLE GUARDED AUTONOMY on this computer."
+		out.Reply = "Sleep Mission status is host law. Chat cannot arm it. Open Automation to review and arm on this computer."
 		return out
 	}
 	if wantsStopAutonomy(low) {
@@ -78,8 +78,7 @@ func Parse(text string) Result {
 	}
 	if wantsShowTxs(low) {
 		out.Tool = "activity.list"
-		out.Navigate = "activity"
-		out.Reply = "Desk ledger with OID, receipts, and explorer links is on Activity. PIT will not invent a fill. Chat cannot AUTHORIZE."
+		out.Reply = "Desk ledger with OID, receipts, and explorer links. PIT will not invent a fill. Chat cannot AUTHORIZE."
 		return out
 	}
 	if wantsAcceptPreview(low) {
@@ -96,34 +95,30 @@ func Parse(text string) Result {
 	}
 	if wantsOnchainProof(low) {
 		out.Tool = "activity.proof"
-		out.Navigate = "activity"
-		out.Reply = "On-chain proof, OID, and explorer links live on Activity. The sealed prompt is never shown here."
+		out.Reply = "On-chain proof, OID, and explorer links are shown here when they exist. The sealed prompt is never shown. PIT will not invent a hash."
 		return out
 	}
 	if wantsWhyBetter(low) {
 		out.Tool = "watch.compare"
-		out.Navigate = "markets"
 		out.Reply = "Best opportunity is the highest host rank among policy-eligible live Hyperliquid books. Rank uses mark/oracle gap, funding, and open interest. It is not a model score."
 		return out
 	}
 	if wantsScanAll(low) {
 		out.Tool = "watch.scan"
-		out.Navigate = "markets"
 		out.Reply = "Scanning every live Hyperliquid perp PIT can read, then filtering by your policy. Empty is honest. Side is not decided here."
 		return out
 	}
-	if wantsBest(low) && !wantsResearch(low) && !wantsTradeStrongest(low) {
-		out.Tool = "watch.best"
-		out.Navigate = "markets"
-		out.Reply = "Best opportunity is the highest host rank among policy-eligible live books. Side is not decided here."
-		return out
-	}
-	if wantsTradeStrongest(low) || wantsResearchBest(low) {
+	if wantsBest(low) || wantsTradeStrongest(low) || wantsResearchBest(low) {
 		out.Tool = "research.best"
 		out.StartResearch = true
 		out.Mutate = true
-		out.Navigate = "research"
-		out.Reply = "I will start a sealed Direct research pass on the strongest policy-eligible setup. Chat cannot AUTHORIZE. In Manual mode you still type AUTHORIZE. A Sleep Mission may execute only after you arm it on Automation and policy passes."
+		if wantsBestLong(low) {
+			out.Hypothesis = "long"
+		}
+		if wantsBestShort(low) {
+			out.Hypothesis = "short"
+		}
+		out.Reply = "I will scan live Hyperliquid books, rank what is executable under your pinned policy, then start sealed 0G Direct on the strongest candidate. Chat cannot AUTHORIZE."
 		return out
 	}
 	execAsk := wantsExecute(low)
@@ -155,22 +150,19 @@ func Parse(text string) Result {
 	}
 	if strings.Contains(low, "compare") && coin == "" {
 		out.Tool = "watch.compare"
-		out.Navigate = "markets"
 		out.Reply = "Host rank compares policy-eligible books by mark/oracle gap, funding, and open interest. It is not a model score."
 		return out
 	}
 	if strings.Contains(low, "compare") && coin != "" {
 		out.Tool = "watch.compare"
 		out.Coin = coin
-		out.Navigate = "markets"
 		out.Reply = "Host rank compares those policy-eligible books by mark/oracle gap, funding, and open interest. It is not a model score."
 		return out
 	}
-	if (strings.Contains(low, "happening") || strings.Contains(low, "why is") && strings.Contains(low, "moving")) && coin != "" {
+	if (strings.Contains(low, "happening") || (strings.Contains(low, "why is") && strings.Contains(low, "interesting")) || (strings.Contains(low, "why is") && strings.Contains(low, "moving"))) && coin != "" {
 		out.Tool = "watch.get"
 		out.Coin = coin
-		out.Navigate = "markets"
-		out.Reply = fmt.Sprintf("Live Hyperliquid state for %s. Freshness is the book timestamp. Side is not decided here. Private thesis stays sealed.", coin)
+		out.Reply = fmt.Sprintf("Live Hyperliquid state for %s. Price is the mark, not the order notional. Side is not decided here. Private thesis stays sealed.", coin)
 		return out
 	}
 	if strings.Contains(low, "happening") || strings.Contains(low, "what is pit doing") || strings.Contains(low, "waiting for") {
@@ -228,9 +220,8 @@ func Parse(text string) Result {
 		return out
 	}
 	if strings.Contains(low, "evidence") || strings.Contains(low, "tee") || strings.Contains(low, "proof") {
-		out.Tool = "research.result"
-		out.Navigate = "research"
-		out.Reply = "Opening research evidence on this computer. The sealed prompt stays private."
+		out.Tool = "activity.proof"
+		out.Reply = "Proof for the latest sealed research is shown here when a real storage root and chain transaction exist. PIT will not invent a hash."
 		return out
 	}
 	if strings.Contains(low, "preview") || strings.Contains(low, "prepare this trade") || strings.Contains(low, "prepare the trade") || strings.Contains(low, "prepare the exact") {
@@ -280,25 +271,23 @@ func Parse(text string) Result {
 		out.StartResearch = true
 		out.Coin = coin
 		out.Mutate = true
-		out.Navigate = "research"
 		label := coin
 		if label == "" {
 			label = "the strongest policy-eligible book"
 		}
 		out.Reply = fmt.Sprintf("%s is eligible only if your policy allows it. I will start a sealed Direct research pass. That spends private compute, not trading capital. It will not place an order.", label)
 		if execAsk {
-			out.Reply += " Chat cannot AUTHORIZE. Review the exact preview on Research, then type AUTHORIZE there."
+			out.Reply += " Chat cannot AUTHORIZE. Review the exact preview on this computer, then type AUTHORIZE there."
 		}
 		return out
 	}
 	if wantsWatch(low) || wantsPrice(low) || coinSetup(low, coin) {
 		out.Tool = "watch.get"
-		out.Navigate = "markets"
 		if coin != "" {
 			out.Coin = coin
-			out.Reply = fmt.Sprintf("Live Hyperliquid marks for %s under your policy. Side is not decided here. Private thesis stays sealed until you start research.", coin)
+			out.Reply = fmt.Sprintf("Live Hyperliquid marks for %s under your policy. Price is the mark, not the order notional. Side is not decided here.", coin)
 		} else {
-			out.Reply = "Markets lists live Hyperliquid books with an honest policy-fit flag. Empty is honest. No invented scores."
+			out.Reply = "Live Hyperliquid books with an honest policy-fit flag. Empty is honest. No invented scores."
 		}
 		if execAsk {
 			out.Navigate = "preview"
@@ -476,10 +465,19 @@ func wantsOvernight(low string) bool {
 		strings.Contains(low, "while i was away") ||
 		strings.Contains(low, "while you were away") ||
 		strings.Contains(low, "last night") ||
-		strings.Contains(low, "good morning")
+		strings.Contains(low, "good morning") ||
+		strings.Contains(low, "while i sleep") ||
+		strings.Contains(low, "while i'm asleep") ||
+		strings.Contains(low, "while im asleep") ||
+		strings.Contains(low, "would pit trade") ||
+		strings.Contains(low, "trade while i sleep") ||
+		strings.Contains(low, "review sleep")
 }
 
 func wantsEnableAutonomy(low string) bool {
+	if strings.Contains(low, "review") || strings.Contains(low, "explain autonomy") || strings.Contains(low, "what would") {
+		return false
+	}
 	return strings.Contains(low, "run autonom") ||
 		strings.Contains(low, "guarded autonomy") ||
 		strings.Contains(low, "enable guarded") ||
@@ -523,6 +521,9 @@ func wantsWhyBetter(low string) bool {
 func wantsScanAll(low string) bool {
 	return strings.Contains(low, "scan everything") || strings.Contains(low, "scan all") ||
 		strings.Contains(low, "whole market") ||
+		strings.Contains(low, "what is moving") ||
+		strings.Contains(low, "what's moving") ||
+		strings.Contains(low, "what is executable") ||
 		(strings.Contains(low, "scan") && strings.Contains(low, "policy"))
 }
 
@@ -531,7 +532,20 @@ func wantsBest(low string) bool {
 		strings.Contains(low, "strongest opportunity") ||
 		strings.Contains(low, "best setup") ||
 		strings.Contains(low, "find me the best") ||
-		strings.Contains(low, "find the strongest")
+		strings.Contains(low, "find the strongest") ||
+		strings.Contains(low, "find the best") ||
+		strings.Contains(low, "best trade") ||
+		strings.Contains(low, "what can i trade") ||
+		strings.Contains(low, "best long") ||
+		strings.Contains(low, "best short")
+}
+
+func wantsBestLong(low string) bool {
+	return strings.Contains(low, "best long") || strings.Contains(low, "find me the best long")
+}
+
+func wantsBestShort(low string) bool {
+	return strings.Contains(low, "best short") || strings.Contains(low, "find me the best short")
 }
 
 func wantsResearchBest(low string) bool {

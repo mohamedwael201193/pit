@@ -126,7 +126,7 @@ const SETUP_KEY = "pit.desk.setup";
 
 const RAIL: { id: View; label: string; glyph: string }[] = [
   { id: "home", label: "Desk", glyph: "D" },
-  { id: "chat", label: "Chat", glyph: "C" },
+  { id: "chat", label: "Agent", glyph: "C" },
   { id: "markets", label: "Markets", glyph: "M" },
   { id: "research", label: "Research", glyph: "R" },
   { id: "portfolio", label: "Portfolio", glyph: "P" },
@@ -182,6 +182,7 @@ export function App() {
   const [restartAllowed, setRestartAllowed] = useState(true);
   const [hypothesis, setHypothesis] = useState<"none" | "long" | "short">("none");
   const researchGen = useRef(0);
+  const researchBusyRef = useRef(false);
   const walletBoundRef = useRef("");
   const [techOpen, setTechOpen] = useState(false);
   const [ticks, setTicks] = useState(0);
@@ -228,8 +229,14 @@ export function App() {
   const [watchGate, setWatchGate] = useState("");
   const [watchWhy, setWatchWhy] = useState("");
   const [routes, setRoutes] = useState<Array<{ action: string; coin?: string; reason: string; execution: string }>>([]);
+  const [watchAt, setWatchAt] = useState(0);
+  const [huntRejected, setHuntRejected] = useState<string[]>([]);
+  const [huntSurvived, setHuntSurvived] = useState("");
+  const huntRef = useRef<string[]>([]);
+  const huntTried = useRef<string[]>([]);
   const fillKey = useRef("");
   const lastNotify = useRef(0);
+  researchBusyRef.current = researchBusy;
 
   useEffect(() => {
     let gone = false;
@@ -319,7 +326,6 @@ export function App() {
   }, []);
 
   useEffect(() => {
-    if (!techOpen) return;
     let gone = false;
     void researchEvidence().then((st) => {
       if (gone || !st.evidence) return;
@@ -328,7 +334,7 @@ export function App() {
     return () => {
       gone = true;
     };
-  }, [techOpen]);
+  }, [researchJobId, researchKind]);
 
   useEffect(() => {
     let gone = false;
@@ -434,6 +440,7 @@ export function App() {
             setWatchGate(body.execGate || "");
             setWatchWhy(body.execWhy || "");
             setRoutes(Array.isArray(body.routes) ? body.routes : []);
+            setWatchAt(Date.now());
           })
           .catch(() => {
             if (!gone) setCoins([]);
@@ -563,6 +570,11 @@ export function App() {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const typing = e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement || e.target instanceof HTMLSelectElement;
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === "a") {
+        e.preventDefault();
+        setView("research");
+        return;
+      }
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
         setPalette((v) => !v);
@@ -576,6 +588,11 @@ export function App() {
       if (e.key === "Escape") {
         setPalette(false);
         goChord.current = false;
+        if (researchBusyRef.current) {
+          researchGen.current += 1;
+          setResearchBusy(false);
+          void cancelResearch();
+        }
         return;
       }
       if (typing) return;
@@ -772,15 +789,27 @@ export function App() {
     setChecks(await doctor());
   }
 
-  async function researchThis(coin?: string, source: "chat" | "research_ui" = "research_ui") {
+  async function researchThis(coin?: string, source: "chat" | "research_ui" = "research_ui", opts?: { hypothesis?: "none" | "long" | "short"; chained?: boolean }) {
     const gen = ++researchGen.current;
-    const want = (coin || coins.find((c) => c.eligible)?.coin || "").toUpperCase();
+    const ranked = [
+      ...coins.filter((c) => c.executionFeasible).map((c) => String(c.coin).toUpperCase()),
+      ...coins.filter((c) => (c.eligible || c.policyEligible) && !c.executionFeasible).map((c) => String(c.coin).toUpperCase()),
+    ].filter((c, i, all) => c && all.indexOf(c) === i);
+    if (source === "chat" && !opts?.chained && !coin) {
+      huntRef.current = ranked;
+      huntTried.current = [];
+      setHuntRejected([]);
+      setHuntSurvived("");
+    }
+    const want = (coin || huntRef.current[0] || coins.find((c) => c.executionFeasible)?.coin || coins.find((c) => c.eligible)?.coin || "").toUpperCase();
     setResearchNote(null);
     setResearchEvidence("");
     setAuthErr(null);
     setPollMiss(false);
+    if (opts?.hypothesis && opts.hypothesis !== "none") setHypothesis(opts.hypothesis);
+    const hypo = opts?.hypothesis && opts.hypothesis !== "none" ? opts.hypothesis : hypothesis;
     if (!want) {
-      setResearchNote("No eligible market yet. Open Markets and wait for live books.");
+      setResearchNote("No eligible market yet. Live books have not arrived on this computer.");
       if (source !== "chat") setView("markets");
       return;
     }
@@ -817,8 +846,9 @@ export function App() {
     const tick = window.setInterval(() => {
       if (gen === researchGen.current) setResearchElapsed(Date.now() - wall);
     }, 250);
+    let lastKind = "";
     try {
-      const started = await startResearch(want, hypothesis, source);
+      const started = await startResearch(want, hypo, source);
       if (gen !== researchGen.current) return;
       if (started.error && !started.running) {
         setResearchStop(started.error);
@@ -838,6 +868,17 @@ export function App() {
       }
     }
 
+    if (source === "chat" && gen === researchGen.current) {
+      huntTried.current = [...huntTried.current, want];
+      const stood = lastKind === "READY_STOOD_DOWN" || lastKind === "COMMITTEE_INCOMPLETE" || lastKind === "MARKET_DENIED";
+      if (stood) setHuntRejected([...huntTried.current]);
+      if (lastKind === "READY_ELIGIBLE") setHuntSurvived(want);
+      const next = huntRef.current.find((c) => !huntTried.current.includes(c));
+      if (stood && next && huntTried.current.length < 3) {
+        await researchThis(next, "chat", { chained: true, hypothesis: hypo });
+      }
+    }
+
     function applyStatus(st: BindResult) {
       if (st.job_id) setResearchJobId(st.job_id);
       if (st.stage) setResearchStage(st.stage);
@@ -845,7 +886,10 @@ export function App() {
       if (st.coin) setResearchCoin(String(st.coin).toUpperCase());
       const roles = Array.isArray(st.roles) ? st.roles : [];
       if (roles.length) setResearchRoles(roles);
-      if (st.terminal_kind) setResearchKind(String(st.terminal_kind));
+      if (st.terminal_kind) {
+        setResearchKind(String(st.terminal_kind));
+        lastKind = String(st.terminal_kind);
+      }
       if (st.preview) {
         setPreview(st.preview);
         setPreviewHash(st.preview_hash || st.preview.hash || "");
@@ -881,6 +925,7 @@ export function App() {
         }
         if (!verified) {
           setResearchStop("COMMITTEE_INCOMPLETE");
+          lastKind = lastKind || "COMMITTEE_INCOMPLETE";
           return;
         }
         setResearchStop(null);
@@ -1037,7 +1082,7 @@ export function App() {
           { id: "health", label: "Open Strategy Health", run: () => setView("health") },
           { id: "security", label: "Open Security", run: () => setView("security") },
           { id: "policy", label: "Open Policy", run: () => setView("security") },
-          { id: "keys", label: "Keyboard: Ctrl+K palette, g then d/m/c/r/p/y/s", run: () => undefined },
+          { id: "keys", label: "Keyboard: Ctrl+K palette, Esc stop research, Ctrl+Shift+A preview, g then d/m/c/r/p/y/s", run: () => undefined },
           { id: "start", label: "Start research", run: () => void researchThis() },
           { id: "stop", label: "Stop current research", run: () => void onCancelResearch() },
           { id: "why", label: "Why nothing is executable", run: () => setView("automation") },
@@ -1241,16 +1286,9 @@ export function App() {
                 setOpenConfirm(true);
                 setView("automation");
               }}
-              onResearch={(c) => void researchThis(c, "chat")}
+              onResearch={(c, hyp) => void researchThis(c, "chat", { hypothesis: hyp })}
               onOpenPreview={() => setView("research")}
               onStop={() => void onCancelResearch()}
-              live={{
-                coin: mission.mission?.best_coin || researchCoin,
-                stage: mission.stage || (researchBusy ? researchStage : ""),
-                gate: mission.block_reason,
-                awaiting: awaitingAuth,
-                running: Boolean(mission.running || mission.mission?.running),
-              }}
               island={{
                 busy: researchBusy,
                 coin: researchCoin,
@@ -1262,8 +1300,23 @@ export function App() {
                 kind: researchKind,
               }}
               coins={coins}
+              scanned={scanned}
+              buyingPower={buyingPower}
+              powerSource={powerSource}
+              watchAgeMs={watchAt ? Date.now() - watchAt : undefined}
+              bestWhy={bestWhy}
               activity={activity}
               preview={preview}
+              lastOrder={status?.lastOrder}
+              lastOid={lastOid}
+              evidence={researchEvidenceText ? (() => { try { return JSON.parse(researchEvidenceText); } catch { return null; } })() : null}
+              researchNote={researchNote}
+              researchStop={researchStop}
+              huntRejected={huntRejected}
+              huntSurvived={huntSurvived}
+              pinned={pinned}
+              sessionAlive={sessionAlive}
+              autonomy={mission.mode || "manual"}
             />
             ) : null}
             {showChat ? null : (

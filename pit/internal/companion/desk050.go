@@ -166,8 +166,16 @@ func (h *Hub) localChatStream(w http.ResponseWriter, r *http.Request) {
 		thread = "desk"
 	}
 	appendChatThread(h.Dir, "user", body.Text, "", thread)
-	if note := h.chatModelHonesty(firstNonEmpty(body.Model, loadChatModel(h.Dir))); note != "" {
-		parsed.Reply = parsed.Reply + "\n\n" + note
+	if parsed.Agent == nil {
+		if note := h.chatModelHonesty(firstNonEmpty(body.Model, loadChatModel(h.Dir))); note != "" {
+			parsed.Reply = parsed.Reply + "\n\n" + note
+		}
+	}
+	if parsed.StartResearch && parsed.Coin == "" {
+		parsed.Coin = h.pickBestCoin()
+	}
+	if parsed.Hypothesis != "" {
+		_ = cli.SaveHypothesis(h.Dir, parsed.Hypothesis)
 	}
 	appendChatThread(h.Dir, "pit", parsed.Reply, parsed.Tool, thread)
 	w.Header().Set("Content-Type", "text/event-stream")
@@ -185,11 +193,7 @@ func (h *Hub) localChatStream(w http.ResponseWriter, r *http.Request) {
 			flusher.Flush()
 		}
 	}
-	done, _ := json.Marshal(map[string]any{
-		"done": true, "reply": parsed.Reply, "tool": parsed.Tool, "execute": false,
-		"start_research": parsed.StartResearch, "coin": parsed.Coin, "navigate": parsed.Navigate,
-		"open_url": parsed.OpenURL, "model": "host-parsed", "stream": true, "sign": false, "trade": false,
-	})
+	done, _ := json.Marshal(chatDonePayload(parsed, thread, "host-parsed", true))
 	_, _ = fmt.Fprintf(w, "data: %s\n\n", done)
 	if flusher != nil {
 		flusher.Flush()

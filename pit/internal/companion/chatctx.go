@@ -32,20 +32,25 @@ func (h *Hub) decorateChat(parsed deskcmd.Result) deskcmd.Result {
 	case "session.status":
 		parsed.Reply = h.replySession()
 	case "watch.get", "watch.best", "watch.scan", "watch.compare":
-		parsed.Reply = h.replyWatch(parsed)
-		if parsed.Coin == "" {
-			parsed.Coin = h.pickBestCoin()
-		}
+		parsed = h.decorateWatchAgent(parsed)
+		parsed.Navigate = ""
 	case "watch.why_not":
-		parsed.Reply = h.replyWhyNotTrade()
-		parsed.Navigate = "automation"
+		parsed = h.decorateWatchAgent(parsed)
+		parsed.Navigate = ""
+		if extra := h.replyWhyNotTradeShort(); extra != "" {
+			parsed.Reply = extra
+			if parsed.Agent != nil {
+				parsed.Agent.Kind = "no_trade"
+				parsed.Agent.Executive = extra
+			}
+		}
 	case "experience.why":
 		coin := parsed.Coin
 		if coin == "" {
 			coin = h.pickBestCoin()
 		}
 		parsed.Reply = h.whyThisSetup(coin) + " Chat cannot AUTHORIZE. Private memory never includes the memory key."
-		parsed.Navigate = "research"
+		parsed.Navigate = ""
 	case "research.start", "research.best":
 		h.researchMu.Lock()
 		running := h.job.running
@@ -59,15 +64,21 @@ func (h *Hub) decorateChat(parsed deskcmd.Result) deskcmd.Result {
 			parsed.Navigate = ""
 			parsed.Tool = "research.status"
 			parsed.Coin = jobCoin
-			parsed.Reply = fmt.Sprintf("Already researching %s (job %s, %s). 0G Direct TeeML is still running on this computer. Chat cannot AUTHORIZE. Stay on Chat for live stages.", jobCoin, jobID, stage)
+			parsed.Reply = fmt.Sprintf("Already researching %s (job %s, %s). Stay here for live stages. Chat cannot AUTHORIZE.", jobCoin, jobID, stage)
 			break
 		}
-		if live := h.replyWatch(parsed); live != "" {
-			parsed.Reply = live + " Starting sealed 0G Direct TeeML on this computer. Stages: read market, seal private book, contact provider, receive sealed response, verify TEE, researcher, challenger, risk, policy, exact preview. Chat cannot AUTHORIZE. When the preview is ready, type AUTHORIZE on Research."
+		parsed = h.decorateWatchAgent(parsed)
+		parsed.Navigate = ""
+		if parsed.StartResearch {
+			parsed.Reply = strings.TrimSpace(parsed.Reply) + " Starting sealed 0G Direct on this computer. Chat cannot AUTHORIZE."
+			if parsed.Agent != nil {
+				parsed.Agent.Kind = "hunt"
+				parsed.Agent.Executive = parsed.Reply
+			}
 		}
 	case "policy.get":
 		parsed.Reply = h.replyPolicy()
-		parsed.Navigate = "security"
+		parsed.Navigate = ""
 	case "setup.guide":
 		parsed.Reply = h.replyDeskStatus() + " First-run setup walks wallet, network, Hyperliquid, session, Protect, private compute, then policy. Chat cannot AUTHORIZE."
 	case "mission.enable_required":
@@ -76,6 +87,7 @@ func (h *Hub) decorateChat(parsed deskcmd.Result) deskcmd.Result {
 		parsed.Reply = h.replyMissionStop()
 	case "mission.status":
 		parsed.Reply = h.replyMissionStatus()
+		parsed.Navigate = ""
 	}
 	return parsed
 }
@@ -103,7 +115,7 @@ func (h *Hub) replyDeskStatus() string {
 		}
 	}
 	if running {
-		return fmt.Sprintf("Researching %s — %s still running. Compute money, not trading capital. Chat cannot AUTHORIZE. Open Research for the live board.", strings.ToUpper(coin), strings.ReplaceAll(stage, "_", " "))
+		return fmt.Sprintf("Researching %s — %s still running. Compute money, not trading capital. Chat cannot AUTHORIZE.", strings.ToUpper(coin), strings.ReplaceAll(stage, "_", " "))
 	}
 	m := auto.LoadMission(h.Dir)
 	mode := "Manual"
@@ -113,13 +125,13 @@ func (h *Hub) replyDeskStatus() string {
 		mode = "Research Only"
 	}
 	if eligible && hash != "" {
-		return fmt.Sprintf("Idle. Wallet %s. %s. Mode %s. Exact preview is waiting for AUTHORIZE on Research. Chat cannot AUTHORIZE.", wallet, sess, mode)
+		return fmt.Sprintf("Idle. Wallet %s. %s. Mode %s. Exact preview is waiting on this computer. Chat cannot AUTHORIZE.", wallet, sess, mode)
 	}
-	top := h.replyWatch(deskcmd.Result{})
-	if strings.Contains(top, "mark") {
-		return fmt.Sprintf("Idle. Wallet %s. %s. Mode %s. Best opportunity: %s Chat cannot AUTHORIZE.", wallet, sess, mode, top)
+	best := h.pickBestCoin()
+	if best != "" {
+		return fmt.Sprintf("Idle. Wallet %s. %s. Mode %s. Strongest executable book: %s. Ask me to find the best opportunity. Chat cannot AUTHORIZE.", wallet, sess, mode, best)
 	}
-	return fmt.Sprintf("Idle. Wallet %s. %s. Mode %s. Open Markets to discover, Research to investigate. Chat cannot AUTHORIZE.", wallet, sess, mode)
+	return fmt.Sprintf("Idle. Wallet %s. %s. Mode %s. Ask me to scan live books. Chat cannot AUTHORIZE.", wallet, sess, mode)
 }
 
 func (h *Hub) replyWatch(parsed deskcmd.Result) string {
@@ -240,6 +252,30 @@ func formatBookFloors(bp float64, coins []watch.PublicCoin) string {
 		return "No policy-eligible books in this Watch."
 	}
 	return fmt.Sprintf("%d pass policy. %s", n, strings.Join(parts, "; "))
+}
+
+func (h *Hub) replyWhyNotTradeShort() string {
+	cap := h.capitalNow()
+	pol := cli.ActivePolicy(h.Dir)
+	st, err := cli.Load(h.Dir)
+	netName := "mainnet"
+	if err == nil && strings.TrimSpace(st.Network) != "" {
+		netName = st.Network
+	}
+	net, nerr := config.ParseNetwork(netName)
+	if nerr != nil {
+		return fmt.Sprintf("NO TRADE. Wrong network. Buying power $%.2f. Nothing was executed.", cap.BuyingPower)
+	}
+	cands, lerr := watch.LiveUniverse(hl.New(config.For(net)), pol)
+	if lerr != nil {
+		return fmt.Sprintf("NO TRADE. Live books were not on this computer. Buying power $%.2f. Nothing was executed.", cap.BuyingPower)
+	}
+	view := h.annotateWatch(watch.Public(cands, string(net)), pol)
+	best := "none"
+	if view.Best != nil {
+		best = view.Best.Coin
+	}
+	return fmt.Sprintf("NO TRADE. Scanned %d. Policy eligible %d. Executable %d. Strongest ranked: %s. Buying power $%.2f (%s). Nothing was executed from chat.", view.Scanned, view.Count, view.ExecFeasibleN, best, cap.BuyingPower, cap.PowerSource)
 }
 
 func (h *Hub) replyWhyNotTrade() string {

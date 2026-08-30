@@ -2,6 +2,34 @@
 
 ---
 
+## M123 — Chat is the trading agent / one-screen desk. PIT 0.9.2
+
+- **Source:** Chat dumped diagnostic prose, sent "Find the best opportunity" to Markets, and made users pick BTC/ETH/AVAX by hand. Judges need one Agent screen: scan → rank → private 0G → committee → policy → exact preview → desktop AUTHORIZE → real OID/fill/proof.
+- **Discovery:** Chat is an orchestration layer over existing Watch, research, policy, capital, and activity. The LLM still cannot pin, arm, authorize, withdraw, or invent a fill. Find-best stays on Chat and starts sealed Direct on the strongest executable book, then hunts the next ranked candidate on a verified no-trade.
+- **Candidate:** Operator cockpit: live funnel, opportunity strip, event-backed 0G pipe, research/preview/no-trade/proof/order cards, chips, Esc stop, Ctrl+Shift+A opens preview. Version **0.9.2**.
+- **Kill:** AUTHORIZE in Chat. Fake streaming percentages. Invented confidence. Ticker-substring false matches. Flatten OID 529167222216. Remint PIT-4bbee556. Authenticode claim. iTransfer/iClone as live.
+- **Next:** Tag `v0.9.2`, NSIS, overlay `D:\PIT`, Vercel + Render. Do not remint. Do not flatten. Do not start a live trade unless the user AUTHORIZEs a preview.
+
+DATE/TIME: 2026-08-31 00:50+03
+PHASE: Agent cockpit. Desktop remains execution authority.
+GOAL: One question — find the best opportunity — runs the whole desk without opening Markets by hand.
+RESULT:
+- **IMPLEMENTED:** Parse `Find the best opportunity/trade` → `research.best`, stay on Chat. Structured `deskcmd.Agent` payload. Short executive replies. Idle no longer dumps Watch. Hunt next executable book after READY_STOOD_DOWN (max 3). Agent rail. Composer chips + More. Live funnel, strip, pipe, preview, no-trade, policy block, 0G proof, order lifecycle, Sleep Mission propose-not-arm.
+- **TESTED:** `go test ./...` PASS. Desktop `tsc -b` pass. `npx tsx e2e/run.ts` including find-best chips, no authorizePreview, proof/no-trade cards. MCP prompt-injection still `mcp_read_only`.
+- **LIVE:** After installer. No new MAINNET fill from this change. ETH OID `529167222216` untouched.
+- **BLOCKED:** Authenticode still absent. Chat still cannot authorize or arm. iTransfer still not live on Aristotle. Direct research still needs Protect + credit.
+
+SECURITY RESULT: Chat cannot AUTHORIZE, pin, arm, or export keys. Preview deep-links to Research. Kill switch still does not flatten.
+TX HASH / OID: Historical OID `529167222216` unchanged.
+CLASSIFICATION:
+- Find-best hero on Chat: **IMPLEMENTED + TESTED**
+- Live stage UI over existing research poll: **IMPLEMENTED + TESTED**
+- AUTHORIZE remains Research-only: **UNCHANGED**
+PRODUCTION READY: 0.9.2 installer after tag.
+NEXT STEP: `python _scripts/push_head.py`. `python _scripts/tag_push.py v0.9.2`. Deploy web.
+
+---
+
 ## M122 — Pair strip on the desk. Agent chat. PIT 0.9.1
 
 - **Source:** Pair token lived inside a collapsed Security fold. Chat was a linear transcript. Users asked it to research the market, pick the best book, explain why to enter, show 0G progress, show txs, and enter when they accept.

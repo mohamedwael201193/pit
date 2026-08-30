@@ -532,6 +532,17 @@ export type ChatReply = BindResult & {
   open_url?: string;
   thread?: string;
   hours?: number;
+  hypothesis?: string;
+  agent?: {
+    kind?: string;
+    executive?: string;
+    scanned?: number;
+    eligible?: number;
+    executable?: number;
+    best?: string;
+    why?: string;
+    buying_power?: number;
+  };
 };
 export type ActivityEvent = {
   ts?: number;

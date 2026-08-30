@@ -2001,6 +2001,77 @@ details.card > summary { cursor: pointer; font-weight: 600; letter-spacing: 0.08
   .status-island li:nth-child(n+4) { display: none; }
   .titlebar-sub { display: none; }
 }
+.cockpit-shell .transcript { font-size: 15px; line-height: 1.55; }
+.cockpit { display: grid; gap: 16px; margin: 0 0 18px; }
+.cockpit-status { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.cockpit-kicker { margin: 0; font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--mute); }
+.cockpit-title { margin: 4px 0 0; font-size: 15px; letter-spacing: 0.08em; font-weight: 650; }
+.cockpit-pill { margin: 0; padding: 4px 10px; border: 1px solid var(--hair); font-size: 11px; letter-spacing: 0.14em; }
+.cockpit-pill.on { border-color: var(--coral); color: var(--coral); }
+.cockpit-pill.ok { border-color: var(--ok); color: var(--ok); }
+.cockpit-facts { display: flex; flex-wrap: wrap; gap: 8px 14px; list-style: none; padding: 0; margin: 0; color: var(--mute); font-size: 12px; }
+.cockpit-funnel { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; }
+.cockpit-funnel div { border: 1px solid var(--line); background: var(--panel); padding: 10px 10px 8px; }
+.cockpit-funnel span { display: block; font-size: 20px; letter-spacing: -0.04em; font-variant-numeric: tabular-nums; }
+.cockpit-funnel em { font-style: normal; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--mute); }
+.cockpit-strip p { margin: 0 0 6px; }
+.cockpit-strip > div { display: flex; gap: 6px; overflow-x: auto; }
+.cockpit-strip button {
+  border: 1px solid var(--hair);
+  background: transparent;
+  min-width: 76px;
+  padding: 8px 10px;
+  display: grid;
+  gap: 2px;
+}
+.cockpit-strip button.on { border-color: var(--coral); }
+.cockpit-strip strong { font-size: 14px; }
+.cockpit-strip em { font-style: normal; font-size: 10px; letter-spacing: 0.12em; color: var(--mute); }
+.cockpit-quote, .cockpit-card, .cockpit-work {
+  border: 1px solid var(--line);
+  background: #101216;
+  padding: 16px;
+}
+.cockpit-quote header { display: flex; align-items: baseline; gap: 12px; }
+.cockpit-quote h3, .cockpit-card h3 { margin: 0; font-size: 26px; letter-spacing: -0.04em; }
+.cockpit-quote p { margin: 0; font-size: 22px; font-variant-numeric: tabular-nums; }
+.cockpit-quote dl { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin: 12px 0 0; }
+.cockpit-quote dt { font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--mute); }
+.cockpit-quote dd { margin: 4px 0 0; font-size: 16px; font-variant-numeric: tabular-nums; }
+.cockpit-num { font-size: 28px; letter-spacing: -0.05em; font-variant-numeric: tabular-nums; margin: 6px 0; }
+.cockpit-work header { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.cockpit-pipe { list-style: none; margin: 12px 0 0; padding: 0; }
+.cockpit-pipe li { border-top: 1px solid var(--line); }
+.cockpit-pipe button {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 36px 1fr auto;
+  gap: 10px;
+  align-items: center;
+  background: transparent;
+  border: 0;
+  padding: 8px 0;
+  text-align: left;
+}
+.cockpit-pipe li.on strong { color: var(--coral); }
+.cockpit-pipe li.done em { color: var(--ok); }
+.cockpit-pipe li.fail em { color: var(--coral); }
+.cockpit-card.ready { background: #16110f; box-shadow: inset 3px 0 0 var(--coral); }
+.cockpit-card.og { box-shadow: inset 3px 0 0 var(--coral); }
+.cockpit-card.stand { background: #101410; }
+.cockpit-card.block { border-color: #3a2a1c; }
+.cockpit-checks { list-style: none; margin: 10px 0; padding: 0; display: grid; gap: 4px; font-size: 13px; }
+.cockpit-checks li::before { content: "✓ "; color: var(--ok); }
+.cockpit-follow { display: flex; flex-wrap: wrap; gap: 6px; }
+.cockpit-tech { color: var(--mute); font-size: 12px; }
+.cockpit-meta { font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--mute); }
+.prompt-chips.more { margin-top: 8px; }
+.composer textarea { min-height: 64px; font-size: 15px; }
+.turn-body { font-size: 15px; line-height: 1.55; max-width: 68ch; }
+@media (max-width: 980px) {
+  .cockpit-funnel { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .cockpit-quote dl { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
 @media (prefers-reduced-motion: reduce) {
   * { animation: none !important; transition: none !important; }
 }

@@ -5,23 +5,36 @@ import {
   fetchChatLog,
   fetchModelCatalog,
   type ActivityEvent,
+  type BindResult,
   type ChatMessage,
   type ChatReply,
   type DirectModel,
+  type LocalStatus,
 } from "./companion";
-import { ExternalLink } from "./ExternalLink";
 import { openExternal } from "./open";
 import { AgentRun, CHAT_AGENT_COPY } from "./AgentRun";
+import type { MarketCoin } from "./WatchBook";
 
-const PROMPTS = [
-  "Research the market. Choose the best opportunity now. Tell me why to enter.",
-  "Find the best opportunity.",
-  "Show all txs.",
-  "Why didn't PIT trade?",
-  "What is happening with BTC?",
-  "Show open positions.",
-  "Show my policy.",
-  "Start a sleep mission.",
+const PRIMARY = [
+  { label: "Find best opportunity", q: "Find the best opportunity available right now." },
+  { label: "Find best long", q: "Find me the best long" },
+  { label: "Scan all markets", q: "Scan all markets" },
+  { label: "What can I trade now?", q: "What can I trade with my current capital?" },
+  { label: "Why didn't PIT trade?", q: "Why didn't you trade?" },
+  { label: "While I sleep", q: "Show me what PIT would trade while I sleep" },
+];
+
+const MORE = [
+  { label: "Find best short", q: "Find me the best short" },
+  { label: "Research BTC", q: "Research BTC" },
+  { label: "Research ETH", q: "Research ETH" },
+  { label: "Research best opportunity", q: "Research the strongest opportunity" },
+  { label: "Compare top", q: "Compare top opportunities" },
+  { label: "Explain my policy", q: "Explain my policy" },
+  { label: "What is executable?", q: "What is executable?" },
+  { label: "Show current exposure", q: "Show current exposure" },
+  { label: "Review Sleep Mission", q: "Review Sleep Mission" },
+  { label: "Explain autonomy limits", q: "Explain autonomy limits" },
 ];
 
 export function CommandChat({
@@ -31,25 +44,32 @@ export function CommandChat({
   onOpenPreview,
   onStop,
   onConfirmAutonomy,
-  live,
   island,
   coins,
+  scanned,
+  buyingPower,
+  powerSource,
+  watchAgeMs,
+  bestWhy,
   activity,
   preview,
+  lastOrder,
+  lastOid,
+  evidence,
+  researchNote,
+  researchStop,
+  huntRejected,
+  huntSurvived,
+  pinned,
+  sessionAlive,
+  autonomy,
 }: {
   thread: string;
   onNavigate: (view: string) => void;
-  onResearch: (coin: string) => void;
+  onResearch: (coin: string, hypothesis?: "none" | "long" | "short") => void;
   onOpenPreview: () => void;
   onConfirmAutonomy?: (hours: number) => void;
   onStop?: () => void;
-  live?: {
-    coin?: string;
-    stage?: string;
-    gate?: string;
-    awaiting?: boolean;
-    running?: boolean;
-  };
   island?: {
     busy: boolean;
     coin: string;
@@ -57,27 +77,27 @@ export function CommandChat({
     elapsedMs: number;
     jobId: string;
     pollMiss?: boolean;
-    roles: Array<{ role?: string; verify_e2ee?: string }>;
+    roles: Array<{ role?: string; verify_e2ee?: string; proposed_side?: string; survives?: boolean; kill?: boolean }>;
     kind?: string;
   };
-  coins?: Array<{
-    coin: string;
-    why?: string;
-    mark?: number;
-    eligible?: boolean;
-    executionFeasible?: boolean;
-    previewReady?: boolean;
-  }>;
+  coins?: MarketCoin[];
+  scanned?: number;
+  buyingPower?: number;
+  powerSource?: string;
+  watchAgeMs?: number;
+  bestWhy?: string;
   activity?: ActivityEvent[];
-  preview?: {
-    market?: string;
-    side?: string;
-    sz?: number;
-    hash?: string;
-    notionalUsd?: number;
-    reasons?: string[];
-    eligible?: boolean;
-  } | null;
+  preview?: BindResult["preview"] | null;
+  lastOrder?: LocalStatus["lastOrder"] | null;
+  lastOid?: string;
+  evidence?: unknown;
+  researchNote?: string | null;
+  researchStop?: string | null;
+  huntRejected?: string[];
+  huntSurvived?: string;
+  pinned?: boolean;
+  sessionAlive?: boolean;
+  autonomy?: string;
 }) {
   const [draft, setDraft] = useState("");
   const [busy, setBusy] = useState(false);
@@ -89,8 +109,8 @@ export function CommandChat({
   const [catalog, setCatalog] = useState<DirectModel[]>([]);
   const [catalogNote, setCatalogNote] = useState("");
   const [modelOpen, setModelOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
   const [picked, setPicked] = useState<DirectModel | null>(null);
-  const [lastUser, setLastUser] = useState("");
   const end = useRef<HTMLDivElement>(null);
   const abort = useRef<AbortController | null>(null);
 
@@ -131,7 +151,7 @@ export function CommandChat({
     if (!text || busy) return;
     setBusy(true);
     setErr(null);
-    setLastUser(text);
+    setMoreOpen(false);
     setLines((cur) => [...cur, { role: "user", text, ts: Date.now(), thread }]);
     abort.current?.abort();
     const ac = new AbortController();
@@ -178,49 +198,43 @@ export function CommandChat({
   }
 
   function applyReply(r: ChatReply) {
+    if (r.execute || r.sign || r.trade) return;
     if (r.open_url) void openExternal(r.open_url);
     if (r.tool === "mission.enable_required") {
       onConfirmAutonomy?.(r.hours || 8);
       return;
     }
     if (r.start_research) {
-      onResearch(r.coin || "");
+      const hyp = r.hypothesis === "long" || r.hypothesis === "short" ? r.hypothesis : undefined;
+      onResearch(r.coin || "", hyp);
       return;
     }
-    if (r.tool === "preview.show" || r.tool === "refuse_execute") onOpenPreview();
+    if (r.navigate === "preview" || r.tool === "preview.show") onOpenPreview();
+    if (r.navigate === "security") onNavigate("security");
+    if (r.navigate === "automation") onNavigate("automation");
+    if (r.navigate === "setup") onNavigate("setup");
   }
 
   const researchSku = privateModels[0];
-  const lastPit = lines.reduce((acc, m, i) => (m.role === "pit" ? i : acc), -1);
-  const modelLabel = picked?.model === "host-parsed"
-    ? `Chat · host-parsed${researchSku ? ` · Research ${researchSku.model}` : ""}`
-    : picked?.private_book
-      ? `Research · Private + Verified · ${picked.model}`
-      : `${picked?.label || "Desk"} · ${picked?.model || "host-parsed"}`;
 
   return (
-    <section className="command" aria-label="Trading desk command">
+    <section className="command cockpit-shell" aria-label="PIT agent">
       <div className="command-head">
         <div>
-          <p className="label">Chat</p>
+          <p className="label">PIT AGENT</p>
           <div className="honesty-row">
-            <span className="honesty-chip">Host-parsed</span>
+            <span className="honesty-chip">Private research enabled</span>
             <span className="honesty-chip">{CHAT_AGENT_COPY.cannotAuthorize}</span>
             <span className="honesty-chip">Cannot pin</span>
           </div>
-          <p className="fine">
-            {picked?.private_book
-              ? `${picked.model} is the sealed research SKU. This thread stays host-parsed on this computer.`
-              : "Desk chat is host-parsed on this computer. It is not a sealed model stream."}
-          </p>
         </div>
         <div className="model-pick">
           <button type="button" aria-haspopup="listbox" aria-expanded={modelOpen} onClick={() => setModelOpen((v) => !v)}>
-            {modelLabel}
+            PIT AGENT · {picked?.private_book ? "Private + Verified" : "Desk command"}
           </button>
           {modelOpen ? (
             <div className="model-menu wide" role="listbox">
-              <p className="label">Private research</p>
+              <p className="label">PIT PRIVATE · Recommended</p>
               {privateModels.length === 0 ? (
                 <p className="fine">No verified Direct SKU on this network.</p>
               ) : (
@@ -228,11 +242,11 @@ export function CommandChat({
                   <ModelRow key={m.model} m={m} picked={picked} onPick={() => { setPicked(m); setModelOpen(false); void pickChatModel(m.model || "host-parsed"); }} />
                 ))
               )}
-              <p className="label">General chat</p>
+              <p className="label">FAST · desk command</p>
               {otherModels.map((m) => (
                 <ModelRow key={m.model} m={m} picked={picked} onPick={() => { setPicked(m); setModelOpen(false); void pickChatModel(m.model || "host-parsed"); }} />
               ))}
-              <p className="label">Official catalog (listing only)</p>
+              <p className="label">AVAILABLE PROVIDERS · listing only</p>
               <details className="catalog-disclosure">
                 <summary>Show listings — not used for chat or private research</summary>
                 <p className="fine">{catalogNote || "Listed SKUs are not inference paths. Private book stays Direct TeeML."}</p>
@@ -240,149 +254,112 @@ export function CommandChat({
                   <ModelRow key={m.model} m={m} picked={null} onPick={() => undefined} disabled />
                 ))}
               </details>
-              <p className="label">Unsupported for private research</p>
               {unsupported.map((m) => (
-                <ModelRow key={m.model} m={m} picked={picked} onPick={() => { setPicked(m); setModelOpen(false); }} disabled />
+                <ModelRow key={m.model} m={m} picked={picked} onPick={() => undefined} disabled />
               ))}
-              <p className="fine">
-                Desk commands are host-parsed. A Private + Verified SKU is used only for sealed research, not as a chat stream. Catalog presence is not privacy.
-              </p>
+              <p className="fine">Desk commands stay host-parsed. Direct TeeML is used only for sealed research. Catalog presence is not privacy.</p>
             </div>
           ) : null}
         </div>
       </div>
+
       <div className="transcript" role="log">
         <AgentRun
+          busy={Boolean(island?.busy)}
+          coin={island?.coin || ""}
+          stage={island?.stage || ""}
+          elapsedMs={island?.elapsedMs || 0}
+          jobId={island?.jobId || ""}
+          pollMiss={Boolean(island?.pollMiss)}
+          roles={island?.roles || []}
+          kind={island?.kind || ""}
           coins={coins || []}
-          island={island}
-          awaiting={live?.awaiting}
-          preview={preview}
+          scanned={scanned || 0}
+          buyingPower={buyingPower}
+          powerSource={powerSource}
+          watchAgeMs={watchAgeMs}
+          bestWhy={bestWhy}
+          preview={preview || null}
+          lastOrder={lastOrder}
+          lastOid={lastOid}
           activity={activity || []}
+          evidence={evidence}
+          researchNote={researchNote}
+          researchStop={researchStop}
+          huntRejected={huntRejected || []}
+          huntSurvived={huntSurvived || ""}
+          pinned={Boolean(pinned)}
+          sessionAlive={Boolean(sessionAlive)}
+          autonomy={autonomy || "manual"}
+          researchSku={researchSku}
+          onAsk={ask}
           onOpenPreview={onOpenPreview}
-          onResearch={onResearch}
+          onOpenPolicy={() => onNavigate("security")}
+          onOpenAutomation={() => onNavigate("automation")}
+          onOpenActivity={() => onNavigate("activity")}
+          onStop={() => onStop?.()}
         />
-        {live ? (
-          <article className="chat-live" aria-label="Live desk state">
-            <p className="label">Live</p>
-            <p>
-              {live.running ? "Sleep Mission on" : "Manual"} · {live.coin || "no opportunity"} ·{" "}
-              {(live.stage || "idle").replaceAll("_", " ")}
-              {live.gate ? ` · gate ${live.gate.replaceAll("_", " ")}` : ""}
-              {live.awaiting ? " · awaiting AUTHORIZE on Research" : ""}
-            </p>
-          </article>
-        ) : null}
         {lines.length === 0 ? (
-          <div className="chat-empty">
-            <p>Ask this computer like an operator. It watches live books, runs 0G Direct research, and shows the ledger. Chat cannot AUTHORIZE.</p>
-            <div className="prompt-chips">
-              {PROMPTS.map((p) => (
-                <button key={p} type="button" className="chip-btn" onClick={() => void ask(p)}>
-                  {p}
-                </button>
-              ))}
+          <p className="chat-empty">Ask PIT what to trade, research, explain, or watch. The desk stays the authority.</p>
+        ) : null}
+        {lines.map((m, i) => (
+          <article key={`${m.ts}-${i}`} className={`turn ${m.role === "user" ? "user" : "pit"}`}>
+            <div className="turn-meta">
+              <span className="who">{m.role === "user" ? "You" : "PIT"}</span>
+              {m.ts ? <time>{new Date(m.ts).toLocaleTimeString()}</time> : null}
             </div>
-          </div>
-        ) : (
-          lines.map((m, i) => (
-            <div key={`${m.ts}-${i}`} className={m.role === "user" ? "turn user" : "turn pit"}>
-              <div className="turn-meta">
-                <span className="who">{m.role === "user" ? "You" : "PIT"}</span>
-                {m.ts ? <time dateTime={new Date(m.ts).toISOString()}>{new Date(m.ts).toLocaleTimeString()}</time> : null}
-                {m.role === "pit" ? (
-                  <button type="button" className="copy-turn" onClick={() => void navigator.clipboard.writeText(m.text || "")}>
-                    Copy
-                  </button>
-                ) : null}
-              </div>
-              <p className="turn-body">
-                <LinkedText text={m.text || ""} />
-              </p>
-              {m.tool && i === lastPit ? (
-                <ChatCard tool={m.tool} coin={m.coin} onNavigate={onNavigate} onOpenPreview={onOpenPreview} onResearch={onResearch} />
-              ) : null}
-            </div>
-          ))
-        )}
-        {busy ? (
-          <article className="chat-card" role="status">
-            <p className="label">Working</p>
-            <p>Host is reading live desk state. This is not a sealed model stream.</p>
+            <p className="turn-body">{displayTurn(m)}</p>
           </article>
-        ) : null}
-        {err ? (
-          <p className="err" role="alert">
-            {err}
-          </p>
-        ) : null}
+        ))}
         <div ref={end} />
       </div>
-      <form className="composer" onSubmit={(e) => void onSubmit(e)}>
+
+      <form className="composer" onSubmit={onSubmit}>
+        <div className="prompt-chips">
+          {PRIMARY.map((p) => (
+            <button key={p.label} type="button" className="chip-btn" onClick={() => void ask(p.q)}>{p.label}</button>
+          ))}
+          <button type="button" className="chip-btn" onClick={() => setMoreOpen((v) => !v)}>More</button>
+        </div>
+        {moreOpen ? (
+          <div className="prompt-chips more">
+            {MORE.map((p) => (
+              <button key={p.label} type="button" className="chip-btn" onClick={() => void ask(p.q)}>{p.label}</button>
+            ))}
+          </div>
+        ) : null}
         <textarea
-          id="desk-cmd"
-          rows={3}
           value={draft}
-          disabled={busy}
-          aria-label="Ask PIT"
           onChange={(e) => setDraft(e.target.value)}
+          placeholder="Ask PIT what to trade, research, explain, or watch…"
+          rows={3}
           onKeyDown={(e) => {
             if (e.key === "Enter" && !e.shiftKey) {
               e.preventDefault();
-              e.currentTarget.form?.requestSubmit();
+              const text = draft.trim();
+              if (!text) return;
+              setDraft("");
+              void ask(text);
             }
           }}
-          placeholder="Ask this computer to watch, research on 0G, or show txs. Chat cannot AUTHORIZE."
         />
         <div className="composer-row">
-          <p className="fine" style={{ margin: 0 }}>
-            Enter send · Shift+Enter newline
-          </p>
-          {busy ? (
-            <button
-              type="button"
-              className="linkish"
-              onClick={() => {
-                abort.current?.abort();
-                setBusy(false);
-              }}
-            >
-              Stop
-            </button>
-          ) : null}
-          {lastUser && !busy ? (
-            <button type="button" className="linkish" onClick={() => void ask(lastUser)}>
-              Retry
-            </button>
-          ) : null}
-          {island?.busy && onStop ? (
-            <button type="button" className="linkish" onClick={onStop}>
-              Stop research
-            </button>
-          ) : null}
-          <button type="submit" className="primary" disabled={busy || !draft.trim()}>
-            {busy ? "Working…" : "Send"}
-          </button>
+          <p className="fine">Enter send · Shift+Enter newline · Esc stop research · Ctrl+K command</p>
+          <button type="submit" className="primary" disabled={busy || !draft.trim()}>Send</button>
         </div>
+        {err ? <p className="fine">{err}</p> : null}
       </form>
     </section>
   );
 }
 
-function LinkedText({ text }: { text: string }) {
-  const parts = String(text || "").split(/(https:\/\/[^\s<>"'()]+)/g);
-  return (
-    <>
-      {parts.map((p, i) =>
-        p.startsWith("https://") ? (
-          <ExternalLink key={`${p}-${i}`} href={p}>
-            {p}
-          </ExternalLink>
-        ) : (
-          <span key={i}>{p}</span>
-        ),
-      )}
-    </>
-  );
+function displayTurn(m: ChatMessage) {
+  const text = String(m.text || "").trim();
+  if (!text) return m.role === "pit" ? "Working…" : "";
+  if (m.role === "pit" && text.length > 420) {
+    return text.split("\n")[0];
+  }
+  return text;
 }
 
 function ModelRow({
@@ -396,183 +373,11 @@ function ModelRow({
   onPick: () => void;
   disabled?: boolean;
 }) {
-  const privacy = m.private_book && m.proven_e2ee ? "PRIVATE · TEE-VERIFIED" : m.private_book ? "PRIVATE" : m.path === "catalog-listing" ? "CATALOG ONLY" : "NOT PRIVATE";
+  const on = picked?.model === m.model;
   return (
-    <button type="button" className={picked?.model === m.model ? "on" : "linkish"} onClick={onPick} disabled={disabled}>
-      <span className="model-row-head">
-        {m.label || m.model}
-        <span className="layer-chip">{privacy}</span>
-      </span>
-      <span className="fine" style={{ display: "block", marginTop: 2 }}>
-        {m.provider || m.path || "Direct"} · {m.latency || "speed not sampled"} · {m.capability || "general"}
-        {m.cost ? ` · ${m.cost}` : ""}
-      </span>
-      {m.note ? (
-        <span className="fine" style={{ display: "block" }}>
-          {m.note}
-        </span>
-      ) : null}
+    <button type="button" role="option" aria-selected={on} disabled={disabled} onClick={onPick}>
+      <strong>{m.label || m.model}</strong>
+      <span>{m.path || m.capability || ""}</span>
     </button>
   );
-}
-
-function ChatCard({
-  tool,
-  coin,
-  onNavigate,
-  onOpenPreview,
-  onResearch,
-}: {
-  tool?: string;
-  coin?: string;
-  onNavigate: (view: string) => void;
-  onOpenPreview: () => void;
-  onResearch?: (coin: string) => void;
-}) {
-  if (!tool || tool === "help" || tool === "status" || tool === "greet") return null;
-  if (tool === "calibration.get") {
-    return (
-      <article className="chat-card">
-        <p className="label">Strategy Health</p>
-        <p>NOT ENOUGH DATA until enough resolved outcomes exist.</p>
-        <button type="button" className="primary" onClick={() => onNavigate("health")}>
-          Open Strategy Health
-        </button>
-      </article>
-    );
-  }
-  if (tool === "setup.guide") {
-    return (
-      <article className="chat-card">
-        <p className="label">Setup</p>
-        <button type="button" className="primary" onClick={() => onNavigate("setup")}>
-          Continue setup
-        </button>
-      </article>
-    );
-  }
-  if (tool === "research.start" || tool === "research.best" || tool === "research.status") {
-    return (
-      <article className="chat-card">
-        <p className="label">0G Direct TeeML</p>
-        <p>Sealed pass for {coin || "the best eligible book"}. Compute money, not trading capital. {CHAT_AGENT_COPY.cannotAuthorize}.</p>
-        <button type="button" className="primary" onClick={onOpenPreview}>
-          Watch 0G stages
-        </button>
-      </article>
-    );
-  }
-  if (tool === "preview.show" || tool === "refuse_execute") {
-    return (
-      <article className="chat-card">
-        <p className="label">Accept on this computer</p>
-        <p>{CHAT_AGENT_COPY.cannotAuthorize}. {CHAT_AGENT_COPY.acceptOnDesk}.</p>
-        <button type="button" className="primary" onClick={onOpenPreview}>
-          Open AUTHORIZE
-        </button>
-      </article>
-    );
-  }
-  if (tool === "watch.get" || tool === "watch.best" || tool === "watch.scan" || tool === "watch.compare") {
-    return (
-      <article className="chat-card">
-        <p className="label">Opportunity</p>
-        <p>Live Hyperliquid marks. Side is not decided on Markets.</p>
-        {coin && onResearch ? (
-          <button type="button" className="primary" onClick={() => onResearch(coin)}>
-            Research {coin} privately
-          </button>
-        ) : (
-          <button type="button" className="primary" onClick={() => onNavigate("markets")}>
-            Open Markets
-          </button>
-        )}
-      </article>
-    );
-  }
-  if (tool === "watch.why_not") {
-    return (
-      <article className="chat-card">
-        <p className="label">Why PIT did not trade</p>
-        <p>Named host refusal. PIT will not invent size or a fill.</p>
-        <button type="button" className="primary" onClick={() => onNavigate("automation")}>
-          Open Automation
-        </button>
-      </article>
-    );
-  }
-  if (tool === "mission.enable_required") {
-    return (
-      <article className="chat-card">
-        <p className="label">Sleep Mission</p>
-        <p>Review the host limits on Automation, then arm it on this computer. Chat cannot arm it.</p>
-        <button type="button" className="primary" onClick={() => onNavigate("automation")}>
-          Review limits
-        </button>
-      </article>
-    );
-  }
-  if (tool === "mission.stop" || tool === "mission.status") {
-    return (
-      <article className="chat-card">
-        <p className="label">Mission</p>
-        <button type="button" className="primary" onClick={() => onNavigate("automation")}>
-          Open Automation
-        </button>
-      </article>
-    );
-  }
-  if (tool === "positions.get") {
-    return (
-      <article className="chat-card">
-        <p className="label">Portfolio</p>
-        <button type="button" className="primary" onClick={() => onNavigate("portfolio")}>
-          Open Portfolio
-        </button>
-      </article>
-    );
-  }
-  if (tool === "activity.list" || tool === "activity.today" || tool === "activity.proof") {
-    return (
-      <article className="chat-card">
-        <p className="label">Desk ledger</p>
-        <p>OID, receipt, and explorer links live on Activity. PIT will not invent a fill.</p>
-        <button type="button" className="primary" onClick={() => onNavigate("activity")}>
-          Open Activity
-        </button>
-      </article>
-    );
-  }
-  if (tool === "policy.get") {
-    return (
-      <article className="chat-card">
-        <p className="label">Policy</p>
-        <p>Host enforced. Chat cannot mutate it.</p>
-        <button type="button" className="primary" onClick={() => onNavigate("security")}>
-          Open Security
-        </button>
-      </article>
-    );
-  }
-  if (tool === "session.status") {
-    return (
-      <article className="chat-card">
-        <p className="label">Hyperliquid</p>
-        <button type="button" className="primary" onClick={() => onNavigate("security")}>
-          Open Security
-        </button>
-      </article>
-    );
-  }
-  if (tool === "research.result") {
-    return (
-      <article className="chat-card">
-        <p className="label">Committee</p>
-        <button type="button" className="primary" onClick={onOpenPreview}>
-          Open research
-        </button>
-      </article>
-    );
-  }
-  return null;
 }

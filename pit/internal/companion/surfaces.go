@@ -160,23 +160,22 @@ func (h *Hub) localChat(w http.ResponseWriter, r *http.Request) {
 		if parsed.Coin == "" {
 			parsed.Coin = h.pickBestCoin()
 		}
-		parsed.Reply = parsed.Reply + " Chat cannot AUTHORIZE. The desk will start the sealed job on this computer."
+	}
+	if parsed.Hypothesis != "" {
+		_ = cli.SaveHypothesis(h.Dir, parsed.Hypothesis)
 	}
 	picked := strings.TrimSpace(body.Model)
 	if picked == "" {
 		picked = loadChatModel(h.Dir)
 	}
-	if note := h.chatModelHonesty(firstNonEmpty(picked, loadChatModel(h.Dir))); note != "" {
-		parsed.Reply = parsed.Reply + "\n\n" + note
+	if parsed.Agent == nil {
+		if note := h.chatModelHonesty(firstNonEmpty(picked, loadChatModel(h.Dir))); note != "" {
+			parsed.Reply = parsed.Reply + "\n\n" + note
+		}
 	}
 	appendChatThread(h.Dir, "user", body.Text, "", thread)
 	appendChatThread(h.Dir, "pit", parsed.Reply, parsed.Tool, thread)
-	writeLocal(w, http.StatusOK, map[string]any{
-		"ok": true, "reply": parsed.Reply, "tool": parsed.Tool, "mutate": parsed.Mutate,
-		"execute": false, "start_research": parsed.StartResearch, "coin": parsed.Coin,
-		"navigate": parsed.Navigate, "open_url": parsed.OpenURL, "thread": thread, "hours": parsed.Hours,
-		"model": picked, "stream": false, "sign": false, "trade": false,
-	})
+	writeLocal(w, http.StatusOK, chatDonePayload(parsed, thread, picked, false))
 }
 
 func (h *Hub) localChatLog(w http.ResponseWriter, r *http.Request) {

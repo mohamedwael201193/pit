@@ -7,7 +7,7 @@ import (
 
 func TestWhyDidntYouTrade(t *testing.T) {
 	r := Parse("Why didn't you trade?")
-	if r.Execute || r.Tool != "watch.why_not" || r.Navigate != "automation" {
+	if r.Execute || r.Tool != "watch.why_not" {
 		t.Fatalf("%+v", r)
 	}
 	r = Parse("Why is nothing executable?")
@@ -56,7 +56,7 @@ func TestWhyAndForget(t *testing.T) {
 		t.Fatal(r)
 	}
 	r = Parse("Show me the evidence")
-	if r.Navigate != "research" || r.Execute {
+	if r.Tool != "activity.proof" || r.Execute || r.Navigate == "markets" {
 		t.Fatal(r)
 	}
 }
@@ -86,7 +86,7 @@ func TestHappeningAndPositions(t *testing.T) {
 		t.Fatalf("%+v", r)
 	}
 	r = Parse("What is happening with BTC?")
-	if r.Execute || r.Tool != "watch.get" || r.Coin != "BTC" || r.Navigate != "markets" {
+	if r.Execute || r.Tool != "watch.get" || r.Coin != "BTC" || r.Navigate == "markets" {
 		t.Fatalf("%+v", r)
 	}
 	r = Parse("Why is ETH moving?")
@@ -146,20 +146,43 @@ func TestTypoResearchStartsSealedPass(t *testing.T) {
 	}
 }
 
-func TestStrongestOpportunityIsWatch(t *testing.T) {
+func TestStrongestOpportunityStartsResearch(t *testing.T) {
 	r := Parse("Find the strongest opportunity.")
-	if r.Execute || r.StartResearch || r.Tool != "watch.best" {
+	if r.Execute || !r.StartResearch || r.Tool != "research.best" || r.Navigate != "" {
+		t.Fatalf("%+v", r)
+	}
+}
+
+func TestFindBestTradeStaysOnChat(t *testing.T) {
+	r := Parse("Find the best trade available right now.")
+	if r.Execute || !r.StartResearch || r.Tool != "research.best" || r.Navigate == "markets" {
+		t.Fatalf("%+v", r)
+	}
+	r = Parse("Find me the best long")
+	if r.Execute || !r.StartResearch || r.Hypothesis != "long" {
+		t.Fatalf("%+v", r)
+	}
+	r = Parse("What can I trade with my current capital?")
+	if r.Execute || !r.StartResearch || r.Tool != "research.best" {
+		t.Fatalf("%+v", r)
+	}
+	r = Parse("What happened with the strategy?")
+	if r.Coin == "ETH" || r.Coin == "BTC" || r.Coin == "SOL" {
+		t.Fatalf("ticker substring %s", r.Coin)
+	}
+	r = Parse("Tell me what is happening with BTC")
+	if r.Coin != "BTC" || r.StartResearch {
 		t.Fatalf("%+v", r)
 	}
 }
 
 func TestAutonomyIntents(t *testing.T) {
 	r := Parse("Find me the best opportunity right now.")
-	if r.Execute || r.StartResearch || r.Tool != "watch.best" {
+	if r.Execute || !r.StartResearch || r.Tool != "research.best" || r.Navigate == "markets" {
 		t.Fatalf("%+v", r)
 	}
 	r = Parse("Scan everything allowed by my policy.")
-	if r.Execute || r.Tool != "watch.scan" || r.Navigate != "markets" {
+	if r.Execute || r.Tool != "watch.scan" || r.Navigate == "markets" {
 		t.Fatalf("%+v", r)
 	}
 	r = Parse("Research the best setup.")
@@ -187,7 +210,7 @@ func TestAutonomyIntents(t *testing.T) {
 		t.Fatalf("%+v", r)
 	}
 	r = Parse("Trade the strongest setup.")
-	if r.Execute || !r.StartResearch || r.Tool != "research.best" {
+	if r.Execute || !r.StartResearch || r.Tool != "research.best" || r.Navigate == "markets" {
 		t.Fatalf("%+v", r)
 	}
 	r = Parse("Run autonomously for 24 hours.")
@@ -210,7 +233,7 @@ func TestAutonomyIntents(t *testing.T) {
 		t.Fatalf("%s", r.Reply)
 	}
 	r = Parse("What happened overnight?")
-	if r.Execute || r.Tool != "mission.status" || r.Navigate != "automation" {
+	if r.Execute || r.Tool != "mission.status" || r.Navigate == "markets" {
 		t.Fatalf("%+v", r)
 	}
 	r = Parse("How did last night's mission perform?")
