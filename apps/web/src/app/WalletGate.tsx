@@ -54,9 +54,6 @@ export function WalletGate() {
                     <ButtonLink as={Link} to="/app" trailingArrow size="lg">
                       Overview
                     </ButtonLink>
-                    <ButtonLink as={Link} to="/app/start" variant="secondary" size="lg">
-                      Protect my strategy
-                    </ButtonLink>
                     <Button variant="secondary" type="button" onClick={logout}>
                       Disconnect
                     </Button>

@@ -2370,6 +2370,29 @@ CLASSIFICATION:
 PRODUCTION READY: Public product pages match the desk. Landing remains the coral story.
 NEXT STEP: Commit, push, Vercel alias pit0g.vercel.app.
 
+---
+
+## M110 — Protect my strategy is wallet sign-in; slim the rail (2026-08-30)
+
+DATE/TIME: 2026-08-30 08:40+03
+PHASE: UI/UX. Do not flatten OID 529167222216. Do not remint PIT-4bbee556. Do not invent fills or APR.
+GOAL: "Protect my strategy" must open Sign in with your wallet, not the 12-step get-started wizard. The desk rail had too many duplicate tabs.
+RESULT:
+- **IMPLEMENTED:** Still **0.8.0**.
+  1. Protect my strategy → `/signin` (Connect your wallet). `/app/start` redirects to `/signin`.
+  2. Rail is short: Look = Radar / Proof / Agent. This computer = Pair. Download stays the coral CTA. Signed-in desk = Overview. Protect my strategy is always in the rail.
+  3. Missions, Capital, How it works remain as pages, not extra rail copies of My Missions / My Agent / My Proof / My Capital / Policy.
+- **TESTED:** Playwright 24/24 PASS, including protect → `/signin` heading Sign in with your wallet.
+- **BLOCKED:** iTransfer UNAVAILABLE. Authenticode absent.
+
+SECURITY RESULT: Web still cannot authorize, pin, or enable autonomy. Session keys stay off the browser.
+TX HASH / OID: Historical OID `529167222216` unchanged.
+CLASSIFICATION:
+- Protect → wallet sign-in: **IMPLEMENTED + TESTED**
+- Get-started hijack of Protect: **REMOVED**
+PRODUCTION READY: Pairing hands off to wallet identity, not onboarding.
+NEXT STEP: Push and alias pit0g.vercel.app.
+
 
 
 

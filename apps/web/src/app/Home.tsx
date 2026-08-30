@@ -41,8 +41,8 @@ export function Home() {
           Pair this computer
         </Link>
         {" · "}
-        <Link to="/app/start" className="text-[#d82f2f]">
-          Setup
+        <Link to="/signin" className="text-[#d82f2f]">
+          Protect my strategy
         </Link>
         {" · "}
         <Link to="/app/policy" className="text-[#d82f2f]">

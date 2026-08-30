@@ -3,8 +3,6 @@ import { Link, NavLink, Outlet } from "react-router-dom";
 import { usePrivy } from "@privy-io/react-auth";
 import {
   Broadcast,
-  ClockCounterClockwise,
-  Coins,
   DownloadSimple,
   Gear,
   House,
@@ -29,33 +27,15 @@ interface NavItem {
 
 const LOOK: readonly NavItem[] = [
   { to: "/radar", label: "Radar", icon: Broadcast, end: false },
-  { to: "/missions", label: "Missions", icon: ClockCounterClockwise, end: false },
   { to: "/proof", label: "Proof", icon: ShieldCheck, end: true },
   { to: "/agent", label: "Agent", icon: User, end: true },
-  { to: "/capital", label: "Capital", icon: Coins, end: true },
-  { to: "/how-it-works", label: "How it works", icon: Info, end: true },
 ];
 
-const MACHINE: readonly NavItem[] = [
-  { to: "/pair", label: "Pair", icon: LinkSimple, end: true },
-  { to: "/download", label: "Download", icon: DownloadSimple, end: true },
-];
+const MACHINE: readonly NavItem[] = [{ to: "/pair", label: "Pair", icon: LinkSimple, end: true }];
 
-const DESK: readonly NavItem[] = [
-  { to: "/app", label: "Overview", icon: House, end: true },
-  { to: "/app/activity", label: "My Missions", icon: ClockCounterClockwise, end: false },
-  { to: "/app/account", label: "My Agent", icon: User, end: false },
-  { to: "/app/verify", label: "My Proof", icon: ShieldCheck, end: false },
-  { to: "/capital", label: "My Capital", icon: Coins, end: true },
-  { to: "/app/start", label: "Protect", icon: LockKey, end: false },
-  { to: "/app/policy", label: "Policy", icon: ShieldCheck, end: false },
-];
+const DESK: readonly NavItem[] = [{ to: "/app", label: "Overview", icon: House, end: true }];
 
-const SETTINGS: NavItem = { to: "/app/settings", label: "Settings", icon: Gear, end: false };
-
-function lookItems(authenticated: boolean): readonly NavItem[] {
-  return authenticated ? LOOK.filter((item) => item.to !== "/capital") : LOOK;
-}
+const PROTECT: NavItem = { to: "/signin", label: "Protect my strategy", icon: LockKey, end: true };
 
 export function DeskFrame() {
   const [chat, setChat] = useState(false);
@@ -102,7 +82,7 @@ function Rail({ chatOpen, onAsk }: { chatOpen: boolean; onAsk: () => void }) {
       </Link>
       <p className="mb-2 px-3 text-[0.6875rem] tracking-[0.14em] text-[rgb(240_231_212/0.4)] uppercase">Look</p>
       <nav aria-label="Look" className="mb-6 flex flex-col gap-1">
-        {lookItems(authenticated).map((item) => (
+        {LOOK.map((item) => (
           <RailLink key={item.to} item={item} />
         ))}
       </nav>
@@ -115,20 +95,14 @@ function Rail({ chatOpen, onAsk }: { chatOpen: boolean; onAsk: () => void }) {
       {authenticated ? (
         <>
           <p className="mb-2 px-3 text-[0.6875rem] tracking-[0.14em] text-[rgb(240_231_212/0.4)] uppercase">Your desk</p>
-          <nav aria-label="Your desk" className="flex flex-col gap-1">
+          <nav aria-label="Your desk" className="mb-4 flex flex-col gap-1">
             {DESK.map((item) => (
               <RailLink key={item.to} item={item} />
             ))}
           </nav>
         </>
-      ) : (
-        <Link
-          to="/signin"
-          className="mb-4 inline-flex items-center justify-center rounded-full border border-[rgb(240_231_212/0.28)] px-3 py-2.5 text-[0.9375rem] font-medium text-[var(--guide-cream)] no-underline"
-        >
-          Sign in
-        </Link>
-      )}
+      ) : null}
+      <RailLink item={PROTECT} />
       <button
         type="button"
         onClick={onAsk}
@@ -141,8 +115,8 @@ function Rail({ chatOpen, onAsk }: { chatOpen: boolean; onAsk: () => void }) {
         to={authenticated ? "/app/settings" : "/how-it-works"}
         className="inline-flex items-center gap-3 rounded-full px-3 py-2.5 text-[0.875rem] text-[rgb(240_231_212/0.45)] no-underline hover:bg-[rgb(240_231_212/0.08)] hover:text-[var(--guide-cream)]"
       >
-        <Gear size={18} aria-hidden="true" />
-        {authenticated ? "Settings" : "Guide"}
+        {authenticated ? <Gear size={18} aria-hidden="true" /> : <Info size={18} aria-hidden="true" />}
+        {authenticated ? "Settings" : "How it works"}
       </Link>
     </div>
   );
@@ -182,7 +156,7 @@ function TopBar({ chatOpen, onAsk }: { chatOpen: boolean; onAsk: () => void }) {
   const { ready, authenticated, user, login, logout } = usePrivy();
   const { desktop } = useWatch();
   const addr = user?.wallet?.address;
-  const mobile = [...lookItems(authenticated), ...MACHINE];
+  const mobile: readonly NavItem[] = authenticated ? [...LOOK, ...MACHINE, ...DESK, PROTECT] : [...LOOK, ...MACHINE, PROTECT];
 
   return (
     <header className="sticky top-0 z-30 border-b border-[rgb(240_231_212/0.25)] bg-[#1a1a1a]/95 backdrop-blur">
@@ -229,13 +203,12 @@ function TopBar({ chatOpen, onAsk }: { chatOpen: boolean; onAsk: () => void }) {
               </button>
             </>
           ) : (
-            <button
-              type="button"
-              onClick={() => void login()}
-              className="rounded-full bg-[#d82f2f] px-3 py-1.5 text-[0.8125rem] font-medium text-[#f0e7d4]"
+            <Link
+              to="/signin"
+              className="rounded-full bg-[#d82f2f] px-3 py-1.5 text-[0.8125rem] font-medium text-[#f0e7d4] no-underline"
             >
               Sign in
-            </button>
+            </Link>
           )}
         </div>
       </div>
@@ -258,37 +231,6 @@ function TopBar({ chatOpen, onAsk }: { chatOpen: boolean; onAsk: () => void }) {
             {item.label}
           </NavLink>
         ))}
-        {authenticated
-          ? DESK.map((item) => (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                end={item.end}
-                className={({ isActive }) =>
-                  cn(
-                    "shrink-0 rounded-full px-3 py-1.5 text-[0.875rem] font-medium whitespace-nowrap no-underline",
-                    isActive ? "bg-[#d82f2f] text-black" : "text-[rgb(240_231_212/0.65)]",
-                  )
-                }
-              >
-                {item.label}
-              </NavLink>
-            ))
-          : null}
-        {authenticated ? (
-          <NavLink
-            to={SETTINGS.to}
-            end={SETTINGS.end}
-            className={({ isActive }) =>
-              cn(
-                "shrink-0 rounded-full px-3 py-1.5 text-[0.875rem] font-medium whitespace-nowrap no-underline",
-                isActive ? "bg-[#d82f2f] text-black" : "text-[rgb(240_231_212/0.65)]",
-              )
-            }
-          >
-            {SETTINGS.label}
-          </NavLink>
-        ) : null}
       </nav>
     </header>
   );

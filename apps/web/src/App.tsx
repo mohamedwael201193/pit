@@ -2,7 +2,6 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import { WalletGate } from "./app/WalletGate";
 import { AppShell } from "./app/AppShell";
 import { Home } from "./app/Home";
-import { StartFlow } from "./app/StartFlow";
 import { Activity } from "./app/Activity";
 import { PolicyPage } from "./app/PolicyPage";
 import { AccountPage } from "./app/AccountPage";
@@ -41,7 +40,7 @@ export function App() {
       <Route path="/signin" element={<WalletGate />} />
       <Route path="/app" element={<AppShell />}>
         <Route index element={<Home />} />
-        <Route path="start" element={<StartFlow />} />
+        <Route path="start" element={<Navigate to="/signin" replace />} />
         <Route path="activity" element={<Activity />} />
         <Route path="policy" element={<PolicyPage />} />
         <Route path="account" element={<AccountPage />} />

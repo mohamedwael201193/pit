@@ -161,14 +161,14 @@ export function PairPage() {
             <p className="mt-2 text-[0.975rem] leading-6 text-[rgb(240_231_212/0.75)]">
               Your browser is read-only. The private authorization stays on this computer.
             </p>
-            <Link className="mt-4 inline-block rounded-full bg-[#d82f2f] px-6 py-3 font-semibold text-[#f0e7d4]" to="/app/start">
+            <Link className="mt-4 inline-block rounded-full bg-[#d82f2f] px-6 py-3 font-semibold text-[#f0e7d4]" to="/signin">
               Protect my strategy
             </Link>
           </div>
         ) : (
           <p className="mt-6 text-[0.875rem] text-[rgb(240_231_212/0.5)]">
             After pairing, open{" "}
-            <Link className="text-[#d82f2f]" to="/app/start">
+            <Link className="text-[#d82f2f]" to="/signin">
               Protect my strategy
             </Link>
             .
@@ -192,7 +192,7 @@ export function PairPage() {
           macOS and Linux installers are not claimed until they are packaged and tested. Source build is documented in
           the README.
         </p>
-        <Link className="mt-6 inline-block text-[#d82f2f]" to="/app/start">
+        <Link className="mt-6 inline-block text-[#d82f2f]" to="/signin">
           Protect my strategy
         </Link>
       </Bezel>
