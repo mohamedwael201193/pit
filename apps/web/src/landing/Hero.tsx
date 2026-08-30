@@ -45,6 +45,14 @@ export function Hero() {
               >
                 PIT watches live markets, researches your private strategy through 0G, challenges every idea, enforces your policy on the host, and when you explicitly arm a bounded Sleep Mission, can act within those limits while you are away.
               </motion.p>
+              <motion.p
+                className="mt-4 max-w-[42ch] text-[1rem] leading-7 text-black/70"
+                initial={reduce ? false : { opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.65, delay: 0.18, ease: [0.16, 1, 0.3, 1] }}
+              >
+                This computer must stay awake for the bound. If it sleeps, the mission stops. That gap is not backfilled.
+              </motion.p>
               <HeroCtas />
             </motion.div>
             <motion.div

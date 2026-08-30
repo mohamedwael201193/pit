@@ -2,6 +2,33 @@
 
 ---
 
+## M119 — Sleep Mission honesty: this computer must stay awake
+
+- **Source:** Live 0G re-fetch still matches frozen Direct glm-5.2. Competitive scan: hosted 24/7 bots hide laptop-sleep as a skip. PIT hero said "while you sleep" without the bound.
+- **Discovery:** Do not copy web arming, LLM fill loops, or 0g-memory EverMemOS. Do not fake iTransfer/DA on 16661. The missing claim is host survival: if this computer sleeps, the mission stops.
+- **Candidate:** One sentence on landing, FAQ, /autonomy, and the arm overlay. Good Morning: zero fills is a successful night.
+- **Kill:** Hosted runner. Auto-retune. Router fallback. Invented TVL. Fake backfill after sleep.
+- **Next:** Vercel only for copy. Do not tag. Do not remint. Do not flatten.
+
+DATE/TIME: 2026-08-30 22:17+03
+PHASE: Claim honesty. Frozen SKU stays. Chat never authorizes.
+GOAL: "Works while you sleep" never implies the machine can sleep.
+RESULT:
+- **IMPLEMENTED:** Still **0.9.0**. No installer. Landing + FAQ + /autonomy + desktop arm overlay state the computer must stay awake. Gap is not backfilled. Good Morning names a no-trade night as success.
+- **TESTED:** Playwright home + autonomy after this patch.
+- **LIVE:** Frozen glm-5.2 still matches getService (live 0G re-fetch). iTransfer/DAEntrance still absent on 16661.
+- **BLOCKED:** Same as M118.
+
+SECURITY RESULT: Same authority model. No new spending path.
+TX HASH / OID: Historical OID `529167222216` unchanged.
+CLASSIFICATION:
+- Host-must-stay-awake copy: **IMPLEMENTED + TESTED**
+- Direct glm-5.2 freeze: **LIVE, UNCHANGED**
+PRODUCTION READY: Same 0.9.0 source. Public claim now matches host survival.
+NEXT STEP: `python _scripts/push_head.py`. Deploy web.
+
+---
+
 ## M118 — PIT 0.9 proof-carrying Sleep Missions
 
 - **Source:** Guarded Autonomy existed as a typed enable phrase and host tick, but it was not a first-class Sleep Mission with a host AutonomyEnvelope, named refusals, night replay, Skillbook, or public-safe mission pages.

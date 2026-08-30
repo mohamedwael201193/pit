@@ -15,5 +15,6 @@ test("home is intelligence, not a wallet-first landing", async ({ page }) => {
   await expect(page.getByRole("button", { name: "Connect your wallet" })).toHaveCount(0);
   await expect(page.getByText("MAINNET only")).toBeVisible();
   await expect(page.getByText("The laboratory exists for CI and developers, not for the public desk.")).toBeVisible();
+  await expect(page.getByText("This computer must stay awake for the bound.")).toBeVisible();
   await expect(page.getByText("Let PIT watch. Keep execution on your machine.")).toBeVisible();
 });

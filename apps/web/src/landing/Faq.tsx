@@ -17,7 +17,7 @@ const QUESTIONS: readonly { q: string; a: string }[] = [
   },
   {
     q: "Can PIT trade without me?",
-    a: "Not unless you arm a Sleep Mission on PIT Desktop. Chat, this website, and the model cannot turn it on. Manual still requires AUTHORIZE on one exact preview. Research never executes. Duplicate clicks do not send a second order.",
+    a: "Not unless you arm a Sleep Mission on PIT Desktop. Chat, this website, and the model cannot turn it on. The desk computer must stay awake for the bound. If it sleeps, the mission stops. That gap is not backfilled. Manual still requires AUTHORIZE on one exact preview. Research never executes. Duplicate clicks do not send a second order.",
   },
   {
     q: "What is the laboratory?",

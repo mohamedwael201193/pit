@@ -248,7 +248,7 @@ export function AutomationCenter({
           }}
         >
           <p className="label">Sleep Mission</p>
-          <p>Arm once. PIT hunts within your rules while you are away.</p>
+          <p>Arm once. PIT hunts within your rules while you are away. This computer must stay awake for the bound.</p>
         </button>
       </div>
       <button
@@ -268,7 +268,7 @@ export function AutomationCenter({
           <p className="label">SLEEP MISSION</p>
           <h2>Armed for {remain}</h2>
           <p>
-            State {String(mission.sleep_state || m.sleep_state || "WATCHING")}. PIT may watch live Hyperliquid books, research privately through 0G, and execute only if every host invariant passes. Chat cannot AUTHORIZE. Withdraw and transfer stay impossible.
+            State {String(mission.sleep_state || m.sleep_state || "WATCHING")}. PIT may watch live Hyperliquid books, research privately through 0G, and execute only if every host invariant passes. This computer must stay awake. If it sleeps, the mission stops. Chat cannot AUTHORIZE. Withdraw and transfer stay impossible.
           </p>
           {mission.block_reason || mission.why_not ? (
             <p className="err" role="status">
@@ -455,6 +455,7 @@ export function AutomationCenter({
             <ul className="can-list">
               <li>Execute from chat or change policy, clip, leverage, or permissions.</li>
               <li>Withdraw, transfer, or bypass kill switch, session, preview binding, or duplicate-order protection.</li>
+              <li>Keep running if this computer sleeps. The mission stops. That gap is not backfilled. Kill does not flatten.</li>
             </ul>
             <Select label="Duration" value={String(hours)} options={HOURS} onChange={(v) => setHours(Number(v))} disabled={busy || phase !== "idle"} />
             <label className="check-row">
@@ -609,7 +610,11 @@ function GoodMorning({
     <section className="away-board" role="status">
       <p className="label">GOOD MORNING</p>
       <h2>Your desk ran for {elapsed === "—" ? "the armed window" : elapsed}.</h2>
-      <p className="fine">Every count is a persisted mission event. Empty is honest.</p>
+      <p className="fine">
+        {!(events?.executions || events?.fills)
+          ? "No trade was a successful night. Every count is a persisted mission event."
+          : "Every count is a persisted mission event. Empty is honest."}
+      </p>
       <dl className="mission-grid">
         <div>
           <dt>Opportunities</dt>

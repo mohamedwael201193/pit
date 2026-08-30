@@ -19,7 +19,7 @@ export function AutonomyPage() {
         lede="The website discovers and proves. It never arms a mission, never holds a session key, and never handles a Direct token. Arming happens only on PIT Desktop."
       />
       <p className="mt-8 max-w-[52ch] text-[1.05rem] leading-7 text-[rgb(240_231_212/0.7)]">
-        A Sleep Mission is bounded host execution. You set duration, max trade, max mission notional, max autonomous trades, max daily loss, max open positions, allowed assets, and max data age. Every setting is clamped to the pinned policy ceiling.
+        A Sleep Mission is bounded host execution on this computer. You set duration, max trade, max mission notional, max autonomous trades, max daily loss, max open positions, allowed assets, and max data age. Every setting is clamped to the pinned policy ceiling. This computer must stay awake for the bound. If it sleeps, the mission stops. That gap is not backfilled.
       </p>
       <ol className="intel-pipe mt-10">
         {BEATS.map((s, i, arr) => (
