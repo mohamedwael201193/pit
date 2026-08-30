@@ -61,14 +61,23 @@ export function powerSourceLabel(src?: string) {
   return src.replaceAll("_", " ");
 }
 
-export function nearestVenueMin(coins: Array<{ minNotional?: number }>): number {
-  const mins = coins.map((c) => c.minNotional).filter((n): n is number => typeof n === "number" && n > 0);
+export function nearestVenueMin(
+  coins: Array<{ minNotional?: number; eligible?: boolean; policyEligible?: boolean; executionFeasible?: boolean }>,
+): number {
+  const actionable = coins.filter((c) => c.executionFeasible);
+  const policy = coins.filter((c) => c.policyEligible || c.eligible);
+  const src = actionable.length ? actionable : policy.length ? policy : coins;
+  const mins = src.map((c) => c.minNotional).filter((n): n is number => typeof n === "number" && n > 0);
   if (!mins.length) return 10;
   return Math.min(...mins);
 }
 
-export function nearestPolicyClip(coins: Array<{ policyClip?: number }>): number {
-  const clips = coins.map((c) => c.policyClip).filter((n): n is number => typeof n === "number" && n > 0);
+export function nearestPolicyClip(
+  coins: Array<{ policyClip?: number; eligible?: boolean; policyEligible?: boolean }>,
+): number {
+  const policy = coins.filter((c) => c.policyEligible || c.eligible);
+  const src = policy.length ? policy : coins;
+  const clips = src.map((c) => c.policyClip).filter((n): n is number => typeof n === "number" && n > 0);
   if (!clips.length) return 10;
   return clips[0];
 }

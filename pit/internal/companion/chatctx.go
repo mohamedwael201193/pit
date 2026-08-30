@@ -163,7 +163,7 @@ func (h *Hub) replyWatch(parsed deskcmd.Result) string {
 	if execLine == "" {
 		execLine = row.ExecWhy
 	}
-	return fmt.Sprintf("%s\nMark %s (oracle %s, funding %s, open interest %s, day notional %s).\n%s\nTrend: %s. Host rank %d, not a model score. Policy %s. Layer %s. Freshness %s. Venue hyperliquid. Provenance %s.\nWhy it passes policy: %s\nRequired margin $%.2f · available $%.2f · host-sized $%.2f · min $%.0f.\nWhy it is executable for this user: %s\nWhat would invalidate it: %s\nWhat research will test: %s%s\nSide is not decided here. Chat cannot AUTHORIZE.",
+	return fmt.Sprintf("%s\nMark %s (oracle %s, funding %s, open interest %s, day notional %s).\n%s\nTrend: %s. Host rank %d, not a model score. Policy %s. Layer %s. Freshness %s. Venue hyperliquid. Provenance %s.\nWhy it passes policy: %s\nRequired margin $%.2f · available $%.2f · host-sized $%.2f · min $%.2f.\nWhy it is executable for this user: %s\nWhat would invalidate it: %s\nWhat research will test: %s%s\nSide is not decided here. Chat cannot AUTHORIZE.",
 		row.Coin, watch.Price(row.Mark), watch.Price(row.Oracle), watch.FundingPct(row.Funding), watch.Compact(row.OpenInterest), watch.CompactUSD(row.Volume), row.Why, row.Trend, row.Rank, fit, row.Layer, row.Freshness, row.Provenance,
 		watch.WhyPolicyFrom(row.Eligible, row.Block, h.policyPinnedNow()), row.RequiredMargin, row.AvailableMargin, row.HostNotional, row.MinNotional, execLine, watch.WhatInvalidatesReason(row.Reason), watch.ResearchWillTestFrom(row.Coin, row.Eligible), whyBetter)
 }

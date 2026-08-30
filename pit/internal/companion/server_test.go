@@ -234,7 +234,7 @@ func TestLocalStatusVersionNoSecret(t *testing.T) {
 	if got["sign"] == true || got["trade"] == true {
 		t.Fatal(got)
 	}
-	if got["version"] != "0.7.4" {
+	if got["version"] != "0.7.5" {
 		t.Fatalf("version %v", got["version"])
 	}
 }
@@ -812,5 +812,32 @@ func TestLocalKillDeniedToWebsite(t *testing.T) {
 	}
 	if !strings.Contains(rec.Body.String(), `"kill":true`) {
 		t.Fatal(rec.Body.String())
+	}
+}
+
+func TestLocalIdentitySplitsMintAndTransfer(t *testing.T) {
+	h := New(t.TempDir())
+	req := local(httptest.NewRequest(http.MethodGet, "/local/identity", nil))
+	rec := httptest.NewRecorder()
+	h.Handler().ServeHTTP(rec, req)
+	if rec.Code != 200 {
+		t.Fatal(rec.Body.String())
+	}
+	body := rec.Body.String()
+	if !strings.Contains(body, `"itransfer":"UNAVAILABLE"`) {
+		t.Fatal(body)
+	}
+	if !strings.Contains(body, "Mint is optional") {
+		t.Fatal(body)
+	}
+	if strings.Contains(body, `"itransfer":"LIVE"`) {
+		t.Fatal(body)
+	}
+	req = local(httptest.NewRequest(http.MethodGet, "/local/identity", nil))
+	req.Header.Set("Origin", "https://pit0g.vercel.app")
+	rec = httptest.NewRecorder()
+	h.Handler().ServeHTTP(rec, req)
+	if rec.Code != http.StatusForbidden {
+		t.Fatal("web identity")
 	}
 }

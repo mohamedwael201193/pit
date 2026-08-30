@@ -174,7 +174,7 @@ export function App() {
   const [calibEnough, setCalibEnough] = useState(false);
   const [calibSkills, setCalibSkills] = useState<Array<{ id?: string; title?: string; version?: string; n?: number; copy?: string }>>([]);
   const [experienceWhy, setExperienceWhy] = useState("NOT ENOUGH DATA");
-  const [identityNote, setIdentityNote] = useState("Transfer of Agentic ID is not live on mainnet.");
+  const [identityNote, setIdentityNote] = useState("Mint is optional on Aristotle. iTransfer is UNAVAILABLE. Trading does not require a desk ID.");
   const [updateNote, setUpdateNote] = useState("This build is checksum-verified, not OS-signed.");
   const [restartAllowed, setRestartAllowed] = useState(true);
   const [hypothesis, setHypothesis] = useState<"none" | "long" | "short">("none");
@@ -476,7 +476,7 @@ export function App() {
           if (!gone) setExperienceWhy(e.why || "NOT ENOUGH DATA");
         });
         void fetchIdentity().then((id) => {
-          if (!gone) setIdentityNote(id.note || "Transfer of Agentic ID is not live on mainnet.");
+          if (!gone) setIdentityNote(id.note || "Mint is optional on Aristotle. iTransfer is UNAVAILABLE. Trading does not require a desk ID.");
         });
         void fetchUpdate().then((u) => {
           if (gone) return;

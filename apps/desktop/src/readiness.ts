@@ -86,7 +86,7 @@ export function probes(checks: DoctorCheck[], status: LocalStatus | null, compan
     id: "identity",
     label: "Identity",
     state: "optional",
-    detail: "Transfer of Agentic ID is not live on mainnet. Trading does not wait on it.",
+    detail: "Mint is optional and live on Aristotle. iTransfer is UNAVAILABLE. Trading does not wait on mint.",
   };
   const execution: Probe =
     policy.state === "ok" && session.state === "ok" && agent.state === "ok" && kill.state === "ok"

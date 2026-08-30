@@ -2200,6 +2200,34 @@ CLASSIFICATION:
 PRODUCTION READY: 0.7.4 is production-ready for honest capital gates. It is **not** production-ready for a new MAINNET clip until YOU pin a clip that meets a book’s rounded min.
 NEXT STEP: Close extra PIT windows if two opened. On Security, preview then pin a clip above the candidate min if you want a clip. Do not flatten. Do not remint.
 
+---
+
+## M104 — War room 0.7.5: policy-eligible floor + Agentic ID split (2026-08-30)
+
+DATE/TIME: 2026-08-30 05:54+03
+PHASE: 0.7.5 follow-up to [Competitor intelligence](59bed584-25d5-4821-b46e-38f639bd4e44), [0G infrastructure](2695e9ef-4c51-4436-a33e-9175a250f1e2), [Capital UX](ceb9e7bd-860b-4999-b93e-4846d4975053). Do not flatten OID 529167222216. Do not remint PIT-4bbee556. Do not invent size. Do not enable Guarded Autonomy. Do not auto-pin. Do not ship a Zia APR table.
+GOAL: After 0.7.4 remapped `policy_clip_tight`, Markets could still show THIS MARKET MIN $10 / SHORTFALL $0 because `nearestVenueMin` took the cheapest of all 232 books (MEW). Chat rounded min to `$%.0f`. Agentic ID was painted fully OFF while mint/own is live. Split those lies. Do not fail-close sealed research on an unminted desk.
+RESULT:
+- **IMPLEMENTED:** Version **0.7.5**.
+  1. `nearestVenueMin` prefers execution-feasible books, then policy-eligible/eligible. MEW $10 no longer pollutes the Markets min when the policy universe starts at DOGE.
+  2. Committee copy for `policy_clip_tight` vs `below_min_notional`. Chat watch min uses `$%.2f`.
+  3. Capability matrix Agentic ID is **PARTIAL**: mint/own/authorizeUsage/revoke live on Aristotle; iTransfer/iClone UNAVAILABLE. `/local/identity` note matches. Website Origin still cannot read identity.
+  4. No Zia APR cards. No `isAuthorized` fail-close on sealed ask (mint stays optional; `BeforeSealedAsk(false)` would block glm-5.2).
+- **TESTED:** `go test ./...` PIT PASS including `TestLocalIdentitySplitsMintAndTransfer`. sealer PASS. Desktop `tsc -b` PASS. Desktop e2e copy harness ok (`assertCapitalFloorIgnoresDust`). `cargo test` allow_official_https PASS. `npx tauri build` NSIS `PIT_0.7.5_x64-setup.exe`. Web `tsc --noEmit` hung again (PID killed); no `apps/web` source change this pass.
+- **LIVE VERIFIED:** Overlay `D:\PIT\pit.exe` `/health` **0.7.5**. `/watch` buying power **$16.181269**, gate **policy_clip_tight**, WAIT selected. Policy-eligible min **DOGE $10.04** (gap $0.04). Universe-wide min still MEW $10 (correctly ignored by the UI helper). ETH $10.07, BTC $10.15, SOL $10.54, HYPE $10.80. `/local/identity` itransfer **UNAVAILABLE**. SWAP/LP unavailable. SHA256 pit.exe `8C1DB361799635D394A3A71F2E0730B2ED91EA5237A31EA9203A1B8ECFA495FB`. pit-desktop.exe `6BBE55497512E90742560ED3622CA88EB04F17BEA0E73B4EBD02C1D20B39BBB1`. sealer `5C1A0B28E8BD6D76C9B139B10B8FBAF53BD459F699FE46C63B8D2C742ED17862`. installer `9D909CCB50BA0B3E1D83A4204B6C97B60FDE2E1AC6E933288D0355894127372D`.
+- **UNVERIFIED:** Guarded live order. New 0G Storage/chain proof this pass. Pairing ceremony this pass. Production Vercel (no web copy change). Render health until this tag deploys.
+- **BLOCKED:** New MAINNET clip until YOU raise max trade above the candidate min, preview, then pin. iTransfer UNAVAILABLE. Zia/DEX SWAP and LP execution unavailable.
+
+SECURITY RESULT: Chat/web/MCP still cannot authorize, pin, or enable autonomy. Sealed research does not wait on desk mint.
+TX HASH / OID: Historical OID `529167222216` unchanged.
+CLASSIFICATION:
+- MEW floor pollution: **IMPLEMENTED + LIVE VERIFIED** (engine min_all still MEW; UI/policy min DOGE)
+- Agentic ID mint vs iTransfer split: **IMPLEMENTED + TESTED + LIVE VERIFIED** (`/local/identity`)
+- Zia APR intelligence: **NOT IMPLEMENTED** (deliberate; promotional APR is not a PIT return)
+- Fail-close sealed ask on unminted desk: **NOT IMPLEMENTED** (would break optional-mint research)
+PRODUCTION READY: 0.7.5 is production-ready for honest policy-eligible floors. It is **not** production-ready for a new MAINNET clip until YOU pin a clip that meets a book’s rounded min.
+NEXT STEP: On Security, preview then pin a clip above the candidate min if you want a clip. Do not flatten. Do not remint.
+
 
 
 

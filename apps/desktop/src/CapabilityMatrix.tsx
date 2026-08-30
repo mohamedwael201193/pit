@@ -38,9 +38,9 @@ export const CAPABILITY: CapRow[] = [
   {
     id: "agentic",
     label: "Agentic ID",
-    mainnet: "off",
+    mainnet: "partial",
     testnet: "partial",
-    note: "Transfer of Agentic ID is not live on Aristotle. Do not claim iTransfer.",
+    note: "Mint, own, authorizeUsage, and revoke are live on Aristotle. iTransfer and iClone are UNAVAILABLE (no attestor). Trading does not wait on mint.",
   },
   {
     id: "erc8004",

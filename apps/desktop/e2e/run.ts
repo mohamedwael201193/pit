@@ -10,6 +10,7 @@ import { assertNetworkToggle } from "./network.spec.ts";
 import { assertReducedMotionCopy } from "./motion.spec.ts";
 import { assertTeeNeverGreenIdle, assertDirectNotGreenWithoutAuth } from "./readiness.spec.ts";
 import { assertNamedErrors } from "./errors.spec.ts";
+import { assertCapitalFloorIgnoresDust, assertPolicyClipTightCopy, assertAgenticIdPartial } from "./capital.spec.ts";
 
 assertOfficialLinks();
 assertHonesty();
@@ -27,4 +28,7 @@ assertReducedMotionCopy();
 assertTeeNeverGreenIdle();
 assertDirectNotGreenWithoutAuth();
 assertNamedErrors();
+assertCapitalFloorIgnoresDust();
+assertPolicyClipTightCopy();
+assertAgenticIdPartial();
 console.log("desktop e2e copy harness ok");

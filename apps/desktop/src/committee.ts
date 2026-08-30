@@ -3,6 +3,7 @@ export const COMMITTEE_DENY = new Set([
   "challenger_killed",
   "no_side",
   "below_min_notional",
+  "policy_clip_tight",
   "policy_denied",
   "kill_switch",
   "coin_not_allowed",
@@ -37,10 +38,16 @@ export function explainCommittee(code: string): { title: string; body: string } 
       body: "The sealed committee did not propose a side. Host will not invent a trade. No order was placed.",
     };
   }
+  if (c === "policy_clip_tight") {
+    return {
+      title: "Policy cap is too tight",
+      body: "Pinned max trade cannot meet this book's rounded Hyperliquid minimum. The account can. Raise max trade, preview, then pin. PIT will not invent size. No order was placed.",
+    };
+  }
   if (c === "below_min_notional") {
     return {
       title: "Below venue minimum",
-      body: "Host sized under the Hyperliquid $10 minimum. PIT will not pad a fake size. No order was placed.",
+      body: "This book's rounded Hyperliquid minimum is above this account and policy. PIT will not invent size. No order was placed.",
     };
   }
   if (c === "kill_switch") {

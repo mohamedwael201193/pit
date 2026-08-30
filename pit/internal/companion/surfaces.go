@@ -297,7 +297,7 @@ func (h *Hub) localSecurity(w http.ResponseWriter, r *http.Request) {
 			securityDomain("policy", named["policy"], "Pin policy", "Open Policy"),
 			{"id": "execution", "state": execState, "why": execWhy, "means": "Host sizes from real available margin. Spot is not silently treated as perp margin.", "do": "Fund perp margin or enable unified account on Hyperliquid", "href": "https://app.hyperliquid.xyz", "hrefLabel": "Open Hyperliquid"},
 			{"id": "kill", "state": killState, "why": killWhy, "means": "YOU flip this. The model cannot.", "do": "Toggle kill on Security", "href": "", "hrefLabel": ""},
-			{"id": "identity", "state": "OPTIONAL", "why": "Desk identity is optional. Transfer of Agentic ID is not live on mainnet.", "means": "Trading does not wait on mint.", "do": "None required", "href": "", "hrefLabel": ""},
+			{"id": "identity", "state": "OPTIONAL", "why": "Desk identity mint is optional and live on Aristotle. iTransfer is UNAVAILABLE. Trading does not wait on mint.", "means": "Trading does not wait on mint.", "do": "None required", "href": "", "hrefLabel": ""},
 		},
 		"sign": false, "trade": false, "version": version.Number,
 	})
@@ -374,7 +374,7 @@ func (h *Hub) localIdentity(w http.ResponseWriter, r *http.Request) {
 	writeLocal(w, http.StatusOK, map[string]any{
 		"itransfer": "UNAVAILABLE",
 		"iclone":    "UNAVAILABLE",
-		"note":      "Transfer of Agentic ID is not live on mainnet. Trading does not require it.",
+		"note":      "Mint is optional on Aristotle. iTransfer is UNAVAILABLE. Trading does not require a desk ID.",
 		"sign":      false, "trade": false,
 	})
 }
