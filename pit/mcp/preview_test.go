@@ -8,7 +8,7 @@ func TestPreviewCannotAuthorize(t *testing.T) {
 		t.Fatal(r)
 	}
 	body, _ := r.Body.(map[string]any)
-	if body["authorize"] != false || body["sign"] != false || body["trade"] != false {
+	if body["authorize"] != false || body["sign"] != false || body["trade"] != false || body["prepare"] != false {
 		t.Fatal(body)
 	}
 	if !IsAllowed("preview") {

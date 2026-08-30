@@ -83,7 +83,7 @@ func (h *Hub) recordPostedOrder(got cli.OrderResult, action, jobID string) {
 		})
 	}
 	h.recordPositionSnapshot(coin, link, got.OID)
-	h.recordFillExperience(coin, got.OID, got.Hash)
+	h.recordOrderExperience(coin, got.OID, got.Hash, status)
 }
 
 func (h *Hub) recordPositionSnapshot(coin, link, oid string) {

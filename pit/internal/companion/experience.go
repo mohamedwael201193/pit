@@ -67,17 +67,30 @@ func (h *Hub) recordResearchExperience(coin, deny, jobErr string, eligible bool,
 }
 
 func (h *Hub) recordFillExperience(coin, oid, hash string) {
+	h.recordOrderExperience(coin, oid, hash, "filled")
+}
+
+func (h *Hub) recordOrderExperience(coin, oid, hash, status string) {
 	if strings.TrimSpace(oid) == "" {
+		return
+	}
+	decision := experience.DecisionResting
+	why := "venue_oid_resting"
+	switch strings.ToLower(strings.TrimSpace(status)) {
+	case "filled":
+		decision = experience.DecisionFilled
+		why = "venue_oid_filled"
+	case "canceled", "cancelled":
 		return
 	}
 	appendExperience(h.Dir, experience.Case{
 		Coin:        strings.ToUpper(strings.TrimSpace(coin)),
-		Decision:    experience.DecisionFilled,
+		Decision:    decision,
 		Executable:  true,
 		Interesting: true,
 		PreviewHash: hash,
 		OID:         oid,
-		Why:         "venue_oid",
+		Why:         why,
 	})
 }
 

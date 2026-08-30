@@ -43,7 +43,7 @@ export function PositionsPanel({
   closeBusy?: boolean;
   net?: string;
 }) {
-  const tradePile = summary?.buyingPower || summary?.spotUsdc || summary?.accountValue;
+  const tradePile = summary?.buyingPower;
   return (
     <section>
       <dl className="metrics">
@@ -53,7 +53,7 @@ export function PositionsPanel({
         </div>
         <div>
           <dt>Available to trade</dt>
-          <dd>{summary?.buyingPower ? `$${summary.buyingPower}` : summary?.spotUsdc ? `$${summary.spotUsdc}` : "—"}</dd>
+          <dd>{summary?.buyingPower ? `$${summary.buyingPower}` : "—"}</dd>
         </div>
         <div>
           <dt>Spot USDC</dt>

@@ -101,7 +101,10 @@ export function DeskHome({
     coins.find((c) => c.previewReady) ||
     coins.find((c) => c.executionFeasible) ||
     coins.find((c) => c.eligible);
-  const ranked = coins.filter((c) => c.eligible).slice(0, 6);
+  const ranked = [...coins]
+    .filter((c) => c.executionFeasible || c.previewReady || c.eligible)
+    .sort((a, b) => Number(Boolean(b.executionFeasible)) - Number(Boolean(a.executionFeasible)) || Number(Boolean(b.previewReady)) - Number(Boolean(a.previewReady)))
+    .slice(0, 6);
   const liveBook = policyPinned && Boolean(coins.find((c) => c.executionFeasible) || coins.find((c) => c.previewReady));
   const sealedNow = policyPinned && Boolean(researchBusy);
   const modeLabel = mode === "guarded" ? "Guarded Autonomy" : mode === "research_only" ? "Research Only" : "Manual";
@@ -305,7 +308,7 @@ export function DeskHome({
         </div>
         <div>
           <dt>Ranked books</dt>
-          <dd>{ranked.length ? `${ranked.length} policy eligible` : "none"}</dd>
+          <dd>{ranked.length ? `${execN} executable · ${ranked.length} shown` : "none"}</dd>
         </div>
         <div>
           <dt>Current exposure</dt>

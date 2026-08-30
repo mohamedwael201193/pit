@@ -10,14 +10,14 @@ export function PolicyLaw({
   const rows = [
     {
       k: "Max trade",
-      v: pinned ? "$10" : "$10 until pinned",
-      why: "Host sizes every clip to this ceiling.",
+      v: pinned ? "Pinned host clip" : "Unpinned — pin on this computer",
+      why: "Host sizes every clip to this ceiling. Venue minimum is per book after szDecimals — never a universal $10.",
       hit: "A larger idea is refused.",
     },
     {
       k: "Max position",
-      v: "$10 notional",
-      why: "Same ceiling as the clip. Guarded Autonomy cannot grow past it.",
+      v: "Same as max trade",
+      why: "Same ceiling as the clip. Guarded Autonomy cannot grow past it. Venue min is per book after szDecimals.",
       hit: "A larger book is refused.",
     },
     {

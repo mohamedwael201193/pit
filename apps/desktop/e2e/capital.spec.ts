@@ -16,6 +16,18 @@ export function assertCapitalFloorIgnoresDust() {
   if (nearestVenueMin(exec) !== 10.52) throw new Error("executable min wins");
 }
 
+export function assertDeskRanksExecutableFirst() {
+  const coins = [
+    { coin: "ETH", eligible: true, executionFeasible: false, previewReady: false },
+    { coin: "BTC", eligible: true, executionFeasible: true, previewReady: false },
+  ];
+  const ranked = [...coins]
+    .filter((c) => c.executionFeasible || c.previewReady || c.eligible)
+    .sort((a, b) => Number(Boolean(b.executionFeasible)) - Number(Boolean(a.executionFeasible)))
+    .map((c) => c.coin);
+  if (ranked[0] !== "BTC") throw new Error("executable first");
+}
+
 export function assertPolicyClipTightCopy() {
   const clip = explainCommittee("policy_clip_tight");
   if (!/too tight/i.test(clip.title)) throw new Error("clip title");

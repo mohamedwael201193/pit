@@ -2444,6 +2444,35 @@ CLASSIFICATION:
 PRODUCTION READY: Source desk shell is ready to ship in the next installer. Do not claim the running 0.7.6 window already has collapse/status island.
 NEXT STEP: Push. Rebuild desktop only when the operator asks for a new NSIS.
 
+---
+
+## M113 — Forensics follow-up: chat persist, MCP honesty, RESTING ≠ FILLED (2026-08-30)
+
+DATE/TIME: 2026-08-30 19:30+03
+PHASE: Security + honesty. Do not flatten OID 529167222216. Do not remint PIT-4bbee556. Direct TeeML only for the private book. Do not claim iTransfer or DA live. Do not invent fills.
+GOAL: Implement the defects from competitor and product-security forensics that fail closed and can be tested: persist streamed chat, stop unmounting Chat, honest MCP/capital copy, RESTING vs FILLED, kill cancels research, no public Watch fallback on desktop.
+RESULT:
+- **IMPLEMENTED:** Still **0.8.0**. No new installer. No web deploy (desktop + Go + MCP only).
+  1. `/local/chat/stream` now appends the thread the same way `/local/chat` does. Chat replies no longer auto-navigate away. Research started from Chat stays on Chat. The rail no longer marks setup complete.
+  2. Desktop keeps polling status/Watch/doctor during a sealed pass. Kill switch on also sets `job.cancel`.
+  3. MCP `security` reports `order`/`cancel` false. MCP `preview` `prepare` is false. Prompt-injection tools still `mcp_read_only`.
+  4. A posted OID with status resting is `RESTING`, not a fill. Empty OID is not recorded. Calibration copy says resting is not a fill.
+  5. PolicyLaw no longer treats `$10` as the Hyperliquid venue floor. DeskHome ranks executable books first. Positions "available to trade" is buying power only, not spot. Desktop `fetchWatch` does not merge public Render health onto the private book. Chat treats `0x`+64 as a digest, not a session key. Named research on PUMP no longer becomes ETH. `hyperliquid` no longer matches ticker HYPE.
+- **TESTED:** `go test ./mcp ./internal/deskcmd ./internal/experience ./internal/companion` (secret + parse + MCP + resting). Desktop `tsc -b` and `npx tsx e2e/run.ts` including executable-first rank.
+- **UNVERIFIED:** Installed GUI still 0.7.6 until rebuild. Companion loopback this session. No new live trade.
+- **BLOCKED:** iTransfer UNAVAILABLE. Authenticode absent. macOS/Linux not packaged. Live companion was not running. No new live trade (historical OID untouched).
+
+SECURITY RESULT: Chat, MCP, SDK, and web still cannot authorize, pin, or hold session keys / Direct tokens. MCP cannot prepare a preview. Router remains forbidden for the private book. Kill switch now also cancels in-flight research.
+TX HASH / OID: Historical OID `529167222216` unchanged.
+CLASSIFICATION:
+- Stream persist + Chat stay mounted: **IMPLEMENTED + TESTED**
+- MCP order/cancel/prepare false: **IMPLEMENTED + TESTED**
+- RESTING ≠ FILLED: **IMPLEMENTED + TESTED**
+- Public Watch fallback on desktop: **REMOVED**
+- Installed desktop GUI: **NOT LIVE VERIFIED** until rebuild
+PRODUCTION READY: Source honesty/security fixes are ready for the next installer. Do not claim the running window already persists streamed chat.
+NEXT STEP: Push. Rebuild desktop only when the operator asks for a new NSIS.
+
 
 
 

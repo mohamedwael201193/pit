@@ -382,13 +382,7 @@ export async function fetchWatch(network: string): Promise<WatchView> {
   if (native) return native;
   const fetched = await fetchJson<WatchView>(`/watch?network=${network}`);
   if (fetched) return fetched;
-  try {
-    const r = await fetch(`https://pit-health.onrender.com/watch?network=${network}`);
-    if (!r.ok) return {};
-    return (await r.json()) as WatchView;
-  } catch {
-    return {};
-  }
+  return {};
 }
 
 export async function setKillSwitch(on: boolean): Promise<BindResult> {

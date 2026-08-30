@@ -10,7 +10,7 @@ import { assertNetworkToggle } from "./network.spec.ts";
 import { assertReducedMotionCopy } from "./motion.spec.ts";
 import { assertTeeNeverGreenIdle, assertDirectNotGreenWithoutAuth } from "./readiness.spec.ts";
 import { assertNamedErrors } from "./errors.spec.ts";
-import { assertCapitalFloorIgnoresDust, assertPolicyClipTightCopy, assertAgenticIdPartial, assertDeskHeadlinePrefersExecutable } from "./capital.spec.ts";
+import { assertCapitalFloorIgnoresDust, assertDeskRanksExecutableFirst, assertPolicyClipTightCopy, assertAgenticIdPartial, assertDeskHeadlinePrefersExecutable } from "./capital.spec.ts";
 import { assertShellFilters } from "./shell.spec.ts";
 
 assertOfficialLinks();
@@ -30,6 +30,7 @@ assertTeeNeverGreenIdle();
 assertDirectNotGreenWithoutAuth();
 assertNamedErrors();
 assertCapitalFloorIgnoresDust();
+assertDeskRanksExecutableFirst();
 assertPolicyClipTightCopy();
 assertAgenticIdPartial();
 assertDeskHeadlinePrefersExecutable();

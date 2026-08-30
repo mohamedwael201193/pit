@@ -161,9 +161,15 @@ func (h *Hub) localChatStream(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	parsed := h.decorateChat(deskcmd.Parse(body.Text))
+	thread := strings.TrimSpace(body.Thread)
+	if thread == "" {
+		thread = "desk"
+	}
+	appendChatThread(h.Dir, "user", body.Text, "", thread)
 	if note := h.chatModelHonesty(firstNonEmpty(body.Model, loadChatModel(h.Dir))); note != "" {
 		parsed.Reply = parsed.Reply + "\n\n" + note
 	}
+	appendChatThread(h.Dir, "pit", parsed.Reply, parsed.Tool, thread)
 	w.Header().Set("Content-Type", "text/event-stream")
 	w.Header().Set("Cache-Control", "no-cache")
 	flusher, _ := w.(http.Flusher)

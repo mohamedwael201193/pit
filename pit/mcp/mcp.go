@@ -54,8 +54,10 @@ func Handle(req Request) Response {
 		}}
 	case "security":
 		return Response{OK: true, Body: map[string]any{
-			"order": true, "cancel": true, "withdraw": false, "transfer": false, "leverage": false,
+			"order": false, "cancel": false, "withdraw": false, "transfer": false, "leverage": false,
 			"sign": false, "trade": false, "authorize": false,
+			"desk_session_order_cancel": true,
+			"copy":                      "MCP cannot order or cancel. Order/cancel exists only on the desktop session.",
 		}}
 	case "research":
 		return Response{OK: true, Body: map[string]any{

@@ -163,8 +163,6 @@ export function CommandChat({
       onConfirmAutonomy?.(r.hours || 8);
       return;
     }
-    if (r.navigate === "preview") onOpenPreview();
-    else if (r.navigate) onNavigate(r.navigate);
     if (r.start_research) onResearch(r.coin || "");
   }
 

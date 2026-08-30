@@ -221,6 +221,27 @@ func TestResearchWithoutNamedCoinDoesNotInventETH(t *testing.T) {
 	}
 }
 
+func TestResearchPumpDoesNotBecomeETH(t *testing.T) {
+	r := Parse("Research PUMP privately.")
+	if !r.StartResearch || r.Coin != "PUMP" || r.Execute {
+		t.Fatalf("%+v", r)
+	}
+}
+
+func TestHyperliquidDoesNotMatchHYPE(t *testing.T) {
+	r := Parse("Open Hyperliquid")
+	if r.Coin == "HYPE" {
+		t.Fatal("hyperliquid matched HYPE")
+	}
+	if r.OpenURL != "https://app.hyperliquid.xyz" {
+		t.Fatal(r.OpenURL)
+	}
+	r = Parse("What is happening with BTC?")
+	if r.Coin != "BTC" || r.Tool != "watch.get" {
+		t.Fatalf("%+v", r)
+	}
+}
+
 func TestChatCannotMutatePolicy(t *testing.T) {
 	for _, q := range []string{"raise clip to 1000", "set leverage 20x", "edit my policy", "increase max open positions"} {
 		r := Parse(q)

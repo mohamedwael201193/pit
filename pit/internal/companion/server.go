@@ -549,6 +549,13 @@ func (h *Hub) localKill(w http.ResponseWriter, r *http.Request) {
 		writeBindErr(w, err)
 		return
 	}
+	if body.On {
+		h.researchMu.Lock()
+		if h.job.running {
+			h.job.cancel = true
+		}
+		h.researchMu.Unlock()
+	}
 	writeLocal(w, http.StatusOK, map[string]any{
 		"ok":     true,
 		"kill":   body.On,

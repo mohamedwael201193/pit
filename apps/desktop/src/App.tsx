@@ -180,8 +180,6 @@ export function App() {
   const [restartAllowed, setRestartAllowed] = useState(true);
   const [hypothesis, setHypothesis] = useState<"none" | "long" | "short">("none");
   const researchGen = useRef(0);
-  const researchBusyRef = useRef(false);
-  researchBusyRef.current = researchBusy;
   const walletBoundRef = useRef("");
   const [techOpen, setTechOpen] = useState(false);
   const [ticks, setTicks] = useState(0);
@@ -361,7 +359,7 @@ export function App() {
       if (gone) return;
       setTicks((n) => n + 1);
       const now = Date.now();
-      if (!statusBusy && !researchBusyRef.current) {
+      if (!statusBusy) {
         statusBusy = true;
         localStatus()
           .then((s) => {
@@ -382,7 +380,7 @@ export function App() {
             }
           })
           .catch(() => {
-            if (!gone && !researchBusyRef.current) {
+            if (!gone) {
               setCompanionUp(false);
               setStatus(null);
             }
@@ -391,7 +389,7 @@ export function App() {
             statusBusy = false;
           });
       }
-      if (!researchBusyRef.current && !codeBusy) {
+      if (!codeBusy) {
         codeBusy = true;
         pairCode()
           .then((p) => {
@@ -404,7 +402,7 @@ export function App() {
             codeBusy = false;
           });
       }
-      if (!researchBusyRef.current && !doctorBusy && now - lastDoctor >= 15000) {
+      if (!doctorBusy && now - lastDoctor >= 15000) {
         doctorBusy = true;
         lastDoctor = now;
         doctor()
@@ -419,7 +417,7 @@ export function App() {
             doctorBusy = false;
           });
       }
-      if (!researchBusyRef.current && !watchBusy && now - lastWatch >= 8000) {
+      if (!watchBusy && now - lastWatch >= 8000) {
         watchBusy = true;
         lastWatch = now;
         fetchWatch(net)
@@ -764,6 +762,11 @@ export function App() {
       return;
     }
     setStatus((s) => (s ? { ...s, kill: on } : s));
+    if (on) {
+      researchGen.current += 1;
+      setResearchBusy(false);
+      void cancelResearch();
+    }
     setChecks(await doctor());
   }
 
@@ -776,38 +779,38 @@ export function App() {
     setPollMiss(false);
     if (!want) {
       setResearchNote("No eligible market yet. Open Markets and wait for live books.");
-      setView("markets");
+      if (source !== "chat") setView("markets");
       return;
     }
     setResearchCoin(want);
     if (!companionUp) {
       setResearchStop("COMPANION_NOT_RUNNING");
-      setView("research");
+      if (source !== "chat") setView("research");
       return;
     }
     const sealer = checks.find((c) => c.name === "direct_sealer");
     if (sealer && !sealer.ok) {
       setResearchStop("DIRECT_PROVIDER_UNAVAILABLE");
-      setView("research");
+      if (source !== "chat") setView("research");
       return;
     }
     const auth = checks.find((c) => c.name === "direct_auth");
     if (auth && !auth.ok) {
       setResearchStop("DIRECT_NOT_AUTHORIZED");
-      setView("research");
+      if (source !== "chat") setView("research");
       return;
     }
     const credit = checks.find((c) => c.name === "direct_credit");
     if (credit && !credit.ok) {
       setResearchStop("DIRECT_CREDIT_INSUFFICIENT");
-      setView("research");
+      if (source !== "chat") setView("research");
       return;
     }
     setResearchBusy(true);
     setResearchStop(null);
     setResearchStage("READING_MARKET");
     setResearchElapsed(0);
-    setView("research");
+    if (source !== "chat") setView("research");
     const wall = Date.now();
     const tick = window.setInterval(() => {
       if (gen === researchGen.current) setResearchElapsed(Date.now() - wall);
@@ -1028,6 +1031,9 @@ export function App() {
           { id: "policy", label: "Open Policy", run: () => setView("security") },
           { id: "keys", label: "Keyboard: Ctrl+K palette, g then d/m/c/r/p/y/s", run: () => undefined },
           { id: "start", label: "Start research", run: () => void researchThis() },
+          { id: "stop", label: "Stop current research", run: () => void onCancelResearch() },
+          { id: "why", label: "Why nothing is executable", run: () => setView("automation") },
+          { id: "kill", label: "Turn kill switch on", run: () => void onKill(true) },
           { id: "hl", label: "Open Hyperliquid", run: () => void openExternal(hyperliquidApp(net)) },
           { id: "hlapi", label: "Open Hyperliquid API", run: () => void openExternal(hyperliquidAPI(net)) },
           { id: "og", label: "Open 0G Private Compute", run: () => void openExternal(LINKS.pcAdvanced) },
@@ -1051,7 +1057,6 @@ export function App() {
               className={view === item.id ? "on" : ""}
               title={item.label}
               onClick={() => {
-                setSetupDone(true);
                 setView(item.id);
               }}
             >
@@ -1428,7 +1433,7 @@ export function App() {
             agent={agent}
             sessionAlive={sessionAlive}
             approved={Boolean(checks.find((c) => c.name === "hl_agent" && c.ok))}
-            tradingCapital={summary.buyingPower || summary.spotUsdc || summary.accountValue}
+            tradingCapital={summary.buyingPower}
             summary={summary}
             policy={hostPolicy}
             pinned={pinned}

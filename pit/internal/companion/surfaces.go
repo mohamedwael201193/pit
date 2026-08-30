@@ -264,13 +264,16 @@ func (h *Hub) localSecurity(w http.ResponseWriter, r *http.Request) {
 		teeWhy = tee.Detail
 	}
 	cap := h.capitalNow()
-	execState, execWhy := "READY", "Host can size a clip if policy, session, and venue minimum pass."
-	if cap.BuyingPower+1e-9 < 10 {
+	execState, execWhy := "READY", "Host sizes from live venue minimums after szDecimals. A $10 clip is not a universal venue floor."
+	if cap.BuyingPower <= 0 {
 		execState = "BLOCKED"
 		execWhy = cap.Note
 		if execWhy == "" {
-			execWhy = "Available margin is below this market's Hyperliquid minimum. PIT will not invent size."
+			execWhy = "Available margin is unread or zero. PIT will not invent size."
 		}
+	} else if cap.Note != "" && strings.Contains(strings.ToLower(cap.Note), "insufficient") {
+		execState = "BLOCKED"
+		execWhy = cap.Note
 	}
 	killOn := false
 	if st, err := cli.Load(h.Dir); err == nil {
@@ -633,7 +636,7 @@ func secretful(s string) bool {
 func looksLikeHexKey(s string) bool {
 	h := strings.TrimSpace(s)
 	if strings.HasPrefix(strings.ToLower(h), "0x") {
-		h = h[2:]
+		return false
 	}
 	if len(h) != 64 {
 		return false

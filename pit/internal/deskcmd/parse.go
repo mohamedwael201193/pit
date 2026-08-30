@@ -3,8 +3,11 @@ package deskcmd
 import (
 	"fmt"
 	"net/url"
+	"regexp"
 	"strings"
 )
+
+var namedResearchCoin = regexp.MustCompile(`(?:research|happening with|price of|setup on)\s+([a-z0-9]{2,10})\b`)
 
 type Result struct {
 	Reply         string `json:"reply"`
@@ -391,11 +394,47 @@ func greetingOnly(low string) bool {
 func firstCoin(low string) string {
 	order := []string{"ETH", "BTC", "SOL", "HYPE", "DOGE", "AVAX"}
 	for _, coin := range order {
-		if strings.Contains(low, strings.ToLower(coin)) {
+		if wordHas(low, strings.ToLower(coin)) {
 			return coin
 		}
 	}
+	if m := namedResearchCoin.FindStringSubmatch(low); len(m) == 2 {
+		tok := strings.ToLower(m[1])
+		switch tok {
+		case "privately", "the", "best", "this", "it", "now", "again", "setup", "one", "my", "a", "on":
+			return ""
+		}
+		return strings.ToUpper(m[1])
+	}
 	return ""
+}
+
+func wordHas(low, needle string) bool {
+	if needle == "" {
+		return false
+	}
+	i := 0
+	for {
+		j := strings.Index(low[i:], needle)
+		if j < 0 {
+			return false
+		}
+		j += i
+		leftOK := j == 0 || !isCoinChar(low[j-1])
+		right := j + len(needle)
+		rightOK := right >= len(low) || !isCoinChar(low[right])
+		if leftOK && rightOK {
+			return true
+		}
+		i = j + 1
+		if i >= len(low) {
+			return false
+		}
+	}
+}
+
+func isCoinChar(c byte) bool {
+	return (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9')
 }
 
 func wantsStopAutonomy(low string) bool {

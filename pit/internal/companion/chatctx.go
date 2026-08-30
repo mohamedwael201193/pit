@@ -47,6 +47,21 @@ func (h *Hub) decorateChat(parsed deskcmd.Result) deskcmd.Result {
 		parsed.Reply = h.whyThisSetup(coin) + " Chat cannot AUTHORIZE. Private memory never includes the memory key."
 		parsed.Navigate = "research"
 	case "research.start", "research.best":
+		h.researchMu.Lock()
+		running := h.job.running
+		jobCoin := h.job.coin
+		jobID := h.job.ID
+		stage := h.job.stage
+		h.researchMu.Unlock()
+		if running {
+			parsed.StartResearch = false
+			parsed.Mutate = false
+			parsed.Navigate = ""
+			parsed.Tool = "research.status"
+			parsed.Coin = jobCoin
+			parsed.Reply = fmt.Sprintf("Already researching %s (job %s, %s). Chat cannot AUTHORIZE. Stay on Chat for live stages, or open Research.", jobCoin, jobID, stage)
+			break
+		}
 		if live := h.replyWatch(parsed); live != "" {
 			parsed.Reply = live + " " + parsed.Reply
 		}

@@ -14,6 +14,7 @@ const (
 	DecisionCapital   = "CAPITAL_BLOCKED"
 	DecisionExecution = "EXECUTION_BLOCKED"
 	DecisionFilled    = "FILLED"
+	DecisionResting   = "RESTING"
 )
 
 type Case struct {
@@ -68,7 +69,7 @@ func WhyThisSetup(coin string, cases []Case) string {
 	if n < MinSamples {
 		return fmt.Sprintf("NOT ENOUGH DATA (%d/%d verified cases for %s). PIT will not invent that this desk learned.", n, MinSamples, c)
 	}
-	noTrade, ready, failed, filled := 0, 0, 0, 0
+	noTrade, ready, failed, filled, resting := 0, 0, 0, 0, 0
 	for _, row := range cases {
 		switch row.Decision {
 		case DecisionReady:
@@ -77,9 +78,11 @@ func WhyThisSetup(coin string, cases []Case) string {
 			failed++
 		case DecisionFilled:
 			filled++
+		case DecisionResting:
+			resting++
 		default:
 			noTrade++
 		}
 	}
-	return fmt.Sprintf("%s has %d verified internal cases. %d ready previews, %d successful stand-downs or blocks, %d confirmed fills, %d failed research. This is workspace memory, not a guarantee.", c, n, ready, noTrade, filled, failed)
+	return fmt.Sprintf("%s has %d verified internal cases. %d ready previews, %d successful stand-downs or blocks, %d confirmed fills, %d resting OIDs, %d failed research. This is workspace memory, not a guarantee. Resting is not a fill.", c, n, ready, noTrade, filled, resting, failed)
 }

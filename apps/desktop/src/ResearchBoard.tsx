@@ -517,8 +517,7 @@ export function PreviewContract({
       <article className="contract">
         <p className="label">Expired preview</p>
         <p>
-          This preview expired. It cannot be authorized. Run research again after the account can size at least the $10
-          Hyperliquid minimum — or stand down. PIT will not invent size.
+          This preview expired. It cannot be authorized. Run research again after the account can size at least this book's live Hyperliquid minimum — or stand down. PIT will not invent size.
         </p>
       </article>
     );

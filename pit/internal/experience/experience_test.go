@@ -1,6 +1,9 @@
 package experience
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func TestClassifyStandDownIsNoTrade(t *testing.T) {
 	if Classify(false, "no_side", "") != DecisionNoTrade {
@@ -25,6 +28,23 @@ func TestWhyThisSetupNeedsSamples(t *testing.T) {
 	}
 	got = WhyThisSetup("ETH", rows)
 	if got[:15] == "NOT ENOUGH DATA" {
+		t.Fatal(got)
+	}
+	if !strings.Contains(got, "Resting is not a fill") {
+		t.Fatal(got)
+	}
+}
+
+func TestRestingIsNotFilled(t *testing.T) {
+	rows := make([]Case, MinSamples)
+	for i := range rows {
+		rows[i] = Case{Coin: "ETH", Decision: DecisionResting}
+	}
+	got := WhyThisSetup("ETH", rows)
+	if strings.Contains(got, "5 confirmed fills") {
+		t.Fatal(got)
+	}
+	if !strings.Contains(got, "5 resting OIDs") {
 		t.Fatal(got)
 	}
 }
