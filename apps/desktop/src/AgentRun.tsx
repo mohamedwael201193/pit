@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { ExternalLink } from "./ExternalLink";
-import { compactUsd, pctFunding, powerSourceLabel } from "./format";
-import { committeeVerified, oidBelongsToPreview, researchCardTitle } from "./honesty";
+import { compactNum, compactUsd, pctFunding } from "./format";
+import { committeeVerified, oidBelongsToPreview } from "./honesty";
 import { explainStop } from "./explain";
 import { researchWhyCopy } from "./researchWhy";
 import { LINKS } from "./links";
@@ -14,15 +14,15 @@ export const CHAT_AGENT_COPY = {
 };
 
 const PIPE = [
-  { id: "DISCOVERY", label: "Universe" },
-  { id: "SEALING_PRIVATE_BOOK", label: "Private book" },
+  { id: "DISCOVERY", label: "Scanning markets" },
+  { id: "RANKING", label: "Ranking" },
+  { id: "SEALING_PRIVATE_BOOK", label: "Private 0G research" },
   { id: "RESEARCHER", label: "Researcher" },
   { id: "CHALLENGER", label: "Challenger" },
   { id: "RISK", label: "Risk" },
-  { id: "VERIFYING_TEE_SIGNATURE", label: "TEE" },
-  { id: "DETERMINISTIC_ENGINE", label: "Host engine" },
+  { id: "VERIFYING_TEE_SIGNATURE", label: "TEE verification" },
   { id: "POLICY", label: "Policy" },
-  { id: "PREVIEW", label: "Decision" },
+  { id: "PREVIEW", label: "Preview" },
 ] as const;
 
 type Role = {
@@ -43,22 +43,22 @@ function roleOf(roles: Role[], name: string) {
   return roles.find((r) => String(r.role || "").toLowerCase() === name);
 }
 
-function stageIndex(stage: string, roles: Role[], busy: boolean) {
+function stageIndex(stage: string, roles: Role[], busy: boolean, scannedN: number) {
   const s = (stage || "").toUpperCase();
   if (!busy && !s) return -1;
-  if (s === "READING_MARKET" || s === "DISCOVERY") return 0;
-  if (s.includes("SEAL") || s.includes("CONTACT") || s.includes("RECEIVING")) return 1;
-  if (s === "RESEARCHER" || (roleOk(roles, "researcher") && !roleOk(roles, "challenger") && busy)) return 2;
-  if (s === "CHALLENGER") return 3;
-  if (s === "RISK" || s.startsWith("RISK_")) return 4;
-  if (s.includes("TEE") || s.includes("VERIFY")) return 5;
-  if (s === "DETERMINISTIC_ENGINE") return 6;
-  if (s === "POLICY") return 7;
+  if (s === "READING_MARKET" || s === "DISCOVERY") return scannedN > 0 ? 1 : 0;
+  if (s.includes("RANK")) return 1;
+  if (s.includes("SEAL") || s.includes("CONTACT") || s.includes("RECEIVING")) return 2;
+  if (s === "RESEARCHER" || (roleOk(roles, "researcher") && !roleOk(roles, "challenger") && busy)) return 3;
+  if (s === "CHALLENGER") return 4;
+  if (s === "RISK" || s.startsWith("RISK_")) return 5;
+  if (s.includes("TEE") || s.includes("VERIFY")) return 6;
+  if (s === "DETERMINISTIC_ENGINE" || s === "POLICY") return 7;
   if (s === "PREVIEW" || s === "READY") return 8;
-  if (roleOk(roles, "risk")) return 6;
-  if (roleOk(roles, "challenger")) return 4;
-  if (roleOk(roles, "researcher")) return 3;
-  return busy ? 0 : -1;
+  if (roleOk(roles, "risk")) return 7;
+  if (roleOk(roles, "challenger")) return 5;
+  if (roleOk(roles, "researcher")) return 4;
+  return busy ? (scannedN > 0 ? 1 : 0) : -1;
 }
 
 function pipeState(i: number, current: number, done: boolean, failed: boolean) {
@@ -78,21 +78,16 @@ function orderKind(order?: LastOrder | null) {
   return String(order.status || "submitted");
 }
 
-function ageLabel(ms: number | undefined) {
-  if (ms == null || !Number.isFinite(ms) || ms < 0) return "";
-  if (ms < 2000) return "just now";
-  if (ms < 60000) return `${Math.round(ms / 1000)}s ago`;
-  return `${Math.round(ms / 60000)}m ago`;
-}
-
 function shortHash(v?: string) {
   const s = String(v || "");
-  if (s.length < 12) return s || "—";
+  if (s.length < 12) return s || "";
   return `${s.slice(0, 8)}…${s.slice(-4)}`;
 }
 
-function mark(ok: boolean) {
-  return ok ? "✓" : "○";
+function roleMark(ok: boolean, waiting: boolean) {
+  if (ok) return "✓";
+  if (waiting) return "·";
+  return "○";
 }
 
 export function AgentRun({
@@ -102,14 +97,11 @@ export function AgentRun({
   elapsedMs,
   jobId,
   pollMiss,
-  updatedAt,
   roles,
   kind,
   coins,
   scanned,
   buyingPower,
-  powerSource,
-  watchAgeMs,
   bestWhy,
   preview,
   previewHash,
@@ -120,10 +112,8 @@ export function AgentRun({
   researchNote,
   researchStop,
   huntRejected,
-  huntSurvived,
   pinned,
   sessionAlive,
-  autonomy,
   researchSku,
   authBusy,
   authErr,
@@ -174,19 +164,14 @@ export function AgentRun({
   onStop: () => void;
   onTradeNow: () => void;
 }) {
-  const [openStep, setOpenStep] = useState<string | null>(null);
-  const [tech, setTech] = useState(false);
-  const [pick, setPick] = useState("");
   const [whyOpen, setWhy] = useState(false);
   const [sleepOpen, setSleep] = useState(false);
   const verified = committeeVerified(roles);
-  const current = stageIndex(stage, roles, busy);
   const executable = coins.filter((c) => c.executionFeasible);
   const eligible = coins.filter((c) => c.eligible || c.policyEligible);
   const scannedN = scanned || coins.length;
   const best = executable[0] || eligible[0] || coins[0];
-  const focus = coins.find((c) => c.coin === (pick || coin)) || best;
-  const title = researchCardTitle(kind, verified);
+  const focus = coins.find((c) => c.coin === coin) || best;
   const deny = String(preview?.deny || "");
   const policyBlock = kind === "POLICY_DENIED" || deny.includes("policy");
   const capitalBlock = kind === "MARKET_DENIED" || deny.includes("min_notional") || deny.includes("margin");
@@ -201,6 +186,8 @@ export function AgentRun({
   const hash = String(previewHash || preview?.hash || "");
   const alreadyPosted = Boolean(lastOrder?.posted && lastOrder.hash && hash && lastOrder.hash === hash);
   const canTrade = ready && Boolean(hash) && sessionAlive && pinned && !authBusy && !alreadyPosted;
+  const current = stageIndex(stage, roles, busy, scannedN);
+  const done = verified || ready || noTrade;
   const proof = useMemo(() => {
     const fromAct = activity.find((e) => (e.job_id && e.job_id === jobId) || e.root || e.tx);
     const ev = evidence && typeof evidence === "object" ? (evidence as Record<string, unknown>) : null;
@@ -213,7 +200,6 @@ export function AgentRun({
   }, [activity, evidence, jobId]);
   const orderState = oidBelongsToPreview(lastOrder?.hash, previewHash, hash) ? orderKind(lastOrder) : "";
   const elapsed = elapsedMs > 0 ? `${(elapsedMs / 1000).toFixed(1)}s` : "";
-  const beat = ageLabel(updatedAt ? Date.now() - updatedAt : undefined);
   const why = researchWhyCopy({
     coin: coin || focus?.coin || "",
     kind,
@@ -224,319 +210,355 @@ export function AgentRun({
     roles,
     snap: focus ? { mark: focus.mark, reason: focus.reason, why: focus.why } : undefined,
   });
-  const status = busy ? "RESEARCHING" : ready ? "READY" : noTrade ? "NO-TRADE" : policyBlock ? "BLOCKED" : fail ? "STOPPED" : verified ? "VERIFIED" : "LIVE";
+  const asset = preview?.market || coin || focus?.coin || "";
+  const verdict = ready && (side === "LONG" || side === "SHORT") ? side : noTrade || policyBlock || capitalBlock ? "NO TRADE" : fail ? "STOPPED" : "";
+  const reason =
+    researchNote ||
+    deny ||
+    (noTrade ? `${asset || "This book"} did not survive the private challenge.` : "") ||
+    (policyBlock ? "Host policy blocked this size." : "") ||
+    (capitalBlock ? `Buying power ${compactUsd(buyingPower)} is below venue min ${compactUsd(focus?.minNotional)}.` : "") ||
+    stop?.body ||
+    "";
 
   const follow = ready
     ? [
-        ["Review details", "Prepare the exact trade"],
+        ["Review", "__review"],
         ["Compare candidates", "Compare top opportunities"],
-        ["Why this book?", "__why"],
-        ["Sleep Mission", "Trade this while I sleep"],
+        ["Show why", "__why"],
       ]
-    : noTrade
+    : noTrade || policyBlock || capitalBlock
       ? [
           ["Research next", "Find the best opportunity"],
           ["Show why", "__why"],
-          ["Show alternatives", "Compare top opportunities"],
-          ["Sleep Mission", "__sleep"],
+          ["Compare candidates", "Compare top opportunities"],
         ]
-      : policyBlock
+      : fail
         ? [
-            ["Open Policy", "Explain my policy"],
-            ["What is executable?", "What is executable?"],
+            ["Research next", "Find the best opportunity"],
+            ["Show why", "__why"],
           ]
-        : capitalBlock
-          ? [
-              ["What can I trade?", "What can I trade now?"],
-              ["Scan again", "Scan all markets"],
-            ]
-          : busy
-            ? [
-                ["Why this book?", "__why"],
-                ["Stop research", "Stop research"],
-              ]
-            : [
-                ["Find best", "Find the best opportunity"],
-                ["What can I trade?", "What can I trade now?"],
-                ["Compare", "Compare top opportunities"],
-              ];
+        : busy
+          ? [["Stop research", "Stop research"]]
+          : [];
+
+  const showBook = Boolean(focus && (busy || ready || noTrade || kind));
+  const showPipe = busy || Boolean(stage) || Boolean(jobId);
+  const showVerdict = !busy && Boolean(verdict);
 
   return (
-    <section className="cockpit" aria-label="PIT agent live">
-      <header className="cockpit-status">
-        <div>
-          <p className="cockpit-kicker">PIT AGENT</p>
-          <h2 className="cockpit-title">Live market → private book → 0G Direct → Hyperliquid</h2>
-        </div>
-        <p className={`cockpit-pill ${busy ? "on" : ready ? "ok" : ""}`}>{status}</p>
-      </header>
+    <div className="agent-mission" aria-label="PIT agent turn">
+      <p className="agent-lead">
+        {busy
+          ? "Scanning live Hyperliquid markets…"
+          : showVerdict
+            ? "Research complete"
+            : "Live Hyperliquid books are on this computer."}
+        {busy && elapsed ? <span className="agent-elapsed">{elapsed}{pollMiss ? " reconnecting" : ""}</span> : null}
+      </p>
 
-      <ul className="cockpit-facts">
-        <li>Policy {pinned ? "pinned" : "draft"}</li>
-        <li>Session {sessionAlive ? "live" : "off"}</li>
-        <li>{compactUsd(buyingPower)} {powerSourceLabel(powerSource)}</li>
-        <li>{autonomy || "manual"}</li>
-        <li>Books {ageLabel(watchAgeMs) || "live"}</li>
-        {beat ? <li>Job {beat}</li> : null}
+      <ul className="agent-checks">
+        <li className={scannedN ? "done" : busy ? "on" : ""}>
+          {scannedN ? `${scannedN} markets scanned` : "Waiting for live books"}
+        </li>
+        <li className={eligible.length ? "done" : busy && scannedN ? "on" : ""}>
+          {eligible.length ? `policy filtered · ${eligible.length} eligible` : "policy filter pending"}
+        </li>
+        <li className={executable.length ? "done" : busy && eligible.length ? "on" : ""}>
+          {executable.length ? `capital checked · ${executable.length} executable` : "capital check pending"}
+        </li>
+        <li className={executable.length ? "done" : ""}>
+          {executable.length ? `${executable.length} executable candidates` : "no executable candidate yet"}
+        </li>
       </ul>
 
-      {!busy ? (
-        <div className="cockpit-funnel" aria-label="scan funnel">
-          <div><span>{scannedN || "—"}</span><em>Scanned</em></div>
-          <div><span>{eligible.length || "—"}</span><em>Policy</em></div>
-          <div><span>{executable.length || "—"}</span><em>Executable</em></div>
-          <div><span>{huntRejected.length || (noTrade ? 1 : 0)}</span><em>Rejected</em></div>
-          <div><span>{huntSurvived || best?.coin || "—"}</span><em>Best</em></div>
-          <div><span>{ready ? "READY" : noTrade ? "NO-TRADE" : status}</span><em>Result</em></div>
-        </div>
-      ) : (
-        <p className="cockpit-scanline">
-          Scanning {scannedN || "live"} markets · {eligible.length} policy · {executable.length} executable · {coin || best?.coin || "selecting"}
-        </p>
-      )}
-
-      {focus ? (
-        <article className="cockpit-quote">
-          <p className="cockpit-kicker">{busy ? "BEST OPPORTUNITY" : ready ? "CANDIDATE" : "LIVE BOOK"}</p>
-          <header>
+      {showBook && focus ? (
+        <article className="agent-card book">
+          <p className="agent-kicker">{busy ? "Best opportunity" : ready ? "Live preview" : "Candidate"}</p>
+          <header className="agent-book-head">
             <h3>{focus.coin}</h3>
             <p>{compactUsd(focus.mark)}</p>
-            <span>Hyperliquid</span>
           </header>
-          <dl>
-            <div><dt>Venue min</dt><dd>{compactUsd(focus.minNotional)}</dd></div>
-            <div><dt>Host clip</dt><dd>{compactUsd(focus.hostNotional || focus.policyClip)}</dd></div>
-            <div><dt>Funding</dt><dd>{pctFunding(focus.funding)}</dd></div>
+          <dl className="agent-metrics">
+            <div>
+              <dt>min</dt>
+              <dd>{compactUsd(focus.minNotional)}</dd>
+            </div>
+            <div>
+              <dt>clip</dt>
+              <dd>{compactUsd(focus.hostNotional || focus.policyClip)}</dd>
+            </div>
+            <div>
+              <dt>funding</dt>
+              <dd>{pctFunding(focus.funding)}</dd>
+            </div>
+            <div>
+              <dt>OI</dt>
+              <dd>{compactNum(focus.openInterest)}</dd>
+            </div>
           </dl>
-          <p className="fine">Mark is the price. Venue min is the order notional. They are not the same number.</p>
-          {bestWhy ? <p className="fine">{bestWhy}</p> : null}
+          {bestWhy ? <p className="agent-note">{bestWhy}</p> : null}
         </article>
       ) : null}
 
-      {!busy && (executable.length || eligible.length) ? (
-        <div className="cockpit-strip" role="list">
-          {(executable.length ? executable : eligible).slice(0, 6).map((c) => (
-            <button
-              key={c.coin}
-              type="button"
-              role="listitem"
-              className={c.coin === (pick || coin) ? "on" : ""}
-              onClick={() => setPick(c.coin)}
-            >
-              <strong>{c.coin}</strong>
-              <em>{c.executionFeasible ? "READY" : c.eligible ? "POLICY" : "WATCH"}</em>
-            </button>
-          ))}
-        </div>
-      ) : null}
-
-      {busy || stage ? (
-        <article className="cockpit-work" aria-live="polite">
-          <header>
-            <div>
-              <p className="cockpit-kicker">PRIVATE 0G RESEARCH</p>
-              <p className="cockpit-work-title">{coin || focus?.coin || "—"} · {elapsed}{pollMiss ? " · reconnecting" : ""}{beat ? ` · ${beat}` : ""}</p>
-            </div>
-            {busy ? (
-              <button type="button" className="ghost" onClick={onStop}>Stop</button>
-            ) : null}
-          </header>
-          <ol className="cockpit-pipe">
+      {showPipe ? (
+        <article className="agent-card pipe" aria-live="polite">
+          <p className="agent-kicker">PRIVATE 0G RESEARCH</p>
+          <ol className="agent-pipe">
             {PIPE.map((step, i) => {
-              const markState = pipeState(i, current, verified || ready || noTrade, fail);
+              const markState = pipeState(i, current, done, fail);
               return (
                 <li key={step.id} className={markState}>
-                  <button type="button" onClick={() => setOpenStep(openStep === step.id ? null : step.id)}>
-                    <em aria-hidden>{markState === "done" ? "✓" : markState === "on" ? "●" : markState === "fail" ? "✕" : "○"}</em>
-                    <strong>{step.label}</strong>
-                    <span>{markState === "on" ? (stage || "live") : ""}</span>
-                  </button>
-                  {openStep === step.id ? (
-                    <p className="fine">
-                      {step.id === "RESEARCHER" ? (researcher ? `verify ${researcher.verify_e2ee || "—"} · ${researcher.proposed_side || "no side"}` : "Waiting for researcher.") : null}
-                      {step.id === "CHALLENGER" ? (challenger ? `verify ${challenger.verify_e2ee || "—"} · survives ${String(challenger.survives)}` : "Waiting for challenger.") : null}
-                      {step.id === "RISK" ? (risk ? `verify ${risk.verify_e2ee || "—"}` : "Waiting for risk.") : null}
-                      {step.id === "PREVIEW" ? (hash ? `Preview ${shortHash(hash)}` : "No exact preview yet.") : null}
-                      {step.id === "POLICY" ? (preview?.eligible ? "Policy pass on this computer." : deny || "Policy has not sized a preview.") : null}
-                      {step.id === "DISCOVERY" ? `${scannedN} live books. ${executable.length} executable.` : null}
-                      {step.id === "VERIFYING_TEE_SIGNATURE" ? (verified ? "VerifyE2EE OK on named roles." : "TEE is not claimed until VerifyE2EE succeeds.") : null}
-                    </p>
-                  ) : null}
+                  <em aria-hidden>
+                    {markState === "done" ? "✓" : markState === "on" ? "●" : markState === "fail" ? "✕" : "○"}
+                  </em>
+                  <strong>{step.label}</strong>
+                  {markState === "on" ? <span>{stage.replaceAll("_", " ").toLowerCase() || "live"}</span> : null}
+                  {markState === "fail" && stop ? <span>{stop.title}</span> : null}
                 </li>
               );
             })}
           </ol>
+          {busy ? (
+            <button type="button" className="ghost" onClick={onStop}>
+              Stop
+            </button>
+          ) : null}
+        </article>
+      ) : null}
+
+      {showVerdict ? (
+        <article className="agent-card verdict">
+          <p className="agent-kicker">Research complete</p>
+          <p className="agent-verdict">
+            Verdict: {verdict}
+          </p>
+          <div className="agent-sections">
+            <section>
+              <h4>Thesis</h4>
+              <p>{why[0]?.a || reason || "No thesis survived."}</p>
+            </section>
+            <section>
+              <h4>Evidence</h4>
+              <p>
+                {why[2]?.a} {why[3]?.a}
+              </p>
+            </section>
+            <section>
+              <h4>Risk</h4>
+              <p>{why[4]?.a}</p>
+            </section>
+            <section>
+              <h4>Why this {ready ? "passed" : "failed"} policy</h4>
+              <p>{why[5]?.a}</p>
+            </section>
+            <section>
+              <h4>What would invalidate it</h4>
+              <p>{why[7]?.a}</p>
+            </section>
+          </div>
         </article>
       ) : null}
 
       {ready && preview ? (
-        <article className="cockpit-card ready">
-          <p className="cockpit-kicker">READY TO TRADE</p>
-          <h3>{preview.market || coin} · {side || "SIDE"}</h3>
-          <p className="cockpit-num">{compactUsd(preview.notionalUsd)}</p>
-          <p>1x leverage · Hyperliquid · nothing executed yet.</p>
-          <ul className="cockpit-checks">
-            <li>asset allowed</li>
-            <li>clip allowed</li>
-            <li>leverage allowed</li>
-            <li>position available</li>
-            <li>venue minimum satisfied</li>
-            <li>slippage allowed</li>
+        <article className="agent-card ready">
+          <p className="agent-kicker">READY</p>
+          <header className="agent-trade-head">
+            <h3>{preview.market || asset}</h3>
+            <p>{side || "SIDE"}</p>
+            <p>{compactUsd(preview.notionalUsd)}</p>
+            <p>1x</p>
+            <p>Hyperliquid</p>
+          </header>
+          <ul className="agent-gates">
+            <li>Policy {pinned ? "✓" : "open Policy first"}</li>
+            <li>Capital {Number.isFinite(buyingPower) ? "✓" : "unknown"}</li>
+            <li>Venue min ✓</li>
+            <li>Slippage ✓</li>
+            <li>Session {sessionAlive ? "✓" : "create a session"}</li>
           </ul>
-          <p className="fine">Account {compactUsd(buyingPower)} · preview {shortHash(hash)}</p>
-          {!sessionAlive ? <p className="fine">Create a live session on Security before TRADE NOW.</p> : null}
-          {!pinned ? <p className="fine">Pin policy on this computer first.</p> : null}
-          {alreadyPosted ? <p className="fine">This preview already produced OID {lastOrder?.oid}. PIT will not double-submit.</p> : null}
-          {authErr ? <p className="fine" role="alert">{authErr}</p> : null}
+          {!sessionAlive ? <p className="agent-note">Create a live session on Security before TRADE NOW.</p> : null}
+          {!pinned ? <p className="agent-note">Pin policy on this computer first.</p> : null}
+          {alreadyPosted ? <p className="agent-note">This preview already produced OID {lastOrder?.oid}.</p> : null}
+          {authErr ? <p className="agent-note" role="alert">{authErr}</p> : null}
           <div className="cta-row">
-            <button
-              type="button"
-              className="primary"
-              aria-label="TRADE NOW"
-              disabled={!canTrade}
-              onClick={onTradeNow}
-            >
+            <button type="button" className="primary" aria-label="TRADE NOW" disabled={!canTrade} onClick={onTradeNow}>
               {authBusy ? "Submitting…" : "TRADE NOW"}
             </button>
-            <button type="button" className="ghost" onClick={() => onAsk("Do not trade")}>REJECT</button>
-            <button type="button" className="ghost" onClick={onOpenPreview}>REVIEW DETAILS</button>
+            <button type="button" className="ghost" onClick={onOpenPreview}>
+              REVIEW
+            </button>
+            <button type="button" className="ghost" onClick={() => onAsk("Do not trade")}>
+              REJECT
+            </button>
           </div>
-          <p className="fine">{CHAT_AGENT_COPY.cannotAuthorize}. {CHAT_AGENT_COPY.acceptOnDesk}</p>
+          <p className="agent-note">{CHAT_AGENT_COPY.cannotAuthorize}. {CHAT_AGENT_COPY.acceptOnDesk}</p>
         </article>
       ) : null}
 
       {noTrade ? (
-        <article className="cockpit-card stand">
-          <p className="cockpit-kicker">NO TRADE, VERIFIED</p>
-          <h3>{coin || focus?.coin || "Candidate"}</h3>
-          <p>{title}. Nothing was executed. This is a valid result.</p>
-          <ul className="cockpit-checks">
-            <li>Researcher {researcher?.proposed_side ? `proposed ${researcher.proposed_side}` : "no candidate proposed"}</li>
-            <li>Challenger {challenger?.survives === false || challenger?.kill ? "no surviving side" : challenger ? "checked" : "not required"}</li>
-            <li>Risk {risk ? "checked" : "not required"}</li>
-            <li>Execution no order created</li>
+        <article className="agent-card stand">
+          <p className="agent-kicker">NO TRADE</p>
+          <h3>{asset || "Candidate"}</h3>
+          <p>{asset ? `${asset} did not survive the private challenge.` : "No side survived the private challenge."}</p>
+          <ul className="agent-gates">
+            <li>Researcher {roleMark(roleOk(roles, "researcher"), busy)}</li>
+            <li>Challenger {roleMark(roleOk(roles, "challenger"), busy)}</li>
+            <li>Risk {roleMark(roleOk(roles, "risk"), busy)}</li>
+            <li>Policy {policyBlock ? "blocked" : "✓"}</li>
           </ul>
-          {huntRejected.length ? (
-            <p className="fine">
-              {scannedN} scanned · {executable.length} executable · {huntRejected.length} researched/rejected
-              {huntSurvived ? ` · survived ${huntSurvived}` : ""}.
+          {reason ? (
+            <p className="agent-reason">
+              <strong>Reason</strong>
+              {reason}
+              {huntRejected.length ? ` Checked ${huntRejected.join(", ")}.` : ""}
             </p>
           ) : null}
         </article>
       ) : null}
 
-      {policyBlock ? (
-        <article className="cockpit-card block">
-          <p className="cockpit-kicker">POLICY BLOCK</p>
-          <h3>{title}</h3>
-          <p>{deny || "Host law refused this size. The model cannot raise clip or leverage."}</p>
+      {policyBlock && !noTrade ? (
+        <article className="agent-card stand">
+          <p className="agent-kicker">NO TRADE</p>
+          <h3>{asset || "Policy"}</h3>
+          <p>Host policy blocked this size. The model cannot raise clip.</p>
           <div className="cta-row">
-            <button type="button" className="primary" onClick={onOpenPolicy}>Open Policy</button>
+            <button type="button" className="ghost" onClick={onOpenPolicy}>
+              Open Policy
+            </button>
           </div>
         </article>
       ) : null}
 
-      {capitalBlock ? (
-        <article className="cockpit-card">
-          <p className="cockpit-kicker">INSUFFICIENT CAPITAL</p>
-          <h3>{title}</h3>
-          <p>Buying power {compactUsd(buyingPower)}. Venue min {compactUsd(focus?.minNotional)}. PIT will not invent size.</p>
+      {capitalBlock && !noTrade && !policyBlock ? (
+        <article className="agent-card stand">
+          <p className="agent-kicker">NO TRADE</p>
+          <h3>{asset || "Capital"}</h3>
+          <p>
+            Buying power {compactUsd(buyingPower)}. Venue min {compactUsd(focus?.minNotional)}.
+          </p>
         </article>
       ) : null}
 
       {fail && stop ? (
-        <article className="cockpit-card">
-          <p className="cockpit-kicker">STOPPED</p>
+        <article className="agent-card stand">
+          <p className="agent-kicker">Stopped</p>
           <h3>{stop.title}</h3>
           <p>{stop.body}</p>
         </article>
       ) : null}
 
-      {proof && (proof.root || proof.tx) && !busy ? (
-        <article className="cockpit-card og">
-          <p className="cockpit-kicker">0G PROOF</p>
-          <h3>{verified ? "TEE verified" : "Not claimed verified"}</h3>
-          {proof.jobId ? <p>Job {shortHash(proof.jobId)}</p> : null}
-          {proof.root ? <p>Root {shortHash(proof.root)}</p> : <p className="fine">No storage root on this computer yet.</p>}
-          {proof.tx ? <p>Chain {shortHash(proof.tx)}</p> : <p className="fine">No chain transaction until a root is filed.</p>}
-          <div className="cta-row">
-            {proof.txLink ? <ExternalLink href={proof.txLink}>Open 0G explorer</ExternalLink> : null}
-            {proof.root ? <button type="button" className="ghost" onClick={onOpenActivity}>Verify on 0G</button> : null}
-          </div>
-        </article>
-      ) : null}
-
       {orderState && lastOrder ? (
-        <article className={`cockpit-card ${orderState === "filled" ? "ready" : ""}`}>
-          <p className="cockpit-kicker">
-            {orderState === "filled" ? "FILLED" : orderState === "resting" ? "ORDER SUBMITTED" : orderState === "cancelled" ? "CANCELLED" : orderState === "failed" ? "FAILED" : "ORDER"}
+        <article className="agent-card order">
+          <p className="agent-kicker">ORDER SUBMITTED</p>
+          <p>OID {lastOrder.oid || lastOid}</p>
+          <p>{String(lastOrder.lifecycle || lastOrder.status || orderState).toUpperCase()}</p>
+          <p>
+            {orderState === "resting"
+              ? "RESTING"
+              : orderState === "filled"
+                ? "FILLED"
+                : orderState === "cancelled"
+                  ? "CANCELLED"
+                  : orderState === "failed"
+                    ? "FAILED"
+                    : orderState.toUpperCase()}
           </p>
-          <h3>{lastOrder?.market || "—"} {String(lastOrder?.side || "").toUpperCase()}</h3>
-          <p>OID {lastOrder?.oid || lastOid}</p>
-          <p>Status {String(lastOrder?.lifecycle || lastOrder?.status || orderState).toUpperCase()}</p>
-          {orderState === "resting" ? <p className="fine">RESTING is not a fill.</p> : null}
-          {orderState === "failed" ? <p className="fine">No execution occurred.</p> : null}
           <div className="cta-row">
             <ExternalLink href={LINKS.hl}>Open Hyperliquid</ExternalLink>
-            <button type="button" className="ghost" onClick={onOpenActivity}>Open Activity</button>
-            {proof?.root || proof?.tx ? <button type="button" className="ghost" onClick={onOpenActivity}>Verify on 0G</button> : null}
+            <button type="button" className="ghost" onClick={onOpenActivity}>
+              Open Activity
+            </button>
+            {proof?.root || proof?.tx ? (
+              <button type="button" className="ghost" onClick={onOpenActivity}>
+                Verify on 0G
+              </button>
+            ) : null}
           </div>
         </article>
       ) : null}
 
-      <div className="cockpit-follow">
-        {follow.map(([label, q]) => (
-          <button
-            key={label}
-            type="button"
-            className="chip-btn"
-            onClick={() => {
-              if (q === "Stop research") {
-                onStop();
-                return;
-              }
-              if (q === "__why") {
-                setWhy(true);
-                return;
-              }
-              if (q === "__sleep" || q === "Review Sleep Mission") {
-                setSleep(true);
-                return;
-              }
-              onAsk(q);
-            }}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
+      {proof && (proof.root || proof.tx) && !busy ? (
+        <p className="agent-proof">
+          {verified ? "TEE verified" : "Proof on file, not claimed verified"}
+          {proof.root ? ` · root ${shortHash(proof.root)}` : ""}
+          {proof.txLink ? (
+            <>
+              {" "}
+              <ExternalLink href={proof.txLink}>Open 0G explorer</ExternalLink>
+            </>
+          ) : null}
+        </p>
+      ) : null}
+
+      {follow.length ? (
+        <div className="agent-follow">
+          {follow.map(([label, q]) => (
+            <button
+              key={label}
+              type="button"
+              className="chip-btn"
+              onClick={() => {
+                if (q === "Stop research") {
+                  onStop();
+                  return;
+                }
+                if (q === "__why") {
+                  setWhy((v) => !v);
+                  return;
+                }
+                if (q === "__review") {
+                  onOpenPreview();
+                  return;
+                }
+                onAsk(q);
+              }}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      ) : null}
 
       {whyOpen ? (
-        <article className="cockpit-card">
-          <p className="cockpit-kicker">WHY</p>
+        <article className="agent-card why">
           {why.map((row) => (
-            <p key={row.q} className="fine"><strong>{row.q}</strong> {row.a}</p>
+            <p key={row.q}>
+              <strong>{row.q}</strong> {row.a}
+            </p>
           ))}
         </article>
       ) : null}
 
       {sleepOpen && !busy ? (
-        <article className="cockpit-sleep">
-          <div>
-            <p className="cockpit-kicker">SLEEP MISSION</p>
-            <p>Bound by current policy. Research, challenge, risk, policy, then execute. This Agent may prepare it. Desktop still arms.</p>
-          </div>
-          <button type="button" className="ghost" onClick={onOpenAutomation}>Open Sleep Mission</button>
+        <article className="agent-card">
+          <p>Sleep Mission stays bound by current policy. This Agent may prepare it. Desktop still arms.</p>
+          <button type="button" className="ghost" onClick={onOpenAutomation}>
+            Review Sleep Mission
+          </button>
         </article>
       ) : null}
 
-      <details className="cockpit-tech" open={tech} onToggle={(e) => setTech((e.target as HTMLDetailsElement).open)}>
-        <summary>Technical details</summary>
-        <p>Direct TeeML · {researchSku?.model || "not this chat stream"} · {researchSku?.proven_e2ee ? "sealed" : "privacy not claimed here"}</p>
-        <p>Job {jobId || "—"} · Kind {kind || "—"} · Stage {stage || "—"}</p>
-        <p>Committee {mark(roleOk(roles, "researcher"))} researcher {mark(roleOk(roles, "challenger"))} challenger {mark(roleOk(roles, "risk"))} risk · TEE {verified ? "VerifyE2EE" : "not claimed"}</p>
-        <p>Private book never uses Router. Catalog listing is not an inference path.</p>
-      </details>
-    </section>
+      {!busy && (ready || noTrade) ? (
+        <p className="agent-sleep-link">
+          <button type="button" className="ghost" onClick={() => setSleep(true)}>
+            Review Sleep Mission
+          </button>
+        </p>
+      ) : null}
+
+      {!busy && (jobId || kind) ? (
+        <details className="agent-tech">
+          <summary>Technical details</summary>
+          <p>
+            Direct TeeML · {researchSku?.model || "not this chat stream"} · {researchSku?.proven_e2ee ? "sealed" : "privacy not claimed here"}
+          </p>
+          <p>
+            Job {jobId ? shortHash(jobId) : "none"} · {kind || "idle"}
+          </p>
+          <p>Private book never uses Router.</p>
+        </details>
+      ) : null}
+    </div>
   );
 }

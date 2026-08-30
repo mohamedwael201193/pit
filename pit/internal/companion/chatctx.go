@@ -58,15 +58,19 @@ func (h *Hub) decorateChat(parsed deskcmd.Result) deskcmd.Result {
 		stage := h.job.stage
 		h.researchMu.Unlock()
 		if running {
-			parsed.StartResearch = false
-			parsed.Mutate = false
-			parsed.Navigate = ""
-			parsed.Tool = "research.status"
-			parsed.Coin = jobCoin
-			stageName := strings.ReplaceAll(stage, "_", " ")
-			parsed.Reply = fmt.Sprintf("Still researching %s · %s. Watch the live stages on this screen.", jobCoin, stageName)
-			parsed.Agent = &deskcmd.Agent{Kind: "hunt", Best: jobCoin, Executive: parsed.Reply}
-			break
+			named := strings.ToUpper(strings.TrimSpace(parsed.Coin))
+			same := named == "" || strings.EqualFold(named, jobCoin)
+			if same {
+				parsed.StartResearch = false
+				parsed.Mutate = false
+				parsed.Navigate = ""
+				parsed.Tool = "research.status"
+				parsed.Coin = jobCoin
+				stageName := strings.ReplaceAll(stage, "_", " ")
+				parsed.Reply = fmt.Sprintf("Still researching %s · %s. Watch the live stages on this screen.", jobCoin, stageName)
+				parsed.Agent = &deskcmd.Agent{Kind: "hunt", Best: jobCoin, Executive: parsed.Reply}
+				break
+			}
 		}
 		parsed = h.decorateWatchAgent(parsed)
 		parsed.Navigate = ""
@@ -276,7 +280,7 @@ func (h *Hub) replyWhyNotTradeShort() string {
 	if view.Best != nil {
 		best = view.Best.Coin
 	}
-	return fmt.Sprintf("NO TRADE. Scanned %d. Policy eligible %d. Executable %d. Strongest ranked: %s. Buying power $%.2f (%s). Nothing was executed from chat.", view.Scanned, view.Count, view.ExecFeasibleN, best, cap.BuyingPower, cap.PowerSource)
+	return fmt.Sprintf("NO TRADE. Scanned %d. Policy eligible %d. Executable %d. Strongest ranked: %s. Buying power $%.2f (%s).", view.Scanned, view.Count, view.ExecFeasibleN, best, cap.BuyingPower, cap.PowerSource)
 }
 
 func (h *Hub) replyWhyNotTrade() string {
@@ -413,15 +417,19 @@ func (h *Hub) replyResearch(fallback string) string {
 	if h.job.deny != "" {
 		kind := TerminalKind(false, h.job.err, h.job.deny, namedRolesVerified(h.job.roles), h.job.eligible, h.job.roles)
 		if kind == TermReadyStoodDown {
-			return fmt.Sprintf("Committee stood down (%s). That is a verified no-trade, not a crash. %s PIT will check the next eligible market. No order was placed. Chat cannot AUTHORIZE.", h.job.deny, roles)
+			asset := strings.ToUpper(h.job.coin)
+			if asset == "" {
+				asset = "This book"
+			}
+			return fmt.Sprintf("NO TRADE. %s did not survive the private challenge. That is a verified no-trade. PIT will check the next eligible market. %s", asset, roles)
 		}
 		if kind == TermMarketDenied {
-			return fmt.Sprintf("This market is not sizeable (%s). %s PIT will not invent size. Chat cannot AUTHORIZE.", h.job.deny, roles)
+			return fmt.Sprintf("NO TRADE. This market is not sizeable (%s). %s PIT will not invent size.", h.job.deny, roles)
 		}
-		return fmt.Sprintf("Committee result: %s (%s). %s One verified role is never a committee result. No order was placed. Open Research.", kind, h.job.deny, roles)
+		return fmt.Sprintf("Committee result: %s (%s). %s", kind, h.job.deny, roles)
 	}
 	if h.job.eligible && h.job.previewHash != "" {
-		return "Exact preview is ready on Agent. " + roles + " TRADE NOW on this computer submits it through the host. The model cannot AUTHORIZE."
+		return "Research complete. Exact preview is on this thread. TRADE NOW on this computer submits it. " + roles
 	}
 	if h.job.err != "" {
 		return "Last research ended: " + h.job.err + ". That is not a fake success. Open Research."

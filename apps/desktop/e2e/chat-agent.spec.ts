@@ -14,11 +14,13 @@ export function assertChatAgentCopy() {
   const chat = readFileSync(join(here, "../src/CommandChat.tsx"), "utf8");
   if (chat.includes("authorizePreview")) throw new Error("chat must not call authorizePreview");
   if (chat.includes('aria-label="type AUTHORIZE"')) throw new Error("chat must not host the AUTHORIZE field");
-  if (!chat.includes("Ask PIT what to trade")) throw new Error("composer placeholder");
+  if (!chat.includes("Ask PIT to research, compare, prepare, trade, or watch")) throw new Error("composer placeholder");
   if (!chat.includes("Find best opportunity")) throw new Error("hero chip");
-  if (!chat.includes("cockpit-live")) throw new Error("live cockpit must sit outside the transcript");
+  if (chat.includes("cockpit-live")) throw new Error("cockpit must not sit above the transcript");
+  if (!chat.includes("agent-stream")) throw new Error("one conversation stream");
+  if (!chat.includes("agent-workspace")) throw new Error("one agent workspace");
   const run = readFileSync(join(here, "../src/AgentRun.tsx"), "utf8");
-  if (!run.includes("READY TO TRADE")) throw new Error("preview card");
+  if (!run.includes("READY")) throw new Error("preview card");
   if (!run.includes("NO TRADE")) throw new Error("no-trade card");
   if (!run.includes("TRADE NOW")) throw new Error("trade now");
   if (!run.includes("onTradeNow")) throw new Error("trade now callback");
@@ -27,10 +29,12 @@ export function assertChatAgentCopy() {
   if (!run.includes("ORDER SUBMITTED")) throw new Error("execution card");
   if (!run.includes("oidBelongsToPreview")) throw new Error("stale fill must be gated");
   if (run.includes('markState === "done" ? "done"')) throw new Error("pipe must not label every row done");
-  if (run.includes("className=\"linkish\"") && run.includes("Show why")) throw new Error("duplicate show why");
+  if (run.includes('className="linkish"') && run.includes("Show why")) throw new Error("duplicate show why");
   if (!chat.includes("lines.length === 0")) throw new Error("hero chips hide after the first turn");
   if (!chat.includes("visibleTurns")) throw new Error("duplicate pit lines must collapse");
   if (!chat.includes("Live numbers stay on the cards")) throw new Error("old hunt dump must collapse");
+  if (!chat.includes("composeStream")) throw new Error("mission must live inside the conversation");
+  if (chat.includes("Still researching ${island.coin}")) throw new Error("busy hunt must not append a second canned line");
   const collapsed = displayTurn({
     role: "pit",
     text: "AVAX is the strongest executable book among 6 of 232 live Hyperliquid perps. Mark 7.32. Venue min $10.02. Host clip $12.95. Buying power $16.18. Starting sealed 0G Direct on this computer. Chat cannot AUTHORIZE.",

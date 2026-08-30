@@ -129,11 +129,23 @@ func (h *Hub) decorateWatchAgent(parsed deskcmd.Result) deskcmd.Result {
 		parsed.Reply = agent.Executive
 	case "watch.compare":
 		agent.Kind = "compare"
-		agent.Executive = fmt.Sprintf("%s ranks first among %d executable of %d scanned. Host rank uses mark, funding, and open interest. It is not a model score.", best, agent.Executable, agent.Scanned)
+		names := make([]string, 0, 3)
+		for _, c := range agent.Coins {
+			if len(names) >= 3 {
+				break
+			}
+			if c.Coin != "" {
+				names = append(names, c.Coin)
+			}
+		}
+		if len(names) == 0 && best != "none" {
+			names = []string{best}
+		}
+		agent.Executive = fmt.Sprintf("%s rank among %d executable of %d scanned. Host rank uses mark, funding, and open interest.", strings.Join(names, ", "), agent.Executable, agent.Scanned)
 		parsed.Reply = agent.Executive
 	case "watch.why_not":
 		agent.Kind = "no_trade"
-		agent.Executive = fmt.Sprintf("NO TRADE. Scanned %d. Policy eligible %d. Executable %d. Nothing was executed from chat.", agent.Scanned, agent.Eligible, agent.Executable)
+		agent.Executive = fmt.Sprintf("NO TRADE. Scanned %d. Policy eligible %d. Executable %d. Strongest ranked: %s.", agent.Scanned, agent.Eligible, agent.Executable, best)
 		parsed.Reply = agent.Executive
 	default:
 		agent.Kind = "hunt"
@@ -141,8 +153,13 @@ func (h *Hub) decorateWatchAgent(parsed deskcmd.Result) deskcmd.Result {
 			agent.Executive = fmt.Sprintf("Scanned %d. %d policy eligible. %d executable. No book is execution-feasible on this computer right now.", agent.Scanned, agent.Eligible, agent.Executable)
 			parsed.Reply = "No executable book on this computer right now."
 		} else {
-			agent.Executive = fmt.Sprintf("%s is the strongest executable book among %d of %d live Hyperliquid perps. Mark %s. Venue min $%.2f. Host clip $%.2f.", agent.Best, agent.Executable, agent.Scanned, watch.Price(agent.Mark), agent.MinNotional, agent.HostNotional)
-			parsed.Reply = fmt.Sprintf("Researching %s. Live numbers stay on the cards.", agent.Best)
+			hypo := strings.ToLower(strings.TrimSpace(parsed.Hypothesis))
+			scan := "Scanning live Hyperliquid markets…"
+			if hypo == "long" || hypo == "short" {
+				scan = fmt.Sprintf("Scanning live Hyperliquid markets for a %s…", hypo)
+			}
+			agent.Executive = fmt.Sprintf("%s %d scanned, %d executable. Strongest: %s.", scan, agent.Scanned, agent.Executable, agent.Best)
+			parsed.Reply = scan
 		}
 	}
 	parsed.Agent = agent

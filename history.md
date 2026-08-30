@@ -2,6 +2,34 @@
 
 ---
 
+## M126 — One Agent conversation. PIT 0.9.5
+
+- **Source:** 0.9.4 still stacked a cockpit above a transcript. Nested scrollbars. Hunt chips and "Researching AVAX" repeated while the AVAX no-trade card sat in another pane. Screenshots showed two apps, not one operator.
+- **Discovery:** AgentRun must live inside the last hunt turn and transform in place. Composer chips belong on empty only. TRADE NOW stays `authorizePreview("AUTHORIZE", previewHash)` on App. Named research (Research ETH) may start while another job is running. Same-job hunt stays quiet. Numbers stay event-backed.
+- **Candidate:** One `agent-stream`. Mission cards inside the PIT turn. Optional live rail only while busy. Version **0.9.5**.
+- **Kill:** Second AUTHORIZE path. Fake token streaming. Fake fills. Flatten OID 529167222216. Remint PIT-4bbee556. Authenticode claim. Nested transcript + cockpit scroll.
+- **Next:** Tag `v0.9.5`, NSIS, overlay `D:\PIT`, Vercel + Render. Do not remint. Do not flatten. Do not start a live trade unless the user clicks TRADE NOW on an exact preview.
+
+DATE/TIME: 2026-08-31 02:50+03
+PHASE: Agent conversation rebuild. Host remains execution authority.
+GOAL: One screen: ask PIT what to trade, watch live scan and private 0G research in that turn, read the verdict, TRADE NOW, see a real OID.
+RESULT:
+- **IMPLEMENTED:** CommandChat is one scroll. AgentRun is an inline turn (scan checklist, book, pipe, verdict sections, READY / NO TRADE / ORDER SUBMITTED). Hunt dumps are not shown as a second chat. Busy same-job hunt does not append "Still researching". Composer placeholder "Ask PIT to research, compare, prepare, trade, or watch…". Contextual chips only on an empty thread. TRADE NOW still App → existing authorize. oidBelongsToPreview unchanged.
+- **TESTED:** `go test ./...` PASS. Desktop `tsc -b` pass. `npx tsx e2e/run.ts` including one stream, no cockpit-live, no canned busy line, TRADE NOW callback, displayTurn collapse of old dumps.
+- **LIVE:** After installer. No new MAINNET fill from this change. ETH OID `529167222216` untouched.
+- **BLOCKED:** Authenticode still absent. iTransfer still not live. TRADE NOW still requires exact preview, live session, pinned policy, capital, venue min.
+
+SECURITY RESULT: The model cannot AUTHORIZE. TRADE NOW is still an explicit desktop confirmation of the existing host path. Preview hash, session, policy, ledger, and capital gates unchanged.
+TX HASH / OID: Historical OID `529167222216` unchanged.
+CLASSIFICATION:
+- One conversation Agent: **IMPLEMENTED + TESTED**
+- TRADE NOW existing authorize path: **UNCHANGED**
+- Live MAINNET fill: **NOT STARTED** (needs explicit TRADE NOW)
+PRODUCTION READY: 0.9.5 installer after tag.
+NEXT STEP: `python _scripts/push_head.py`. `python _scripts/tag_push.py v0.9.5`. Deploy web.
+
+---
+
 ## M125 — Agent chat stops repeating itself. PIT 0.9.4
 
 - **Source:** Desktop Agent stacked the same chips, two Show why controls, an always-on Sleep Mission card, a stale FILLED banner from an old OID, DONE on every pipe row, buying power in the header and the quote, and the same AVAX sentence plus "Chat cannot AUTHORIZE" after every hunt.

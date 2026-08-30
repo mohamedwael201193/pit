@@ -18,28 +18,27 @@ import type { MarketCoin } from "./WatchBook";
 const PRIMARY = [
   { label: "Find best opportunity", q: "Find the best opportunity available right now." },
   { label: "Find best long", q: "Find me the best long" },
-  { label: "Scan all markets", q: "Scan all markets" },
-  { label: "What can I trade now?", q: "What can I trade with my current capital?" },
-  { label: "Why didn't PIT trade?", q: "Why didn't you trade?" },
-  { label: "While I sleep", q: "Trade this while I sleep" },
-];
-
-const MORE = [
   { label: "Find best short", q: "Find me the best short" },
-  { label: "Research BTC", q: "Research BTC" },
-  { label: "Research ETH", q: "Research ETH" },
-  { label: "Compare top", q: "Compare top opportunities" },
-  { label: "Explain my policy", q: "Explain my policy" },
-  { label: "What is executable?", q: "What is executable?" },
-  { label: "Show current exposure", q: "Show current exposure" },
-  { label: "Show proof", q: "Show proof" },
-  { label: "Review Sleep Mission", q: "Review Sleep Mission" },
+  { label: "What can I trade?", q: "What can I trade?" },
+  { label: "Compare top opportunities", q: "Compare top opportunities" },
 ];
 
 function huntLike(text: string) {
-  return /find (me )?(the )?(best|strongest)|scan all markets|what can i trade|research (btc|eth|avax|sol|the strongest)|research the strongest/i.test(
+  return /find (me )?(the )?(best|strongest)|scan all markets|what can i trade|research (btc|eth|avax|sol)|research the strongest|compare top/i.test(
     text,
   );
+}
+
+function huntDump(text: string) {
+  const t = String(text || "").trim();
+  if (!t) return false;
+  if (/^(Researching |Still researching |Scanning live Hyperliquid)/i.test(t)) return true;
+  if (/Live numbers stay on the cards/i.test(t)) return true;
+  if (/Live stages stay on this screen/i.test(t)) return true;
+  if (/Watch the (live )?stages/i.test(t)) return true;
+  if (/is the strongest executable book among/i.test(t)) return true;
+  if (t === "Working…") return true;
+  return false;
 }
 
 export function CommandChat({
@@ -123,10 +122,10 @@ export function CommandChat({
   const [catalog, setCatalog] = useState<DirectModel[]>([]);
   const [catalogNote, setCatalogNote] = useState("");
   const [modelOpen, setModelOpen] = useState(false);
-  const [moreOpen, setMoreOpen] = useState(false);
   const [picked, setPicked] = useState<DirectModel | null>(null);
   const end = useRef<HTMLDivElement>(null);
   const log = useRef<HTMLDivElement>(null);
+  const stick = useRef(true);
   const abort = useRef<AbortController | null>(null);
 
   useEffect(() => {
@@ -160,39 +159,30 @@ export function CommandChat({
 
   useEffect(() => {
     const box = log.current;
-    if (box) box.scrollTop = box.scrollHeight;
-    else end.current?.scrollIntoView({ block: "end" });
-  }, [lines, busy]);
+    if (!box) return;
+    if (stick.current) box.scrollTop = box.scrollHeight;
+    else end.current?.scrollIntoView({ block: "nearest" });
+  }, [lines, busy, island?.stage, island?.kind, island?.elapsedMs]);
 
   async function ask(text: string) {
     if (!text || busy) return;
-    if (island?.busy && huntLike(text) && !/why|stop|proof|reject/i.test(text)) {
-      setLines((cur) => [
-        ...cur,
-        { role: "user", text, ts: Date.now(), thread },
-        {
-          role: "pit",
-          text: `Still researching ${island.coin}. Live stages stay on this screen.`,
-          ts: Date.now(),
-          thread,
-        },
-      ]);
-      return;
-    }
     setBusy(true);
     setErr(null);
-    setMoreOpen(false);
     setLines((cur) => [...cur, { role: "user", text, ts: Date.now(), thread }]);
     abort.current?.abort();
     const ac = new AbortController();
     abort.current = ac;
     const streamIdx = { n: -1 };
+    const hunt = huntLike(text);
     try {
-      setLines((cur) => {
-        streamIdx.n = cur.length;
-        return [...cur, { role: "pit", text: "", ts: Date.now(), thread }];
-      });
+      if (!hunt) {
+        setLines((cur) => {
+          streamIdx.n = cur.length;
+          return [...cur, { role: "pit", text: "", ts: Date.now(), thread }];
+        });
+      }
       const r = await streamDeskCommand(text, thread, picked?.model || "host-parsed", ac.signal, (delta) => {
+        if (hunt) return;
         setLines((cur) => {
           const next = [...cur];
           const i = streamIdx.n >= 0 ? streamIdx.n : next.length - 1;
@@ -201,15 +191,26 @@ export function CommandChat({
         });
       });
       if (ac.signal.aborted) return;
-      let reply = r.reply || r.error || "PIT could not complete that command.";
-      if (r.tool === "research.status") {
-        reply = `Still researching ${r.coin || island?.coin || "the live book"}. Watch the stages above.`;
+      if (r.tool === "research.status" || r.start_research) {
+        if (streamIdx.n >= 0) {
+          setLines((cur) => {
+            const next = [...cur];
+            const row = next[streamIdx.n];
+            if (row?.role === "pit" && (huntDump(row.text || "") || !row.text)) next.splice(streamIdx.n, 1);
+            return next;
+          });
+        }
+        applyReply(r);
+        return;
       }
+      const reply = r.reply || r.error || "PIT could not complete that command.";
       setLines((cur) => {
         const next = [...cur];
-        const i = streamIdx.n >= 0 ? streamIdx.n : next.length - 1;
-        if (next[i]?.role === "pit") next[i] = { ...next[i], text: reply, tool: r.tool, coin: r.coin };
-        return next;
+        if (streamIdx.n >= 0 && next[streamIdx.n]?.role === "pit") {
+          next[streamIdx.n] = { ...next[streamIdx.n], text: reply, tool: r.tool, coin: r.coin };
+          return next;
+        }
+        return [...next, { role: "pit", text: reply, tool: r.tool, coin: r.coin, ts: Date.now(), thread }];
       });
       applyReply(r);
     } catch (e) {
@@ -249,21 +250,22 @@ export function CommandChat({
   }
 
   const researchSku = privateModels[0];
+  const showMission = Boolean(
+    island?.busy || island?.kind || island?.jobId || preview?.eligible || (researchNote && island?.coin),
+  );
+  const stream = composeStream(lines, showMission);
+  const chips = lines.length === 0 ? PRIMARY : [];
 
   return (
-    <section className="command cockpit-shell" aria-label="PIT agent">
+    <section className="command agent-workspace" aria-label="PIT agent">
       <div className="command-head">
         <div>
-          <p className="label">PIT AGENT</p>
-          <div className="honesty-row">
-            <span className="honesty-chip">Private research</span>
-            <span className="honesty-chip">{CHAT_AGENT_COPY.cannotAuthorize}</span>
-            <span className="honesty-chip">Cannot pin</span>
-          </div>
+          <p className="label">PIT Agent</p>
+          <p className="fine">{CHAT_AGENT_COPY.cannotAuthorize}</p>
         </div>
         <div className="model-pick">
           <button type="button" aria-haspopup="listbox" aria-expanded={modelOpen} onClick={() => setModelOpen((v) => !v)}>
-            PIT AGENT · {picked?.private_book ? "Private + Verified" : "Desk command"}
+            {picked?.private_book ? "Private + Verified" : "Desk command"}
           </button>
           {modelOpen ? (
             <div className="model-menu wide" role="listbox">
@@ -281,7 +283,7 @@ export function CommandChat({
               ))}
               <p className="label">AVAILABLE PROVIDERS · listing only</p>
               <details className="catalog-disclosure">
-                <summary>Show listings — not used for chat or private research</summary>
+                <summary>Show listings - not used for chat or private research</summary>
                 <p className="fine">{catalogNote || "Listed SKUs are not inference paths. Private book stays Direct TeeML."}</p>
                 {catalog.slice(0, 31).map((m) => (
                   <ModelRow key={m.model} m={m} picked={null} onPick={() => undefined} disabled />
@@ -296,93 +298,103 @@ export function CommandChat({
         </div>
       </div>
 
-      <div className="cockpit-live">
-        <AgentRun
-          busy={Boolean(island?.busy)}
-          coin={island?.coin || ""}
-          stage={island?.stage || ""}
-          elapsedMs={island?.elapsedMs || 0}
-          jobId={island?.jobId || ""}
-          pollMiss={Boolean(island?.pollMiss)}
-          updatedAt={island?.updatedAt}
-          roles={island?.roles || []}
-          kind={island?.kind || ""}
-          coins={coins || []}
-          scanned={scanned || 0}
-          buyingPower={buyingPower}
-          powerSource={powerSource}
-          watchAgeMs={watchAgeMs}
-          bestWhy={bestWhy}
-          preview={preview || null}
-          previewHash={previewHash}
-          lastOrder={lastOrder}
-          lastOid={lastOid}
-          activity={activity || []}
-          evidence={evidence}
-          researchNote={researchNote}
-          researchStop={researchStop}
-          huntRejected={huntRejected || []}
-          huntSurvived={huntSurvived || ""}
-          pinned={Boolean(pinned)}
-          sessionAlive={Boolean(sessionAlive)}
-          autonomy={autonomy || "manual"}
-          researchSku={researchSku}
-          authBusy={authBusy}
-          authErr={authErr}
-          onAsk={ask}
-          onOpenPreview={onOpenPreview}
-          onOpenPolicy={() => onNavigate("security")}
-          onOpenAutomation={() => onNavigate("automation")}
-          onOpenActivity={() => onNavigate("activity")}
-          onStop={() => onStop?.()}
-          onTradeNow={onTradeNow}
-        />
-      </div>
-
-      <div className="transcript" role="log" ref={log}>
-        {lines.length === 0 ? (
-          <p className="chat-empty">Ask PIT what to trade. It will scan live books, research privately, and wait for TRADE NOW on this computer.</p>
+      <div className={island?.busy ? "agent-body with-rail" : "agent-body"}>
+        <div
+          className="agent-stream"
+          role="log"
+          ref={log}
+          onScroll={() => {
+            const box = log.current;
+            if (!box) return;
+            stick.current = box.scrollHeight - box.scrollTop - box.clientHeight < 96;
+          }}
+        >
+          {lines.length === 0 && !showMission ? (
+            <p className="chat-empty">Ask PIT what to trade. It will scan live books, research privately, and wait for TRADE NOW on this computer.</p>
+          ) : null}
+          {stream.map((row, i) =>
+            row.mission ? (
+              <article key={`mission-${i}`} className="turn pit mission">
+                <div className="turn-meta">
+                  <span className="who">PIT</span>
+                </div>
+                <AgentRun
+                  busy={Boolean(island?.busy)}
+                  coin={island?.coin || ""}
+                  stage={island?.stage || ""}
+                  elapsedMs={island?.elapsedMs || 0}
+                  jobId={island?.jobId || ""}
+                  pollMiss={Boolean(island?.pollMiss)}
+                  updatedAt={island?.updatedAt}
+                  roles={island?.roles || []}
+                  kind={island?.kind || ""}
+                  coins={coins || []}
+                  scanned={scanned || 0}
+                  buyingPower={buyingPower}
+                  powerSource={powerSource}
+                  watchAgeMs={watchAgeMs}
+                  bestWhy={bestWhy}
+                  preview={preview || null}
+                  previewHash={previewHash}
+                  lastOrder={lastOrder}
+                  lastOid={lastOid}
+                  activity={activity || []}
+                  evidence={evidence}
+                  researchNote={researchNote}
+                  researchStop={researchStop}
+                  huntRejected={huntRejected || []}
+                  huntSurvived={huntSurvived || ""}
+                  pinned={Boolean(pinned)}
+                  sessionAlive={Boolean(sessionAlive)}
+                  autonomy={autonomy || "manual"}
+                  researchSku={researchSku}
+                  authBusy={authBusy}
+                  authErr={authErr}
+                  onAsk={ask}
+                  onOpenPreview={onOpenPreview}
+                  onOpenPolicy={() => onNavigate("security")}
+                  onOpenAutomation={() => onNavigate("automation")}
+                  onOpenActivity={() => onNavigate("activity")}
+                  onStop={() => onStop?.()}
+                  onTradeNow={onTradeNow}
+                />
+              </article>
+            ) : (
+              <article key={`${row.m?.ts}-${i}`} className={`turn ${row.m?.role === "user" ? "user" : "pit"}`}>
+                <div className="turn-meta">
+                  <span className="who">{row.m?.role === "user" ? "You" : "PIT"}</span>
+                  {row.m?.ts ? <time>{new Date(row.m.ts).toLocaleTimeString()}</time> : null}
+                </div>
+                <TurnBody text={row.text || ""} />
+              </article>
+            ),
+          )}
+          <div ref={end} />
+        </div>
+        {island?.busy ? (
+          <aside className="agent-rail" aria-label="Live context">
+            <p className="agent-kicker">Working</p>
+            <p className="agent-rail-coin">{island.coin || "markets"}</p>
+            <p>{(island.stage || "scanning").replaceAll("_", " ").toLowerCase()}</p>
+            {island.elapsedMs > 0 ? <p>{(island.elapsedMs / 1000).toFixed(0)}s</p> : null}
+          </aside>
         ) : null}
-        {visibleTurns(lines).map((row, i) => (
-          <article key={`${row.m.ts}-${i}`} className={`turn ${row.m.role === "user" ? "user" : "pit"}`}>
-            <div className="turn-meta">
-              <span className="who">{row.m.role === "user" ? "You" : "PIT"}</span>
-              {row.m.ts ? <time>{new Date(row.m.ts).toLocaleTimeString()}</time> : null}
-            </div>
-            <TurnBody text={row.text} />
-          </article>
-        ))}
-        <div ref={end} />
       </div>
 
       <form className="composer" onSubmit={onSubmit}>
-        <div className="prompt-chips">
-          {lines.length === 0
-            ? PRIMARY.map((p) => (
-                <button
-                  key={p.label}
-                  type="button"
-                  className="chip-btn"
-                  disabled={Boolean(island?.busy && huntLike(p.q))}
-                  onClick={() => void ask(p.q)}
-                >
-                  {p.label}
-                </button>
-              ))
-            : null}
-          <button type="button" className="chip-btn" onClick={() => setMoreOpen((v) => !v)}>More</button>
-        </div>
-        {moreOpen ? (
-          <div className="prompt-chips more">
-            {MORE.filter((p) => chipFresh(p.q, lastUserText(lines))).map((p) => (
-              <button key={p.label} type="button" className="chip-btn" onClick={() => void ask(p.q)}>{p.label}</button>
+        {chips.length ? (
+          <div className="prompt-chips">
+            {chips.map((p) => (
+              <button key={p.label} type="button" className="chip-btn" disabled={Boolean(island?.busy && huntLike(p.q))} onClick={() => void ask(p.q)}>
+                {p.label}
+              </button>
             ))}
           </div>
         ) : null}
         <textarea
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
-          placeholder="Ask PIT what to trade, research, explain, or watch…"
+          placeholder="Ask PIT to research, compare, prepare, trade, or watch…"
           rows={3}
           onKeyDown={(e) => {
             if (e.key === "Enter" && !e.shiftKey) {
@@ -392,32 +404,19 @@ export function CommandChat({
               setDraft("");
               void ask(text);
             }
+            if (e.key === "Escape") onStop?.();
           }}
         />
         <div className="composer-row">
           <p className="fine">Enter send · Shift+Enter newline · Esc stop research · Ctrl+K command</p>
-          <button type="submit" className="primary" disabled={busy || !draft.trim()}>Send</button>
+          <button type="submit" className="primary" disabled={busy || !draft.trim()}>
+            Send
+          </button>
         </div>
         {err ? <p className="fine">{err}</p> : null}
       </form>
     </section>
   );
-}
-
-function lastUserText(lines: ChatMessage[]) {
-  for (let i = lines.length - 1; i >= 0; i--) {
-    if (lines[i].role === "user") return String(lines[i].text || "");
-  }
-  return "";
-}
-
-function chipFresh(q: string, lastUser: string) {
-  const a = q.toLowerCase().replace(/[^a-z0-9 ]/g, " ").replace(/\s+/g, " ").trim();
-  const b = lastUser.toLowerCase().replace(/[^a-z0-9 ]/g, " ").replace(/\s+/g, " ").trim();
-  if (!a || !b) return true;
-  if (a === b) return false;
-  if (b.includes(a) || a.includes(b)) return false;
-  return true;
 }
 
 export function displayTurn(m: ChatMessage) {
@@ -439,10 +438,46 @@ function visibleTurns(lines: ChatMessage[]) {
   for (const m of lines) {
     const text = displayTurn(m);
     if (!text) continue;
+    if (huntDump(text) || huntDump(String(m.text || ""))) continue;
     const prev = out[out.length - 1];
     if (prev && prev.m.role === m.role && prev.text === text) continue;
     out.push({ m, text });
   }
+  return out;
+}
+
+function lastHuntUserIndex(lines: ChatMessage[]) {
+  for (let i = lines.length - 1; i >= 0; i--) {
+    if (lines[i].role === "user" && huntLike(String(lines[i].text || ""))) return i;
+  }
+  return -1;
+}
+
+function composeStream(lines: ChatMessage[], showMission: boolean) {
+  const vis = visibleTurns(lines);
+  if (!showMission) return vis.map((row) => ({ ...row, mission: false as const }));
+  const huntAt = lastHuntUserIndex(lines);
+  const out: Array<{ m?: ChatMessage; text?: string; mission?: boolean }> = [];
+  let placed = false;
+  if (!vis.length) {
+    return [{ mission: true }];
+  }
+  for (const row of vis) {
+    out.push({ ...row, mission: false });
+    if (!placed && huntAt >= 0 && row.m === lines[huntAt]) {
+      out.push({ mission: true });
+      placed = true;
+    }
+  }
+  if (!placed) {
+    const lastUser = [...vis].reverse().find((r) => r.m.role === "user");
+    if (lastUser && huntLike(String(lastUser.m.text || ""))) {
+      const idx = out.findIndex((r) => r.m === lastUser.m);
+      out.splice(idx + 1, 0, { mission: true });
+      placed = true;
+    }
+  }
+  if (!placed) out.push({ mission: true });
   return out;
 }
 
