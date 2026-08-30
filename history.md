@@ -2316,6 +2316,31 @@ CLASSIFICATION:
 PRODUCTION READY: 0.8.0 passport is honest about what ERC-7857 can do on Aristotle today.
 NEXT STEP: Commit, push, Vercel. Judge can open `/agent` without a wallet.
 
+---
+
+## M108 — Restore coral landing design, keep WEB 2.0 copy (2026-08-30)
+
+DATE/TIME: 2026-08-30 07:44+03
+PHASE: Visual restore. Do not flatten OID 529167222216. Do not remint PIT-4bbee556. Do not invent fills or APR.
+GOAL: Put back the coral PIT landing (grain, mega type, pipeline ring, marquee, motion) and compact CTAs. Keep WEB 2.0 copy, live radar tape, and public routes. Kill the full-width mobile Download bar.
+RESULT:
+- **IMPLEMENTED:** Still **0.8.0**.
+  1. `/` is the restored guide landing: coral hero, WireTurn, pipeline ring, moments track, Dual MAINNET, live tape, marquee, ledger, FAQ, CTA band.
+  2. New copy stays: "Your trading agent doesn't sleep. Your keys don't leave your machine." Explore / Download / Verify. No Connect-your-wallet primary CTA.
+  3. Live tape reads health `/watch` in the old visual language. Capital / radar / proof / agent routes unchanged.
+  4. Mobile dock is two compact pills (Radar, Download), not a stretched red bar.
+- **TESTED:** Playwright 22/22 PASS.
+- **UNVERIFIED:** Vercel alias after this commit (deploy next).
+- **BLOCKED:** iTransfer UNAVAILABLE. Authenticode absent.
+
+SECURITY RESULT: Web still cannot authorize, pin, or enable autonomy. Session keys stay off the browser.
+TX HASH / OID: Historical OID `529167222216` unchanged.
+CLASSIFICATION:
+- Coral landing restore: **IMPLEMENTED + TESTED**
+- Full-width dock CTA: **REMOVED**
+PRODUCTION READY: Landing looks like PIT again. Product routes still discover/prove only.
+NEXT STEP: Push and alias pit0g.vercel.app.
+
 
 
 

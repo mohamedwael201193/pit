@@ -10,7 +10,7 @@ import { SettingsPage } from "./app/SettingsPage";
 import { VerifyPage } from "./app/VerifyPage";
 import { PairPage } from "./PairPage";
 import { PublicShell } from "./public/Shell";
-import { HomeLanding } from "./public/Home";
+import { Landing } from "./landing/Landing";
 import { RadarPage } from "./public/Radar";
 import { MarketPage } from "./public/Market";
 import { CapitalPage } from "./public/Capital";
@@ -24,8 +24,8 @@ import { DownloadPage } from "./public/Download";
 export function App() {
   return (
     <Routes>
+      <Route path="/" element={<Landing />} />
       <Route element={<PublicShell />}>
-        <Route path="/" element={<HomeLanding />} />
         <Route path="/radar" element={<RadarPage />} />
         <Route path="/radar/:coin" element={<MarketPage />} />
         <Route path="/capital" element={<CapitalPage />} />

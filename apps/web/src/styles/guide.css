@@ -280,8 +280,8 @@ html[data-theme="guide"] body {
 
 .intel-shell {
   min-height: 100dvh;
-  background: #0b0b0c;
-  color: #ece8e1;
+  background: #1a1a1a;
+  color: #f0e7d4;
   padding-bottom: 5.5rem;
 }
 
@@ -595,10 +595,17 @@ a.intel-row:hover {
   left: 0;
   z-index: 30;
   display: flex;
+  justify-content: flex-end;
+  align-items: center;
   gap: 0.5rem;
-  border-top: 1px solid rgb(236 232 225 / 0.12);
-  background: #0b0b0c;
-  padding: 0.65rem 1rem calc(0.65rem + env(safe-area-inset-bottom));
+  border-top: 1px solid rgb(240 231 212 / 0.18);
+  background: #1a1a1a;
+  padding: 0.55rem 1rem calc(0.55rem + env(safe-area-inset-bottom));
+}
+
+.intel-dock .pill {
+  flex: 0 0 auto;
+  width: auto;
 }
 
 .intel-ask {
@@ -607,11 +614,19 @@ a.intel-row:hover {
   bottom: 4.75rem;
   z-index: 35;
   border-radius: 999px;
-  background: #ece8e1;
-  color: #0b0b0c;
+  background: #f0e7d4;
+  color: #1a1a1a;
   padding: 0.55rem 0.95rem;
   font-size: 0.8125rem;
   font-weight: 650;
+}
+
+.guide-shell:not(.intel-shell) .intel-ask {
+  bottom: 1.25rem;
+}
+
+.guide-shell:not(.intel-shell) .intel-chat {
+  bottom: 4.5rem;
 }
 
 @media (min-width: 640px) {
