@@ -1210,6 +1210,7 @@ export function App() {
               capitalNote={capitalNote || summary.capitalNote}
               powerSource={powerSource || summary.powerSource}
               fundHref={hyperliquidApp(net)}
+              experienceWhy={experienceWhy}
               onResearch={(c) => void researchThis(c)}
               onGo={(v) => setView(v)}
             />

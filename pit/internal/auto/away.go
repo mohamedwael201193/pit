@@ -34,7 +34,7 @@ func awayPath(dir string) string {
 func HumanWhy(code string) string {
 	switch strings.TrimSpace(code) {
 	case "insufficient_margin":
-		return "Not enough available trading capital for this market."
+		return "This account cannot clear that book's Hyperliquid floor. PIT will not invent size."
 	case "below_min_notional", "below_minimum":
 		return "This market's rounded Hyperliquid minimum is above this account's buying power. PIT will not invent size."
 	case "policy_denied", "policy_fail", "asset_blocked":

@@ -486,8 +486,8 @@ function humanStop(s: string) {
   if (s === "consecutive_loss_limit") return "Consecutive loss ceiling";
   if (s === "duplicate_preview") return "Duplicate preview";
   if (s === "preview_before_guarded") return "Preview started before enable";
-  if (s === "insufficient_margin") return "Not enough available trading capital for this market.";
-  if (s === "below_min_notional") return "This account cannot size a clip at the $10 Hyperliquid minimum.";
+  if (s === "insufficient_margin") return "This account cannot clear that book's Hyperliquid floor. PIT will not invent size.";
+  if (s === "below_min_notional") return "This book's rounded Hyperliquid minimum is above this account and policy. PIT will not invent size.";
   if (s === "no_opportunity") return "Nothing qualifies under your law right now.";
   return s.replaceAll("_", " ");
 }

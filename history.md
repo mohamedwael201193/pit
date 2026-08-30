@@ -2155,6 +2155,22 @@ RESULT:
 SECURITY RESULT: Chat/web/MCP still cannot authorize, pin, or enable autonomy.
 TX HASH / OID: Historical OID `529167222216` unchanged.
 
+---
+
+## M102 — Chat lists per-book floors; Desk shows lesson line (2026-08-30)
+
+DATE/TIME: 2026-08-30 04:42+03
+PHASE: 0.7.3 follow-up. Do not flatten OID 529167222216. Do not remint. Do not invent size. Do not enable Guarded Autonomy. Do not auto-pin.
+GOAL: Late war rooms still saw Chat latch a skipped coin and Desk omit verified-experience copy. Fix that honesty without a new clip.
+RESULT:
+- **IMPLEMENTED:** `formatBookFloors` lists each policy-eligible min/shortfall. `replyWhyNotTrade` no longer leads with `LatestSkip`. Desk hero shows `experienceWhy`. Chat prompt “What did we learn on HYPE?”. `HumanWhy(insufficient_margin)` no longer says “this market.”
+- **TESTED:** `TestFormatBookFloorsListsPerMarketShortfall`. `go test ./internal/companion ./internal/auto` PASS. Desktop `tsc -b` PASS.
+- **LIVE VERIFIED:** Not yet — overlay companion after this commit.
+- **BLOCKED:** New MAINNET clip unchanged.
+
+SECURITY RESULT: Chat still cannot AUTHORIZE.
+TX HASH / OID: Historical OID `529167222216` unchanged.
+
 
 
 

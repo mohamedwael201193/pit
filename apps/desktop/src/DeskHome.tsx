@@ -55,6 +55,7 @@ export function DeskHome({
   capitalNote,
   powerSource,
   fundHref,
+  experienceWhy,
   onResearch,
   onGo,
 }: {
@@ -87,6 +88,7 @@ export function DeskHome({
   capitalNote?: string;
   powerSource?: string;
   fundHref?: string;
+  experienceWhy?: string;
   onResearch: (coin: string) => void;
   onGo: (view: "markets" | "research" | "security" | "chat" | "automation" | "portfolio" | "activity") => void;
 }) {
@@ -173,6 +175,7 @@ export function DeskHome({
             {execGate ? ` · ${execGate.replaceAll("_", " ")}` : ""}
           </p>
           <p>{execWhy || capitalNote || gate.detail}</p>
+          {experienceWhy ? <p className="fine">{experienceWhy}</p> : null}
           {!gate.canOpen && fundHref ? (
             <p className="fine">
               <ExternalLink className="linkish" href={fundHref}>

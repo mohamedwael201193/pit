@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/mohamedwael201193/pit/internal/compute"
+	"github.com/mohamedwael201193/pit/internal/watch"
 )
 
 func TestChatWhatIsHappeningIdle(t *testing.T) {
@@ -43,6 +44,26 @@ func TestChatCannotExecute(t *testing.T) {
 	}
 	if !strings.Contains(rec.Body.String(), "AUTHORIZE") {
 		t.Fatal(rec.Body.String())
+	}
+}
+
+func TestFormatBookFloorsListsPerMarketShortfall(t *testing.T) {
+	got := formatBookFloors(9.38, []watch.PublicCoin{
+		{Coin: "AVAX", PolicyEligible: true, MinNotional: 10.02},
+		{Coin: "BTC", PolicyEligible: true, MinNotional: 10.16},
+		{Coin: "SOL", Eligible: false, PolicyEligible: false, MinNotional: 10.52},
+	})
+	if !strings.Contains(got, "AVAX $0.64 short of $10.02") {
+		t.Fatal(got)
+	}
+	if !strings.Contains(got, "BTC $0.78 short of $10.16") {
+		t.Fatal(got)
+	}
+	if strings.Contains(got, "SOL") {
+		t.Fatal(got)
+	}
+	if strings.Contains(got, "Latest:") {
+		t.Fatal(got)
 	}
 }
 

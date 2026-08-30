@@ -190,19 +190,43 @@ func (h *Hub) pickBestCoin() string {
 	return ""
 }
 
+func formatBookFloors(bp float64, coins []watch.PublicCoin) string {
+	parts := make([]string, 0, 8)
+	n := 0
+	for _, c := range coins {
+		if !c.PolicyEligible && !c.Eligible {
+			continue
+		}
+		n++
+		min := c.MinNotional
+		if min <= 0 {
+			parts = append(parts, c.Coin+" min unknown")
+			continue
+		}
+		if bp+1e-9 < min {
+			parts = append(parts, fmt.Sprintf("%s $%.2f short of $%.2f", c.Coin, min-bp, min))
+			continue
+		}
+		if c.ExecutionFeasible {
+			parts = append(parts, fmt.Sprintf("%s executable at min $%.2f", c.Coin, min))
+			continue
+		}
+		parts = append(parts, fmt.Sprintf("%s min $%.2f", c.Coin, min))
+	}
+	if n == 0 {
+		return "No policy-eligible books in this Watch."
+	}
+	return fmt.Sprintf("%d pass policy. %s", n, strings.Join(parts, "; "))
+}
+
 func (h *Hub) replyWhyNotTrade() string {
 	cap := h.capitalNow()
 	pol := cli.ActivePolicy(h.Dir)
 	away := auto.LoadAway(h.Dir)
-	m := auto.LoadMission(h.Dir)
 	p := auto.Load(h.Dir)
-	note := strings.TrimSpace(m.SearchNote)
-	if note == "" {
-		if last := p.LatestSkip(); last.Coin != "" {
-			note = auto.SearchNote(last.Coin, last.Kind, "")
-		}
-	}
+	floors := "Watch did not return sized books on this computer."
 	nextLine := "No remaining candidate qualifies under this account and law."
+	bestCoin := ""
 	st, err := cli.Load(h.Dir)
 	netName := "mainnet"
 	if err == nil && strings.TrimSpace(st.Network) != "" {
@@ -213,9 +237,11 @@ func (h *Hub) replyWhyNotTrade() string {
 		if lerr == nil {
 			view := watch.Public(cands, string(net))
 			view = h.annotateWatch(view, pol)
+			floors = formatBookFloors(cap.BuyingPower, view.Coins)
 			skip := p.SkipSet(time.Now().Unix())
 			best, exe, ok := watch.NextCandidate(cands, cap, pol, h.sessionAliveNow(), h.policyPinnedNow(), skip)
 			if ok {
+				bestCoin = best.Coin
 				why := ""
 				for _, c := range view.Coins {
 					if strings.EqualFold(c.Coin, best.Coin) {
@@ -237,16 +263,9 @@ func (h *Hub) replyWhyNotTrade() string {
 			}
 		}
 	}
-	if note == "" {
-		block, why := policy.ExecWhy(h.openPositionCount(), cap.BuyingPower, pol)
-		human := auto.HumanWhy(block)
-		if human == "" {
-			human = why
-		}
-		note = human
-	}
-	return fmt.Sprintf("Why PIT did not trade: %s Buying power $%.2f (%s). Scan continues past a blocked or stood-down book. %s While you were away: %d detected, %d researched, %d refused, %d autonomous trades. Chat cannot AUTHORIZE. PIT will not invent size.",
-		note, cap.BuyingPower, cap.PowerSource, nextLine, away.Detected, away.Researched, away.Rejected, away.Traded)
+	lesson := h.whyThisSetup(bestCoin)
+	return fmt.Sprintf("Why PIT did not trade: Buying power $%.2f (%s). %s Scan continues past a blocked or stood-down book. %s While you were away: %d detected, %d researched, %d refused, %d autonomous trades. %s Chat cannot AUTHORIZE. PIT will not invent size.",
+		cap.BuyingPower, cap.PowerSource, floors, nextLine, away.Detected, away.Researched, away.Rejected, away.Traded, lesson)
 }
 
 func (h *Hub) replyMissionEnable() string {

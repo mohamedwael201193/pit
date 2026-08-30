@@ -16,6 +16,7 @@ const PROMPTS = [
   "Why didn't you trade?",
   "Why is nothing executable?",
   "Why this setup matters",
+  "What did we learn on HYPE?",
   "Research the best one.",
   "Show my evidence.",
 ];
