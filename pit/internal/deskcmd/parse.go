@@ -83,8 +83,12 @@ func Parse(text string) Result {
 	}
 	if wantsAcceptPreview(low) {
 		out.Tool = "preview.show"
-		out.Navigate = "research"
-		out.Reply = "Accepting is AUTHORIZE on this computer. Chat cannot AUTHORIZE. Open Research and type AUTHORIZE on the exact preview."
+		out.Reply = "TRADE NOW on this computer submits the exact preview through the host. The model cannot AUTHORIZE."
+		return out
+	}
+	if wantsRejectPreview(low) {
+		out.Tool = "watch.why_not"
+		out.Reply = "Rejected. No order was created. That is a valid result."
 		return out
 	}
 	if wantsWhyEnter(low) && !wantsResearch(low) {
@@ -554,7 +558,7 @@ func wantsResearchBest(low string) bool {
 
 func wantsAcceptPreview(low string) bool {
 	t := strings.Trim(low, "!?. ")
-	if t == "accept" || t == "i accept" || t == "yes enter" {
+	if t == "accept" || t == "i accept" || t == "yes enter" || t == "trade this" || t == "trade now" {
 		return true
 	}
 	return strings.Contains(low, "i accept") ||
@@ -562,7 +566,14 @@ func wantsAcceptPreview(low string) bool {
 		strings.Contains(low, "accept this") ||
 		strings.Contains(low, "enter the trade") ||
 		strings.Contains(low, "enter this trade") ||
-		strings.Contains(low, "enter it now")
+		strings.Contains(low, "enter it now") ||
+		strings.Contains(low, "trade this") ||
+		strings.Contains(low, "trade now")
+}
+
+func wantsRejectPreview(low string) bool {
+	t := strings.Trim(low, "!?. ")
+	return t == "reject" || strings.Contains(low, "reject this") || strings.Contains(low, "do not trade")
 }
 
 func wantsWhyEnter(low string) bool {

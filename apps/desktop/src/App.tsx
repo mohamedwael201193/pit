@@ -1,6 +1,7 @@
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { NetworkToggle } from "./NetworkToggle";
 import { isDeveloper, armDeveloper } from "./developer";
+import { confirmAuthorize } from "./authorize";
 import { committeeDeny } from "./committee";
 import {
   authorizePreview,
@@ -40,6 +41,7 @@ import {
   saveAutomation,
   setKillSwitch,
   startResearch,
+  openResearchStream,
   wakeCompanion,
   type AccountSummary,
   type ActivityEvent,
@@ -160,6 +162,7 @@ export function App() {
   const [pollMiss, setPollMiss] = useState(false);
   const [researchJobId, setResearchJobId] = useState("");
   const [researchKind, setResearchKind] = useState("");
+  const [researchUpdated, setResearchUpdated] = useState(0);
   const [preview, setPreview] = useState<NonNullable<BindResult["preview"]> | null>(null);
   const [previewHash, setPreviewHash] = useState("");
   const [authTyped, setAuthTyped] = useState("");
@@ -894,10 +897,16 @@ export function App() {
         setPreview(st.preview);
         setPreviewHash(st.preview_hash || st.preview.hash || "");
       }
+      if (typeof st.updated_at === "number") setResearchUpdated(st.updated_at);
       return roles;
     }
 
     async function followJob(genNow: number, startedAt: number) {
+      const stopStream = openResearchStream((st) => {
+        if (genNow !== researchGen.current) return;
+        applyStatus(st);
+      });
+      try {
       for (;;) {
         await sleep(1000);
         if (genNow !== researchGen.current) return;
@@ -932,6 +941,9 @@ export function App() {
         setResearchNote(st.note || "Sealed committee verified on this computer.");
         return;
       }
+      } finally {
+        stopStream();
+      }
     }
   }
 
@@ -942,6 +954,29 @@ export function App() {
     setResearchStop(r.error || "research_cancelled");
     if (r.stage) setResearchStage(r.stage);
     if (typeof r.elapsed_ms === "number") setResearchElapsed(r.elapsed_ms);
+  }
+
+  async function onAgentTrade() {
+    const gate = confirmAuthorize("AUTHORIZE", sessionAlive);
+    if (gate) {
+      setAuthErr(gate);
+      return;
+    }
+    if (!preview?.eligible || !previewHash) {
+      setAuthErr("preview_required");
+      return;
+    }
+    setAuthBusy(true);
+    setAuthErr(null);
+    const r = await authorizePreview("AUTHORIZE", previewHash);
+    setAuthBusy(false);
+    if (r.error) {
+      setAuthErr(r.error);
+      return;
+    }
+    if (r.oid) setLastOid(String(r.oid));
+    setAuthTyped("");
+    setChecks(await doctor());
   }
 
   async function onAuthorize(e: FormEvent) {
@@ -1192,7 +1227,7 @@ export function App() {
             ) : null}
           </div>
         </header>
-        {setupDone ? (
+        {setupDone && !showChat ? (
           <PairingDock
             compact
             code={code}
@@ -1289,6 +1324,7 @@ export function App() {
               onResearch={(c, hyp) => void researchThis(c, "chat", { hypothesis: hyp })}
               onOpenPreview={() => setView("research")}
               onStop={() => void onCancelResearch()}
+              onTradeNow={() => void onAgentTrade()}
               island={{
                 busy: researchBusy,
                 coin: researchCoin,
@@ -1296,6 +1332,7 @@ export function App() {
                 elapsedMs: researchElapsed,
                 jobId: researchJobId,
                 pollMiss,
+                updatedAt: researchUpdated,
                 roles: researchRoles,
                 kind: researchKind,
               }}
@@ -1307,6 +1344,7 @@ export function App() {
               bestWhy={bestWhy}
               activity={activity}
               preview={preview}
+              previewHash={previewHash}
               lastOrder={status?.lastOrder}
               lastOid={lastOid}
               evidence={researchEvidenceText ? (() => { try { return JSON.parse(researchEvidenceText); } catch { return null; } })() : null}
@@ -1317,6 +1355,8 @@ export function App() {
               pinned={pinned}
               sessionAlive={sessionAlive}
               autonomy={mission.mode || "manual"}
+              authBusy={authBusy}
+              authErr={authErr}
             />
             ) : null}
             {showChat ? null : (

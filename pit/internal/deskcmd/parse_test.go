@@ -17,7 +17,7 @@ func TestWhyDidntYouTrade(t *testing.T) {
 }
 
 func TestRefuseExecute(t *testing.T) {
-	for _, q := range []string{"buy ETH", "trade now", "I authorize it", "just do it", "flatten ETH", "close my position"} {
+	for _, q := range []string{"buy ETH", "I authorize it", "just do it", "flatten ETH", "close my position"} {
 		r := Parse(q)
 		if r.Execute || r.StartResearch {
 			t.Fatalf("%s %+v", q, r)
@@ -25,6 +25,10 @@ func TestRefuseExecute(t *testing.T) {
 		if r.Navigate != "preview" {
 			t.Fatalf("%s navigate %s", q, r.Navigate)
 		}
+	}
+	r := Parse("trade now")
+	if r.Execute || r.StartResearch || r.Tool != "preview.show" || r.Navigate != "" {
+		t.Fatalf("trade now %+v", r)
 	}
 }
 
@@ -194,7 +198,15 @@ func TestAutonomyIntents(t *testing.T) {
 		t.Fatalf("%+v", r)
 	}
 	r = Parse("I accept")
-	if r.Execute || r.StartResearch || r.Tool != "preview.show" || r.Navigate != "research" {
+	if r.Execute || r.StartResearch || r.Tool != "preview.show" || r.Navigate != "" {
+		t.Fatalf("%+v", r)
+	}
+	r = Parse("Trade this")
+	if r.Execute || r.StartResearch || r.Tool != "preview.show" || r.Navigate != "" {
+		t.Fatalf("%+v", r)
+	}
+	r = Parse("Reject this")
+	if r.Execute || r.StartResearch || r.Tool != "watch.why_not" {
 		t.Fatalf("%+v", r)
 	}
 	r = Parse("AUTHORIZE")

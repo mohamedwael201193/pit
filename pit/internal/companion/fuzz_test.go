@@ -82,6 +82,57 @@ func TestChatFindBestOpportunityStaysOnChat(t *testing.T) {
 	}
 }
 
+func TestChatFindBestWhileRunningStaysQuiet(t *testing.T) {
+	h := New(t.TempDir())
+	h.researchMu.Lock()
+	h.job.running = true
+	h.job.coin = "AVAX"
+	h.job.ID = "292ecf1bdeadbeef"
+	h.job.stage = "CHALLENGER"
+	h.researchMu.Unlock()
+	req := local(httptest.NewRequest(http.MethodPost, "/local/chat", bytes.NewBufferString(`{"text":"Find the best opportunity available right now."}`)))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+	h.Handler().ServeHTTP(rec, req)
+	body := rec.Body.String()
+	if strings.Contains(body, `"start_research":true`) || strings.Contains(body, `"execute":true`) {
+		t.Fatal(body)
+	}
+	if strings.Contains(body, "292ecf1b") {
+		t.Fatal("job id leaked into chat")
+	}
+	if !strings.Contains(body, "AVAX") || !strings.Contains(body, "Still researching") {
+		t.Fatal(body)
+	}
+}
+
+func TestResearchStreamClosesWhenIdle(t *testing.T) {
+	h := New(t.TempDir())
+	req := local(httptest.NewRequest(http.MethodGet, "/local/research/stream", nil))
+	rec := httptest.NewRecorder()
+	h.Handler().ServeHTTP(rec, req)
+	if rec.Code != 200 {
+		t.Fatal(rec.Code, rec.Body.String())
+	}
+	if !strings.Contains(rec.Header().Get("Content-Type"), "text/event-stream") {
+		t.Fatal(rec.Header().Get("Content-Type"))
+	}
+	body := rec.Body.String()
+	if !strings.Contains(body, `"running":false`) {
+		t.Fatal(body)
+	}
+	if strings.Contains(strings.ToLower(body), "app-sk-") {
+		t.Fatal("secret")
+	}
+	req = local(httptest.NewRequest(http.MethodGet, "/local/research/stream", nil))
+	req.Header.Set("Origin", "https://pit0g.vercel.app")
+	rec = httptest.NewRecorder()
+	h.Handler().ServeHTTP(rec, req)
+	if rec.Code != http.StatusForbidden {
+		t.Fatalf("web research stream %d", rec.Code)
+	}
+}
+
 func TestChatGreetingIsNotCannedHelp(t *testing.T) {
 	h := New(t.TempDir())
 	req := local(httptest.NewRequest(http.MethodPost, "/local/chat", bytes.NewBufferString(`{"text":"HI"}`)))

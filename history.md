@@ -2,7 +2,36 @@
 
 ---
 
+## M124 — Desktop Agent as trading operator. PIT 0.9.3
+
+- **Source:** 0.9.2 Agent was unreadable: pairing strip ate the canvas, AgentRun sat inside a transcript that auto-scrolled away, answers were tiny, chips while a job ran dumped "Already researching AVAX (job …, CHALLENGER)" twice, and TRADE NOW did not exist.
+- **Discovery:** The trusted desktop may invoke the existing AUTHORIZE path from an explicit TRADE NOW button. Chat/LLM still cannot construct an order. Pairing belongs in the titlebar Browser chip on Agent. Research progress is event-backed (status poll + `/local/research/stream`), never fake tokens or fake percentages.
+- **Candidate:** Scrollable conversation + sticky live cockpit, larger type, opportunity/research/preview/execution cards, TRADE NOW → `authorizePreview("AUTHORIZE", hash)`, quiet already-researching, hunt still max 3. Version **0.9.3**.
+- **Kill:** Second execution implementation. Chat importing authorizePreview. Fake fills. Fake 0G roots. Flatten OID 529167222216. Remint PIT-4bbee556. Authenticode claim.
+- **Next:** Tag `v0.9.3`, NSIS, overlay `D:\PIT`, Vercel + Render. Do not remint. Do not flatten. Do not start a live trade unless the user clicks TRADE NOW on an exact preview.
+
+DATE/TIME: 2026-08-31 01:40+03
+PHASE: Agent operator UI. Host remains execution authority.
+GOAL: One Agent screen: live scan → 0G Direct → committee → TRADE NOW → real OID.
+RESULT:
+- **IMPLEMENTED:** Pairing dock hidden on Agent. Independent cockpit + transcript scroll. 16.5px answers. TRADE NOW calls existing desktop authorize. SSE `/local/research/stream`. Chat stream no longer fakes 12-rune deltas. Already-researching is a one-liner without job ids.
+- **TESTED:** `go test ./...` PASS including find-best, already-researching quiet, research stream origin lock, trade-this stays on Agent. Desktop `tsc -b` pass. `npx tsx e2e/run.ts` including TRADE NOW callback, no CommandChat authorizePreview, pairing hidden on Agent.
+- **LIVE:** After installer. No new MAINNET fill from this change unless the user clicks TRADE NOW. ETH OID `529167222216` untouched.
+- **BLOCKED:** Authenticode still absent. iTransfer still not live. TRADE NOW still requires exact preview, live session, pinned policy, capital, venue min.
+
+SECURITY RESULT: The model cannot AUTHORIZE. TRADE NOW is an explicit desktop confirmation of the existing host path. Preview hash, session, policy, ledger, and capital gates unchanged.
+TX HASH / OID: Historical OID `529167222216` unchanged.
+CLASSIFICATION:
+- Agent operator UI: **IMPLEMENTED + TESTED**
+- TRADE NOW existing authorize path: **IMPLEMENTED + TESTED**
+- Live MAINNET fill: **NOT STARTED** (needs explicit TRADE NOW)
+PRODUCTION READY: 0.9.3 installer after tag.
+NEXT STEP: `python _scripts/push_head.py`. `python _scripts/tag_push.py v0.9.3`. Deploy web.
+
+---
+
 ## M123 — Chat is the trading agent / one-screen desk. PIT 0.9.2
+
 
 - **Source:** Chat dumped diagnostic prose, sent "Find the best opportunity" to Markets, and made users pick BTC/ETH/AVAX by hand. Judges need one Agent screen: scan → rank → private 0G → committee → policy → exact preview → desktop AUTHORIZE → real OID/fill/proof.
 - **Discovery:** Chat is an orchestration layer over existing Watch, research, policy, capital, and activity. The LLM still cannot pin, arm, authorize, withdraw, or invent a fill. Find-best stays on Chat and starts sealed Direct on the strongest executable book, then hunts the next ranked candidate on a verified no-trade.

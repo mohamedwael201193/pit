@@ -21,21 +21,26 @@ const PRIMARY = [
   { label: "Scan all markets", q: "Scan all markets" },
   { label: "What can I trade now?", q: "What can I trade with my current capital?" },
   { label: "Why didn't PIT trade?", q: "Why didn't you trade?" },
-  { label: "While I sleep", q: "Show me what PIT would trade while I sleep" },
+  { label: "While I sleep", q: "Trade this while I sleep" },
 ];
 
 const MORE = [
   { label: "Find best short", q: "Find me the best short" },
   { label: "Research BTC", q: "Research BTC" },
   { label: "Research ETH", q: "Research ETH" },
-  { label: "Research best opportunity", q: "Research the strongest opportunity" },
   { label: "Compare top", q: "Compare top opportunities" },
   { label: "Explain my policy", q: "Explain my policy" },
   { label: "What is executable?", q: "What is executable?" },
   { label: "Show current exposure", q: "Show current exposure" },
+  { label: "Show proof", q: "Show proof" },
   { label: "Review Sleep Mission", q: "Review Sleep Mission" },
-  { label: "Explain autonomy limits", q: "Explain autonomy limits" },
 ];
+
+function huntLike(text: string) {
+  return /find (me )?(the )?(best|strongest)|scan all markets|what can i trade|research (btc|eth|avax|sol|the strongest)|research the strongest/i.test(
+    text,
+  );
+}
 
 export function CommandChat({
   thread,
@@ -44,6 +49,7 @@ export function CommandChat({
   onOpenPreview,
   onStop,
   onConfirmAutonomy,
+  onTradeNow,
   island,
   coins,
   scanned,
@@ -53,6 +59,7 @@ export function CommandChat({
   bestWhy,
   activity,
   preview,
+  previewHash,
   lastOrder,
   lastOid,
   evidence,
@@ -63,6 +70,8 @@ export function CommandChat({
   pinned,
   sessionAlive,
   autonomy,
+  authBusy,
+  authErr,
 }: {
   thread: string;
   onNavigate: (view: string) => void;
@@ -70,6 +79,7 @@ export function CommandChat({
   onOpenPreview: () => void;
   onConfirmAutonomy?: (hours: number) => void;
   onStop?: () => void;
+  onTradeNow: () => void;
   island?: {
     busy: boolean;
     coin: string;
@@ -77,6 +87,7 @@ export function CommandChat({
     elapsedMs: number;
     jobId: string;
     pollMiss?: boolean;
+    updatedAt?: number;
     roles: Array<{ role?: string; verify_e2ee?: string; proposed_side?: string; survives?: boolean; kill?: boolean }>;
     kind?: string;
   };
@@ -88,6 +99,7 @@ export function CommandChat({
   bestWhy?: string;
   activity?: ActivityEvent[];
   preview?: BindResult["preview"] | null;
+  previewHash?: string;
   lastOrder?: LocalStatus["lastOrder"] | null;
   lastOid?: string;
   evidence?: unknown;
@@ -98,6 +110,8 @@ export function CommandChat({
   pinned?: boolean;
   sessionAlive?: boolean;
   autonomy?: string;
+  authBusy?: boolean;
+  authErr?: string | null;
 }) {
   const [draft, setDraft] = useState("");
   const [busy, setBusy] = useState(false);
@@ -112,13 +126,14 @@ export function CommandChat({
   const [moreOpen, setMoreOpen] = useState(false);
   const [picked, setPicked] = useState<DirectModel | null>(null);
   const end = useRef<HTMLDivElement>(null);
+  const log = useRef<HTMLDivElement>(null);
   const abort = useRef<AbortController | null>(null);
 
   useEffect(() => {
     let gone = false;
     void (async () => {
-      const log = await fetchChatLog(thread);
-      if (!gone) setLines(log);
+      const got = await fetchChatLog(thread);
+      if (!gone) setLines(got);
     })();
     return () => {
       gone = true;
@@ -144,11 +159,26 @@ export function CommandChat({
   }, []);
 
   useEffect(() => {
-    end.current?.scrollIntoView({ block: "end" });
-  }, [lines, island?.stage, island?.elapsedMs, busy]);
+    const box = log.current;
+    if (box) box.scrollTop = box.scrollHeight;
+    else end.current?.scrollIntoView({ block: "end" });
+  }, [lines, busy]);
 
   async function ask(text: string) {
     if (!text || busy) return;
+    if (island?.busy && huntLike(text) && !/why|stop|proof|reject/i.test(text)) {
+      setLines((cur) => [
+        ...cur,
+        { role: "user", text, ts: Date.now(), thread },
+        {
+          role: "pit",
+          text: `Still researching ${island.coin}. Live stages stay on this screen.`,
+          ts: Date.now(),
+          thread,
+        },
+      ]);
+      return;
+    }
     setBusy(true);
     setErr(null);
     setMoreOpen(false);
@@ -171,7 +201,10 @@ export function CommandChat({
         });
       });
       if (ac.signal.aborted) return;
-      const reply = r.reply || r.error || "PIT could not complete that command.";
+      let reply = r.reply || r.error || "PIT could not complete that command.";
+      if (r.tool === "research.status") {
+        reply = `Still researching ${r.coin || island?.coin || "the live book"}. Watch the stages above.`;
+      }
       setLines((cur) => {
         const next = [...cur];
         const i = streamIdx.n >= 0 ? streamIdx.n : next.length - 1;
@@ -209,7 +242,7 @@ export function CommandChat({
       onResearch(r.coin || "", hyp);
       return;
     }
-    if (r.navigate === "preview" || r.tool === "preview.show") onOpenPreview();
+    if (r.navigate === "preview") onOpenPreview();
     if (r.navigate === "security") onNavigate("security");
     if (r.navigate === "automation") onNavigate("automation");
     if (r.navigate === "setup") onNavigate("setup");
@@ -223,7 +256,7 @@ export function CommandChat({
         <div>
           <p className="label">PIT AGENT</p>
           <div className="honesty-row">
-            <span className="honesty-chip">Private research enabled</span>
+            <span className="honesty-chip">Private research</span>
             <span className="honesty-chip">{CHAT_AGENT_COPY.cannotAuthorize}</span>
             <span className="honesty-chip">Cannot pin</span>
           </div>
@@ -263,7 +296,7 @@ export function CommandChat({
         </div>
       </div>
 
-      <div className="transcript" role="log">
+      <div className="cockpit-live">
         <AgentRun
           busy={Boolean(island?.busy)}
           coin={island?.coin || ""}
@@ -271,6 +304,7 @@ export function CommandChat({
           elapsedMs={island?.elapsedMs || 0}
           jobId={island?.jobId || ""}
           pollMiss={Boolean(island?.pollMiss)}
+          updatedAt={island?.updatedAt}
           roles={island?.roles || []}
           kind={island?.kind || ""}
           coins={coins || []}
@@ -280,6 +314,7 @@ export function CommandChat({
           watchAgeMs={watchAgeMs}
           bestWhy={bestWhy}
           preview={preview || null}
+          previewHash={previewHash}
           lastOrder={lastOrder}
           lastOid={lastOid}
           activity={activity || []}
@@ -292,15 +327,21 @@ export function CommandChat({
           sessionAlive={Boolean(sessionAlive)}
           autonomy={autonomy || "manual"}
           researchSku={researchSku}
+          authBusy={authBusy}
+          authErr={authErr}
           onAsk={ask}
           onOpenPreview={onOpenPreview}
           onOpenPolicy={() => onNavigate("security")}
           onOpenAutomation={() => onNavigate("automation")}
           onOpenActivity={() => onNavigate("activity")}
           onStop={() => onStop?.()}
+          onTradeNow={onTradeNow}
         />
+      </div>
+
+      <div className="transcript" role="log" ref={log}>
         {lines.length === 0 ? (
-          <p className="chat-empty">Ask PIT what to trade, research, explain, or watch. The desk stays the authority.</p>
+          <p className="chat-empty">Ask PIT what to trade. It will scan live books, research privately, and wait for TRADE NOW on this computer.</p>
         ) : null}
         {lines.map((m, i) => (
           <article key={`${m.ts}-${i}`} className={`turn ${m.role === "user" ? "user" : "pit"}`}>
@@ -308,7 +349,7 @@ export function CommandChat({
               <span className="who">{m.role === "user" ? "You" : "PIT"}</span>
               {m.ts ? <time>{new Date(m.ts).toLocaleTimeString()}</time> : null}
             </div>
-            <p className="turn-body">{displayTurn(m)}</p>
+            <TurnBody text={displayTurn(m)} />
           </article>
         ))}
         <div ref={end} />
@@ -317,7 +358,15 @@ export function CommandChat({
       <form className="composer" onSubmit={onSubmit}>
         <div className="prompt-chips">
           {PRIMARY.map((p) => (
-            <button key={p.label} type="button" className="chip-btn" onClick={() => void ask(p.q)}>{p.label}</button>
+            <button
+              key={p.label}
+              type="button"
+              className="chip-btn"
+              disabled={Boolean(island?.busy && huntLike(p.q))}
+              onClick={() => void ask(p.q)}
+            >
+              {p.label}
+            </button>
           ))}
           <button type="button" className="chip-btn" onClick={() => setMoreOpen((v) => !v)}>More</button>
         </div>
@@ -356,10 +405,19 @@ export function CommandChat({
 function displayTurn(m: ChatMessage) {
   const text = String(m.text || "").trim();
   if (!text) return m.role === "pit" ? "Working…" : "";
-  if (m.role === "pit" && text.length > 420) {
-    return text.split("\n")[0];
-  }
   return text;
+}
+
+function TurnBody({ text }: { text: string }) {
+  const parts = String(text || "").split(/\n+/).filter(Boolean);
+  if (!parts.length) return <p className="turn-body">Working…</p>;
+  return (
+    <div className="turn-body">
+      {parts.map((ln, i) => (
+        <p key={i}>{ln}</p>
+      ))}
+    </div>
+  );
 }
 
 function ModelRow({

@@ -2,6 +2,7 @@ package companion
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -683,6 +684,45 @@ func (h *Hub) localResearchStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeLocal(w, http.StatusOK, h.snapshotResearch())
+}
+
+func (h *Hub) localResearchStream(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+	if !httpx.CodeOriginOK(r.Header.Get("Origin")) {
+		http.Error(w, "origin_denied", http.StatusForbidden)
+		return
+	}
+	flusher, ok := w.(http.Flusher)
+	if !ok {
+		writeLocal(w, http.StatusOK, h.snapshotResearch())
+		return
+	}
+	w.Header().Set("Content-Type", "text/event-stream")
+	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Set("Connection", "keep-alive")
+	w.Header().Set("X-Accel-Buffering", "no")
+	w.WriteHeader(http.StatusOK)
+	ctx := r.Context()
+	for {
+		body := h.snapshotResearch()
+		running, _ := body["running"].(bool)
+		b, err := json.Marshal(body)
+		if err == nil && !strings.Contains(strings.ToLower(string(b)), "app-sk-") {
+			_, _ = fmt.Fprintf(w, "data: %s\n\n", b)
+			flusher.Flush()
+		}
+		if !running {
+			return
+		}
+		select {
+		case <-ctx.Done():
+			return
+		case <-time.After(400 * time.Millisecond):
+		}
+	}
 }
 
 func (h *Hub) localResearchResult(w http.ResponseWriter, r *http.Request) {

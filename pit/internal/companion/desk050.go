@@ -181,18 +181,6 @@ func (h *Hub) localChatStream(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/event-stream")
 	w.Header().Set("Cache-Control", "no-cache")
 	flusher, _ := w.(http.Flusher)
-	runes := []rune(parsed.Reply)
-	for i := 0; i < len(runes); i += 12 {
-		end := i + 12
-		if end > len(runes) {
-			end = len(runes)
-		}
-		chunk, _ := json.Marshal(map[string]any{"delta": string(runes[i:end]), "sign": false, "trade": false})
-		_, _ = fmt.Fprintf(w, "data: %s\n\n", chunk)
-		if flusher != nil {
-			flusher.Flush()
-		}
-	}
 	done, _ := json.Marshal(chatDonePayload(parsed, thread, "host-parsed", true))
 	_, _ = fmt.Fprintf(w, "data: %s\n\n", done)
 	if flusher != nil {

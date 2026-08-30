@@ -55,7 +55,6 @@ func (h *Hub) decorateChat(parsed deskcmd.Result) deskcmd.Result {
 		h.researchMu.Lock()
 		running := h.job.running
 		jobCoin := h.job.coin
-		jobID := h.job.ID
 		stage := h.job.stage
 		h.researchMu.Unlock()
 		if running {
@@ -64,7 +63,9 @@ func (h *Hub) decorateChat(parsed deskcmd.Result) deskcmd.Result {
 			parsed.Navigate = ""
 			parsed.Tool = "research.status"
 			parsed.Coin = jobCoin
-			parsed.Reply = fmt.Sprintf("Already researching %s (job %s, %s). Stay here for live stages. Chat cannot AUTHORIZE.", jobCoin, jobID, stage)
+			stageName := strings.ReplaceAll(stage, "_", " ")
+			parsed.Reply = fmt.Sprintf("Still researching %s · %s. Watch the live stages on this screen.", jobCoin, stageName)
+			parsed.Agent = &deskcmd.Agent{Kind: "hunt", Best: jobCoin, Executive: parsed.Reply}
 			break
 		}
 		parsed = h.decorateWatchAgent(parsed)
@@ -420,7 +421,7 @@ func (h *Hub) replyResearch(fallback string) string {
 		return fmt.Sprintf("Committee result: %s (%s). %s One verified role is never a committee result. No order was placed. Open Research.", kind, h.job.deny, roles)
 	}
 	if h.job.eligible && h.job.previewHash != "" {
-		return "Exact preview is on Research. " + roles + " Chat cannot AUTHORIZE it. Type AUTHORIZE only on that card."
+		return "Exact preview is ready on Agent. " + roles + " TRADE NOW on this computer submits it through the host. The model cannot AUTHORIZE."
 	}
 	if h.job.err != "" {
 		return "Last research ended: " + h.job.err + ". That is not a fake success. Open Research."
@@ -446,7 +447,7 @@ func (h *Hub) replyCannotExecute(fallback string) string {
 		if !live {
 			return "An exact preview is waiting, but there is no live order/cancel session. Create a session on Security, then type AUTHORIZE on Research. Chat cannot AUTHORIZE."
 		}
-		return "An exact preview is waiting on Research. Chat cannot AUTHORIZE. Type AUTHORIZE only on that card. Withdraw stays impossible."
+		return "An exact preview is waiting on Agent. TRADE NOW on this computer submits it through the host. The model cannot AUTHORIZE. Withdraw stays impossible."
 	}
 	return fallback
 }

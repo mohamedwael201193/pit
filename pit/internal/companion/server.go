@@ -122,6 +122,7 @@ func (h *Hub) Handler() http.Handler {
 	mux.HandleFunc("/local/research", h.localResearch)
 	mux.HandleFunc("/local/research/start", h.localResearchStart)
 	mux.HandleFunc("/local/research/status", h.localResearchStatus)
+	mux.HandleFunc("/local/research/stream", h.localResearchStream)
 	mux.HandleFunc("/local/research/result", h.localResearchResult)
 	mux.HandleFunc("/local/research/cancel", h.localResearchCancel)
 	mux.HandleFunc("/local/authorize", h.localAuthorize)

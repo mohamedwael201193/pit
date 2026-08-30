@@ -59,7 +59,7 @@ export function researchWhyCopy(input: {
             : "No order was placed.";
   const engine =
     accepted
-      ? "Host sized an exact preview under policy. You still type AUTHORIZE on that card."
+      ? "Host sized an exact preview under policy. TRADE NOW on this computer submits it through the host."
       : stood
         ? "Host did not size. A verified stand-down is the result, not a crash."
         : blocked

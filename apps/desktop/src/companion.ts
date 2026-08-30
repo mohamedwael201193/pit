@@ -77,6 +77,8 @@ export type BindResult = {
   poll?: string;
   seq?: number;
   heartbeat_unix_ms?: number;
+  updated_at?: number;
+  created_at?: number;
   terminal?: boolean;
   terminal_kind?: string;
   card_title?: string;
@@ -450,6 +452,27 @@ export async function researchStatus(): Promise<BindResult> {
   const fetched = rejectSecrets(await fetchJson<BindResult>("/local/research/status"));
   if (fetched) return fetched;
   return { error: "POLL_FAILED", poll: "POLL_FAILED", transient: true, running: true };
+}
+
+export function openResearchStream(onSnap: (s: BindResult) => void): () => void {
+  let es: EventSource | null = null;
+  try {
+    es = new EventSource(`${COMPANION}/local/research/stream`);
+    es.onmessage = (ev) => {
+      try {
+        const data = JSON.parse(ev.data) as BindResult;
+        if (data.sign || data.trade) return;
+        onSnap(data);
+      } catch {
+        /* incomplete event */
+      }
+    };
+  } catch {
+    return () => undefined;
+  }
+  return () => {
+    es?.close();
+  };
 }
 
 export async function researchEvidence(): Promise<BindResult> {
