@@ -1,8 +1,14 @@
 # PIT
 
-**Private intelligence → 0G sealed research + TEE verification + proof → policy-bounded desktop execution → real Hyperliquid.**
+**PIT is a real private AI trading desk.** 0G protects and verifies the private intelligence. Hyperliquid is where the resulting trade executes.
 
-PIT is a private trading desk whose **heart is 0G**. The private book enters Direct TeeML on Aristotle 16661. Researcher, Challenger, and Risk run as sequential sealed envelopes. The host runs VerifyE2EE, sizes the order from pinned policy, and builds one exact preview. You authorize on this computer. Hyperliquid returns an OID. This-job Storage `--proof` files the research and the order. The model cannot set size. Sleep Mission is bounded host automation and arms only here. The web discovers and proves. The desktop protects and acts.
+private market intelligence → 0G Direct sealed research → Researcher / Challenger / Risk → VerifyE2EE → policy sizing → exact preview → user authorization → **real Hyperliquid order** → OID / fill → 0G proof.
+
+0G makes the intelligence private and provable. PIT turns that intelligence into a controlled real trade. Hyperliquid proves the trade happened.
+
+**Recorded Mainnet fill** — job `4a1d45ec-8c3f-4883-a162-19739accb9cf`: Hyperliquid OID **531667200134**, buy 0.16 HYPE @ 80.909, **FILLED**. Matching 0G research [`0x1d2113bd…510b`](https://chainscan.0g.ai/tx/0x1d2113bd683b3ef8be5d74d603018c4bacdd49531bdf201abbc7dea4bb16510b) and order [`0x8c28051b…11fb`](https://chainscan.0g.ai/tx/0x8c28051bec7bebd7af3b6cc75f7aa034d67f9809f9c30eef9a6c9f84ed6c11fb). Storage proof [submission 211566](https://storagescan.0g.ai/submission/211566). Agent `PIT-4bbee556`. FILLED is painted only from Hyperliquid `user_fills`.
+
+The **heart is 0G**. The output is not research alone: a policy-bounded Hyperliquid order you authorize on this computer. The model cannot set size. Sleep Mission is bounded host automation and arms only here. The web discovers and proves. The desktop protects and acts.
 
 **Product 0.9.13** · companion `127.0.0.1:17373` · website [pit0g.vercel.app](https://pit0g.vercel.app) · health [pit-health.onrender.com](https://pit-health.onrender.com/health) (`sign: false`, version `0.9.13`) · installer [direct Windows download](https://pit-health.onrender.com/windows)
 
@@ -10,14 +16,12 @@ PIT is a private trading desk whose **heart is 0G**. The private book enters Dir
 
 ## Watch PIT in action
 
-The launch film is the live desk path: private intelligence sealed in 0G, then a policy-bounded Hyperliquid action you authorize.
+The launch film is the live desk path: private intelligence sealed in 0G, then a real Hyperliquid order you authorize.
 
-**Pair → Protect → Hyperliquid → Policy → Agent → 0G Direct → Researcher → Challenger → Risk → VerifyE2EE → exact preview → AUTHORIZE → fill → proof.**
+**private intelligence → 0G Direct → Researcher → Challenger → Risk → VerifyE2EE → policy → preview → AUTHORIZE → Hyperliquid order → OID / fill → 0G proof.**
 
 - Watch: [https://youtu.be/zYgxDTI7jIk](https://youtu.be/zYgxDTI7jIk)
 - Local master: `edit/PIT-launch.mp4`
-
-Matching recorded evidence (job `4a1d45ec-8c3f-4883-a162-19739accb9cf`): HYPE OID **531667200134** FILLED, with this-job 0G research and order filings on Aristotle. PIT paints FILLED only when Hyperliquid `user_fills` reports filled.
 
 <img src="docs/diagrams/pipeline.png" alt="0G is the heart" width="1280" />
 
@@ -25,7 +29,7 @@ Matching recorded evidence (job `4a1d45ec-8c3f-4883-a162-19739accb9cf`): HYPE OI
 
 ## Why 0G is the heart
 
-A trading book in a public router leaks alpha. A withdraw key empties an account. PIT exists because **private inference, sealed research, TEE verification, provenance, storage proofs, and verifiable order evidence** have to live on 0G — not in the browser, not in MCP, not in a cloud LLM.
+0G is required because the private book must be inferred, challenged, TEE-verified, and proven before a Hyperliquid order exists. **Private inference, sealed research, VerifyE2EE, provenance, Storage `--proof`, and verifiable order evidence** live on 0G. The website, MCP, and public routers do not see the book.
 
 | 0G capability | What PIT uses it for |
 |---|---|

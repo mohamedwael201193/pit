@@ -4,9 +4,10 @@ import { expect, test } from "./fixture";
 
 test("home is intelligence, not a wallet-first landing", async ({ page }) => {
   await page.goto("/");
-  await expect(page.getByRole("heading", { name: /Sealed in 0G/ })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /0G seals the book/ })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Watch PIT in action" })).toBeVisible();
-  await expect(page.getByText("You authorize the fill.")).toBeVisible();
+  await expect(page.getByText("Hyperliquid fills the order.")).toBeVisible();
+  await expect(page.getByText(/OID 531667200134/)).toBeVisible();
   await expect(page.getByRole("link", { name: "Watch PIT in action" }).first()).toHaveAttribute("href", /#watch$/);
   await expect(page.getByRole("link", { name: "Explore PIT" }).first()).toBeVisible();
   await expect(page.getByRole("link", { name: "Download PIT Desktop" }).first()).toBeVisible();
