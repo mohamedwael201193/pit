@@ -13,7 +13,7 @@ DATE/TIME: 2026-08-31 10:20+03
 PHASE: Audit + publish + README + proof honesty. No new live trade.
 GOAL: Product, docs, npm, website download, and public proof agree with the actual 0.9.11 desk.
 RESULT:
-- **IMPLEMENTED:** Health `/windows` + `/checksums`. Vercel redirects the same paths. Website Download/Hero/Pair/How CTAs file the installer. JS SDK `pit-os@0.9.11`. MCP `pit-mcp@0.9.12`. README rewritten (no competitor/hackathon language). Four architecture JPEGs in `docs/diagrams/`. `/proof` links research `0x1d2113bd…` and order `0x8c28051b…`. `/missions` has RECORDED HYPE plus HISTORICAL ETH.
+- **IMPLEMENTED:** Health `/windows` + `/checksums` 302 to the GitHub **asset** URL with **no HTML body**. Vercel redirects the same paths. Website Download/Hero/Pair/How CTAs file the installer. JS SDK `pit-os@0.9.11`. MCP `pit-mcp@0.9.12`. README rewritten (no competitor/hackathon language). Four architecture JPEGs in `docs/diagrams/`. `/proof` links research `0x1d2113bd…` and order `0x8c28051b…`. `/missions` has RECORDED HYPE plus HISTORICAL ETH.
 - **TESTED:** `go test ./... -count=1` all packages ok. Verbose `--- PASS` **653**, `--- FAIL` **0**. `go test ./cmd/health` includes `TestWindowsRedirectsToInstallerNotReleasePage`. `pit-os` 2 pass. `pit-mcp` 3 pass. Desktop `npx tsx e2e/run.ts` PASS. Web Playwright **29 passed** with Vite + `VITE_PRIVY_APP_ID`. Foundry local **UNVERIFIED** (forge not on PATH).
 - **LIVE:** npm `pit-os` 0.9.11 and `pit-mcp` 0.9.12 (verified install). Installer SHA `B621A10504EF1F9031C8C6D28E0B36FDB29B8AD186CEA86BCAC81F209A64515F`. Agent `PIT-4bbee556` reused. No new trade.
 - **UNVERIFIED until this ship’s Render/Vercel:** production `/windows` 302 (code is ready; health process must be redeployed).
