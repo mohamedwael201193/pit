@@ -27,15 +27,15 @@ export function HeroCtas() {
       }}
     >
       <motion.div className="w-full sm:w-auto" style={reduce ? undefined : { x, y }}>
-        <Link to="/radar" className="pill pill-ink">
-          Explore PIT
-        </Link>
+        <a href="#watch" className="pill pill-ink">
+          Watch PIT in action
+        </a>
       </motion.div>
       <a href={windowsInstallerUrl()} className="pill pill-ghost">
         Download PIT Desktop
       </a>
-      <Link to="/missions" className="pill pill-cream">
-        See Sleep Missions
+      <Link to="/radar" className="pill pill-cream">
+        Explore PIT
       </Link>
     </motion.div>
   );

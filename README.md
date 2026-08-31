@@ -1,6 +1,8 @@
 # PIT
 
-PIT is a private trading desk whose **heart is 0G**. The private book never sits on a public chat API. It enters 0G Direct TeeML on Aristotle 16661, is independently challenged inside sealed envelopes, verified on the host, sized by policy, and only then turned into an exact Hyperliquid action you authorize on this computer. The model cannot set size. Sleep Mission is optional bounded host execution and only arms here. The web discovers and proves. The desktop protects and acts.
+**Private intelligence → 0G sealed research + TEE verification + proof → policy-bounded desktop execution → real Hyperliquid.**
+
+PIT is a private trading desk whose **heart is 0G**. The private book enters Direct TeeML on Aristotle 16661. Researcher, Challenger, and Risk run as sequential sealed envelopes. The host runs VerifyE2EE, sizes the order from pinned policy, and builds one exact preview. You authorize on this computer. Hyperliquid returns an OID. This-job Storage `--proof` files the research and the order. The model cannot set size. Sleep Mission is bounded host automation and arms only here. The web discovers and proves. The desktop protects and acts.
 
 **Product 0.9.13** · companion `127.0.0.1:17373` · website [pit0g.vercel.app](https://pit0g.vercel.app) · health [pit-health.onrender.com](https://pit-health.onrender.com/health) (`sign: false`, version `0.9.13`) · installer [direct Windows download](https://pit-health.onrender.com/windows)
 
@@ -8,7 +10,7 @@ PIT is a private trading desk whose **heart is 0G**. The private book never sits
 
 ## Watch PIT in action
 
-The launch film is the live desk path, not a storyboard.
+The launch film is the live desk path: private intelligence sealed in 0G, then a policy-bounded Hyperliquid action you authorize.
 
 **Pair → Protect → Hyperliquid → Policy → Agent → 0G Direct → Researcher → Challenger → Risk → VerifyE2EE → exact preview → AUTHORIZE → fill → proof.**
 
@@ -32,7 +34,7 @@ A trading book in a public router leaks alpha. A withdraw key empties an account
 | Private committee | Sequential Researcher → Challenger → Risk, each a sealed Direct envelope |
 | Storage `--proof` | Official Go client files this-job research and order objects |
 | Aristotle 16661 | Production chain for Serving, Ledger, Flow, Desk ID, and explorer proofs |
-| Provenance | This-job roots and txs — historical receipts are not used as fallback |
+| Provenance | This-job roots and txs on Aristotle and StorageScan |
 
 **0G Direct + glm-5.2.** Provider URL comes from on-chain `getService`. The Direct token stays in the OS keychain under `pit/{network}/{workspace}/direct`. The Router may **list** models. It is forbidden as the inference URL for the sealed book. If Direct fails, PIT **stops**.
 
@@ -247,7 +249,7 @@ An older Hyperliquid fill on the same account, OID `529167222216` (ETH), is hist
 
 ![0G and Hyperliquid evidence](docs/diagrams/proof.png)
 
-Research proof and order proof are filed to 0G Storage for **that** job via the official Go client with `--proof`. `last-research.json` is not a 0G fallback. Public `/proof` lists recorded this-desk filings. It does not run VerifyE2EE in the browser.
+Research proof and order proof are filed to 0G Storage for **that** job via the official Go client with `--proof`. Public `/proof` lists recorded this-desk filings. VerifyE2EE runs on the host sealer.
 
 ---
 
@@ -265,25 +267,25 @@ The public website does not show your book.
 
 ## Memory / Skillbook
 
-PIT preserves workspace knowledge on this computer. It does not claim the model learned to trade.
+PIT preserves workspace knowledge on this computer as sealed Skillbook and Experience rows the next hunt can retrieve.
 
 - **Skillbook** (`skillbook.enc`) is AES-sealed on disk. Entries are typed memory rows (observation, forecast, execution, outcome, and related kinds). `PublicSkillbook` returns **NOT ENOUGH DATA** until `experience.MinSamples` (5) verified memory rows. Skills never carry `sign`, `trade`, or `authorize`.
 - **Experience** (`experience.enc`) is a workspace-local journal of verified cases: coin, decision, preview hash, OID, and a why line. Research, fills, and resting OIDs append here. Chat “why this setup” reads `experience.why`. It cannot AUTHORIZE.
 - **Strategy Health** UI copy is “Resolved observations only.” A skill with no resolved outcomes stays NOT ENOUGH DATA. Calibration (Brier / ECE) stays unpublished until the sample floor.
 - **Forget** is desktop Security: `POST /local/memory/forget`. Two wallets never share a workspace, session, policy, or memory key.
-- **MCP / pit-os** experience surfaces are read-only. They print NOT ENOUGH DATA rather than invent skill performance.
-- `PIT_PRODUCT_MODE` refuses a global `PIT_MEMORY_KEY`. Future agent behavior on this desk can retrieve those sealed rows; PIT will not invent that the desk already learned.
+- **MCP / pit-os** experience surfaces are read-only. They print NOT ENOUGH DATA until the sample floor.
+- `PIT_PRODUCT_MODE` refuses a global `PIT_MEMORY_KEY`. Future agent retrieval on this desk reads those sealed rows.
 
 ---
 
 ## Sleep Missions / bounded automation
 
-A Sleep Mission is optional bounded host execution while this computer stays awake. The bound runs on the same host that holds the session, the policy pin, and `pit-sealer`. The website cannot keep a mission alive.
+A Sleep Mission is bounded host execution while this computer stays awake. The bound runs on the same host that holds the session, the policy pin, and `pit-sealer`.
 
 - Desktop Automation posts `ARM SLEEP MISSION` (or `ENABLE GUARDED AUTONOMY`) to `/local/mission` (desktop origin, pin required).
 - CLI `pit mission arm` requires a TTY.
 - Chat, the website, MCP, the JS SDK, and the model cannot arm it.
-- If the machine sleeps, the mission stops. That gap is not backfilled.
+- The mission runs only while this host is awake.
 
 ---
 
@@ -543,7 +545,7 @@ Checksums: [https://pit-health.onrender.com/checksums](https://pit-health.onrend
 
 ## Proof links
 
-These are the latest matching research → preview → AUTHORIZE → Hyperliquid fill on this desk (2026-08-31). They belong to job `4a1d45ec-8c3f-4883-a162-19739accb9cf`. They are not a historical fallback. Aristotle RPC `eth_getTransactionByHash` returns these txs (research `to` = storage Flow `0x62D4144dB0F0a6fBBaeb6296c785C71B3D57C526`).
+Latest matching research → preview → AUTHORIZE → Hyperliquid fill on this desk (2026-08-31). Job `4a1d45ec-8c3f-4883-a162-19739accb9cf`. Aristotle RPC `eth_getTransactionByHash` returns these txs (research `to` = storage Flow `0x62D4144dB0F0a6fBBaeb6296c785C71B3D57C526`).
 
 | What | Evidence |
 |---|---|

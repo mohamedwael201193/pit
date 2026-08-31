@@ -25,7 +25,7 @@ export function Story() {
             The web discovers. The desktop acts.
           </p>
           <p className="mt-5 max-w-[46ch] text-[1.125rem] leading-7 text-[rgb(240_231_212/0.78)]">
-            This computer must stay awake for the bound. If it sleeps, the mission stops. That gap is not backfilled.
+            Sleep Mission is bounded host automation on this computer. The same host holds the session, the policy pin, and the sealer.
           </p>
         </Reveal>
 

@@ -17,14 +17,14 @@ export function Hero() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.75, ease: [0.16, 1, 0.3, 1] }}
           >
-            <p className="guide-kicker">PRIVATE ALPHA OS</p>
+            <p className="guide-kicker">PRIVATE INTELLIGENCE</p>
             <h1 className="mt-5 text-[clamp(1.85rem,4.2vw,3.15rem)] leading-[1.14] font-semibold tracking-[-0.035em] text-black md:mt-6">
-              It hunts while you sleep.
+              Sealed in 0G.
               <br />
-              Your keys never leave your machine.
+              You authorize the fill.
             </h1>
-            <p className="mt-4 max-w-[44ch] text-[1.25rem] leading-8 text-black/85 md:text-[1.35rem] md:leading-8">
-              Arm a bounded Sleep Mission on this computer. Keys stay here.
+            <p className="mt-4 max-w-[46ch] text-[1.25rem] leading-8 text-black/85 md:text-[1.35rem] md:leading-8">
+              Direct TeeML researches the private book. VerifyE2EE and Storage proof land on Aristotle. Policy sizes the order. Hyperliquid executes the exact preview on this computer.
             </p>
             <HeroCtas />
           </motion.div>
