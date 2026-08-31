@@ -32,7 +32,7 @@ export function assertChatAgentCopy() {
   if (!run.includes("CANCELED_BY_USER")) throw new Error("cancelled job must not paint NO TRADE");
   if (!run.includes('kind === "READY_ELIGIBLE"')) throw new Error("TRADE NOW only on READY");
   if (!run.includes('id: "DECISION"')) throw new Error("decision stage");
-  if (!run.includes("REVIEW PREVIEW")) throw new Error("review preview");
+  if (!run.includes("REVIEW")) throw new Error("review preview");
   if (!run.includes("Research next")) throw new Error("research next on no-trade");
   if (!run.includes("Scan again")) throw new Error("scan again on no-trade");
   if (!run.includes("NO TRADE")) throw new Error("no-trade card");
@@ -62,6 +62,11 @@ export function assertChatAgentCopy() {
   if (run.includes('["Research next", "Find the best opportunity"]')) throw new Error("research next must skip the last book");
   if (!run.includes("agent-receipts")) throw new Error("0G receipts in the turn");
   if (!run.includes("hyperliquidTrade")) throw new Error("Hyperliquid trade link");
+  if (!run.includes("LIVE MARKET")) throw new Error("live facts labeled");
+  if (!run.includes("<h4>Thesis</h4>")) throw new Error("NO TRADE thesis");
+  if (!run.includes("<h4>Rejected side</h4>")) throw new Error("rejected side");
+  if (!run.includes("LiveFacts")) throw new Error("live book facts");
+  if (!run.includes("Committee forecast")) throw new Error("forecast must be labeled");
   const collapsed = displayTurn({
     role: "pit",
     text: "AVAX is the strongest executable book among 6 of 232 live Hyperliquid perps. Mark 7.32. Venue min $10.02. Host clip $12.95. Buying power $16.18. Starting sealed 0G Direct on this computer. Chat cannot AUTHORIZE.",
@@ -83,6 +88,9 @@ export function assertChatAgentCopy() {
   if (app.includes("huntTried.current.length >= ranked.length")) throw new Error("exhausted hunt must not wrap to ranked[0]");
   if (!app.includes("hunt_exhausted")) throw new Error("host exhausted hunt");
   if (!app.includes("openResearchStream")) throw new Error("research event stream");
+  if (!app.includes("chain = next")) throw new Error("Find the best must continue after NO TRADE");
+  if (!app.includes('setResearchJobId("")')) throw new Error("new book must drop previous job id");
+  if (app.includes("Math.min(6")) throw new Error("hunt must not stop at six books");
   if (!app.includes("unnamed hunts") && !chat.includes("unnamed ? \"\"")) throw new Error("next hunt must ignore host coin");
   const companion = readFileSync(join(here, "../src/companion.ts"), "utf8");
   if (!companion.includes("/local/research/stream")) throw new Error("research SSE");

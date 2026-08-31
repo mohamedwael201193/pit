@@ -2,6 +2,36 @@
 
 ---
 
+## M131 — Operator Agent hunts the universe. Live facts on NO TRADE. PIT 0.9.9
+
+- **Source:** AVAX NO TRADE after “Find the next opportunity” showed a sparse card (no live mark/oracle/funding/OI, no stages, no thesis) and a giant empty area. Research next stopped after one book. 0G receipts were job-scoped (good) but unused below the fold.
+- **Discovery:** Completed `READY_STOOD_DOWN` hid `ResearchStages` (`showVerdict || fail` excluded `noTrade`) and hid live book facts (`showBook` busy-only). Chat hunts only chained when `fresh || chained` and capped at six. Starting a new book left the previous `jobId` on screen. Version **0.9.9**.
+- **Candidate:** Chain any chat hunt after a genuine stand-down until READY or the executable universe is exhausted. Always render stages + LIVE MARKET facts + Thesis/Evidence/Rejected side/Reason/Policy/Risk/this-job 0G. TRADE NOW still `authorizePreview("AUTHORIZE", previewHash)` only on `READY_ELIGIBLE`. Clear `jobId` when a new book starts. Do not invent a side.
+- **Kill:** Second AUTHORIZE path. Fake fills. Flatten OID 529167222216. Remint PIT-4bbee556. Authenticode claim. Historical tx fallback. Loosening policy to force a fill.
+- **Next:** Overlay `D:\PIT`, tag `v0.9.9`, NSIS, Vercel + Render. Close the 0.9.7 window and run the 0.9.9 installer. Do not remint. Do not flatten. Do not TRADE NOW unless an exact READY preview exists.
+
+DATE/TIME: 2026-08-31 07:00+03
+PHASE: Operator Agent hunt + live facts. Host remains execution authority.
+GOAL: Find the best opportunity → live scan → rank → private 0G on every executable book → useful analysis + this-job 0G → TRADE NOW only if READY, else genuine exhausted NO TRADE.
+RESULT:
+- **IMPLEMENTED:** Chat hunts keep `researchBusy` and continue after `READY_STOOD_DOWN` without the six-book cap. Fresh hunts still reset skip. `setResearchJobId("")` on each new book. Agent turn always shows 10-stage pipe, LIVE MARKET (mark, oracle, funding, OI, venue min, host notional, clip, capital), labeled host rank vs committee, structured NO TRADE, OPPORTUNITY FOUND + REVIEW / TRADE NOW / REJECT. Pad no longer eats the stream. TRADE NOW still `authorizePreview("AUTHORIZE", previewHash)`.
+- **TESTED:** `go test ./...` PASS. Desktop `tsc -b` PASS. `npx tsx e2e/run.ts` PASS. Playwright 29 passed. Chrome http://localhost:3001 Agent 0.9.9 frontend: **Find the best opportunity** at 6:51:43 AM. Live pipe + live facts. Chained **AVAX → DOGE → BTC → ETH → SOL → HYPE** without wrapping. Each book got its own TeeML job (HYPE `3c9f2e96…1167`). Waiting copy until this job filed. **Research next** at 6:57:00 AM did not wrap. No TRADE NOW (no `READY_ELIGIBLE`).
+- **LIVE:** Companion `/health` still **0.9.7** (process lock). Frontend **0.9.9**. Session live. Policy pinned. Buying power $16.18. Committee proposed `none` on every executable book. Exhausted copy: Checked every executable book. 0G proof for this HYPE job: root `0x086200…8826`, tx `https://chainscan.0g.ai/tx/0x30df71b929e05a4feca6d4683bbe86af97750b70807a28957bcc54e2d99aa4ed`. ETH OID `529167222216` untouched. Agent `PIT-4bbee556` not reminted.
+- **BLOCKED:** Authenticode still absent. iTransfer still not live. TRADE NOW not clicked: committee proposed none on the live executable universe. Forcing a fill would be a fake demo.
+
+SECURITY RESULT: The model cannot AUTHORIZE. TRADE NOW is still an explicit desktop confirmation of the existing host path.
+TX HASH / OID: Current-job 0G `https://chainscan.0g.ai/tx/0x30df71b929e05a4feca6d4683bbe86af97750b70807a28957bcc54e2d99aa4ed` (HYPE job `3c9f2e96…1167`). Historical venue OID `529167222216` unchanged. No new order.
+CLASSIFICATION:
+- Hunt continues after genuine NO TRADE until READY or exhausted: **IMPLEMENTED + LIVE VERIFIED**
+- Live facts + committee why on the completed turn: **IMPLEMENTED + LIVE VERIFIED**
+- Current-job 0G receipts: **IMPLEMENTED + LIVE VERIFIED**
+- TRADE NOW existing authorize path: **UNCHANGED** (no eligible preview this pass)
+PRODUCTION READY: 0.9.9 installer after tag.
+NEXT STEP: Push. Tag `v0.9.9`. NSIS. Overlay `D:\PIT`. Vercel + Render. Close the 0.9.7 window and reinstall. TRADE NOW only on an exact READY preview.
+
+---
+
+
 ## M130 — Job-scoped 0G proof. Opportunity Found. Honest NO TRADE. PIT 0.9.8
 
 - **Source:** Agent showed live stages but 0G explorer links belonged to older jobs. Duplicate “evidence filed [research]” chips. NO TRADE dumped a thesis log. TRADE NOW missing on a surviving side. Chat repeated “cannot AUTHORIZE”. Find the best stopped after one book because stale huntRejected poisoned the chain.

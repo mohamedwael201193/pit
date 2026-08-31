@@ -110,6 +110,54 @@ function roleMark(ok: boolean, waiting: boolean) {
   return "○";
 }
 
+function committeeSide(role?: Role) {
+  const raw = String(role?.proposed_side || "").trim().toLowerCase();
+  if (role?.kill || role?.survives === false) {
+    return raw && raw !== "none" ? `rejected ${raw}` : "rejected none";
+  }
+  if (!raw || raw === "none") return "none";
+  return raw;
+}
+
+function LiveFacts({ coin, buyingPower }: { coin: MarketCoin; buyingPower?: number }) {
+  return (
+    <dl className="agent-metrics">
+      <div>
+        <dt>Mark</dt>
+        <dd>{compactUsd(coin.mark)}</dd>
+      </div>
+      <div>
+        <dt>Oracle</dt>
+        <dd>{coin.oracle ? compactUsd(coin.oracle) : "—"}</dd>
+      </div>
+      <div>
+        <dt>Funding</dt>
+        <dd>{pctFunding(coin.funding)}</dd>
+      </div>
+      <div>
+        <dt>Open interest</dt>
+        <dd>{compactNum(coin.openInterest)}</dd>
+      </div>
+      <div>
+        <dt>Venue min</dt>
+        <dd>{compactUsd(coin.minNotional)}</dd>
+      </div>
+      <div>
+        <dt>Host notional</dt>
+        <dd>{compactUsd(coin.hostNotional)}</dd>
+      </div>
+      <div>
+        <dt>Policy clip</dt>
+        <dd>{compactUsd(coin.policyClip || coin.hostNotional)}</dd>
+      </div>
+      <div>
+        <dt>Capital</dt>
+        <dd>{compactUsd(buyingPower ?? coin.availableMargin)}</dd>
+      </div>
+    </dl>
+  );
+}
+
 export function AgentRun({
   busy,
   coin,
@@ -233,7 +281,16 @@ export function AgentRun({
     deny,
     eligible: Boolean(preview?.eligible),
     roles,
-    snap: focus ? { mark: focus.mark, reason: focus.reason, why: focus.why } : undefined,
+    snap: focus
+      ? {
+          mark: focus.mark,
+          reason: focus.reason,
+          why: focus.why,
+          whyRanked: focus.whyRanked,
+          invalidation: focus.invalidation,
+          expectedEdge: focus.expectedEdge,
+        }
+      : undefined,
   });
   const asset = (busy ? coin : preview?.market) || coin || focus?.coin || "";
   const verdict = ready && (side === "LONG" || side === "SHORT") ? side : noTrade || policyBlock || capitalBlock ? "NO TRADE" : fail ? "STOPPED" : "";
@@ -246,7 +303,7 @@ export function AgentRun({
     stop?.body ||
     "";
 
-  const huntDone = !busy && (String(researchNote || "").includes("every executable") || huntRejected.length >= 6);
+  const huntDone = !busy && (String(researchNote || "").includes("every executable") || (huntRejected.length > 0 && huntRejected.length >= executable.length && executable.length > 0));
   const follow = ready
     ? []
     : noTrade || policyBlock || capitalBlock
@@ -265,18 +322,27 @@ export function AgentRun({
           ? [["Stop research", "Stop research"]]
           : [];
 
-  const showBook = Boolean(focus && busy);
+  const showBook = Boolean(focus && (busy || noTrade || ready || policyBlock || capitalBlock));
   const showVerdict = !busy && Boolean(verdict) && !ready && !noTrade && !cancelled;
+  const showPipe = busy || noTrade || ready || fail || showVerdict;
   const liveStep = current >= 0 ? PIPE[Math.min(current, PIPE.length - 1)] : PIPE[0];
+  const rejectedSide = [committeeSide(researcher), committeeSide(challenger), committeeSide(risk)].filter((s, i, all) => all.indexOf(s) === i).join(" · ");
+  const lead = busy
+    ? `Researching ${asset || coin || "live books"} on 0G Direct…`
+    : ready
+      ? "Opportunity found"
+      : huntDone
+        ? "Checked every executable book. No side survived."
+        : noTrade
+          ? `NO TRADE · ${asset || "this book"}`
+          : fail
+            ? "Research stopped"
+            : "Live Hyperliquid books are on this computer.";
 
   return (
     <div className="agent-mission" aria-label="PIT agent turn">
       <p className="agent-lead">
-        {busy
-          ? `Researching ${asset || coin || "live books"} on 0G Direct…`
-          : showVerdict
-            ? "Research complete"
-            : "Live Hyperliquid books are on this computer."}
+        {lead}
         {busy && elapsed ? <span className="agent-elapsed">{elapsed}{pollMiss ? " reconnecting" : ""}</span> : null}
       </p>
 
@@ -296,6 +362,7 @@ export function AgentRun({
             {eligible.length ? ` · ${eligible.length} eligible` : ""}
             {executable.length ? ` · ${executable.length} executable` : ""}
             {jobId ? ` · TeeML ${shortHash(jobId)}` : ""}
+            {huntRejected.length ? ` · checked ${huntRejected.join(", ")}` : ""}
           </p>
           {proofRows.length ? (
             <ul className="agent-live-proof">
@@ -322,39 +389,41 @@ export function AgentRun({
         <p className="agent-note">{scannedN} scanned · {eligible.length} eligible · {executable.length} executable{huntRejected.length ? ` · checked ${huntRejected.join(", ")}` : ""}</p>
       ) : null}
 
-      {!busy && (showVerdict || fail) ? (
+      {!busy && showPipe ? (
         <article className="agent-live done">
-          <p className="agent-kicker">{fail ? "COMMITTEE STOPPED" : "COMMITTEE"}</p>
+          <p className="agent-kicker">{fail ? "COMMITTEE STOPPED" : ready ? "COMMITTEE PASSED" : "COMMITTEE"}</p>
           <ResearchStages current={fail ? Math.max(current, 2) : PIPE.length} done={!fail} fail={fail} />
         </article>
       ) : null}
 
       {showBook && focus ? (
         <article className="agent-card book">
-          <p className="agent-kicker">{busy ? "Best opportunity" : ready ? "Live preview" : "Candidate"}</p>
+          <p className="agent-kicker">LIVE MARKET</p>
           <header className="agent-book-head">
             <h3>{focus.coin}</h3>
             <p>{compactUsd(focus.mark)}</p>
           </header>
-          <dl className="agent-metrics">
-            <div>
-              <dt>min</dt>
-              <dd>{compactUsd(focus.minNotional)}</dd>
-            </div>
-            <div>
-              <dt>clip</dt>
-              <dd>{compactUsd(focus.hostNotional || focus.policyClip)}</dd>
-            </div>
-            <div>
-              <dt>funding</dt>
-              <dd>{pctFunding(focus.funding)}</dd>
-            </div>
-            <div>
-              <dt>OI</dt>
-              <dd>{compactNum(focus.openInterest)}</dd>
-            </div>
-          </dl>
-          {bestWhy ? <p className="agent-note">{bestWhy}</p> : null}
+          <LiveFacts coin={focus} buyingPower={buyingPower} />
+          {focus.whyRanked || bestWhy ? (
+            <p className="agent-note">
+              <strong>Why ranked. </strong>
+              {focus.whyRanked || bestWhy} This is host rank of live venue facts, not a forecast.
+            </p>
+          ) : null}
+          {focus.expectedEdge ? (
+            <p className="agent-note">
+              <strong>Host edge note. </strong>
+              {focus.expectedEdge} Not a committee forecast.
+            </p>
+          ) : null}
+          {focus.invalidation ? (
+            <p className="agent-note">
+              <strong>Live invalidation. </strong>
+              {focus.invalidation}
+            </p>
+          ) : (
+            <p className="agent-note">Research horizon: sealed snapshot only. Host did not publish a timed forecast.</p>
+          )}
         </article>
       ) : null}
 
@@ -376,15 +445,19 @@ export function AgentRun({
               </p>
             </section>
             <section>
+              <h4>Rejected side</h4>
+              <p>{rejectedSide || "none"}</p>
+            </section>
+            <section>
               <h4>Risk</h4>
               <p>{why[4]?.a}</p>
             </section>
             <section>
-              <h4>Why this {ready ? "passed" : "failed"} policy</h4>
+              <h4>Policy</h4>
               <p>{why[5]?.a}</p>
             </section>
             <section>
-              <h4>What would invalidate it</h4>
+              <h4>Invalidation</h4>
               <p>{why[7]?.a}</p>
             </section>
           </div>
@@ -398,12 +471,36 @@ export function AgentRun({
             <div><dt>Asset</dt><dd>{preview.market || asset}</dd></div>
             <div><dt>Side</dt><dd>{side || "—"}</dd></div>
             <div><dt>Live mark</dt><dd>{compactUsd(focus?.mark)}</dd></div>
+            <div><dt>Oracle</dt><dd>{focus?.oracle ? compactUsd(focus.oracle) : "—"}</dd></div>
             <div><dt>Venue min</dt><dd>{compactUsd(focus?.minNotional)}</dd></div>
             <div><dt>Host size</dt><dd>{compactUsd(preview.notionalUsd)}</dd></div>
             <div><dt>Policy clip</dt><dd>{compactUsd(focus?.hostNotional || focus?.policyClip)}</dd></div>
             <div><dt>Available capital</dt><dd>{compactUsd(buyingPower)}</dd></div>
             <div><dt>Leverage</dt><dd>1x</dd></div>
+            <div><dt>Exact size</dt><dd>{preview.sz ?? "—"}</dd></div>
+            <div><dt>Limit</dt><dd>{preview.limitPx || "—"}</dd></div>
+            <div><dt>Policy</dt><dd>{pinned ? "pinned" : "not pinned"}</dd></div>
           </dl>
+          <div className="agent-sections">
+            <section>
+              <h4>Thesis</h4>
+              <p>{why[0]?.a || `${side} survived the private committee on ${asset}.`}</p>
+            </section>
+            <section>
+              <h4>Committee forecast</h4>
+              <p>
+                Expected direction is the verified committee side {side || "none"}. Host did not publish a price target or confidence on this preview.
+              </p>
+            </section>
+            <section>
+              <h4>Invalidation</h4>
+              <p>{focus?.invalidation || why[7]?.a}</p>
+            </section>
+            <section>
+              <h4>Risk</h4>
+              <p>{why[4]?.a} Risk/reward is not shown unless the engine computed it. This preview has size {preview.sz ?? "—"} at {preview.limitPx || "the host limit"}.</p>
+            </section>
+          </div>
           <ul className="agent-gates">
             <li>Researcher {roleMark(roleOk(roles, "researcher"), false)}</li>
             <li>Challenger {roleMark(roleOk(roles, "challenger"), false)}</li>
@@ -417,11 +514,11 @@ export function AgentRun({
           {alreadyPosted ? <p className="agent-note">This preview already produced OID {lastOrder?.oid}.</p> : null}
           {authErr ? <p className="agent-note" role="alert">{authErr}</p> : null}
           <div className="cta-row trade-now-row">
+            <button type="button" className="ghost" onClick={onOpenPreview}>
+              REVIEW
+            </button>
             <button type="button" className="primary" aria-label="TRADE NOW" disabled={!canTrade} onClick={onTradeNow}>
               {authBusy ? "Submitting…" : "TRADE NOW"}
-            </button>
-            <button type="button" className="ghost" onClick={onOpenPreview}>
-              REVIEW PREVIEW
             </button>
             <button type="button" className="ghost" onClick={() => onAsk("Do not trade")}>
               REJECT
@@ -441,13 +538,41 @@ export function AgentRun({
             <li>Risk {roleMark(roleOk(roles, "risk"), busy)}</li>
             <li>Policy {policyBlock ? "blocked" : "✓"}</li>
           </ul>
-          {reason ? (
-            <p className="agent-reason">
-              <strong>Why</strong>
-              {reason}
-              {huntRejected.length ? ` Checked ${huntRejected.join(", ")}.` : ""}
-            </p>
-          ) : null}
+          <div className="agent-sections">
+            <section>
+              <h4>Thesis</h4>
+              <p>{why[0]?.a || reason || "No thesis survived."}</p>
+            </section>
+            <section>
+              <h4>Evidence</h4>
+              <p>
+                {why[2]?.a} {why[3]?.a}
+              </p>
+            </section>
+            <section>
+              <h4>Rejected side</h4>
+              <p>{rejectedSide || "none"}</p>
+            </section>
+            <section>
+              <h4>Reason</h4>
+              <p>
+                {reason}
+                {huntRejected.length ? ` Checked ${huntRejected.join(", ")}.` : ""}
+              </p>
+            </section>
+            <section>
+              <h4>Policy</h4>
+              <p>{why[5]?.a}</p>
+            </section>
+            <section>
+              <h4>Risk</h4>
+              <p>{why[4]?.a}</p>
+            </section>
+            <section>
+              <h4>Current 0G proof</h4>
+              <p>{jobId ? `This job ${shortHash(jobId)} only. Historical receipts stay off this card.` : "Waiting for this research run’s 0G receipt…"}</p>
+            </section>
+          </div>
         </article>
       ) : null}
 

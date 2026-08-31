@@ -838,6 +838,9 @@ export function App() {
     if (source === "chat" && !opts?.chained && !coin) {
       huntRef.current = ranked;
     }
+    if (source === "chat" && huntRef.current.length === 0) {
+      huntRef.current = ranked;
+    }
     const skip = new Set(huntTried.current.map((c) => c.toUpperCase()));
     if (!fresh && !opts?.chained) {
       for (const c of huntRejected) {
@@ -870,6 +873,7 @@ export function App() {
           ? "Checked every executable book. No side survived. Ask Find the best opportunity to scan again."
           : "No eligible market yet. Live books have not arrived on this computer.",
       );
+      setResearchBusy(false);
       if (source !== "chat") setView("markets");
       return;
     }
@@ -881,27 +885,33 @@ export function App() {
     setPreviewHash("");
     setResearchKind("");
     setResearchRoles([]);
+    setResearchJobId("");
+    setResearchStage("READING_MARKET");
     setResearchCoin(want);
     if (!companionUp) {
       setResearchStop("COMPANION_NOT_RUNNING");
+      setResearchBusy(false);
       if (source !== "chat") setView("research");
       return;
     }
     const sealer = checks.find((c) => c.name === "direct_sealer");
     if (sealer && !sealer.ok) {
       setResearchStop("DIRECT_PROVIDER_UNAVAILABLE");
+      setResearchBusy(false);
       if (source !== "chat") setView("research");
       return;
     }
     const auth = checks.find((c) => c.name === "direct_auth");
     if (auth && !auth.ok) {
       setResearchStop("DIRECT_NOT_AUTHORIZED");
+      setResearchBusy(false);
       if (source !== "chat") setView("research");
       return;
     }
     const credit = checks.find((c) => c.name === "direct_credit");
     if (credit && !credit.ok) {
       setResearchStop("DIRECT_CREDIT_INSUFFICIENT");
+      setResearchBusy(false);
       if (source !== "chat") setView("research");
       return;
     }
@@ -915,10 +925,11 @@ export function App() {
       if (gen === researchGen.current) setResearchElapsed(Date.now() - wall);
     }, 250);
     let lastKind = "";
+    let chain = "";
     try {
       const started = await startResearch(want, hypo, source, fresh);
       if (gen !== researchGen.current) return;
-      if (!fresh && Array.isArray(started.hunt_skip)) {
+      if (!fresh && Array.isArray(started.hunt_skip) && !opts?.chained) {
         const extra = started.hunt_skip.map((c) => String(c).toUpperCase()).filter(Boolean);
         huntTried.current = [...new Set([...huntTried.current, ...extra])];
         writeSessionList(HUNT_TRIED_KEY, huntTried.current);
@@ -930,6 +941,7 @@ export function App() {
       }
       if (started.error && !started.running) {
         setResearchStop(started.error);
+        setResearchBusy(false);
         return;
       }
       applyStatus(started);
@@ -949,26 +961,35 @@ export function App() {
       await followJob(gen, wall);
     } finally {
       window.clearInterval(tick);
-      if (gen === researchGen.current) {
-        setResearchBusy(false);
-        setPollMiss(false);
-      }
     }
 
     if (source === "chat" && gen === researchGen.current) {
       huntTried.current = [...new Set([...huntTried.current, want])];
       writeSessionList(HUNT_TRIED_KEY, huntTried.current);
       const stood = lastKind === "READY_STOOD_DOWN" || lastKind === "MARKET_DENIED" || lastKind === "POLICY_DENIED";
+      const canceled = lastKind === "CANCELED_BY_USER" || lastKind === "CANCELED";
       if (stood) {
         setHuntRejected([...huntTried.current]);
         writeSessionList(HUNT_REJ_KEY, huntTried.current);
       }
       if (lastKind === "READY_ELIGIBLE") setHuntSurvived(want);
+      const pool = huntRef.current.length ? huntRef.current : ranked;
       const tried = new Set(huntTried.current.map((c) => c.toUpperCase()));
-      const next = huntRef.current.find((c) => !tried.has(String(c).toUpperCase()));
-      if (stood && next && (fresh || opts?.chained) && huntTried.current.length < Math.min(6, Math.max(3, huntRef.current.length))) {
-        await researchThis(next, "chat", { chained: true, hypothesis: hypo });
+      const next = pool.find((c) => !tried.has(String(c).toUpperCase()));
+      if (stood && next && !canceled) {
+        chain = next;
+      } else if (stood && !next) {
+        setResearchNote("Checked every executable book. No side survived. Ask Find the best opportunity to scan again.");
       }
+    }
+
+    if (chain && gen === researchGen.current) {
+      await researchThis(chain, "chat", { chained: true, hypothesis: hypo });
+      return;
+    }
+    if (gen === researchGen.current) {
+      setResearchBusy(false);
+      setPollMiss(false);
     }
 
     function applyStatus(st: BindResult) {

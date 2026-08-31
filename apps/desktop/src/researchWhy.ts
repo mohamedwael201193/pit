@@ -33,13 +33,24 @@ export function researchWhyCopy(input: {
   deny?: string;
   eligible?: boolean;
   roles: Role[];
-  snap?: { mark?: number; reason?: string; why?: string };
+  snap?: {
+    mark?: number;
+    reason?: string;
+    why?: string;
+    whyRanked?: string;
+    invalidation?: string;
+    expectedEdge?: string;
+  };
 }): { q: string; a: string }[] {
   const verified = committeeVerified(input.roles);
   const stood = input.kind === "READY_STOOD_DOWN" || input.deny === "no_side" || input.stop === "READY_STOOD_DOWN";
   const blocked = input.kind === "POLICY_DENIED" || input.kind === "POLICY_REJECTED";
   const accepted = verified && input.eligible && !stood && !blocked;
-  const found = input.snap?.why || input.note || (input.coin ? `Public ${input.coin} book under policy.` : "No completed pass yet.");
+  const found =
+    input.snap?.whyRanked ||
+    input.snap?.why ||
+    input.note ||
+    (input.coin ? `Public ${input.coin} book under policy.` : "No completed pass yet.");
   let change = "Protect private compute, pin policy, and run a sealed pass on an eligible market.";
   if (stood) change = "Checking the next eligible book, a different thesis, or more venue margin. Host will not invent a side.";
   if (blocked) change = "Pin a policy that allows this market, or pick a coin that already passes.";
@@ -85,6 +96,11 @@ export function researchWhyCopy(input: {
         : "Host clip, universe, leverage, kill switch, and slippage stay on this computer.",
     },
     { q: "Why did the engine size or reject it?", a: engine },
-    { q: "What would need to change?", a: change },
+    {
+      q: "What would need to change?",
+      a: input.snap?.invalidation
+        ? `Live host invalidation: ${input.snap.invalidation}`
+        : change,
+    },
   ];
 }
