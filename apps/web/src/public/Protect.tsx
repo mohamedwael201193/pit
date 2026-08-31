@@ -55,32 +55,43 @@ export function ProtectPage() {
         </Bezel>
 
         <Bezel as="li">
-          <p className="font-mono text-[0.7rem] tracking-[0.14em] text-[rgb(240_231_212/0.45)]">STEP 2 · SIGN IN WALLET</p>
-          <p className="mt-2 text-[1.25rem] font-semibold">Sign in to link the wallet with desktop</p>
+          <p className="font-mono text-[0.7rem] tracking-[0.14em] text-[rgb(240_231_212/0.45)]">STEP 2 · CONNECT WALLET</p>
+          <p className="mt-2 text-[1.25rem] font-semibold">Connect wallet to link with desktop</p>
           <p className="mt-3 max-w-[52ch] text-[0.975rem] leading-6 text-[rgb(240_231_212/0.7)]">
             Connect the wallet you already use. No seed field exists. After you sign Protect my strategy, PIT stores the
             24-hour sealed-path token on this computer only. Then return to PIT Desktop for Connect Hyperliquid.
           </p>
-          {!paired ? (
-            <p className="mt-6 text-[0.975rem] text-[#ff7a7a]" role="status">
-              Complete pairing first. Connect your wallet stays locked until this browser is paired.
-            </p>
-          ) : !ready ? (
+          {!ready ? (
             <p className="mt-6">Loading wallet connect</p>
           ) : !authenticated || !addr ? (
-            <button
-              type="button"
-              className="mt-6 rounded-full bg-[#d82f2f] px-6 py-3 font-semibold text-[#f0e7d4]"
-              onClick={() => void connect()}
-            >
-              Connect your wallet
-            </button>
+            <>
+              <button
+                type="button"
+                className="mt-6 rounded-full bg-[#d82f2f] px-6 py-3 font-semibold text-[#f0e7d4]"
+                onClick={() => void connect()}
+              >
+                Connect your wallet
+              </button>
+              {!paired ? (
+                <p className="mt-4 text-[0.975rem] text-[rgb(240_231_212/0.7)]" role="status">
+                  You can connect the wallet now. Protect my strategy stays locked until this browser is paired.
+                </p>
+              ) : null}
+            </>
           ) : (
             <div className="mt-6">
               <p className="text-[0.75rem] tracking-[0.16em] text-[rgb(240_231_212/0.55)]">BOUND WALLET</p>
               <p className="mt-2 font-mono break-all text-[0.9375rem]">{addr}</p>
-              <BindDesk network="mainnet" />
-              <DirectSign />
+              {paired ? (
+                <>
+                  <BindDesk network="mainnet" />
+                  <DirectSign />
+                </>
+              ) : (
+                <p className="mt-4 text-[0.975rem] text-[#ff7a7a]" role="status">
+                  Wallet connected. Complete pairing first. Protect my strategy stays locked until this browser is paired.
+                </p>
+              )}
             </div>
           )}
           {error ? (

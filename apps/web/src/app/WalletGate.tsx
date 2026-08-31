@@ -36,7 +36,7 @@ export function WalletGate() {
             <PitMark />
           </Link>
           <h1 className="guide-display mt-10 !text-[clamp(2.25rem,5vw,3.5rem)]">
-            {authenticated ? "Wallet connected" : "Sign in with your wallet"}
+            {authenticated ? "Wallet connected" : "Connect wallet"}
           </h1>
           <AnimatePresence mode="wait" initial={false}>
             <motion.div

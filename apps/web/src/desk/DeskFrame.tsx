@@ -207,12 +207,13 @@ function TopBar({ chatOpen, onAsk }: { chatOpen: boolean; onAsk: () => void }) {
               </button>
             </>
           ) : (
-            <Link
-              to="/protect"
-              className="rounded-full bg-[#d82f2f] px-3 py-1.5 text-[0.8125rem] font-medium text-[#f0e7d4] no-underline"
+            <button
+              type="button"
+              onClick={() => void login()}
+              className="rounded-full bg-[#d82f2f] px-3 py-1.5 text-[0.8125rem] font-medium text-[#f0e7d4]"
             >
-              Sign in
-            </Link>
+              Connect wallet
+            </button>
           )}
         </div>
       </div>

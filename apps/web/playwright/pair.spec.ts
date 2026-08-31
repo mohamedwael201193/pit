@@ -22,10 +22,18 @@ test("protect stays locked until this browser is paired", async ({ page }) => {
   await page.getByRole("link", { name: "Protect my strategy" }).first().click();
   await expect(page).toHaveURL(/\/protect$/);
   await expect(page.getByRole("heading", { name: "Protect my strategy" })).toBeVisible();
-  await expect(page.getByText("Sign in to link the wallet with desktop")).toBeVisible();
-  await expect(page.getByText("Complete pairing first")).toBeVisible();
-  await expect(page.getByRole("button", { name: "Connect your wallet" })).toHaveCount(0);
+  await expect(page.getByText("Connect wallet to link with desktop")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Connect your wallet" })).toBeVisible();
+  await expect(page.getByText("Protect my strategy stays locked until this browser is paired.")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Protect my strategy" })).toHaveCount(0);
   await expect(page.getByRole("link", { name: "Overview" })).toHaveCount(0);
+});
+
+test("explore desk shows connect wallet in the header", async ({ page }) => {
+  await page.goto("/radar");
+  await expect(page.getByRole("heading", { name: "What is happening right now?" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Connect wallet" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Sign in" })).toHaveCount(0);
 });
 
 test("protect unlocks wallet connect after a pairing token exists", async ({ page }) => {

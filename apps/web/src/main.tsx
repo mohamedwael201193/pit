@@ -16,6 +16,7 @@ createRoot(document.getElementById("root")!).render(
     <PrivyProvider
       appId={appId}
       config={{
+        loginMethods: ["wallet"],
         appearance: { theme: "dark", accentColor: "#D82F2F" },
         embeddedWallets: { createOnLogin: "off" },
         supportedChains: [
