@@ -2,6 +2,35 @@
 
 ---
 
+## M130 — Job-scoped 0G proof. Opportunity Found. Honest NO TRADE. PIT 0.9.8
+
+- **Source:** Agent showed live stages but 0G explorer links belonged to older jobs. Duplicate “evidence filed [research]” chips. NO TRADE dumped a thesis log. TRADE NOW missing on a surviving side. Chat repeated “cannot AUTHORIZE”. Find the best stopped after one book because stale huntRejected poisoned the chain.
+- **Discovery:** `proofRows` skipped the job filter when an activity row had a root/tx. `last-research.json` was a global evidence fallback. Client merged `started.hunt_skip` and React `huntRejected` into a fresh hunt. Version **0.9.8**.
+- **Candidate:** Unique jobId on every run. Render only receipts with `receipt.jobId === currentAgentRun.jobId`. Waiting copy until this job files. OPPORTUNITY FOUND + TRADE NOW = existing `authorizePreview("AUTHORIZE", previewHash)`. NO TRADE shows this-run committee and this-run 0G proof. Fresh hunt does not ingest stale skip. Chained hunts use `huntTried` only.
+- **Kill:** Second AUTHORIZE path. Fake fills. Flatten OID 529167222216. Remint PIT-4bbee556. Authenticode claim. Historical tx fallback.
+- **Next:** Overlay `D:\PIT`, tag `v0.9.8`, NSIS, Vercel + Render. Do not remint. Do not flatten. Do not start a live trade unless TRADE NOW on an exact READY preview.
+
+DATE/TIME: 2026-08-31 06:22+03
+PHASE: Agent 0G correlation + live operator turn.
+GOAL: Find the best opportunity → live scan → private 0G → current-job root/tx → TRADE NOW only if READY, else genuine NO TRADE with this-run proof.
+RESULT:
+- **IMPLEMENTED:** `jobProof.ts` `collectJobReceipts` / `evidenceObjectForJob`. Companion `evidenceForJob` on `/local/research/result` only when the job is done. No last-research overlay. Agent 10-stage pipe including Decision. OPPORTUNITY FOUND card. Header-only AUTHORIZE copy. RESTING ≠ FILLED. Cancelled jobs are CANCELED_BY_USER, not NO TRADE. Fresh hunt no longer merges host skip or stale rejected coins.
+- **TESTED:** `go test ./...` PASS. Desktop `tsc -b` PASS. `npx tsx e2e/run.ts` PASS including `assertLiveAgentPipeline`. Chrome http://localhost:3001 Agent: **Find the best opportunity** at 6:14:59 AM researched **DOGE** job `b4ed73ce-2587-4d69-a009-bae3693629e3`. While running: “Waiting for this research run’s 0G receipt…” — old HYPE tx `0x57c6e574…9bde` did not render. After seal, 0G proof was **this job**: root `0x66817182…2251`, tx `https://chainscan.0g.ai/tx/0x28f0f7474760ec88c8c2a76f9959e136756eb5dd8ccfd530eb43d38c10f7277c`. **Research next** started **AVAX** job `10ae9aff…f678` and showed waiting, not the DOGE tx. AVAX NO TRADE with this-job receipts (`0x3b8bab…` / job `10ae9aff…f678`). No TRADE NOW (no READY_ELIGIBLE). Session live. Policy pinned. Buying power $16.18.
+- **LIVE:** Companion `/health` still **0.9.7** until overlay/reinstall (frontend 0.9.8). Session live. Agent `PIT-4bbee556` not reminted. ETH OID `529167222216` untouched. No new MAINNET fill. Committee stood down on DOGE and AVAX (`no_side`).
+- **BLOCKED:** Authenticode still absent. iTransfer still not live. TRADE NOW not clicked: no READY_ELIGIBLE preview this pass.
+
+SECURITY RESULT: The model cannot AUTHORIZE. TRADE NOW is still an explicit desktop confirmation of the existing host path.
+TX HASH / OID: Current-job 0G `https://chainscan.0g.ai/tx/0x28f0f7474760ec88c8c2a76f9959e136756eb5dd8ccfd530eb43d38c10f7277c` (DOGE job `b4ed73ce…29e3`). AVAX job `10ae9aff…f678` filed its own receipt (not the DOGE or HYPE txs). Historical venue OID `529167222216` unchanged. No new order.
+CLASSIFICATION:
+- Job-scoped 0G receipts in the Agent turn: **IMPLEMENTED + LIVE VERIFIED**
+- Waiting copy instead of stale explorer links: **IMPLEMENTED + LIVE VERIFIED**
+- TRADE NOW existing authorize path: **UNCHANGED** (no eligible preview this pass)
+PRODUCTION READY: 0.9.8 installer after tag.
+NEXT STEP: Push. Tag `v0.9.8`. NSIS. Overlay `D:\PIT`. Vercel + Render. TRADE NOW only on an exact READY preview.
+
+---
+
+
 ## M129 — Hunt does not wrap. Honest incomplete card. PIT 0.9.7
 
 - **Source:** Research next after HYPE restarted AVAX. Cancelled wrap painted NO TRADE with empty ○ roles. Stages hid after the job. Auto-scroll fought the wheel. 0G TRAIL showed only a TeeML job id.

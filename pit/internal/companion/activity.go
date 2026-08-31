@@ -75,3 +75,33 @@ func readActivity(dir string, limit int) []activityEvent {
 	}
 	return out
 }
+
+func evidenceForJob(dir, jobID string) map[string]any {
+	jobID = strings.TrimSpace(jobID)
+	if jobID == "" {
+		return nil
+	}
+	var latest activityEvent
+	for _, ev := range readActivity(dir, 0) {
+		if ev.JobID != jobID {
+			continue
+		}
+		if ev.Root == "" && ev.Tx == "" && ev.Digest == "" && ev.TxLink == "" {
+			continue
+		}
+		latest = ev
+	}
+	if latest.JobID == "" {
+		return nil
+	}
+	return map[string]any{
+		"job_id":  latest.JobID,
+		"market":  latest.Market,
+		"root":    latest.Root,
+		"tx":      latest.Tx,
+		"tx_link": latest.TxLink,
+		"digest":  latest.Digest,
+		"ts":      latest.TS,
+		"kind":    latest.Kind,
+	}
+}

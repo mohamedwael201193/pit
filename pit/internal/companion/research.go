@@ -410,6 +410,11 @@ func (h *Hub) snapshotResearch() map[string]any {
 	if pv, ok := body["preview"].(map[string]any); ok && !body["preview_expired"].(bool) {
 		body["preview_expired"] = previewExpiredMap(pv, now.UnixMilli())
 	}
+	if !h.job.running {
+		if ev := evidenceForJob(h.Dir, h.job.ID); ev != nil {
+			body["evidence"] = ev
+		}
+	}
 	return body
 }
 
@@ -850,13 +855,6 @@ func (h *Hub) localResearchResult(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	body := h.snapshotResearch()
-	raw, err := os.ReadFile(filepath.Join(h.Dir, "last-research.json"))
-	if err == nil && !strings.Contains(strings.ToLower(string(raw)), "app-sk-") {
-		var ev any
-		if json.Unmarshal(raw, &ev) == nil {
-			body["evidence"] = ev
-		}
-	}
 	writeLocal(w, http.StatusOK, body)
 }
 
@@ -895,14 +893,15 @@ func (h *Hub) localAuthorize(w http.ResponseWriter, r *http.Request) {
 			Action: "authorize", Status: "failed", Reason: got.Error,
 		})
 	} else {
+		jobID := h.currentJobID()
 		appendActivity(h.Dir, activityEvent{
 			WorkspaceID: workspaceID(h.Dir), Kind: "approval.accepted", Market: got.Market,
-			Action: "authorize", Status: "accepted", OID: got.OID, PreviewHash: got.Hash,
+			Action: "authorize", Status: "accepted", OID: got.OID, PreviewHash: got.Hash, JobID: jobID,
 			Link: venueTradeLink(workspaceNetwork(h.Dir), got.Market),
 		})
 		appendActivity(h.Dir, activityEvent{
 			WorkspaceID: workspaceID(h.Dir), Kind: "order.submitted", Market: got.Market,
-			Action: "authorize", Status: got.Status, OID: got.OID, PreviewHash: got.Hash,
+			Action: "authorize", Status: got.Status, OID: got.OID, PreviewHash: got.Hash, JobID: jobID,
 			Link: venueTradeLink(workspaceNetwork(h.Dir), got.Market),
 		})
 		h.recordPostedOrder(got, "authorize", h.currentJobID())

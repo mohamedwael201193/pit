@@ -234,7 +234,7 @@ func TestLocalStatusVersionNoSecret(t *testing.T) {
 	if got["sign"] == true || got["trade"] == true {
 		t.Fatal(got)
 	}
-	if got["version"] != "0.9.7" {
+	if got["version"] != "0.9.8" {
 		t.Fatalf("version %v", got["version"])
 	}
 }
@@ -721,13 +721,17 @@ func TestResearchStatusKeepsPersistedPreview(t *testing.T) {
 	}
 }
 
-func TestResearchResultIncludesEvidence(t *testing.T) {
+func TestResearchResultEvidenceMatchesJob(t *testing.T) {
 	dir := t.TempDir()
 	h := New(dir)
-	ev := `{"sign":false,"trade":false,"roles":[{"role":"researcher","verify_e2ee":"OK","elapsed_ms":8790},{"role":"challenger","verify_e2ee":"OK","survives":true},{"role":"risk","verify_e2ee":"OK","survives":true,"kill":false,"elapsed_ms":5381}]}`
-	if err := os.WriteFile(filepath.Join(dir, "last-research.json"), []byte(ev), 0o600); err != nil {
-		t.Fatal(err)
-	}
+	appendActivity(dir, activityEvent{
+		Kind: "evidence.filed", Market: "AVAX", JobID: "job-old",
+		Root: "0xoldroot", Tx: "0xoldtxaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+	})
+	appendActivity(dir, activityEvent{
+		Kind: "evidence.filed", Market: "ETH", JobID: "job-result",
+		Root: "0xnewroot", Tx: "0xnewtxbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", TxLink: "https://chainscan.0g.ai/tx/0xnewtx",
+	})
 	h.researchMu.Lock()
 	h.job = researchJob{
 		ID: "job-result", done: true, stage: "READY", coin: "ETH",
@@ -741,14 +745,72 @@ func TestResearchResultIncludesEvidence(t *testing.T) {
 	if rec.Code != 200 {
 		t.Fatal(rec.Body.String())
 	}
-	if !strings.Contains(rec.Body.String(), `"evidence"`) {
-		t.Fatal(rec.Body.String())
+	body := rec.Body.String()
+	if !strings.Contains(body, `"job_id":"job-result"`) {
+		t.Fatal(body)
 	}
-	if !strings.Contains(rec.Body.String(), `"elapsed_ms":5381`) {
-		t.Fatal(rec.Body.String())
+	if !strings.Contains(body, "0xnewtx") {
+		t.Fatal(body)
 	}
-	if strings.Contains(strings.ToLower(rec.Body.String()), "app-sk-") {
+	if strings.Contains(body, "0xoldtx") {
+		t.Fatal("stale receipt leaked", body)
+	}
+	if strings.Contains(strings.ToLower(body), "app-sk-") {
 		t.Fatal("leak")
+	}
+}
+
+func TestResearchResultWaitingHasNoFallback(t *testing.T) {
+	dir := t.TempDir()
+	h := New(dir)
+	appendActivity(dir, activityEvent{
+		Kind: "evidence.filed", Market: "AVAX", JobID: "job-old",
+		Root: "0xoldroot", Tx: "0xoldtxaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+	})
+	h.researchMu.Lock()
+	h.job = researchJob{ID: "job-live", done: true, stage: "READY", coin: "HYPE"}
+	h.researchMu.Unlock()
+	req := local(httptest.NewRequest(http.MethodGet, "/local/research/result", nil))
+	rec := httptest.NewRecorder()
+	h.Handler().ServeHTTP(rec, req)
+	if rec.Code != 200 {
+		t.Fatal(rec.Body.String())
+	}
+	body := rec.Body.String()
+	if strings.Contains(body, "0xoldtx") {
+		t.Fatal("stale receipt leaked", body)
+	}
+	if strings.Contains(body, `"evidence"`) {
+		t.Fatal("waiting job must not fall back to latest", body)
+	}
+}
+
+func TestCancelledJobSnapshotIsNotNoTrade(t *testing.T) {
+	dir := t.TempDir()
+	h := New(dir)
+	h.researchMu.Lock()
+	h.job = researchJob{
+		ID: "job-cancel", done: true, err: "research_cancelled", stage: "CANCELED", coin: "ETH",
+		deny: "no_side",
+		roles: []map[string]any{
+			{"role": "researcher", "verify_e2ee": "OK"},
+			{"role": "challenger", "verify_e2ee": "OK"},
+			{"role": "risk", "verify_e2ee": "OK"},
+		},
+	}
+	h.researchMu.Unlock()
+	req := local(httptest.NewRequest(http.MethodGet, "/local/research/status", nil))
+	rec := httptest.NewRecorder()
+	h.Handler().ServeHTTP(rec, req)
+	if rec.Code != 200 {
+		t.Fatal(rec.Body.String())
+	}
+	body := rec.Body.String()
+	if strings.Contains(body, "READY_STOOD_DOWN") {
+		t.Fatal("cancelled job cannot become NO TRADE", body)
+	}
+	if !strings.Contains(body, "CANCELED_BY_USER") {
+		t.Fatal(body)
 	}
 }
 

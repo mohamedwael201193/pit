@@ -4,7 +4,8 @@ import { compactNum, compactUsd, pctFunding } from "./format";
 import { committeeVerified, oidBelongsToPreview } from "./honesty";
 import { explainStop } from "./explain";
 import { researchWhyCopy } from "./researchWhy";
-import { explorerTx, hyperliquidTrade } from "./links";
+import { hyperliquidTrade } from "./links";
+import { collectJobReceipts, evidenceObjectForJob, shortProof, venueOrderState } from "./jobProof";
 import type { ActivityEvent, BindResult, DirectModel } from "./companion";
 import type { MarketCoin } from "./WatchBook";
 
@@ -22,6 +23,7 @@ const PIPE = [
   { id: "RISK", label: "Risk" },
   { id: "VERIFYING_TEE_SIGNATURE", label: "TEE verification" },
   { id: "POLICY", label: "Policy" },
+  { id: "DECISION", label: "Decision" },
   { id: "PREVIEW", label: "Preview" },
 ] as const;
 
@@ -54,8 +56,9 @@ function stageIndex(stage: string, roles: Role[], busy: boolean, scannedN: numbe
   if (s === "RISK" || s.startsWith("RISK_")) return 5;
   if (s.includes("TEE") || s.includes("VERIFY")) return 6;
   if (s === "DETERMINISTIC_ENGINE" || s === "POLICY") return 7;
-  if (s === "PREVIEW" || s === "READY") return 8;
-  if (roleOk(roles, "risk")) return 7;
+  if (s === "DECISION") return 8;
+  if (s === "PREVIEW" || s === "READY") return 9;
+  if (roleOk(roles, "risk")) return 8;
   if (roleOk(roles, "challenger")) return 5;
   if (roleOk(roles, "researcher")) return 4;
   return busy ? (scannedN > 0 ? 1 : 0) : -1;
@@ -97,20 +100,8 @@ function ResearchStages({ current, done, fail }: { current: number; done: boolea
   );
 }
 
-function orderKind(order?: LastOrder | null) {
-  if (!order?.oid) return "";
-  const life = String(order.lifecycle || order.status || "").toLowerCase();
-  if (order.cancelled) return "cancelled";
-  if (life.includes("fail") || life.includes("reject")) return "failed";
-  if (life.includes("fill")) return "filled";
-  if (life.includes("rest") || life.includes("open") || order.posted) return "resting";
-  return String(order.status || "submitted");
-}
-
 function shortHash(v?: string) {
-  const s = String(v || "");
-  if (s.length < 12) return s || "";
-  return `${s.slice(0, 8)}…${s.slice(-4)}`;
+  return shortProof(v);
 }
 
 function roleMark(ok: boolean, waiting: boolean) {
@@ -207,9 +198,14 @@ export function AgentRun({
   const deny = String(preview?.deny || "");
   const policyBlock = kind === "POLICY_DENIED" || deny.includes("policy");
   const capitalBlock = kind === "MARKET_DENIED" || deny.includes("min_notional") || deny.includes("margin");
-  const noTrade = !busy && kind === "READY_STOOD_DOWN";
+  const cancelled =
+    kind === "CANCELED_BY_USER" ||
+    kind === "CANCELED" ||
+    researchStop === "research_cancelled" ||
+    researchStop === "CANCELED_BY_USER";
+  const noTrade = !busy && kind === "READY_STOOD_DOWN" && !cancelled;
   const ready = !busy && kind === "READY_ELIGIBLE" && Boolean(preview?.eligible && (preview.hash || previewHash));
-  const fail = !busy && (Boolean(researchStop) || kind === "CANCELED_BY_USER" || kind === "CANCELED") && !noTrade && !ready;
+  const fail = !busy && (Boolean(researchStop) || cancelled) && !noTrade && !ready;
   const stop = explainStop(researchStop || "");
   const researcher = roleOf(roles, "researcher");
   const challenger = roleOf(roles, "challenger");
@@ -222,47 +218,12 @@ export function AgentRun({
   const venue = net || "mainnet";
   const proofRows = useMemo(() => {
     const ev = evidence && typeof evidence === "object" ? (evidence as Record<string, unknown>) : null;
-    const rows: Array<{ label: string; href?: string; text: string }> = [];
-    const seen = new Set<string>();
-    function add(label: string, text: string, href?: string) {
-      const key = `${label}:${text}:${href || ""}`;
-      if (!text || seen.has(key)) return;
-      seen.add(key);
-      rows.push({ label, text, href });
-    }
-    for (const e of activity) {
-      const og = Boolean(e.tx || e.tx_link || e.root || e.digest);
-      if (!og) {
-        if (jobId && e.job_id && e.job_id !== jobId && !e.oid) continue;
-        if (!jobId && coin && e.market && String(e.market).toUpperCase() !== String(coin).toUpperCase() && !e.oid) continue;
-      }
-      if (e.root) add("0G storage root", shortHash(String(e.root)), e.tx_link || undefined);
-      if (e.tx) add("0G transaction", shortHash(String(e.tx)), e.tx_link || explorerTx(String(e.tx), venue));
-      if (e.tx_link && !e.tx) add("0G explorer", "Open", e.tx_link);
-      if (e.digest) add("0G digest", shortHash(String(e.digest)));
-      if (e.oid) add("Hyperliquid OID", String(e.oid), e.link || hyperliquidTrade(venue, String(e.market || "").split(":").pop()));
-      const kindName = String(e.kind || "");
-      if ((kindName.includes("verified") || kindName.includes("sealed") || kindName.includes("filed")) && (e.tx || e.root || e.digest || e.tx_link)) {
-        add(kindName.replaceAll(".", " "), e.status || "ok", e.tx_link || explorerTx(String(e.tx || ""), venue) || undefined);
-      }
-    }
-    if (ev) {
-      const evJob = String(ev.job_id || ev.jobId || "");
-      const evMarket = String(ev.market || ev.coin || "").toUpperCase();
-      const jobOk = !jobId || !evJob || evJob === jobId;
-      const mktOk = !coin || !evMarket || evMarket === String(coin).toUpperCase();
-      if (jobOk && mktOk) {
-        const root = String(ev.root || ev.storage_root || "");
-        const tx = String(ev.tx || "");
-        const txLink = String(ev.tx_link || "");
-        if (root) add("0G storage root", shortHash(root), txLink || undefined);
-        if (tx) add("0G transaction", shortHash(tx), txLink || explorerTx(tx, venue));
-      }
-    }
-    if (jobId) add("Direct TeeML job", shortHash(jobId));
-    return rows.slice(0, 12);
-  }, [activity, evidence, jobId, venue, coin]);
-  const orderState = oidBelongsToPreview(lastOrder?.hash, previewHash, hash) ? orderKind(lastOrder) : "";
+    const extra = evidenceObjectForJob(ev, jobId);
+    const events = extra ? [...activity, extra] : activity;
+    return collectJobReceipts(events, jobId, venue);
+  }, [activity, evidence, jobId, venue]);
+  const orderState = oidBelongsToPreview(lastOrder?.hash, previewHash, hash) ? venueOrderState(lastOrder) : "";
+  const orderFiledAt = activity.find((e) => e.oid && e.oid === (lastOrder?.oid || lastOid))?.ts;
   const elapsed = elapsedMs > 0 ? `${(elapsedMs / 1000).toFixed(1)}s` : "";
   const why = researchWhyCopy({
     coin: coin || focus?.coin || "",
@@ -287,20 +248,12 @@ export function AgentRun({
 
   const huntDone = !busy && (String(researchNote || "").includes("every executable") || huntRejected.length >= 6);
   const follow = ready
-    ? [
-        ["Review", "__review"],
-        ["Compare candidates", "Compare top opportunities"],
-        ["Show why", "__why"],
-        ["Sleep Mission", "__sleep"],
-        ["Technical details", "__tech"],
-      ]
+    ? []
     : noTrade || policyBlock || capitalBlock
       ? [
-          huntDone ? ["Scan again", "Find the best opportunity"] : ["Research next", "Find the next opportunity"],
+          ["Research next", "Find the next opportunity"],
+          ["Scan again", "Find the best opportunity"],
           ["Show why", "__why"],
-          ["Compare candidates", "Compare top opportunities"],
-          ["Sleep Mission", "__sleep"],
-          ["Technical details", "__tech"],
         ]
       : fail
         ? [
@@ -312,8 +265,8 @@ export function AgentRun({
           ? [["Stop research", "Stop research"]]
           : [];
 
-  const showBook = Boolean(focus && (busy || ready));
-  const showVerdict = !busy && Boolean(verdict);
+  const showBook = Boolean(focus && busy);
+  const showVerdict = !busy && Boolean(verdict) && !ready && !noTrade && !cancelled;
   const liveStep = current >= 0 ? PIPE[Math.min(current, PIPE.length - 1)] : PIPE[0];
 
   return (
@@ -359,7 +312,7 @@ export function AgentRun({
               ))}
             </ul>
           ) : (
-            <p className="agent-note">0G receipts appear here when Direct files a root or chain tx.</p>
+            <p className="agent-note">Waiting for this research run’s 0G receipt…</p>
           )}
           <button type="button" className="ghost" onClick={onStop}>
             Stop
@@ -405,7 +358,7 @@ export function AgentRun({
         </article>
       ) : null}
 
-      {showVerdict ? (
+      {showVerdict && !ready ? (
         <article className="agent-card verdict">
           <p className="agent-kicker">Research complete</p>
           <p className="agent-verdict">
@@ -440,21 +393,25 @@ export function AgentRun({
 
       {ready && preview ? (
         <article className="agent-card ready">
-          <p className="agent-kicker">READY</p>
-          <header className="agent-trade-head">
-            <h3>{preview.market || asset}</h3>
-            <p>{side || "SIDE"}</p>
-            <p>{compactUsd(preview.notionalUsd)}</p>
-            <p>1x</p>
-            <p>Hyperliquid</p>
-          </header>
+          <p className="agent-kicker">OPPORTUNITY FOUND</p>
+          <dl className="agent-found">
+            <div><dt>Asset</dt><dd>{preview.market || asset}</dd></div>
+            <div><dt>Side</dt><dd>{side || "—"}</dd></div>
+            <div><dt>Live mark</dt><dd>{compactUsd(focus?.mark)}</dd></div>
+            <div><dt>Venue min</dt><dd>{compactUsd(focus?.minNotional)}</dd></div>
+            <div><dt>Host size</dt><dd>{compactUsd(preview.notionalUsd)}</dd></div>
+            <div><dt>Policy clip</dt><dd>{compactUsd(focus?.hostNotional || focus?.policyClip)}</dd></div>
+            <div><dt>Available capital</dt><dd>{compactUsd(buyingPower)}</dd></div>
+            <div><dt>Leverage</dt><dd>1x</dd></div>
+          </dl>
           <ul className="agent-gates">
+            <li>Researcher {roleMark(roleOk(roles, "researcher"), false)}</li>
+            <li>Challenger {roleMark(roleOk(roles, "challenger"), false)}</li>
+            <li>Risk {roleMark(roleOk(roles, "risk"), false)}</li>
+            <li>TEE {verified ? "✓" : "○"}</li>
             <li>Policy {pinned ? "✓" : "open Policy first"}</li>
-            <li>Capital {Number.isFinite(buyingPower) ? "✓" : "unknown"}</li>
-            <li>Venue min ✓</li>
-            <li>Slippage ✓</li>
-            <li>Session {sessionAlive ? "✓" : "create a session"}</li>
           </ul>
+          <p className="agent-kicker">PREVIEW READY</p>
           {!sessionAlive ? <p className="agent-note">Create a live session on Security before TRADE NOW.</p> : null}
           {!pinned ? <p className="agent-note">Pin policy on this computer first.</p> : null}
           {alreadyPosted ? <p className="agent-note">This preview already produced OID {lastOrder?.oid}.</p> : null}
@@ -463,17 +420,13 @@ export function AgentRun({
             <button type="button" className="primary" aria-label="TRADE NOW" disabled={!canTrade} onClick={onTradeNow}>
               {authBusy ? "Submitting…" : "TRADE NOW"}
             </button>
-            <ExternalLink className="ghost" href={hyperliquidTrade(venue, String(preview.market || asset).split(":").pop())}>
-              Open Hyperliquid
-            </ExternalLink>
             <button type="button" className="ghost" onClick={onOpenPreview}>
-              REVIEW
+              REVIEW PREVIEW
             </button>
             <button type="button" className="ghost" onClick={() => onAsk("Do not trade")}>
               REJECT
             </button>
           </div>
-          <p className="agent-note">{CHAT_AGENT_COPY.cannotAuthorize}. {CHAT_AGENT_COPY.acceptOnDesk}</p>
         </article>
       ) : null}
 
@@ -481,7 +434,7 @@ export function AgentRun({
         <article className="agent-card stand">
           <p className="agent-kicker">NO TRADE</p>
           <h3>{asset || "Candidate"}</h3>
-          <p>{asset ? `${asset} did not survive the private challenge.` : "No side survived the private challenge."}</p>
+          <p>No side survived the private challenge.</p>
           <ul className="agent-gates">
             <li>Researcher {roleMark(roleOk(roles, "researcher"), busy)}</li>
             <li>Challenger {roleMark(roleOk(roles, "challenger"), busy)}</li>
@@ -490,7 +443,7 @@ export function AgentRun({
           </ul>
           {reason ? (
             <p className="agent-reason">
-              <strong>Reason</strong>
+              <strong>Why</strong>
               {reason}
               {huntRejected.length ? ` Checked ${huntRejected.join(", ")}.` : ""}
             </p>
@@ -532,50 +485,62 @@ export function AgentRun({
       {orderState && lastOrder ? (
         <article className="agent-card order">
           <p className="agent-kicker">ORDER SUBMITTED</p>
-          <p>OID {lastOrder.oid || lastOid}</p>
-          <p>{String(lastOrder.lifecycle || lastOrder.status || orderState).toUpperCase()}</p>
-          <p>
-            {orderState === "resting"
-              ? "RESTING"
-              : orderState === "filled"
-                ? "FILLED"
-                : orderState === "cancelled"
-                  ? "CANCELLED"
-                  : orderState === "failed"
-                    ? "FAILED"
-                    : orderState.toUpperCase()}
-          </p>
+          <dl className="agent-found">
+            <div><dt>OID</dt><dd>{lastOrder.oid || lastOid}</dd></div>
+            <div>
+              <dt>Status</dt>
+              <dd>
+                {orderState === "resting"
+                  ? "RESTING"
+                  : orderState === "filled"
+                    ? "FILLED"
+                    : orderState === "cancelled"
+                      ? "CANCELED"
+                      : orderState === "failed"
+                        ? "FAILED"
+                        : orderState.toUpperCase()}
+              </dd>
+            </div>
+            <div><dt>Side</dt><dd>{String(lastOrder.side || side || "").toUpperCase() || "—"}</dd></div>
+            <div><dt>Size</dt><dd>{lastOrder.sz ?? preview?.sz ?? "—"}</dd></div>
+            <div><dt>Price</dt><dd>{preview?.limitPx || "—"}</dd></div>
+            <div><dt>Time</dt><dd>{orderFiledAt ? new Date(Number(orderFiledAt)).toLocaleTimeString() : "—"}</dd></div>
+          </dl>
           <div className="cta-row">
             <ExternalLink className="ghost" href={hyperliquidTrade(venue, String(lastOrder.market || asset).split(":").pop())}>Open Hyperliquid</ExternalLink>
             <button type="button" className="ghost" onClick={onOpenActivity}>
               Open Activity
             </button>
-            {proofRows.length ? (
-              <button type="button" className="ghost" onClick={onOpenActivity}>
-                Verify on 0G
-              </button>
-            ) : null}
           </div>
         </article>
       ) : null}
 
-      {proofRows.length ? (
+      {jobId && (busy || noTrade || ready || fail) ? (
         <article className="agent-receipts">
           <p className="agent-kicker">{verified ? "0G PROOF" : "0G TRAIL"}</p>
-          <ul>
-            {proofRows.map((row) => (
-              <li key={`${row.label}-${row.text}`}>
-                <span>{row.label}</span>
-                {row.href ? (
-                  <ExternalLink className="ghost" href={row.href}>
-                    {row.text}
-                  </ExternalLink>
-                ) : (
-                  <strong>{row.text}</strong>
-                )}
-              </li>
-            ))}
-          </ul>
+          {proofRows.length ? (
+            <ul>
+              {proofRows.map((row) => (
+                <li key={`${row.label}-${row.text}`}>
+                  <span>{row.label}</span>
+                  {row.href ? (
+                    <ExternalLink className="ghost" href={row.href}>
+                      {row.text}
+                    </ExternalLink>
+                  ) : (
+                    <strong>{row.text}</strong>
+                  )}
+                  <em>
+                    {row.ts ? new Date(row.ts).toLocaleTimeString() : ""} · job {shortHash(row.jobId)}
+                    {row.market ? ` · ${row.market}` : asset ? ` · ${asset}` : ""}
+                  </em>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="agent-note">Waiting for this research run’s 0G receipt…</p>
+          )}
+          <p className="agent-note">job {shortHash(jobId)}{asset ? ` · ${asset}` : ""}</p>
         </article>
       ) : null}
 

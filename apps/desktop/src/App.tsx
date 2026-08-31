@@ -55,6 +55,7 @@ import {
   type SecurityDomain,
   type VenuePosition,
 } from "./companion";
+import { evidenceObjectForJob } from "./jobProof";
 import { LINKS, hyperliquidAPI, hyperliquidApp } from "./links";
 import { openExternal, useNativeExternalLinks } from "./open";
 import { nextFix } from "./nextFix";
@@ -351,12 +352,19 @@ export function App() {
 
   useEffect(() => {
     let gone = false;
-    void researchEvidence().then((st) => {
-      if (gone || !st.evidence) return;
-      setResearchEvidence(JSON.stringify(st.evidence, null, 2));
-    });
+    const tick = () => {
+      if (!researchJobId) return;
+      void researchEvidence().then((st) => {
+        if (gone || !st.evidence || typeof st.evidence !== "object") return;
+        if (!evidenceObjectForJob(st.evidence as Record<string, unknown>, researchJobId)) return;
+        setResearchEvidence(JSON.stringify(st.evidence, null, 2));
+      });
+    };
+    tick();
+    const id = window.setInterval(tick, 3000);
     return () => {
       gone = true;
+      window.clearInterval(id);
     };
   }, [researchJobId, researchKind]);
 
@@ -831,8 +839,10 @@ export function App() {
       huntRef.current = ranked;
     }
     const skip = new Set(huntTried.current.map((c) => c.toUpperCase()));
-    for (const c of huntRejected) {
-      if (c) skip.add(String(c).toUpperCase());
+    if (!fresh && !opts?.chained) {
+      for (const c of huntRejected) {
+        if (c) skip.add(String(c).toUpperCase());
+      }
     }
     if (source === "chat" && !opts?.chained && !fresh && researchCoin && (researchKind === "READY_STOOD_DOWN" || researchKind === "MARKET_DENIED" || researchKind === "POLICY_DENIED")) {
       const prev = researchCoin.toUpperCase();
@@ -908,7 +918,7 @@ export function App() {
     try {
       const started = await startResearch(want, hypo, source, fresh);
       if (gen !== researchGen.current) return;
-      if (Array.isArray(started.hunt_skip)) {
+      if (!fresh && Array.isArray(started.hunt_skip)) {
         const extra = started.hunt_skip.map((c) => String(c).toUpperCase()).filter(Boolean);
         huntTried.current = [...new Set([...huntTried.current, ...extra])];
         writeSessionList(HUNT_TRIED_KEY, huntTried.current);
@@ -928,7 +938,10 @@ export function App() {
         if (gen === researchGen.current) setActivity(ev);
       });
       void researchEvidence().then((st) => {
-        if (gen === researchGen.current && st.evidence) setResearchEvidence(JSON.stringify(st.evidence, null, 2));
+        if (gen !== researchGen.current || !st.evidence || typeof st.evidence !== "object") return;
+        const job = String(st.job_id || "");
+        if (!evidenceObjectForJob(st.evidence as Record<string, unknown>, job)) return;
+        setResearchEvidence(JSON.stringify(st.evidence, null, 2));
       });
     } catch (e) {
       if (gen !== researchGen.current) return;
@@ -979,6 +992,11 @@ export function App() {
         lastKind = "READY_STOOD_DOWN";
       }
       if (typeof st.updated_at === "number") setResearchUpdated(st.updated_at);
+      if (st.evidence && typeof st.evidence === "object" && st.job_id) {
+        if (evidenceObjectForJob(st.evidence as Record<string, unknown>, String(st.job_id))) {
+          setResearchEvidence(JSON.stringify(st.evidence, null, 2));
+        }
+      }
       return roles;
     }
 
@@ -1040,6 +1058,7 @@ export function App() {
     researchGen.current += 1;
     setResearchBusy(false);
     const r = await cancelResearch();
+    setResearchKind("CANCELED_BY_USER");
     setResearchStop(r.error || "research_cancelled");
     if (r.stage) setResearchStage(r.stage);
     if (typeof r.elapsed_ms === "number") setResearchElapsed(r.elapsed_ms);

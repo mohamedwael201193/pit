@@ -24,7 +24,17 @@ export function assertChatAgentCopy() {
   if (!chat.includes("[lines, island?.busy]")) throw new Error("elapsed ticks must not steal scroll");
   if (chat.includes("island?.roles?.length")) throw new Error("role ticks must not steal scroll");
   const run = readFileSync(join(here, "../src/AgentRun.tsx"), "utf8");
-  if (!run.includes("READY")) throw new Error("preview card");
+  if (!run.includes("OPPORTUNITY FOUND")) throw new Error("opportunity found card");
+  if (!run.includes("Waiting for this research run")) throw new Error("waiting receipt copy");
+  if (!run.includes("collectJobReceipts")) throw new Error("job-scoped receipts");
+  if (!run.includes("evidenceObjectForJob")) throw new Error("evidence must match job");
+  if (run.includes("{CHAT_AGENT_COPY.cannotAuthorize}")) throw new Error("cannot authorize belongs in the header once");
+  if (!run.includes("CANCELED_BY_USER")) throw new Error("cancelled job must not paint NO TRADE");
+  if (!run.includes('kind === "READY_ELIGIBLE"')) throw new Error("TRADE NOW only on READY");
+  if (!run.includes('id: "DECISION"')) throw new Error("decision stage");
+  if (!run.includes("REVIEW PREVIEW")) throw new Error("review preview");
+  if (!run.includes("Research next")) throw new Error("research next on no-trade");
+  if (!run.includes("Scan again")) throw new Error("scan again on no-trade");
   if (!run.includes("NO TRADE")) throw new Error("no-trade card");
   if (!run.includes("TRADE NOW")) throw new Error("trade now");
   if (!run.includes("onTradeNow")) throw new Error("trade now callback");
@@ -46,6 +56,7 @@ export function assertChatAgentCopy() {
   if (!chat.includes("if (huntUser) return")) throw new Error("mission view must drop the old desk wall");
   if (chat.includes("Still researching ${island.coin}")) throw new Error("busy hunt must not append a second canned line");
   const css = readFileSync(join(here, "../src/styles.css"), "utf8");
+  if (!css.includes("repeat(10")) throw new Error("10-stage track");
   if (!css.includes("button.ghost")) throw new Error("ghost buttons must be dark-styled");
   if (!css.includes("color-scheme: dark")) throw new Error("native widgets must follow the dark desk");
   if (run.includes('["Research next", "Find the best opportunity"]')) throw new Error("research next must skip the last book");
@@ -65,7 +76,9 @@ export function assertChatAgentCopy() {
   const app = readFileSync(join(here, "../src/App.tsx"), "utf8");
   if (!app.includes("setupDone && !showChat")) throw new Error("pair strip hidden on Agent");
   if (!app.includes('label: "Agent"')) throw new Error("rail Agent");
-  if (!app.includes("onAgentTrade")) throw new Error("desktop TRADE NOW handoff");
+  if (!app.includes("!fresh && Array.isArray(started.hunt_skip)")) throw new Error("fresh hunt must not ingest stale host skip");
+  if (!app.includes("!fresh && !opts?.chained")) throw new Error("chained hunt must not reuse stale rejected state");
+  if (!app.includes('setResearchKind("CANCELED_BY_USER")')) throw new Error("cancel must not become NO TRADE");
   if (!app.includes('authorizePreview("AUTHORIZE"')) throw new Error("TRADE NOW must use existing authorize path");
   if (app.includes("huntTried.current.length >= ranked.length")) throw new Error("exhausted hunt must not wrap to ranked[0]");
   if (!app.includes("hunt_exhausted")) throw new Error("host exhausted hunt");
