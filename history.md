@@ -18,6 +18,7 @@ RESULT:
 - **TESTED:** `go test ./...` PASS. Desktop `tsc -b` PASS. `npx tsx e2e/run.ts` PASS. Companion overlayed to **0.9.10** without remint: agent `PIT-4bbee556` `0xfc64e36babe7dfe9eb779ee3a9f2362d16881d52`, session live. Buying power $16.18. Policy pinned. ETH OID `529167222216` untouched.
 - **LIVE:** **Find the next opportunity** at 7:38:53 AM (short hypothesis still sealed) chained **BTC → SOL → ETH → HYPE** after the earlier DOGE+AVAX stand-downs. Did not wrap. Universe exhausted: all six executable books. No `READY_ELIGIBLE`, so TRADE NOW was not shown and was not clicked.
 - **THIS-JOB 0G:** BTC job `8c8d331d…84fb` challenger_killed after proposed sell, tx `https://chainscan.0g.ai/tx/0x6abe43772f1b953e2c6debec31dba1d64b77a7f8c3b6f83cf950f18f11e263e4`. SOL job `d3b198f7…42c3` `no_side`, tx `https://chainscan.0g.ai/tx/0x7e7f85aaf4aacd29129b8697cbc5de7e8f6d56745754897807a262e2d31b21ef`. ETH job `78617f6c…845c` tx `https://chainscan.0g.ai/tx/0xdf4f8f95cbee81f99402754455915635bbc3f4623861318f5fc171da631f8ae0`. HYPE job `9761cbd5…c980` `no_side` proposed none, tx `https://chainscan.0g.ai/tx/0x266c45cbd35cb8b9e856d7f3c850e5ce72d34fb33251bba616345e34cd04cb78`.
+- **SHIPPED:** Commit `fed6989` 2026-08-31 07:45:26 +0300. Tag `v0.9.10`. NSIS `PIT_0.9.10_x64-setup.exe` SHA256 `247E596F4389990F88494959E1B1867E21E095200F9133C7F0F999F3AB584BAC`. Release https://github.com/mohamedwael201193/pit/releases/tag/v0.9.10. Vercel https://pit0g.vercel.app. Health https://pit-health.onrender.com **0.9.10**. Overlay companion `D:\PIT\pit.exe` is **0.9.10** (session reused, agent not reminted). Installer also at `D:\PIT\PIT_0.9.10_x64-setup.exe`.
 - **BLOCKED:** Authenticode still absent. iTransfer still not live. TRADE NOW not clicked: short hypothesis still produced no `READY_ELIGIBLE` preview. Forcing a fill would be a fake demo.
 
 SECURITY RESULT: The model cannot AUTHORIZE. TRADE NOW is still an explicit desktop confirmation of the existing host path.
@@ -28,7 +29,7 @@ CLASSIFICATION:
 - Current-job 0G receipts: **IMPLEMENTED + LIVE VERIFIED**
 - TRADE NOW existing authorize path: **UNCHANGED** (no eligible preview this pass)
 PRODUCTION READY: 0.9.10 installer after tag.
-NEXT STEP: Push. Tag `v0.9.10`. NSIS. Overlay `D:\PIT`. Vercel + Render. TRADE NOW only on an exact READY preview.
+NEXT STEP: Close any 0.9.9 window and run `D:\PIT\PIT_0.9.10_x64-setup.exe` if using the Tauri window. Vite localhost:3001 already talks to companion 0.9.10. TRADE NOW only on an exact READY preview.
 
 ---
 
