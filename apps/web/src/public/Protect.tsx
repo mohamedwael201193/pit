@@ -32,7 +32,7 @@ export function ProtectPage() {
         title="Protect my strategy"
         lede="Desktop setup, step two: sign in the bound wallet to link this browser with PIT on this computer. The Direct token stays on the machine. This site never holds it and cannot place an order."
       />
-      <OnboardRail current={2} />
+      <OnboardRail current={2} paired={paired} />
 
       <ol className="mt-10 grid gap-6">
         <Bezel as="li">

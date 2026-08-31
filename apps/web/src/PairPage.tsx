@@ -93,7 +93,7 @@ export function PairPage() {
           title="Pair this browser with PIT on this machine."
           lede="PIT never asks for a seed phrase. The one-time code lives on your desktop. This site never receives your session key. After pairing, Protect my strategy is step 2."
         />
-        <OnboardRail current={1} />
+        <OnboardRail current={1} paired={already || Boolean(msg)} />
         <p className="mt-2 text-[0.875rem] text-[rgb(240_231_212/0.5)]">
           Pairing is step 1. Protect my strategy is step 2.
         </p>

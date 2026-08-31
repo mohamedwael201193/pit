@@ -8,11 +8,11 @@ const STEPS = [
   { n: 5, label: "Ready", to: "/protect" },
 ] as const;
 
-export function OnboardRail({ current }: { current: 1 | 2 | 3 | 4 | 5 }) {
+export function OnboardRail({ current, paired }: { current: 1 | 2 | 3 | 4 | 5; paired?: boolean }) {
   return (
     <ol className="mb-8 flex flex-wrap gap-2" aria-label="Setup steps">
       {STEPS.map((s) => {
-        const done = s.n < current;
+        const done = s.n === 1 ? Boolean(paired) : s.n < current && Boolean(paired);
         const here = s.n === current;
         return (
           <li key={s.n}>
