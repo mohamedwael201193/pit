@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { PageHead } from "./ui/PageHead";
 import { Bezel } from "./ui/Surface";
+import { windowsInstallerUrl } from "./public/facts";
 
 const COMPANION = "http://127.0.0.1:17373";
 
@@ -114,7 +115,7 @@ export function PairPage() {
           ) : (
             <a
               className="rounded-full bg-[#d82f2f] px-6 py-3 font-semibold text-[#f0e7d4]"
-              href="https://github.com/mohamedwael201193/pit/releases/latest"
+              href={windowsInstallerUrl()}
             >
               Download PIT
             </a>
@@ -129,7 +130,7 @@ export function PairPage() {
           {deskOk ? (
             <a
               className="rounded-full border border-[rgb(240_231_212/0.35)] px-6 py-3 font-semibold text-[#f0e7d4]"
-              href="https://github.com/mohamedwael201193/pit/releases/latest"
+              href={windowsInstallerUrl()}
             >
               Download PIT
             </a>

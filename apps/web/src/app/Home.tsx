@@ -3,6 +3,7 @@ import { usePrivy } from "@privy-io/react-auth";
 import { PageHead } from "../ui/PageHead";
 import { ButtonLink } from "../ui/Button";
 import { WatchHome } from "../WatchHome";
+import { windowsInstallerUrl } from "../public/facts";
 
 export function Home() {
   const { user } = usePrivy();
@@ -26,7 +27,7 @@ export function Home() {
         <ButtonLink as={Link} to="/proof" variant="secondary" size="lg">
           Proof
         </ButtonLink>
-        <ButtonLink as={Link} to="/download" variant="secondary" size="lg">
+        <ButtonLink href={windowsInstallerUrl()} variant="secondary" size="lg">
           Download desktop
         </ButtonLink>
       </div>

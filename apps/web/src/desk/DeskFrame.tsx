@@ -18,6 +18,7 @@ import { PitMark } from "../brand/PitMark";
 import { cn } from "../lib/cn";
 import { ChatPanel } from "../public/ChatPanel";
 import { useWatch } from "../public/Watch";
+import { windowsInstallerUrl } from "../public/facts";
 
 interface NavItem {
   to: string;
@@ -76,13 +77,13 @@ function Rail({ chatOpen, onAsk }: { chatOpen: boolean; onAsk: () => void }) {
       <Link to="/" className="mb-6 inline-flex px-1" aria-label="PIT home">
         <PitMark />
       </Link>
-      <Link
-        to="/download"
+      <a
+        href={windowsInstallerUrl()}
         className="mb-6 inline-flex items-center justify-center gap-2 rounded-full bg-[#d82f2f] px-3 py-2.5 text-[0.9375rem] font-semibold text-[#f0e7d4] no-underline"
       >
         <DownloadSimple size={16} weight="bold" aria-hidden="true" />
         Download
-      </Link>
+      </a>
       <p className="mb-2 px-3 text-[0.6875rem] tracking-[0.14em] text-[rgb(240_231_212/0.4)] uppercase">Look</p>
       <nav aria-label="Look" className="mb-6 flex flex-col gap-1">
         {LOOK.map((item) => (

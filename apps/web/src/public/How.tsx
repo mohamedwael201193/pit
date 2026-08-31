@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { PageHead } from "../ui/PageHead";
+import { windowsInstallerUrl } from "./facts";
 
 export function HowPage() {
   return (
@@ -72,9 +73,9 @@ export function HowPage() {
         <Link to="/radar" className="intel-cta">
           Explore live PIT
         </Link>
-        <Link to="/download" className="intel-secondary">
+        <a href={windowsInstallerUrl()} className="intel-secondary">
           Download PIT Desktop
-        </Link>
+        </a>
         <Link to="/pair" className="intel-ghost">
           Pair later
         </Link>

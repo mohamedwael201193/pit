@@ -38,6 +38,10 @@ test("proof does not badge verified without a check", async ({ page }) => {
   await page.goto("/proof");
   await expect(page.getByRole("heading", { name: "What was verified, and how" })).toBeVisible();
   await expect(page.getByText("NO LIVE RECEIPT")).toBeVisible();
+  await expect(page.getByText("531667200134")).toBeVisible();
+  await expect(page.getByText("529167222216")).toBeVisible();
+  await expect(page.getByRole("link", { name: /Research 0x1d2113bd/ })).toBeVisible();
+  await expect(page.getByRole("link", { name: /Order 0x8c28051b/ })).toBeVisible();
 });
 
 test("agent shows iTransfer not live and desk id", async ({ page }) => {
@@ -48,10 +52,14 @@ test("agent shows iTransfer not live and desk id", async ({ page }) => {
   await expect(page.getByRole("button", { name: /transfer/i })).toHaveCount(0);
 });
 
-test("download does not claim authenticode", async ({ page }) => {
+test("download does not claim authenticode and files the installer", async ({ page }) => {
   await page.goto("/download");
   await expect(page.getByText("unsigned")).toBeVisible();
-  await expect(page.getByRole("link", { name: "GitHub release" })).toBeVisible();
+  const installer = page.getByRole("link", { name: "Download Windows installer" });
+  await expect(installer).toBeVisible();
+  await expect(installer).toHaveAttribute("href", /\/windows$/);
+  await expect(installer).not.toHaveAttribute("href", /releases\/latest/);
+  await expect(page.getByRole("link", { name: "SHA256SUMS" })).toHaveAttribute("href", /\/checksums$/);
 });
 
 test("unknown replay is honest", async ({ page }) => {

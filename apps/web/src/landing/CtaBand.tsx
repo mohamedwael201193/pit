@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { Reveal } from "../ui/Reveal";
+import { windowsInstallerUrl } from "../public/facts";
 
 export function CtaBand() {
   return (
@@ -13,9 +14,9 @@ export function CtaBand() {
             Explore live books here. Verify proof here. Authorize only on desktop.
           </p>
           <div className="mt-12 flex flex-wrap gap-3">
-            <Link to="/download" className="pill pill-coral">
+            <a href={windowsInstallerUrl()} className="pill pill-coral">
               Download PIT Desktop
-            </Link>
+            </a>
             <Link to="/radar" className="pill pill-line">
               Explore live PIT
             </Link>

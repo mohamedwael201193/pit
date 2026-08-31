@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useState, type FormEvent, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import {
   ARISTOTLE_EXPLORER,
@@ -7,6 +7,7 @@ import {
   IDENTITY_8004,
   PIT_AGENT,
   STORAGE_INDEXER,
+  VERIFIED_FILL,
 } from "./facts";
 import { PageHead } from "../ui/PageHead";
 import { shortAddr } from "./format";
@@ -68,14 +69,30 @@ export function ProofPage() {
         <ProofRow
           name="0G Chain"
           status="BROWSER READ"
-          proves="A transaction exists on Aristotle if the RPC returns it."
-          how="Paste a hash. This browser calls evmrpc.0g.ai."
+          proves="A transaction exists on Aristotle if the RPC returns it. Paste a hash below. This browser calls evmrpc.0g.ai."
+          how="This page does not run VerifyE2EE."
+        />
+        <ProofRow
+          name="This-job 0G"
+          status="RECORDED"
+          proves={`Job ${VERIFIED_FILL.job}. Research and order evidence for that job. Not a historical fallback. This page did not re-run VerifyE2EE.`}
+          how="Open the Aristotle explorer. Confirm the hashes match the job."
+          extra={
+            <p className="mt-2 flex flex-col gap-1 text-[0.8125rem] leading-5">
+              <a className="text-[#d82f2f] break-all" href={`${ARISTOTLE_EXPLORER}/tx/${VERIFIED_FILL.researchTx}`} target="_blank" rel="noreferrer">
+                Research {VERIFIED_FILL.researchTx}
+              </a>
+              <a className="text-[#d82f2f] break-all" href={`${ARISTOTLE_EXPLORER}/tx/${VERIFIED_FILL.orderTx}`} target="_blank" rel="noreferrer">
+                Order {VERIFIED_FILL.orderTx}
+              </a>
+            </p>
+          }
         />
         <ProofRow
           name="Hyperliquid"
-          status="HISTORICAL OID"
-          proves={`OID ${HISTORICAL_FILL.oid} / ${HISTORICAL_FILL.market} ${HISTORICAL_FILL.sz} is a recorded fill.`}
-          how="This site does not fetch another account’s fills. Verify the OID on the account that received it."
+          status="RECORDED OID"
+          proves={`Latest recorded fill on this desk: OID ${VERIFIED_FILL.oid} / ${VERIFIED_FILL.market} ${VERIFIED_FILL.sz} @ ${VERIFIED_FILL.px}, job ${VERIFIED_FILL.job}. Older ETH OID ${HISTORICAL_FILL.oid} is historical and was not flattened.`}
+          how="This site does not fetch another account’s fills and does not run a live mission stream. Verify the OID on the account that received it."
         />
         <ProofRow
           name="Policy"
@@ -121,7 +138,19 @@ export function ProofPage() {
   );
 }
 
-function ProofRow({ name, status, proves, how }: { name: string; status: string; proves: string; how: string }) {
+function ProofRow({
+  name,
+  status,
+  proves,
+  how,
+  extra,
+}: {
+  name: string;
+  status: string;
+  proves: string;
+  how: string;
+  extra?: ReactNode;
+}) {
   return (
     <article className="grid gap-2 py-5 md:grid-cols-[9rem_8rem_1fr] md:gap-6">
       <h2 className="font-semibold">{name}</h2>
@@ -129,6 +158,7 @@ function ProofRow({ name, status, proves, how }: { name: string; status: string;
       <div>
         <p className="text-[0.9375rem] leading-6">{proves}</p>
         <p className="mt-1 text-[0.8125rem] leading-5 text-[rgb(240_231_212/0.5)]">HOW: {how}</p>
+        {extra}
       </div>
     </article>
   );

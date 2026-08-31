@@ -2,6 +2,7 @@ package main
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/mohamedwael201193/pit/internal/config"
 	"github.com/mohamedwael201193/pit/internal/hl"
@@ -59,5 +60,20 @@ func newMux() http.Handler {
 		}
 		obs.WriteJSON(w, http.StatusOK, releaseBody(rel))
 	})
+	mux.HandleFunc("/windows", func(w http.ResponseWriter, r *http.Request) {
+		rel, _ := cachedRelease()
+		redirectLatestAsset(w, r, windowsAsset(rel), firstNonEmpty(rel.File, "PIT_x64-setup.exe"))
+	})
+	mux.HandleFunc("/checksums", func(w http.ResponseWriter, r *http.Request) {
+		rel, _ := cachedRelease()
+		redirectLatestAsset(w, r, checksumsAsset(rel), "SHA256SUMS.txt")
+	})
 	return httpx.Public(mux)
+}
+
+func firstNonEmpty(v, fallback string) string {
+	if strings.TrimSpace(v) != "" {
+		return v
+	}
+	return fallback
 }

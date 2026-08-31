@@ -29,7 +29,7 @@ const QUESTIONS: readonly { q: string; a: string }[] = [
   },
   {
     q: "How do I install PIT?",
-    a: "Download the Windows installer from GitHub Releases. Verify SHA256 against SHA256SUMS. The installer is not Authenticode-signed until a certificate exists. Pair at /pair with the code shown on this machine.",
+    a: "Use Download PIT Desktop on this site. The installer is a file download, not a GitHub Releases page. Verify SHA256 against SHA256SUMS. The installer is not Authenticode-signed until a certificate exists. Pair at /pair with the code shown on this machine.",
   },
   {
     q: "How do I revoke PIT?",

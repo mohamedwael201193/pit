@@ -75,7 +75,13 @@ func TestWatchCORSForProductionOrigin(t *testing.T) {
 
 func TestReleaseNeverSigns(t *testing.T) {
 	fetchGH = func() (publicRelease, error) {
-		return publicRelease{Tag: "v0.9.1", Name: "PIT 0.9.1", HTML: "https://github.com/mohamedwael201193/pit/releases/tag/v0.9.1", SHA: "ABCD", Unsigned: true}, nil
+		return publicRelease{
+			Tag: "v0.9.1", Name: "PIT 0.9.1", HTML: "https://github.com/mohamedwael201193/pit/releases/tag/v0.9.1",
+			SHA: "ABCD", Unsigned: true,
+			Asset: "https://github.com/mohamedwael201193/pit/releases/download/v0.9.1/PIT_0.9.1_x64-setup.exe",
+			File:  "PIT_0.9.1_x64-setup.exe",
+			Sums:  "https://github.com/mohamedwael201193/pit/releases/download/v0.9.1/SHA256SUMS.txt",
+		}, nil
 	}
 	t.Cleanup(func() { fetchGH = fetchGitHubLatest })
 	relMu.Lock()
@@ -96,5 +102,50 @@ func TestReleaseNeverSigns(t *testing.T) {
 	}
 	if body["tag"] != "v0.9.1" {
 		t.Fatal(body)
+	}
+	if body["filename"] != "PIT_0.9.1_x64-setup.exe" {
+		t.Fatal(body["filename"])
+	}
+}
+
+func TestWindowsRedirectsToInstallerNotReleasePage(t *testing.T) {
+	fetchGH = func() (publicRelease, error) {
+		return publicRelease{
+			Tag:      "v0.9.11",
+			Asset:    "https://github.com/mohamedwael201193/pit/releases/download/v0.9.11/PIT_0.9.11_x64-setup.exe",
+			File:     "PIT_0.9.11_x64-setup.exe",
+			Sums:     "https://github.com/mohamedwael201193/pit/releases/download/v0.9.11/SHA256SUMS.txt",
+			SHA:      "B621A10504EF1F9031C8C6D28E0B36FDB29B8AD186CEA86BCAC81F209A64515F",
+			Unsigned: true,
+		}, nil
+	}
+	t.Cleanup(func() { fetchGH = fetchGitHubLatest })
+	relMu.Lock()
+	relOK = false
+	relMu.Unlock()
+	req := httptest.NewRequest(http.MethodGet, "/windows", nil)
+	rec := httptest.NewRecorder()
+	newMux().ServeHTTP(rec, req)
+	if rec.Code != http.StatusFound {
+		t.Fatal(rec.Code, rec.Body.String())
+	}
+	loc := rec.Header().Get("Location")
+	if loc != "https://github.com/mohamedwael201193/pit/releases/download/v0.9.11/PIT_0.9.11_x64-setup.exe" {
+		t.Fatal(loc)
+	}
+	if rec.Header().Get("Content-Type") == "text/html" {
+		t.Fatal("html")
+	}
+	if rec.Header().Get("Content-Disposition") == "" {
+		t.Fatal("disposition")
+	}
+	req = httptest.NewRequest(http.MethodGet, "/checksums", nil)
+	rec = httptest.NewRecorder()
+	newMux().ServeHTTP(rec, req)
+	if rec.Code != http.StatusFound {
+		t.Fatal(rec.Code)
+	}
+	if rec.Header().Get("Location") != "https://github.com/mohamedwael201193/pit/releases/download/v0.9.11/SHA256SUMS.txt" {
+		t.Fatal(rec.Header().Get("Location"))
 	}
 }

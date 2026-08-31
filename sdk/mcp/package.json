@@ -1,0 +1,27 @@
+{
+  "name": "pit-mcp",
+  "version": "0.9.12",
+  "description": "Read-only MCP server for PIT. Cannot authorize, sign, or place orders.",
+  "type": "module",
+  "bin": {
+    "pit-mcp": "bin/pit-mcp.mjs"
+  },
+  "main": "./dist/index.js",
+  "files": ["dist", "bin", "README.md", "LICENSE"],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mohamedwael201193/pit.git",
+    "directory": "sdk/mcp"
+  },
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "npm test",
+    "test": "tsc && node --test test/mcp.test.mjs"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "typescript": "^5.8.3"
+  }
+}

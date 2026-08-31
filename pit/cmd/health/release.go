@@ -8,6 +8,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/mohamedwael201193/pit/internal/obs"
 )
 
 const githubLatest = "https://api.github.com/repos/mohamedwael201193/pit/releases/latest"
@@ -18,6 +20,9 @@ type publicRelease struct {
 	HTML     string `json:"html"`
 	SHA      string `json:"sha,omitempty"`
 	Unsigned bool   `json:"unsigned"`
+	Asset    string `json:"asset,omitempty"`
+	File     string `json:"file,omitempty"`
+	Sums     string `json:"sums,omitempty"`
 }
 
 var (
@@ -30,15 +35,52 @@ var (
 
 func releaseBody(rel publicRelease) map[string]any {
 	return map[string]any{
-		"ok":       rel.Tag != "",
-		"tag":      rel.Tag,
-		"name":     rel.Name,
-		"html":     rel.HTML,
-		"sha":      rel.SHA,
-		"unsigned": true,
-		"sign":     false,
-		"trade":    false,
+		"ok":        rel.Tag != "",
+		"tag":       rel.Tag,
+		"name":      rel.Name,
+		"html":      rel.HTML,
+		"sha":       rel.SHA,
+		"installer": rel.Asset,
+		"filename":  rel.File,
+		"checksums": rel.Sums,
+		"unsigned":  true,
+		"sign":      false,
+		"trade":     false,
 	}
+}
+
+func windowsAsset(rel publicRelease) string {
+	return strings.TrimSpace(rel.Asset)
+}
+
+func checksumsAsset(rel publicRelease) string {
+	return strings.TrimSpace(rel.Sums)
+}
+
+func redirectLatestAsset(w http.ResponseWriter, r *http.Request, url, filename string) {
+	if r.Method != http.MethodGet && r.Method != http.MethodHead {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+	_, ok := cachedRelease()
+	if !ok {
+		obs.WriteJSON(w, http.StatusServiceUnavailable, map[string]any{
+			"ok": false, "error": "release_unavailable", "sign": false, "trade": false,
+		})
+		return
+	}
+	dest := strings.TrimSpace(url)
+	if dest == "" {
+		obs.WriteJSON(w, http.StatusNotFound, map[string]any{
+			"ok": false, "error": "installer_missing", "sign": false, "trade": false,
+		})
+		return
+	}
+	w.Header().Set("Cache-Control", "no-store")
+	if filename != "" {
+		w.Header().Set("Content-Disposition", `attachment; filename="`+filename+`"`)
+	}
+	http.Redirect(w, r, dest, http.StatusFound)
 }
 
 func cachedRelease() (publicRelease, bool) {
@@ -99,11 +141,17 @@ func fetchGitHubLatest() (publicRelease, error) {
 		Unsigned: true,
 	}
 	for _, a := range body.Assets {
-		if !strings.Contains(strings.ToLower(a.Name), "sha256") {
+		name := strings.ToLower(strings.TrimSpace(a.Name))
+		url := strings.TrimSpace(a.URL)
+		if strings.HasSuffix(name, "x64-setup.exe") {
+			out.Asset = url
+			out.File = strings.TrimSpace(a.Name)
 			continue
 		}
-		out.SHA = fetchSumsSHA(a.URL)
-		break
+		if strings.Contains(name, "sha256") {
+			out.Sums = url
+			out.SHA = fetchSumsSHA(url)
+		}
 	}
 	return out, nil
 }

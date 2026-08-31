@@ -1,4 +1,4 @@
-import { HISTORICAL_FILL, PIT_AGENT } from "./facts";
+import { HISTORICAL_FILL, PIT_AGENT, VERIFIED_FILL } from "./facts";
 import { compact, fundingLabel, markLabel, usd } from "./format";
 import type { PublicCoin, WatchView } from "./types";
 import { coinMin } from "./venue";
@@ -37,11 +37,11 @@ export function answerChat(raw: string, watch: WatchView | null): string {
   }
 
   if (q.includes("proof") || q.includes("verify") || q.includes("oid")) {
-    return `Open /proof. TEE verification recovers a signer from Direct evidence and compares it to the registered signer — there is no live public receipt on this page to recover, so it will not badge Verified. A historical Hyperliquid fill exists: ${HISTORICAL_FILL.market} size ${HISTORICAL_FILL.sz} OID ${HISTORICAL_FILL.oid}, labeled HISTORICAL. Paste a 0G Chain transaction hash to read it from Aristotle RPC in this browser.`;
+    return `Open /proof. Latest recorded desk fill: ${VERIFIED_FILL.market} size ${VERIFIED_FILL.sz} OID ${VERIFIED_FILL.oid}, job ${VERIFIED_FILL.job}. Research 0G ${VERIFIED_FILL.researchTx}. Order 0G ${VERIFIED_FILL.orderTx}. An older ETH fill OID ${HISTORICAL_FILL.oid} is HISTORICAL and was not flattened. TEE VerifyE2EE is not run in this browser, so this page will not badge Verified. Paste a 0G Chain transaction hash to read it from Aristotle RPC.`;
   }
 
   if (q.includes("last mission") || (q.includes("happened") && q.includes("mission"))) {
-    return `There is no live public mission stream. A historical fill is on record: ${HISTORICAL_FILL.market} ${HISTORICAL_FILL.sz} @ ${HISTORICAL_FILL.px}, OID ${HISTORICAL_FILL.oid}. That is HISTORICAL, not a live replay of private research. Open /missions/historical-eth/replay.`;
+    return `There is no live public mission stream. Latest recorded fill: ${VERIFIED_FILL.market} ${VERIFIED_FILL.sz} @ ${VERIFIED_FILL.px}, OID ${VERIFIED_FILL.oid}. Older ETH OID ${HISTORICAL_FILL.oid} is HISTORICAL. Open /missions/${VERIFIED_FILL.id}/replay.`;
   }
 
   if (q.includes("protect") || q.includes("strategy") || q.includes("private") || q.includes("sealed")) {
@@ -53,7 +53,7 @@ export function answerChat(raw: string, watch: WatchView | null): string {
   }
 
   if (q.includes("desktop") || q.includes("download") || q.includes("install")) {
-    return "PIT Desktop is the private brain: policy, keys, session, authorization, autonomy, execution. This website discovers and proves. Download the Windows x64 installer from GitHub Releases and verify SHA256. It is not Authenticode-signed. macOS and Linux are not claimed until packaged and tested.";
+    return "PIT Desktop is the private brain: policy, keys, session, authorization, autonomy, execution. This website discovers and proves. Use Download PIT Desktop on this site — the installer is served as a file, not a GitHub Releases page. Verify SHA256. It is not Authenticode-signed. macOS and Linux are not claimed until packaged and tested.";
   }
 
   const coins = watch?.coins ?? [];

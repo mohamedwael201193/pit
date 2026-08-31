@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { HISTORICAL_FILL } from "./facts";
+import { HISTORICAL_FILL, VERIFIED_FILL } from "./facts";
 import { PageHead } from "../ui/PageHead";
 
 export function MissionsPage() {
@@ -7,7 +7,7 @@ export function MissionsPage() {
     <div className="mx-auto max-w-[80rem]">
       <PageHead
         title="Public-safe PIT missions"
-        lede="The public site only lists missions that have a public-safe receipt. Private research stays on desktop. This page will not invent Mission IDs, OIDs, or fills."
+        lede="The public site only lists missions that have a public-safe receipt. Private research stays on desktop. This page will not invent Mission IDs, OIDs, or fills. It is not a live mission stream."
       />
 
       <div className="mt-10 border border-[rgb(240_231_212/0.14)] px-5 py-6">
@@ -16,6 +16,19 @@ export function MissionsPage() {
         <p className="mt-2 max-w-[52ch] text-[0.9375rem] leading-6 text-[rgb(240_231_212/0.6)]">
           Empty is honest. Desktop missions remain private unless a public-safe proof is published.
         </p>
+      </div>
+
+      <div className="mt-6 border border-[rgb(240_231_212/0.14)] px-5 py-6">
+        <p className="text-[0.6875rem] tracking-[0.16em] text-[#d82f2f]">RECORDED</p>
+        <p className="mt-2 text-[1.25rem] font-semibold">
+          {VERIFIED_FILL.market} · OID {VERIFIED_FILL.oid}
+        </p>
+        <p className="mt-2 max-w-[52ch] text-[0.9375rem] leading-6 text-[rgb(240_231_212/0.6)]">
+          Size {VERIFIED_FILL.sz} @ {VERIFIED_FILL.px}. Job {VERIFIED_FILL.job}. Same-desk READY → TRADE NOW → FILLED. Not a live stream.
+        </p>
+        <Link to={`/missions/${VERIFIED_FILL.id}/replay`} className="intel-cta mt-6 inline-flex">
+          Open recorded replay
+        </Link>
       </div>
 
       <div className="mt-6 border border-[rgb(240_231_212/0.14)] px-5 py-6">

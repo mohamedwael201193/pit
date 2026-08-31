@@ -1,9 +1,21 @@
 import { Link, useParams } from "react-router-dom";
 import { PageHead } from "../ui/PageHead";
-import { HISTORICAL_FILL } from "./facts";
+import { ARISTOTLE_EXPLORER, HISTORICAL_FILL, VERIFIED_FILL } from "./facts";
 import type { EvidenceKind } from "./types";
 
 type Beat = { title: string; kind: EvidenceKind; detail: string };
+
+const RECORDED_BEATS: Beat[] = [
+  { title: "Market discovered", kind: "RECORDED", detail: `${VERIFIED_FILL.market} on Hyperliquid mainnet.` },
+  { title: "Research started", kind: "RECORDED", detail: "Private Direct TeeML committee on desktop. Prompt not published." },
+  { title: "Host decision", kind: "RECORDED", detail: "Host sized the preview. Model cannot raise clip." },
+  { title: "Execution", kind: "RECORDED", detail: "Desktop TRADE NOW → authorizePreview(AUTHORIZE, previewHash). This website cannot sign." },
+  { title: "OID", kind: "RECORDED", detail: VERIFIED_FILL.oid },
+  { title: "Fill", kind: "RECORDED", detail: `${VERIFIED_FILL.sz} @ ${VERIFIED_FILL.px}` },
+  { title: "Research 0G", kind: "RECORDED", detail: `${ARISTOTLE_EXPLORER}/tx/${VERIFIED_FILL.researchTx}` },
+  { title: "Order 0G", kind: "RECORDED", detail: `${ARISTOTLE_EXPLORER}/tx/${VERIFIED_FILL.orderTx}` },
+  { title: "VerifyE2EE in this browser", kind: "ABSENT", detail: "Public /proof does not run VerifyE2EE." },
+];
 
 const HISTORICAL_BEATS: Beat[] = [
   { title: "Market discovered", kind: "HISTORICAL", detail: `${HISTORICAL_FILL.market} on Hyperliquid mainnet.` },
@@ -20,7 +32,9 @@ const HISTORICAL_BEATS: Beat[] = [
 
 export function ReplayPage() {
   const { id = "" } = useParams();
-  if (id !== HISTORICAL_FILL.id) {
+  const recorded = id === VERIFIED_FILL.id;
+  const historical = id === HISTORICAL_FILL.id;
+  if (!recorded && !historical) {
     return (
       <div className="mx-auto max-w-[80rem]">
         <PageHead
@@ -34,21 +48,24 @@ export function ReplayPage() {
     );
   }
 
+  const fill = recorded ? VERIFIED_FILL : HISTORICAL_FILL;
+  const beats = recorded ? RECORDED_BEATS : HISTORICAL_BEATS;
+  const lede = recorded
+    ? `${VERIFIED_FILL.note} Job ${VERIFIED_FILL.job}.`
+    : HISTORICAL_FILL.note;
+
   return (
     <div className="mx-auto max-w-[80rem]">
       <Link to="/missions" className="intel-ghost">
         ← Missions
       </Link>
-      <PageHead
-        title={`${HISTORICAL_FILL.market} ${HISTORICAL_FILL.oid}`}
-        lede={HISTORICAL_FILL.note}
-      />
+      <PageHead title={`${fill.market} ${fill.oid}`} lede={lede} />
       <ol className="mt-10 divide-y divide-[rgb(240_231_212/0.12)] border-y border-[rgb(240_231_212/0.12)]">
-        {HISTORICAL_BEATS.map((b) => (
+        {beats.map((b) => (
           <li key={b.title} className="grid gap-1 py-4 sm:grid-cols-[1fr_7rem_2fr] sm:items-baseline">
             <p className="font-medium">{b.title}</p>
             <p className={`text-[0.6875rem] tracking-[0.14em] ${kindColor(b.kind)}`}>{b.kind}</p>
-            <p className="text-[0.875rem] leading-6 text-[rgb(240_231_212/0.65)]">{b.detail}</p>
+            <p className="text-[0.875rem] leading-6 break-all text-[rgb(240_231_212/0.65)]">{b.detail}</p>
           </li>
         ))}
       </ol>

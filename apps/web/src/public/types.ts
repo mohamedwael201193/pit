@@ -68,4 +68,4 @@ export type SimRow = {
   why: string;
 };
 
-export type EvidenceKind = "LIVE" | "HISTORICAL" | "REPLAY" | "ABSENT";
+export type EvidenceKind = "LIVE" | "HISTORICAL" | "RECORDED" | "REPLAY" | "ABSENT";

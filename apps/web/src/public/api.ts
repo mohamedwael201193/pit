@@ -42,10 +42,23 @@ export async function fetchRelease(signal?: AbortSignal): Promise<{
   html?: string;
   sha?: string;
   unsigned?: boolean;
+  installer?: string;
+  filename?: string;
+  checksums?: string;
 }> {
   const r = await fetch(`${healthBase()}/release`, { signal });
   if (!r.ok) throw new Error(`release_${r.status}`);
-  const body = (await r.json()) as { sign?: boolean; trade?: boolean; tag?: string; name?: string; html?: string; sha?: string };
+  const body = (await r.json()) as {
+    sign?: boolean;
+    trade?: boolean;
+    tag?: string;
+    name?: string;
+    html?: string;
+    sha?: string;
+    installer?: string;
+    filename?: string;
+    checksums?: string;
+  };
   if (body.sign || body.trade) throw new UnsafeWatchError("release_refused");
   return body;
 }

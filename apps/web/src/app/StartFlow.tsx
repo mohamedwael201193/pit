@@ -13,6 +13,7 @@ import { PolicyPanel } from "../PolicyPanel";
 import { DirectSign } from "../DirectSign";
 import { namedState } from "../namedStates";
 import { cn } from "../lib/cn";
+import { windowsInstallerUrl } from "../public/facts";
 import {
   DiagramAuthorize,
   DiagramHeroPostcard,
@@ -211,7 +212,7 @@ export function StartFlow() {
 
           {current.id === 3 ? (
             <div className="mt-10">
-              <ButtonLink as={Link} to="/download" size="lg">
+              <ButtonLink href={windowsInstallerUrl()} size="lg">
                 Download PIT Desktop
               </ButtonLink>
               <div className="mt-8">

@@ -1,5 +1,17 @@
 {
   "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }],
+  "redirects": [
+    {
+      "source": "/windows",
+      "destination": "https://pit-health.onrender.com/windows",
+      "permanent": false
+    },
+    {
+      "source": "/checksums",
+      "destination": "https://pit-health.onrender.com/checksums",
+      "permanent": false
+    }
+  ],
   "headers": [
     {
       "source": "/index.html",
@@ -7,3 +19,4 @@
     }
   ]
 }
+

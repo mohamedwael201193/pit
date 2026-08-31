@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { motion, useMotionValue, useReducedMotion, useTransform } from "motion/react";
+import { windowsInstallerUrl } from "../public/facts";
 
 export function HeroCtas() {
   const reduce = useReducedMotion();
@@ -30,9 +31,9 @@ export function HeroCtas() {
           Explore PIT
         </Link>
       </motion.div>
-      <Link to="/download" className="pill pill-ghost">
+      <a href={windowsInstallerUrl()} className="pill pill-ghost">
         Download PIT Desktop
-      </Link>
+      </a>
       <Link to="/missions" className="pill pill-cream">
         See Sleep Missions
       </Link>

@@ -69,3 +69,27 @@ jobs:
           node-version: "20"
       - run: npm install
       - run: npm run build
+  sdk:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: sdk/js
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - run: npm install
+      - run: npm test
+  mcp:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: sdk/mcp
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - run: npm install
+      - run: npm test

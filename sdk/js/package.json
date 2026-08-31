@@ -1,10 +1,35 @@
 {
-  "name": "@pit/sdk",
-  "private": true,
-  "version": "0.1.0",
+  "name": "pit-os",
+  "version": "0.9.11",
+  "description": "Read-only PIT helpers. Cannot authorize, sign, place orders, or export session keys.",
   "type": "module",
-  "main": "./src/index.ts",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
-    ".": "./src/index.ts"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": ["dist", "README.md", "LICENSE"],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mohamedwael201193/pit.git",
+    "directory": "sdk/js"
+  },
+  "bugs": {
+    "url": "https://github.com/mohamedwael201193/pit/issues"
+  },
+  "homepage": "https://github.com/mohamedwael201193/pit/tree/main/sdk/js",
+  "keywords": ["pit", "0g", "hyperliquid", "readonly"],
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "npm test",
+    "test": "tsc && node --test test/sdk.test.mjs"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.3"
   }
 }
