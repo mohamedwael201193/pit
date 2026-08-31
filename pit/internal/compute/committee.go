@@ -1,6 +1,9 @@
 package compute
 
-import "fmt"
+import (
+	"encoding/json"
+	"fmt"
+)
 
 // Progress maps to real backend steps. UI must not animate these on a timer.
 type Progress string
@@ -43,11 +46,11 @@ func Next(cur Progress) (Progress, error) {
 func RoleInstruction(role Role) string {
 	switch role {
 	case Researcher:
-		return `ROLE=researcher. Read the sealed hypothesis (none|long|short). Reply with JSON only: {"proposed_side":"buy"|"sell"|"none"}. none is valid. Confirm long as buy or short as sell only if the sealed book supports it. You may reject the hypothesis with none. Never output size, leverage, withdraw, transfer, or permissions. The host sizes.`
+		return `ROLE=researcher. Read live market facts and the sealed hypothesis (none|long|short). Reply with JSON only: {"proposed_side":"buy"|"sell"|"none"}. If hypothesis is long, confirm buy unless live facts clearly contradict a long. If hypothesis is short, confirm sell unless live facts clearly contradict a short. If hypothesis is none, pick buy, sell, or none from the live market facts; prefer a side when funding, mark/oracle gap, open interest, or momentum in this envelope leans one way. Do not echo none just because hypothesis is none. Never output size, leverage, withdraw, transfer, or permissions. The host sizes.`
 	case Challenger:
-		return `ROLE=challenger. Reply with JSON only: {"survives":true|false,"kill":false}. Challenge the thesis. Never size.`
+		return `ROLE=challenger. Reply with JSON only: {"survives":true|false,"kill":false}. Challenge researcher_thesis in this envelope against the live market facts. If proposed_side is none or missing, survives=false. If proposed_side is buy or sell, survives=true only when that exact side is still justified by the live facts; otherwise survives=false. Never size.`
 	case Risk:
-		return `ROLE=risk. Reply with JSON only: {"kill":false,"survives":true}. Kill if the book is unsafe. Never size.`
+		return `ROLE=risk. Reply with JSON only: {"kill":false,"survives":true}. Read researcher_thesis. Kill if that side is unsafe on this book. Never size.`
 	default:
 		return ""
 	}
@@ -69,4 +72,30 @@ func Envelope(role Role, publicMarket, privateBook []byte) ([]byte, error) {
 	out = append(out, '|')
 	out = append(out, privateBook...)
 	return out, nil
+}
+
+// WithResearcherThesis copies the researcher's JSON into the public market so
+// challenger and risk challenge that exact side instead of an empty hypothesis.
+func WithResearcherThesis(publicMarket, prior []byte) []byte {
+	if len(publicMarket) == 0 {
+		return publicMarket
+	}
+	if len(prior) == 0 {
+		return publicMarket
+	}
+	var m map[string]any
+	if err := json.Unmarshal(publicMarket, &m); err != nil {
+		return publicMarket
+	}
+	var thesis any
+	if err := json.Unmarshal(prior, &thesis); err != nil {
+		m["researcher_thesis"] = string(prior)
+	} else {
+		m["researcher_thesis"] = thesis
+	}
+	b, err := json.Marshal(m)
+	if err != nil {
+		return publicMarket
+	}
+	return b
 }

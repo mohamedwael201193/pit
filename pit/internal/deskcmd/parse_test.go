@@ -166,9 +166,17 @@ func TestFindBestTradeStaysOnChat(t *testing.T) {
 	if r.Execute || !r.StartResearch || r.Hypothesis != "long" {
 		t.Fatalf("%+v", r)
 	}
-	r = Parse("What can I trade with my current capital?")
+	r = Parse("What can I trade now?")
 	if r.Execute || !r.StartResearch || r.Tool != "research.best" {
-		t.Fatalf("%+v", r)
+		t.Fatalf("what can i trade now %+v", r)
+	}
+	r = Parse("What can I trade?")
+	if r.Execute || !r.StartResearch || r.Tool != "research.best" {
+		t.Fatalf("what can i trade %+v", r)
+	}
+	r = Parse("Trade now")
+	if r.Execute || r.StartResearch || r.Tool != "preview.show" {
+		t.Fatalf("trade now still preview %+v", r)
 	}
 	r = Parse("What happened with the strategy?")
 	if r.Coin == "ETH" || r.Coin == "BTC" || r.Coin == "SOL" {

@@ -2,6 +2,40 @@
 
 ---
 
+## M133 — Sequential committee + live READY → TRADE NOW → OID. PIT 0.9.11
+
+- **Source:** “What can I trade now?” did not start research. None-hypothesis hunts proposed `none` on every book. Challenger never saw the researcher thesis. After a fill, Agent painted RESTING and “not execution-feasible” on a READY card.
+- **Discovery:** `wantsAcceptPreview` matched the substring `trade now` inside “What can I trade now?” and returned `preview.show`. Researcher prompt echoed sealed `hypothesis: none`. Challenger envelopes were sealed before researcher finished, so they challenged an empty thesis. `venueOrderState` preferred lifecycle `reconciled` over status `filled`. Chat leftover long/short could leak into Find the best. Version **0.9.11**.
+- **Candidate:** Hunt phrases win over TRADE NOW substring. Researcher confirms long/short unless facts contradict, and must pick a side from live facts when hypothesis is none. Challenger/risk receive `researcher_thesis` after the researcher job. Chat always seals `none|long|short` for this hunt. TRADE NOW remains `authorizePreview("AUTHORIZE", previewHash)`. FILLED only when Hyperliquid reports filled.
+- **Kill:** Second signer. Fake READY. Flatten OID 529167222216. Remint PIT-4bbee556. Loosening clip/leverage. Historical 0G fallback.
+
+DATE/TIME: 2026-08-31 08:50+03
+PHASE: Real research → real 0G Direct → real READY preview → real TRADE NOW → real OID.
+GOAL: Operator Agent is the single cockpit. Live scan, private committee, this-job proof, TRADE NOW only on exact READY, real Hyperliquid status.
+RESULT:
+- **IMPLEMENTED:** Parse, sequential TeeML committee, none-hypothesis does not echo none, chat seals none on Find the best, FILLED vs RESTING, READY thesis stays the preview not the post-fill book, banner Order filled after authorize.
+- **TESTED:** `go test ./internal/compute ./internal/deskcmd ./internal/companion` PASS. Desktop `tsc -b` PASS. `npx tsx e2e/run.ts` PASS.
+- **LIVE:** **What can I trade now?** at 7:57:41 AM started a fresh hunt (parse fix). **Find the best opportunity** hunts exhausted honestly when researcher proposed none. **Find the best long** at 8:32 AM chained DOGE/AVAX/BTC/ETH/SOL (challenger_killed after buy) then **HYPE READY_ELIGIBLE**.
+- **TRADE:** Preview hash `0xb273d0052fe389b5e5ad3aad4b176e1cc993b8d8e605716bab78c70f3814e401`. Host sized buy 0.16 HYPE at 80.909, notional $12.95, clip $13, 1x. Path `authorize`. OID **531667200134**. Host reconcile `user_fills` **FILLED**. Agent card STATUS **FILLED**. TRADE NOW disabled after this preview’s OID. Duplicate TRADE NOW not offered.
+- **HYPERLIQUID:** Portfolio wallet `0xBDfC…0034`. Positions (1) **0.16 HYPE**, value $12.93, entry 80.826. ETH OID `529167222216` untouched.
+- **ACTIVITY:** `approval.accepted` + `order.submitted` + `order.filled` + `position.updated` for job `4a1d45ec-8c3f-4883-a162-19739accb9cf` and OID `531667200134`.
+- **THIS-JOB 0G:** Research tx `https://chainscan.0g.ai/tx/0x1d2113bd683b3ef8be5d74d603018c4bacdd49531bdf201abbc7dea4bb16510b` root `0x9fd427…f72e`. Order evidence tx `https://chainscan.0g.ai/tx/0x8c28051bec7bebd7af3b6cc75f7aa034d67f9809f9c30eef9a6c9f84ed6c11fb`. Both job `4a1d45ec…b9cf`. No historical fallback.
+- **SESSION:** Agent `PIT-4bbee556` `0xfc64e36babe7dfe9eb779ee3a9f2362d16881d52` reused. Policy pinned. Companion overlay `D:\PIT\pit.exe` **0.9.11**.
+- **SHIPPED:** See follow-up ship line after tag/NSIS/Vercel/Render.
+
+SECURITY RESULT: The model cannot AUTHORIZE. TRADE NOW used the existing desktop authorize path. Policy clip was not raised. Withdraw/transfer remain forbidden.
+TX HASH / OID: Venue OID `531667200134` FILLED. Research 0G `0x1d2113bd683b3ef8be5d74d603018c4bacdd49531bdf201abbc7dea4bb16510b`. Order 0G `0x8c28051bec7bebd7af3b6cc75f7aa034d67f9809f9c30eef9a6c9f84ed6c11fb`. Historical ETH OID `529167222216` unchanged.
+CLASSIFICATION:
+- What can I trade now starts research: **IMPLEMENTED + LIVE VERIFIED**
+- Sequential committee (challenger sees researcher thesis): **IMPLEMENTED + LIVE VERIFIED**
+- READY → TRADE NOW → real OID: **LIVE VERIFIED**
+- FILLED only when Hyperliquid reports filled: **IMPLEMENTED + LIVE VERIFIED**
+- Current-job 0G linked to the same preview/order: **LIVE VERIFIED**
+PRODUCTION READY: 0.9.11 overlay is live. NSIS/tag after this commit.
+NEXT STEP: Tag `v0.9.11`, NSIS, Vercel + Render, copy installer to `D:\PIT`. Close any 0.9.10 Tauri window before installing.
+
+---
+
 ## M132 — Chat hunts ignore stale 4h auto skips. PIT 0.9.10
 
 - **Source:** Find me the best short researched DOGE then AVAX and painted “Checked every executable book” with only two names. Host `hunt-skip.json` was only `DOGE,AVAX`. Remaining BTC/ETH/SOL/HYPE were still in automation.json 4h skips from the earlier long hunt. Client then cleared the last-book card.

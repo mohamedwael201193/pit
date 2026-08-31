@@ -20,6 +20,7 @@ export function assertChatAgentCopy() {
   if (!chat.includes("agent-stream")) throw new Error("one conversation stream");
   if (!chat.includes("agent-workspace")) throw new Error("one agent workspace");
   if (!chat.includes("unnamed ? \"\"")) throw new Error("next/best hunt must not reuse the last coin from the host");
+  if (!chat.includes('r.hypothesis === "short" ? r.hypothesis : "none"')) throw new Error("find the best must seal none, not leftover long/short");
   if (!chat.includes("fresh: fresh")) throw new Error("Find the best must reset skip; Research next must not");
   if (!chat.includes("[lines, island?.busy]")) throw new Error("elapsed ticks must not steal scroll");
   if (chat.includes("island?.roles?.length")) throw new Error("role ticks must not steal scroll");
@@ -36,6 +37,7 @@ export function assertChatAgentCopy() {
   if (!run.includes('id: "DECISION"')) throw new Error("decision stage");
   if (!run.includes("REVIEW")) throw new Error("review preview");
   if (!run.includes("Research next")) throw new Error("research next on no-trade");
+  if (!run.includes("huntDone")) throw new Error("exhausted hunt uses scan-again, not research-next");
   if (!run.includes("Scan again")) throw new Error("scan again on no-trade");
   if (!run.includes("NO TRADE")) throw new Error("no-trade card");
   if (!run.includes("TRADE NOW")) throw new Error("trade now");

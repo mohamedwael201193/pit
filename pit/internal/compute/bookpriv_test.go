@@ -20,6 +20,9 @@ func TestBuildPrivateBookDoesNotInventFills(t *testing.T) {
 	if !strings.Contains(s, `"hypothesis":"none"`) {
 		t.Fatal(s)
 	}
+	if !strings.Contains(s, "live market facts") {
+		t.Fatal("none book must ask researcher to read live facts")
+	}
 }
 
 func TestBuildPrivateBookHypothesisLong(t *testing.T) {

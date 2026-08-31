@@ -46,11 +46,12 @@ export function researchWhyCopy(input: {
   const stood = input.kind === "READY_STOOD_DOWN" || input.deny === "no_side" || input.stop === "READY_STOOD_DOWN";
   const blocked = input.kind === "POLICY_DENIED" || input.kind === "POLICY_REJECTED";
   const accepted = verified && input.eligible && !stood && !blocked;
-  const found =
-    input.snap?.whyRanked ||
-    input.snap?.why ||
-    input.note ||
-    (input.coin ? `Public ${input.coin} book under policy.` : "No completed pass yet.");
+  const found = accepted
+    ? `Verified ${input.coin || "this book"} reached an exact host preview. Host sized under the pinned clip.`
+    : input.snap?.whyRanked ||
+      input.snap?.why ||
+      input.note ||
+      (input.coin ? `Public ${input.coin} book under policy.` : "No completed pass yet.");
   let change = "Protect private compute, pin policy, and run a sealed pass on an eligible market.";
   if (stood) change = "Checking the next eligible book, a different thesis, or more venue margin. Host will not invent a side.";
   if (blocked) change = "Pin a policy that allows this market, or pick a coin that already passes.";

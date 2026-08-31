@@ -100,18 +100,6 @@ func ProductAskReportStage(net config.Network, deskAuthorized bool, bin string, 
 		os.RemoveAll(dir)
 	}()
 	notify(stage, "SEALING_PRIVATE_BOOK")
-	envelopes, err := Committee(publicMarket, privateBook)
-	if err != nil {
-		return AskReport{}, err
-	}
-	for _, role := range CommitteeRoles() {
-		j, merr := MaterializeAsk(dir, sku, role, envelopes[role], loaded.Authorization)
-		if merr != nil {
-			return AskReport{}, merr
-		}
-		j.Bin = bin
-		jobs = append(jobs, j)
-	}
 	if stopped(stop) {
 		return AskReport{}, fmt.Errorf("research_cancelled")
 	}
@@ -119,11 +107,45 @@ func ProductAskReportStage(net config.Network, deskAuthorized bool, bin string, 
 	if lastPath != "" {
 		_ = os.WriteFile(lastPath, []byte(`{"sign":false,"trade":false,"roles":[]}`), 0o600)
 	}
-	if err := RunCommitteeStagesPersist(bin, jobs, stage, stop, func(done []DirectJob) {
-		_ = SavePublicEvidence(lastPath, done, nil)
-	}); err != nil {
-		rep = AskReport{Note: "Committee stopped. PIT did not fall back to Router.", Roles: publicJobs(jobs)}
-		return rep, err
+	labels := map[Role]string{
+		Researcher: "RESEARCHER",
+		Challenger: "CHALLENGER",
+		Risk:       "RISK",
+	}
+	var prior []byte
+	for _, role := range CommitteeRoles() {
+		if stopped(stop) {
+			return AskReport{}, fmt.Errorf("research_cancelled")
+		}
+		market := publicMarket
+		if role != Researcher {
+			market = WithResearcherThesis(publicMarket, prior)
+		}
+		env, envErr := Envelope(role, market, privateBook)
+		if envErr != nil {
+			return AskReport{}, envErr
+		}
+		j, merr := MaterializeAsk(dir, sku, role, env, loaded.Authorization)
+		if merr != nil {
+			return AskReport{}, merr
+		}
+		j.Bin = bin
+		jobs = append(jobs, j)
+		if role == Risk {
+			notify(stage, "RISK_START")
+		}
+		notify(stage, labels[role])
+		if runErr := RunSealedAskCtl(j, stage, stop); runErr != nil {
+			_ = SavePublicEvidence(lastPath, jobs, runErr)
+			notify(stage, labels[role]+"_FAILED")
+			rep = AskReport{Note: "Committee stopped. PIT did not fall back to Router.", Roles: publicJobs(jobs)}
+			return rep, runErr
+		}
+		_ = SavePublicEvidence(lastPath, jobs, nil)
+		notify(stage, labels[role]+"_VERIFIED")
+		if role == Researcher {
+			prior = roleJSONFromOut(j.OutPath)
+		}
 	}
 	notify(stage, "DETERMINISTIC_ENGINE")
 	rep = AskReport{Note: HonestLabel(IndependenceNote()), Roles: make([]map[string]any, 0, len(jobs))}

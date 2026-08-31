@@ -50,6 +50,9 @@ export function assertJobProofCorrelation() {
   }
   if (venueOrderState({ oid: "1", status: "filled" }) !== "filled") throw new Error("fill must stay fill");
   if (venueOrderState({ oid: "1", posted: true, status: "open" }) !== "resting") throw new Error("posted without fill is resting");
+  if (venueOrderState({ oid: "1", posted: true, lifecycle: "reconciled", status: "filled" }) !== "filled") {
+    throw new Error("reconciled fill must stay FILLED");
+  }
 
   const three = [
     { role: "researcher", verify_e2ee: "OK" },

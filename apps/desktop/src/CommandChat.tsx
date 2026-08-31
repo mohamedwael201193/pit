@@ -240,7 +240,7 @@ export function CommandChat({
       return;
     }
     if (r.start_research) {
-      const hyp = r.hypothesis === "long" || r.hypothesis === "short" ? r.hypothesis : undefined;
+      const hyp = r.hypothesis === "long" || r.hypothesis === "short" ? r.hypothesis : "none";
       const unnamed = /find (me )?(the )?(best|strongest|next)|what can i trade|research next|next opportunity|next eligible|next market/i.test(asked);
       const nextHunt = /research next|next opportunity|next eligible|next market/i.test(asked);
       const fresh = unnamed && !nextHunt;

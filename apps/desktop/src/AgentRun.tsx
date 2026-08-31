@@ -306,7 +306,12 @@ export function AgentRun({
   const huntDone = !busy && huntRejected.length > 0 && executable.length > 0 && huntRejected.length >= executable.length;
   const follow = ready
     ? []
-    : noTrade || policyBlock || capitalBlock
+    : huntDone
+      ? [
+          ["Scan again", "Find the best opportunity"],
+          ["Show why", "__why"],
+        ]
+      : noTrade || policyBlock || capitalBlock
       ? [
           ["Research next", "Find the next opportunity"],
           ["Scan again", "Find the best opportunity"],
@@ -314,7 +319,7 @@ export function AgentRun({
         ]
       : fail
         ? [
-            huntDone ? ["Scan again", "Find the best opportunity"] : ["Research next", "Find the next opportunity"],
+            ["Research next", "Find the next opportunity"],
             ["Show why", "__why"],
             ["Technical details", "__tech"],
           ]

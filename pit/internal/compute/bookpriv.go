@@ -41,7 +41,7 @@ func BuildPrivateBookHypothesis(wallet, workspace, network, policyHash, hypothes
 	if err != nil {
 		return nil, err
 	}
-	note := "No local fills are recorded on this machine yet. PIT does not invent positions."
+	note := "User asked for the best executable opportunity with no directional bias. Researcher must pick buy, sell, or none from live market facts. Do not echo none just because hypothesis is none. none means no tradeable edge. Host still sizes. PIT does not invent fills."
 	switch hyp {
 	case "long":
 		note = "User sealed hypothesis: considering a long. Committee may reject with none. Host still sizes. PIT does not invent fills."

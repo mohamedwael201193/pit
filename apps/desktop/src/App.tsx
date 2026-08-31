@@ -705,10 +705,18 @@ export function App() {
   const protectedOk = Boolean(checks.find((c) => c.name === "direct_auth")?.ok);
   const computeReady = Boolean(checks.find((c) => c.name === "direct_credit")?.ok);
   const previewExpired = Boolean(preview?.expiryUnixMs && preview.expiryUnixMs < Date.now());
-  const awaitingAuth = Boolean(preview?.eligible && pinned && sessionAlive && !researchBusy && !previewExpired);
+  const lastMatchesPreview = Boolean(
+    status?.lastOrder?.posted && status.lastOrder.hash && previewHash && status.lastOrder.hash === previewHash,
+  );
+  const lastFill = String(status?.lastOrder?.status || "").toLowerCase().includes("fill");
+  const awaitingAuth = Boolean(preview?.eligible && pinned && sessionAlive && !researchBusy && !previewExpired && !lastMatchesPreview);
   const doing = researchBusy
     ? `Researching ${researchCoin}`
-    : awaitingAuth
+    : lastMatchesPreview
+      ? lastFill
+        ? "Order filled"
+        : "Order submitted"
+      : awaitingAuth
       ? "Awaiting AUTHORIZE"
       : mission.status === "ACTIVE" || status?.missionRunning || mission.running
         ? mission.mode === "guarded"
@@ -864,8 +872,13 @@ export function App() {
       nextBook ||
       (fresh ? coins.find((c) => c.executionFeasible)?.coin || coins.find((c) => c.eligible)?.coin || "" : "")
     ).toUpperCase();
-    if (opts?.hypothesis && opts.hypothesis !== "none") setHypothesis(opts.hypothesis);
-    const hypo = opts?.hypothesis && opts.hypothesis !== "none" ? opts.hypothesis : hypothesis;
+    if (opts?.hypothesis === "long" || opts?.hypothesis === "short" || opts?.hypothesis === "none") {
+      setHypothesis(opts.hypothesis);
+    }
+    const hypo =
+      opts?.hypothesis === "long" || opts?.hypothesis === "short" || opts?.hypothesis === "none"
+        ? opts.hypothesis
+        : hypothesis;
     if (!want) {
       setResearchNote(
         source === "chat" && !fresh

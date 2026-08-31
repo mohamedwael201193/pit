@@ -19,4 +19,10 @@ func TestThreeEnvelopesSameProviderHonest(t *testing.T) {
 	if !strings.Contains(string(got[Researcher]), `"proposed_side"`) {
 		t.Fatal("researcher must ask for JSON side")
 	}
+	if !strings.Contains(string(got[Researcher]), "Do not echo none") {
+		t.Fatal("researcher must not echo sealed none")
+	}
+	if !strings.Contains(string(got[Challenger]), "researcher_thesis") {
+		t.Fatal("challenger must challenge the researcher thesis")
+	}
 }

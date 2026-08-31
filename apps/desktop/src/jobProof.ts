@@ -81,10 +81,13 @@ export function venueOrderState(order?: {
   posted?: boolean;
 } | null): string {
   if (!order?.oid) return "";
-  const life = String(order.lifecycle || order.status || "").toLowerCase();
-  if (order.cancelled) return "cancelled";
-  if (life.includes("fill")) return "filled";
-  if (life.includes("fail") || life.includes("reject")) return "failed";
-  if (life.includes("rest") || life.includes("open") || order.posted) return "resting";
+  const status = String(order.status || "").toLowerCase();
+  const life = String(order.lifecycle || "").toLowerCase();
+  const blob = `${status} ${life}`;
+  if (order.cancelled || blob.includes("cancel")) return "cancelled";
+  if (status.includes("fill") || life.includes("fill")) return "filled";
+  if (blob.includes("fail") || blob.includes("reject")) return "failed";
+  if (status.includes("rest") || status.includes("open") || life.includes("rest") || life.includes("open")) return "resting";
+  if (order.posted && !status.includes("fill")) return "resting";
   return String(order.status || "submitted");
 }

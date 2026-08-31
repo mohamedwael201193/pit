@@ -81,7 +81,7 @@ func Parse(text string) Result {
 		out.Reply = "Desk ledger with OID, receipts, and explorer links. PIT will not invent a fill. Chat cannot AUTHORIZE."
 		return out
 	}
-	if wantsAcceptPreview(low) {
+	if wantsAcceptPreview(low) && !wantsBest(low) && !wantsNext(low) && !wantsResearchBest(low) && !wantsTradeStrongest(low) {
 		out.Tool = "preview.show"
 		out.Reply = "TRADE NOW on this computer submits the exact preview through the host. The model cannot AUTHORIZE."
 		return out
