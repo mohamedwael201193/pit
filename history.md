@@ -10,23 +10,23 @@
 - **Kill:** Second AUTHORIZE path. Fake fills. Flatten OID 529167222216. Remint PIT-4bbee556. Authenticode claim.
 - **Next:** Overlay `D:\PIT`, tag `v0.9.6`, NSIS, Vercel + Render. Do not remint. Do not flatten. Do not start a live trade unless TRADE NOW on an exact preview.
 
-DATE/TIME: 2026-08-31 04:42+03
+DATE/TIME: 2026-08-31 04:50+03
 PHASE: Agent hunt + live proof. Host remains execution authority.
 GOAL: Type Find the best opportunity, watch live 0G stages, skip a failed book, TRADE NOW, see a real OID when the preview is eligible.
 RESULT:
-- **IMPLEMENTED:** Stood-down coins go on `huntSkip` + persisted `auto.SkipSet`. Unnamed hunts ("Find the next opportunity") send an empty coin so the desktop skips `huntTried`. Live named 9-stage pipe. 0G receipts scoped to the current job. Cream Research next. Stream scroll no longer depends on elapsed ticks. TRADE NOW still `authorizePreview("AUTHORIZE", previewHash)`.
-- **TESTED:** `go test` deskcmd/companion/version PASS. Desktop `tsc -b` PASS. `npx tsx e2e/run.ts` PASS. Chrome localhost:3001 Agent: Research next started **DOGE** not AVAX, then **ETH** not AVAX/DOGE. Live pipe showed Scanning → Ranking → Private 0G research → Researcher live. Header `Researching ETH`.
-- **LIVE:** Overlay `D:\PIT` companion `/health` **0.9.6**. Session live. Policy pinned. Buying power $16.18. Direct credit 3.5945 0G. AVAX/DOGE sealed `no_side`. ETH researcher VerifyE2EE OK then `JOB_CRASHED` after companion overlay (Direct token missing until Protect my strategy). No new MAINNET fill. ETH OID `529167222216` untouched. Agent `PIT-4bbee556` not reminted.
-- **BLOCKED:** Authenticode still absent. iTransfer still not live. TRADE NOW not clicked: no READY_ELIGIBLE preview this pass.
+- **IMPLEMENTED:** Stood-down coins go on `huntSkip`. Unnamed hunts send an empty coin. Host `research.best` re-picks with skip after Watch. Live named 9-stage pipe + 9-cell track. 0G receipts in the turn. Cream Research next. Visible scrollbar. TRADE NOW still `authorizePreview("AUTHORIZE", previewHash)`. Browser Vite can start research via `/local/research/start` fallback. Hunt wrap when every executable book is skipped.
+- **TESTED:** `go test ./...` PASS. Desktop `tsc -b` PASS. `npx tsx e2e/run.ts` PASS. Chrome http://localhost:3001 Agent: typed **Find the best opportunity**. Live pipe showed Scanning markets / Ranking / Private 0G research / Researcher live. Stream `canScroll` true while busy. Header `Researching AVAX` then the hunt moved on.
+- **LIVE:** Overlay `D:\PIT` companion `/health` **0.9.6**. Session live. Policy pinned. Buying power $16.18. Direct credit ~3.59 0G. Sealed committee on **AVAX, DOGE, BTC, ETH, SOL, HYPE** — all `READY_STOOD_DOWN` `no_side`. UI: `checked AVAX, DOGE, BTC, ETH, SOL, HYPE`. Verdict NO TRADE HYPE. 0G proof tx `0x2045c98a69aae505ee5be36eaa1cf05c5d93c2662d90b5d7b07dc8452d537711`. Research next after all six wrapped (did not re-run AVAX while others remained). No new MAINNET fill. ETH OID `529167222216` untouched. Agent `PIT-4bbee556` not reminted.
+- **BLOCKED:** Authenticode still absent. iTransfer still not live. TRADE NOW not clicked: no READY_ELIGIBLE preview this pass (committee proposed none on every executable book).
 
 SECURITY RESULT: The model cannot AUTHORIZE. TRADE NOW is still an explicit desktop confirmation of the existing host path.
-TX HASH / OID: Historical OID `529167222216` unchanged. No new order.
+TX HASH / OID: 0G storage `https://chainscan.0g.ai/tx/0x2045c98a69aae505ee5be36eaa1cf05c5d93c2662d90b5d7b07dc8452d537711`. Historical venue OID `529167222216` unchanged. No new order.
 CLASSIFICATION:
-- Next-book hunt: **IMPLEMENTED + LIVE VERIFIED** (DOGE then ETH, not AVAX)
-- Live stages in the turn: **IMPLEMENTED + LIVE VERIFIED**
+- Next-book hunt: **IMPLEMENTED + LIVE VERIFIED** (AVAX→DOGE→BTC→ETH→SOL→HYPE)
+- Live stages + 0G receipts in the turn: **IMPLEMENTED + LIVE VERIFIED**
 - TRADE NOW existing authorize path: **UNCHANGED** (no eligible preview this pass)
 PRODUCTION READY: 0.9.6 installer after tag.
-NEXT STEP: Push. Tag `v0.9.6`. NSIS. Vercel + Render. Protect my strategy after overlay, then TRADE NOW only on an exact READY preview.
+NEXT STEP: Push. Tag `v0.9.6`. NSIS. Overlay `D:\PIT`. Vercel + Render. TRADE NOW only on an exact READY preview.
 
 ---
 

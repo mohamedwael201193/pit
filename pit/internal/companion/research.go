@@ -500,6 +500,12 @@ func (h *Hub) beginResearch(coin, source string) {
 		want = h.pickBestCoinSkipping(skip)
 	}
 	if want == "" {
+		h.researchMu.Lock()
+		h.huntSkip = nil
+		h.researchMu.Unlock()
+		want = h.pickBestCoin()
+	}
+	if want == "" {
 		return
 	}
 	h.researchMu.Lock()
