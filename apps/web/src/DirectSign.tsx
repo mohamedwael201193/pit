@@ -134,8 +134,8 @@ export function DirectSign() {
           <p className="text-[0.975rem] font-semibold text-[#f0e7d4]">PRIVATE RESEARCH PROTECTED</p>
           <p className="mt-2 text-[0.975rem] text-[#f0e7d4]">{msg}</p>
           <p className="mt-2 text-[0.975rem] leading-6 text-[rgb(240_231_212/0.75)]">
-            This browser never received your private token. Next: open PIT Desktop. PIT checks Direct eligibility
-            automatically. You are only asked to fund provider credit if that ledger is actually short.
+            This browser never received your private token. Next: open PIT Desktop and complete Connect Hyperliquid.
+            PIT checks Direct eligibility automatically. You are only asked to fund provider credit if that ledger is actually short.
           </p>
           <button
             type="button"

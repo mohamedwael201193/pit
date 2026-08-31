@@ -108,7 +108,7 @@ func fetchGitHubLatest() (publicRelease, error) {
 	if err != nil {
 		return publicRelease{}, err
 	}
-	req.Header.Set("User-Agent", "pit-health/0.9.11")
+	req.Header.Set("User-Agent", "pit-health/0.9.12")
 	req.Header.Set("Accept", "application/vnd.github+json")
 	client := &http.Client{Timeout: 8 * time.Second}
 	resp, err := client.Do(req)
@@ -162,7 +162,7 @@ func fetchSumsSHA(url string) string {
 	if err != nil {
 		return ""
 	}
-	req.Header.Set("User-Agent", "pit-health/0.9.11")
+	req.Header.Set("User-Agent", "pit-health/0.9.12")
 	client := &http.Client{Timeout: 8 * time.Second}
 	resp, err := client.Do(req)
 	if err != nil {

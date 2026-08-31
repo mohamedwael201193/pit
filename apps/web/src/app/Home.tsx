@@ -37,7 +37,7 @@ export function Home() {
       </section>
 
       <p className="text-[0.875rem] text-[rgb(240_231_212/0.5)]">
-        Pairing is a late step, after you have seen live intelligence.{" "}
+        Pairing is step 1. Protect my strategy is step 2.{" "}
         <Link to="/pair" className="text-[#d82f2f]">
           Pair this computer
         </Link>

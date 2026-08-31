@@ -151,20 +151,19 @@ The Windows download button on the website starts a **file download**. Health `G
 ## Install
 
 1. Open [pit0g.vercel.app](https://pit0g.vercel.app)
-2. Click **Download PIT Desktop** (file: `PIT_0.9.11_x64-setup.exe`)
-3. Verify SHA256 `B621A10504EF1F9031C8C6D28E0B36FDB29B8AD186CEA86BCAC81F209A64515F`
+2. Click **Download PIT Desktop** (file: `PIT_0.9.12_x64-setup.exe`)
+3. Verify SHA256 `0E40880652572A051382DF93F58D84C634DB7695E0F859F9F90335510E92333E`
 4. Install and launch PIT
-5. Pair at [/pair](https://pit0g.vercel.app/pair) with the one-time code on the machine
-6. Connect your wallet. PIT never asks for a seed phrase.
-7. Sign **Protect my strategy**. The Direct token stays on this computer.
-8. Stay on MAINNET. Connect Hyperliquid. Pin policy. Approve the printed agent (order and cancel only).
+5. Pair at [/pair](https://pit0g.vercel.app/pair) with the one-time code on the machine (step 1)
+6. Sign **Protect my strategy** (step 2). PIT never asks for a seed phrase. The Direct token stays on this computer.
+7. Stay on MAINNET. Connect Hyperliquid. Pin policy. Approve the printed PIT Agent (order and cancel only). Do not paste an API wallet into PIT.
 
 macOS and Linux: source build only until those installers are packaged and tested.
 
 Health: [pit-health.onrender.com/health](https://pit-health.onrender.com/health)
 
 ```powershell
-Get-FileHash .\PIT_0.9.11_x64-setup.exe -Algorithm SHA256
+Get-FileHash .\PIT_0.9.12_x64-setup.exe -Algorithm SHA256
 ```
 
 ---
@@ -382,10 +381,10 @@ An older Hyperliquid fill on the same account, OID `529167222216` (ETH), is hist
 
 ## Latest release
 
-- Product **0.9.11**
-- GitHub Latest: [v0.9.11](https://github.com/mohamedwael201193/pit/releases/tag/v0.9.11)
-- Installer `PIT_0.9.11_x64-setup.exe`
-- SHA256 `B621A10504EF1F9031C8C6D28E0B36FDB29B8AD186CEA86BCAC81F209A64515F`
+- Product **0.9.12**
+- GitHub Latest: [v0.9.12](https://github.com/mohamedwael201193/pit/releases/tag/v0.9.12)
+- Installer `PIT_0.9.12_x64-setup.exe`
+- SHA256 `0E40880652572A051382DF93F58D84C634DB7695E0F859F9F90335510E92333E`
 - npm `pit-os` **0.9.11** and `pit-mcp` **0.9.12**
 
 ---

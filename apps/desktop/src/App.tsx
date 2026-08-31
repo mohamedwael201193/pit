@@ -1381,7 +1381,7 @@ export function App() {
             ) : null}
           </div>
         </header>
-        {setupDone && !showChat ? (
+        {setupDone && !showChat && view !== "security" && !status?.paired ? (
           <PairingDock
             compact
             code={code}
@@ -1430,6 +1430,8 @@ export function App() {
             checks={checks}
             researchBusy={researchBusy}
             researchVerified={committeeVerified(researchRoles)}
+            paired={Boolean(status?.paired)}
+            onRotate={() => void onRotatePair()}
           />
         ) : (
           <div className={showChat ? "desk-body with-threads" : "desk-body solo"}>

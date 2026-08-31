@@ -31,7 +31,7 @@ export function HowPage() {
           <strong>Download desktop.</strong> Private brain, policy, keys, session.
         </li>
         <li>
-          <strong>Connect, then pair.</strong> Pairing is a late step after public value.
+          <strong>Pair this browser.</strong> Pairing is step 1. Type the one-time code from PIT Desktop.
         </li>
       </ol>
 

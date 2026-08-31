@@ -5,6 +5,7 @@ import { expect, test } from "./fixture";
 test("pair page never asks for a seed or authorize", async ({ page }) => {
   await page.goto("/pair");
   await expect(page.getByText("PIT never asks for a seed phrase.")).toBeVisible();
+  await expect(page.getByText("Pairing is step 1. Protect my strategy is step 2.")).toBeVisible();
   await expect(page.getByRole("link", { name: "Protect my strategy" }).first()).toHaveAttribute("href", "/protect");
   await expect(page.getByRole("button", { name: "Authorize" })).toHaveCount(0);
   await expect(page.locator('input[type="password"]')).toHaveCount(0);
@@ -16,19 +17,26 @@ test("pair page never asks for a seed or authorize", async ({ page }) => {
   await expect(page.getByLabel("pairing code")).toBeVisible();
 });
 
-test("protect my strategy opens wallet link for desktop, not overview", async ({ page }) => {
+test("protect stays locked until this browser is paired", async ({ page }) => {
   await page.goto("/pair");
   await page.getByRole("link", { name: "Protect my strategy" }).first().click();
   await expect(page).toHaveURL(/\/protect$/);
   await expect(page.getByRole("heading", { name: "Protect my strategy" })).toBeVisible();
   await expect(page.getByText("Sign in to link the wallet with desktop")).toBeVisible();
-  await expect(page.getByRole("button", { name: "Connect your wallet" })).toBeVisible();
+  await expect(page.getByText("Complete pairing first")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Connect your wallet" })).toHaveCount(0);
   await expect(page.getByRole("link", { name: "Overview" })).toHaveCount(0);
 });
 
-test("legacy sign-in and get-started land on protect", async ({ page }) => {
+test("protect unlocks wallet connect after a pairing token exists", async ({ page }) => {
+  await page.addInitScript(() => sessionStorage.setItem("pit_device", "playwright-device"));
+  await page.goto("/protect");
+  await expect(page.getByRole("button", { name: "Connect your wallet" })).toBeVisible();
+});
+
+test("legacy sign-in and get-started land on pair", async ({ page }) => {
   await page.goto("/signin");
-  await expect(page).toHaveURL(/\/protect$/);
+  await expect(page).toHaveURL(/\/pair$/);
   await page.goto("/app/start");
-  await expect(page).toHaveURL(/\/protect$/);
+  await expect(page).toHaveURL(/\/pair$/);
 });

@@ -2,8 +2,11 @@ import { PairingDock } from "./PairingDock";
 import { ComputeCard } from "./ComputeCard";
 import { ExternalLink } from "./ExternalLink";
 import { HyperliquidCard } from "./HyperliquidCard";
+import { OnboardRail } from "./OnboardRail";
 import { PolicyEditor, emptyPolicy } from "./PolicyEditor";
+import { PermissionsCard } from "./Permissions";
 import { explorerAddress, hyperliquidAPI, LINKS } from "./links";
+import { computeOnboard, onboardInput } from "./onboard";
 import type { AccountSummary, DoctorCheck, HostPolicy, LocalStatus, SecurityDomain } from "./companion";
 import { checkNamed } from "./companion";
 import type { NextFix } from "./nextFix";
@@ -18,14 +21,10 @@ function tone(state?: string) {
   return "wait";
 }
 
-function probeOf(items: Probe[], id: string) {
-  return items.find((p) => p.id === id);
-}
-
 export function SecurityCenter({
   domains,
   checks,
-  items,
+  items: _items,
   net,
   status,
   agent,
@@ -97,30 +96,27 @@ export function SecurityCenter({
 }) {
   const wallet = status?.wallet || "";
   const hl = checkNamed(checks, "hl_agent");
-  const ready =
-    attention.title === "Desk is ready" || attention.title.startsWith("Watching");
-  const spine = [
-    probeOf(items, "local"),
-    probeOf(items, "session"),
-    probeOf(items, "hl_agent"),
-    probeOf(items, "policy"),
-  ].filter(Boolean) as Probe[];
+  const board = computeOnboard(onboardInput(Boolean(companionUp), status, checks, sessionAlive));
+  const current = board.steps.find((s) => s.id === board.current) || board.steps[0];
+  const ready = board.ready;
 
   return (
     <main className="page security-page">
       <header className="sec-head">
         <div>
-          <p className="eyebrow">Security</p>
-          <h1>{ready ? "Workspace ready" : "Do this next"}</h1>
-          <p className="sec-line">{attention.why}</p>
+          <p className="eyebrow">Setup</p>
+          <h1>{ready ? "Workspace ready" : `Step ${current.n} of 5`}</h1>
+          <p className="sec-line">{current.why}</p>
         </div>
         <button type="button" className="linkish" onClick={onCheck} disabled={busy}>
           Check again
         </button>
       </header>
 
-      <section className={ready ? "sec-next ok" : "sec-next"} aria-label="Next action">
-        <p className="sec-step">{ready ? "Ready" : "1"}</p>
+      <OnboardRail steps={board.steps} />
+
+      <section className={ready ? "sec-next ok" : "sec-next"} aria-label="Current step">
+        <p className="sec-step">{ready ? "Ready" : `Step ${current.n}`}</p>
         <div>
           <h2>{attention.title}</h2>
           <p>{attention.fix}</p>
@@ -134,111 +130,11 @@ export function SecurityCenter({
         />
       </section>
 
-      {spine.length ? (
-        <ol className="sec-spine" aria-label="Setup spine">
-          {spine.map((p) => (
-            <li key={p.id} className={p.state === "ok" ? "ok" : p.state === "fail" ? "fail" : "wait"}>
-              <strong>{p.label}</strong>
-              <span>{p.state === "ok" ? "ready" : p.state === "fail" ? "blocked" : "needed"}</span>
-            </li>
-          ))}
-        </ol>
-      ) : null}
-
-      <section className="sec-block" id="session">
-        <h2>Session</h2>
-        <p className="sec-line">Order and cancel only. Withdraw stays impossible. Chat cannot authorize.</p>
-        <HyperliquidCard
-          net={net}
-          agent={agent}
-          agentName={status?.agentName}
-          sessionAlive={sessionAlive}
-          sessionExpires={status?.sessionExpires}
-          approved={approved}
-          approvedDetail={hl?.detail}
-          busy={busy}
-          tradingCapital={tradingCapital || summary?.accountValue}
-          account={wallet}
-          onCreateSession={onSession}
-          onCheck={onCheck}
-          onRevoke={onRevoke}
-        />
-      </section>
-
-      {summary?.execWhy ? (
-        <p className="fine" role="status">
-          {summary.execGate ? `Execution blocked: ${summary.execGate.replaceAll("_", " ")}. ` : ""}
-          {summary.execWhy}
-        </p>
-      ) : null}
-
-      <section className="sec-block" id="policy">
-        <h2>Policy</h2>
-        <p className="sec-line">You edit. You pin. The model cannot raise clip, leverage, or permissions.</p>
-        <PolicyEditor
-          current={policy}
-          consequences={consequences}
-          allowed={allowed}
-          refused={refused}
-          pinned={pinned}
-          policyHash={policyHash}
-          busy={busy}
-          onPreview={onPolicyPreview}
-          onPin={onPolicyPin}
-        />
-      </section>
-
-      <section className="sec-block" id="authority">
-        <h2>Machine authority</h2>
-        <p className="sec-line">Spending authority never leaves this computer. Chat, web, MCP, and SDK cannot arm a Sleep Mission.</p>
-        <table className="desk-table">
-          <thead>
-            <tr>
-              <th>Surface</th>
-              <th>May</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>Browser</td>
-              <td>read-only</td>
-            </tr>
-            <tr>
-              <td>Chat</td>
-              <td>prepare, explain, research</td>
-            </tr>
-            <tr>
-              <td>MCP</td>
-              <td>read-only</td>
-            </tr>
-            <tr>
-              <td>SDK</td>
-              <td>read-only</td>
-            </tr>
-            <tr>
-              <td>Desktop</td>
-              <td>policy, session, authorize, execute</td>
-            </tr>
-            <tr>
-              <td>Mission</td>
-              <td>bounded host execution after ARM SLEEP MISSION</td>
-            </tr>
-          </tbody>
-        </table>
-        <p className="fine">
-          Session {sessionAlive ? "live" : "none"}
-          {status?.sessionExpires ? ` · expires ${new Date(status.sessionExpires).toISOString().replace(".000Z", "Z")}` : ""}
-          {policyHash ? ` · policy ${policyHash.slice(0, 10)}` : ""}
-          {status?.kill ? " · kill switch on" : ""}
-        </p>
-      </section>
-
-      {code !== undefined ? (
+      {current.id === "pair" || (board.steps[0].done && current.id === "protect") ? (
         <section className="sec-block" id="pairing">
-          <h2>Browser</h2>
-          <p className="sec-line">Optional. Orders still sign on this computer if the site is unpaired.</p>
+          <h2>1. Pair this browser</h2>
           <PairingDock
-            code={code}
+            code={code || ""}
             expires={expires}
             companionUp={Boolean(companionUp)}
             paired={paired}
@@ -248,11 +144,86 @@ export function SecurityCenter({
         </section>
       ) : null}
 
-      <section className="sec-block" id="compute">
-        <h2>Private compute</h2>
-        <p className="sec-line">0G Direct credit is not Hyperliquid buying power.</p>
-        <ComputeCard checks={checks} onCheck={onCheck} />
-      </section>
+      {current.id === "protect" ? (
+        <section className="sec-block" id="protect">
+          <h2>2. Protect my strategy</h2>
+          <p className="sec-line">
+            Sign in the bound wallet on this computer. The authorization is local and lasts 24 hours. PIT never asks for a
+            seed phrase. The website never receives the Direct token.
+          </p>
+          <ExternalLink className="primary" href={LINKS.protect}>
+            Protect my strategy
+          </ExternalLink>
+          <p className="fine">
+            {checkNamed(checks, "direct_auth")?.ok
+              ? "This computer stored the authorization."
+              : "Waiting for the wallet signature. Check again after you sign."}
+          </p>
+        </section>
+      ) : null}
+
+      {current.id === "hyperliquid" ? (
+        <section className="sec-block" id="session">
+          <h2>3. Connect Hyperliquid</h2>
+          <p className="sec-line">
+            PIT creates the agent on this computer. You approve it with the master wallet. Do not invent or paste an API
+            wallet into PIT.
+          </p>
+          <HyperliquidCard
+            net={net}
+            agent={agent}
+            agentName={status?.agentName}
+            sessionAlive={sessionAlive}
+            sessionExpires={status?.sessionExpires}
+            approved={approved}
+            approvedDetail={hl?.detail}
+            busy={busy}
+            tradingCapital={tradingCapital || summary?.accountValue}
+            account={wallet}
+            onCreateSession={onSession}
+            onCheck={onCheck}
+          />
+          <PermissionsCard />
+        </section>
+      ) : null}
+
+      {current.id === "policy" ? (
+        <section className="sec-block" id="policy">
+          <h2>4. Pin policy</h2>
+          <p className="sec-line">You edit. You pin. The model cannot raise clip, leverage, or permissions.</p>
+          <PolicyEditor
+            current={policy}
+            consequences={consequences}
+            allowed={allowed}
+            refused={refused}
+            pinned={pinned}
+            policyHash={policyHash}
+            busy={busy}
+            onPreview={onPolicyPreview}
+            onPin={onPolicyPin}
+          />
+        </section>
+      ) : null}
+
+      {ready ? (
+        <section className="sec-block" id="ready">
+          <h2>5. Ready to trade</h2>
+          <p className="sec-line">Research, preview, and AUTHORIZE stay on this computer. Chat cannot authorize.</p>
+          <ul className="onboard-checks">
+            <li>Browser paired ✓</li>
+            <li>Strategy protected ✓</li>
+            <li>Hyperliquid agent verified ✓</li>
+            <li>Policy pinned ✓</li>
+          </ul>
+        </section>
+      ) : null}
+
+      {summary?.execWhy ? (
+        <p className="fine" role="status">
+          {summary.execGate ? `Execution blocked: ${summary.execGate.replaceAll("_", " ")}. ` : ""}
+          {summary.execWhy}
+        </p>
+      ) : null}
 
       <section className="sec-danger" aria-label="Halt and revoke">
         <div>
@@ -284,7 +255,7 @@ export function SecurityCenter({
       </section>
 
       <details className="sec-fold">
-        <summary>Workspace identity</summary>
+        <summary>View technical details</summary>
         <p>Wallet {wallet || "unbound"}</p>
         <p>Network {net === "mainnet" ? "MAINNET" : "TESTNET"}</p>
         <p>PIT Agent {status?.agentName || "none"}</p>
@@ -301,10 +272,37 @@ export function SecurityCenter({
         ) : null}
         <p className="fine">{identityNote}</p>
         <p className="fine">{calibCopy || "NOT ENOUGH DATA"}</p>
-      </details>
-
-      <details className="sec-fold">
-        <summary>Official domains</summary>
+        <ComputeCard checks={checks} onCheck={onCheck} />
+        <table className="desk-table">
+          <thead>
+            <tr>
+              <th>Surface</th>
+              <th>May</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Browser</td>
+              <td>read-only</td>
+            </tr>
+            <tr>
+              <td>Chat</td>
+              <td>prepare, explain, research</td>
+            </tr>
+            <tr>
+              <td>MCP</td>
+              <td>read-only</td>
+            </tr>
+            <tr>
+              <td>SDK</td>
+              <td>read-only</td>
+            </tr>
+            <tr>
+              <td>Desktop</td>
+              <td>policy, session, authorize, execute</td>
+            </tr>
+          </tbody>
+        </table>
         <table className="desk-table">
           <thead>
             <tr>
@@ -330,10 +328,6 @@ export function SecurityCenter({
             ))}
           </tbody>
         </table>
-      </details>
-
-      <details className="sec-fold">
-        <summary>Diagnostics</summary>
         {checks.length === 0 ? (
           <p>Waiting for the local companion on 127.0.0.1:17373.</p>
         ) : (
@@ -372,21 +366,21 @@ function NextControl({
   if (/Create a local session/i.test(t)) {
     return (
       <button type="button" className="primary" onClick={onSession} disabled={busy}>
-        Create session
+        Create PIT Agent on this computer
       </button>
     );
   }
   if (/Pin a trading policy|Policy cap/i.test(t)) {
     return (
       <a className="primary" href="#policy">
-        Edit policy
+        Pin policy
       </a>
     );
   }
   if (/Approve PIT/i.test(t) && attention.href) {
     return (
       <ExternalLink className="primary" href={attention.href}>
-        {attention.hrefLabel || "Approve PIT"}
+        {attention.hrefLabel || "Approve PIT on Hyperliquid"}
       </ExternalLink>
     );
   }
@@ -427,8 +421,8 @@ function NextControl({
   }
   if (/Desk is ready/i.test(t)) {
     return (
-      <a className="primary" href="#policy">
-        Review policy
+      <a className="primary" href="#ready">
+        View ready state
       </a>
     );
   }

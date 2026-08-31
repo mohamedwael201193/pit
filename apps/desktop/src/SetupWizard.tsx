@@ -4,56 +4,16 @@ import { NetworkBanner } from "./NetworkBanner";
 import { NetworkToggle } from "./NetworkToggle";
 import { PermissionsCard } from "./Permissions";
 import { PolicyLaw } from "./PolicyLaw";
-import { SessionNote } from "./SessionNote";
-import { LINKS, hyperliquidAPI, hyperliquidApp } from "./links";
+import { LINKS, hyperliquidAPI } from "./links";
 import { ExternalLink } from "./ExternalLink";
-import { prettyCode, type DoctorCheck } from "./companion";
-import { ComputeCard } from "./ComputeCard";
+import { type DoctorCheck } from "./companion";
+import { PairingDock } from "./PairingDock";
+import { HyperliquidCard } from "./HyperliquidCard";
+import { OnboardRail } from "./OnboardRail";
+import { computeOnboard, onboardInput } from "./onboard";
 import type { Probe } from "./readiness";
 
 type Net = "mainnet" | "testnet";
-
-function PairingBlock({
-  code,
-  expires,
-  companionUp,
-}: {
-  code: string;
-  expires: string;
-  companionUp: boolean;
-}) {
-  const display = code ? prettyCode(code) : companionUp ? "rotating…" : "waiting for local PIT";
-  return (
-    <section>
-      <p className="pair-chip" aria-label="pairing code">
-        {display}
-      </p>
-      <p className="fine">
-        Type this code on the pairing page. It expires in two minutes and works once. The website never receives a session key.
-      </p>
-      {expires ? <p className="fine">Expires {expires}</p> : null}
-    </section>
-  );
-}
-
-function StepMeta({ status, meaning, why }: { status: string; meaning: string; why: string }) {
-  return (
-    <dl className="setup-meta">
-      <div>
-        <dt>Status</dt>
-        <dd>{status}</dd>
-      </div>
-      <div>
-        <dt>What this means</dt>
-        <dd>{meaning}</dd>
-      </div>
-      <div>
-        <dt>Why it is needed</dt>
-        <dd>{why}</dd>
-      </div>
-    </dl>
-  );
-}
 
 export function SetupWizard({
   step,
@@ -78,6 +38,8 @@ export function SetupWizard({
   onCheck,
   onDone,
   checks,
+  paired,
+  onRotate,
 }: {
   step: number;
   setStep: (n: number) => void;
@@ -105,210 +67,160 @@ export function SetupWizard({
   checks: DoctorCheck[];
   researchBusy: boolean;
   researchVerified: boolean;
+  paired?: boolean;
+  onRotate?: () => void;
 }) {
   const hlAgent = checks.find((c) => c.name === "hl_agent");
-  const last = 9;
-  const titles = [
-    "Connect wallet",
-    "Production network",
-    "Connect Hyperliquid",
-    "Create PIT session",
-    "Approve PIT",
-    "Protect private research",
-    "Private compute",
-    "Set policy",
-    "Choose mode",
-    "Ready to discover",
-  ];
+  const protectOk = Boolean(checks.find((c) => c.name === "direct_auth")?.ok);
+  const board = computeOnboard(
+    onboardInput(
+      companionUp,
+      { sign: false, paired: Boolean(paired), wallet: boundWallet },
+      checks,
+      sessionAlive,
+    ),
+  );
+  const currentN = board.steps.find((s) => s.id === board.current)?.n ?? 1;
+  const view = Math.min(Math.max(step, 0), currentN - 1);
+  const viewId = board.steps[view]?.id || board.current;
+
   return (
     <section className="setup">
       <p className="eyebrow">
-        FIRST RUN · {step + 1} / {last + 1} · {titles[step]}
+        FIRST RUN · STEP {currentN} OF 5 · {board.steps[currentN - 1]?.title}
       </p>
-      {step === 0 ? (
+      <OnboardRail steps={board.steps} />
+      {viewId === "pair" ? (
         <>
-          <h1>Connect your wallet.</h1>
-          <StepMeta
-            status={boundWallet ? "Bound" : companionUp ? "Waiting for bind" : "Companion starting"}
-            meaning="This computer is paired to a public 0x address. The seed never enters PIT."
-            why="Every later step — session, policy, research — is bound to this wallet."
+          <h1>Pair this browser with PIT Desktop.</h1>
+          <p className="lead">
+            Type the one-time code on the website. It expires in two minutes and works once. {NAMED.SEED_FORBIDDEN} The
+            website never receives a session key.
+          </p>
+          <PairingDock
+            code={code}
+            expires={expires}
+            companionUp={companionUp}
+            paired={paired}
+            onRotate={onRotate}
           />
+        </>
+      ) : null}
+      {viewId === "protect" ? (
+        <>
+          <h1>Protect my strategy.</h1>
           <p className="lead">
-            Pair the browser to this machine, then bind the public 0x address. {NAMED.SEED_FORBIDDEN}
-          </p>
-          <PairingBlock code={code} expires={expires} companionUp={companionUp} />
-          <ExternalLink className="primary" href={LINKS.pair}>
-            Open official page
-          </ExternalLink>
-          <form
-            className="bind-form"
-            onSubmit={(e: FormEvent) => {
-              e.preventDefault();
-              onBind();
-            }}
-          >
-            <label htmlFor="desk-wallet">Public wallet</label>
-            <input
-              id="desk-wallet"
-              autoComplete="off"
-              spellCheck={false}
-              placeholder="0x…"
-              value={walletDraft}
-              onChange={(e) => setWalletDraft(e.target.value)}
-            />
-            <button type="submit" className="linkish" disabled={bindBusy || !companionUp}>
-              {boundWallet ? "Wallet bound on this computer" : "Bind this computer"}
-            </button>
-            {boundWallet ? <p className="fine">Bound {boundWallet}</p> : null}
-            {bindError ? (
-              <p className="err" role="alert">
-                {bindError}
-              </p>
-            ) : null}
-          </form>
-          <button type="button" className="linkish" onClick={onCheck}>
-            Check again
-          </button>
-        </>
-      ) : null}
-      {step === 1 ? (
-        <>
-          <h1>MAINNET production.</h1>
-          <NetworkToggle net={net} onChange={setNet} />
-          <NetworkBanner net={net} />
-          <p className="fine">This desk trades Hyperliquid mainnet and Aristotle. TESTNET stays in developer tooling.</p>
-        </>
-      ) : null}
-      {step === 2 ? (
-        <>
-          <h1>Connect Hyperliquid.</h1>
-          <p className="lead">Open the official app for this network. PIT still cannot withdraw.</p>
-          <ExternalLink className="primary" href={hyperliquidApp(net)}>
-            Open official page
-          </ExternalLink>
-          <button type="button" className="linkish" onClick={onCheck}>
-            Check again
-          </button>
-        </>
-      ) : null}
-      {step === 3 ? (
-        <>
-          <h1>Create or verify the PIT session.</h1>
-          <PermissionsCard />
-          <SessionNote />
-          <button type="button" className="primary" onClick={onSession} disabled={bindBusy || !companionUp || !boundWallet}>
-            {sessionAlive ? "Session live on this computer" : "Create PIT session"}
-          </button>
-          {agent ? (
-            <p className="fine">
-              PIT Agent {agentName || ""} {agent}. If Hyperliquid still lists this agent, PIT reuses it.
-            </p>
-          ) : null}
-          {bindError ? (
-            <p className="err" role="alert">
-              {bindError}
-            </p>
-          ) : null}
-          <button type="button" className="linkish" onClick={onCheck}>
-            Check again
-          </button>
-        </>
-      ) : null}
-      {step === 4 ? (
-        <>
-          <h1>Approve PIT on Hyperliquid.</h1>
-          <p className="lead">
-            Open the official API page. Authorize API Wallet with the name and address below. PIT cannot withdraw.
-          </p>
-          {agentName ? <p>Name {agentName}</p> : null}
-          {agent ? <p>PIT Agent {agent}</p> : null}
-          <p>{hlAgent?.ok ? "Your trading account is ready." : hlAgent?.detail || "Waiting for Hyperliquid approval."}</p>
-          <ExternalLink className="primary" href={hyperliquidAPI(net)}>
-            Open official page
-          </ExternalLink>
-          <button type="button" className="linkish" onClick={onCheck}>
-            Check again
-          </button>
-        </>
-      ) : null}
-      {step === 5 ? (
-        <>
-          <h1>Protect private research.</h1>
-          <p className="lead">
-            Sign in the paired browser. This computer stores the sealed-path authorization for 24 hours. The website never
+            Sign in the bound wallet. This computer stores the sealed-path authorization for 24 hours. The website never
             receives it.
           </p>
-          <p>{checks.find((c) => c.name === "direct_auth")?.ok ? "Protected on this computer." : "Waiting for the wallet signature."}</p>
+          <p>
+            {protectOk
+              ? "This computer stored the authorization."
+              : "Waiting for the wallet signature. Check again after you sign."}
+          </p>
           <ExternalLink className="primary" href={LINKS.protect}>
-            Sign in to link desktop
+            Protect my strategy
           </ExternalLink>
-          <button type="button" className="linkish" onClick={onCheck}>
-            Check again
-          </button>
+          <details className="sec-fold">
+            <summary>Advanced recovery — bind a public address here</summary>
+            <form
+              className="bind-form"
+              onSubmit={(e: FormEvent) => {
+                e.preventDefault();
+                onBind();
+              }}
+            >
+              <label htmlFor="desk-wallet">Public wallet</label>
+              <input
+                id="desk-wallet"
+                autoComplete="off"
+                spellCheck={false}
+                placeholder="0x…"
+                value={walletDraft}
+                onChange={(e) => setWalletDraft(e.target.value)}
+              />
+              <button type="submit" className="linkish" disabled={bindBusy || !companionUp}>
+                {boundWallet ? "Wallet bound on this computer" : "Bind this computer"}
+              </button>
+              {boundWallet ? <p className="fine">Bound {boundWallet}</p> : null}
+              {bindError ? (
+                <p className="err" role="alert">
+                  {bindError}
+                </p>
+              ) : null}
+            </form>
+          </details>
         </>
       ) : null}
-      {step === 6 ? (
+      {viewId === "hyperliquid" ? (
         <>
-          <h1>Verify private compute is ready.</h1>
-          <p className="lead">This is compute money. It is not Hyperliquid trading capital.</p>
-          <ComputeCard checks={checks} onCheck={onCheck} />
+          <h1>Connect Hyperliquid.</h1>
+          <p className="lead">
+            PIT creates the agent on this computer. Approve it with your master wallet. Do not paste an API wallet into
+            PIT.
+          </p>
+          <NetworkToggle net={net} onChange={setNet} />
+          <NetworkBanner net={net} />
+          <HyperliquidCard
+            net={net}
+            agent={agent}
+            agentName={agentName}
+            sessionAlive={sessionAlive}
+            approved={Boolean(hlAgent?.ok)}
+            approvedDetail={hlAgent?.detail}
+            busy={bindBusy}
+            account={boundWallet}
+            onCreateSession={onSession}
+            onCheck={onCheck}
+          />
+          <PermissionsCard />
         </>
       ) : null}
-      {step === 7 ? (
+      {viewId === "policy" ? (
         <>
-          <h1>Set policy.</h1>
+          <h1>Pin policy.</h1>
           <p className="lead">The model cannot raise clip, leverage, or permissions.</p>
           <PolicyLaw pinned={pinned} onPin={onPolicy} busy={bindBusy || !boundWallet} />
         </>
       ) : null}
-      {step === 8 ? (
+      {viewId === "ready" ? (
         <>
-          <h1>Choose how PIT should work.</h1>
-          <p className="lead">You pick the mode. Chat cannot. A Sleep Mission still requires ARM SLEEP MISSION on Automation.</p>
-          <div className="mode-grid">
-            <article>
-              <p className="label">Manual</p>
-              <p>Scan and research on your command. Every order waits for AUTHORIZE.</p>
-            </article>
-            <article>
-              <p className="label">Research only</p>
-              <p>Scan, research, explain. Never execute.</p>
-            </article>
-            <article>
-              <p className="label">Sleep Mission</p>
-              <p>Arm once. PIT hunts within your pinned policy while you are away.</p>
-            </article>
-          </div>
-        </>
-      ) : null}
-      {step === 9 ? (
-        <>
-          <h1>Ready to discover.</h1>
+          <h1>Ready to trade.</h1>
           <p className="lead">Markets is live public marks. Private research stays sealed. Authorize stays on this computer.</p>
-          <p>
-            {boundWallet ? "Wallet connected. " : "Wallet still unbound. "}
-            {sessionAlive ? "Session live. " : "Session still needed. "}
-            {hlAgent?.ok ? "Hyperliquid approved. " : "Hyperliquid still needs approval. "}
-            {pinned ? "Policy pinned." : "Policy still unpinned."}
-          </p>
+          <ul className="onboard-checks">
+            <li>Browser paired ✓</li>
+            <li>Strategy protected ✓</li>
+            <li>Hyperliquid agent verified ✓</li>
+            <li>Policy pinned ✓</li>
+          </ul>
         </>
       ) : null}
       <div className="row">
-        {step > 0 ? (
-          <button type="button" className="off" onClick={() => setStep(step - 1)}>
+        {view > 0 ? (
+          <button type="button" className="off" onClick={() => setStep(view - 1)}>
             Back
           </button>
         ) : null}
-        {step < last ? (
-          <button type="button" className="on" onClick={() => setStep(step + 1)}>
-            Continue
-          </button>
-        ) : (
+        {board.ready ? (
           <button type="button" className="on" onClick={onDone}>
             Open the desk
           </button>
+        ) : (
+          <button
+            type="button"
+            className="on"
+            onClick={() => {
+              onCheck();
+              setStep(currentN - 1);
+            }}
+          >
+            Check again
+          </button>
         )}
       </div>
+      <p className="fine">
+        Official Hyperliquid API is {hyperliquidAPI(net).replace("https://", "")}. PIT still cannot withdraw.
+      </p>
     </section>
   );
 }

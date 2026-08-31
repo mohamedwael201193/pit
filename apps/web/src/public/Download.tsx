@@ -74,7 +74,7 @@ export function DownloadPage() {
       <ol className="intel-steps mt-10">
         <li>Click Download Windows installer. That is a file download (HTTP 302 to the release asset), not a GitHub Releases HTML page.</li>
         <li>Hash the file. Compare to SHA256SUMS.</li>
-        <li>Install. Launch PIT Desktop. Pairing comes after you have seen radar and proof.</li>
+        <li>Install. Launch PIT Desktop. Pairing is step 1. Type the one-time code at /pair.</li>
       </ol>
 
       <div className="mt-10 flex flex-wrap gap-2.5">

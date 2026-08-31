@@ -42,10 +42,10 @@ export function App() {
         <Route path="/protect" element={<ProtectPage />} />
         <Route path="/watch" element={<Navigate to="/radar" replace />} />
       </Route>
-      <Route path="/signin" element={<Navigate to="/protect" replace />} />
+      <Route path="/signin" element={<Navigate to="/pair" replace />} />
       <Route path="/app" element={<AppShell />}>
         <Route index element={<Home />} />
-        <Route path="start" element={<Navigate to="/protect" replace />} />
+        <Route path="start" element={<Navigate to="/pair" replace />} />
         <Route path="activity" element={<Activity />} />
         <Route path="policy" element={<PolicyPage />} />
         <Route path="account" element={<AccountPage />} />

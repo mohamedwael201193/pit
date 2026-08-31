@@ -134,44 +134,34 @@ export function DeskHome({
   });
   const path = (
       <ol className="demo-path" aria-label="New user path">
-        <li className={items.find((p) => p.id === "wallet")?.state === "ok" ? "on" : ""}>
+        <li className={paired ? "on" : ""}>
           <button type="button" className="linkish" onClick={() => onGo("security")}>
-            1. Connect wallet
+            1. Pair this browser
           </button>
         </li>
         <li className={protectedOk ? "on" : ""}>
           <button type="button" className="linkish" onClick={() => onGo("security")}>
-            2. Protect 0G strategy
+            2. Protect my strategy
           </button>
         </li>
-        <li className={hlApproved ? "on" : ""}>
+        <li className={hlApproved && sessionAlive ? "on" : ""}>
           <button type="button" className="linkish" onClick={() => onGo("security")}>
             3. Connect Hyperliquid
           </button>
         </li>
-        <li className={sessionAlive ? "on" : ""}>
-          <button type="button" className="linkish" onClick={() => onGo("security")}>
-            4. Scoped session
-          </button>
-        </li>
         <li className={policyPinned ? "on" : ""}>
           <button type="button" className="linkish" onClick={() => onGo("security")}>
-            5. Pin policy{policyPinned ? "" : " — draft only until you pin"}
+            4. Pin policy{policyPinned ? "" : " — draft only until you pin"}
           </button>
         </li>
-        <li className={liveBook ? "on" : ""}>
-          <button type="button" className="linkish" onClick={() => onGo("markets")}>
-            6. Live opportunities
+        <li className={paired && protectedOk && hlApproved && sessionAlive && policyPinned ? "on" : ""}>
+          <button type="button" className="linkish" onClick={() => onGo("security")}>
+            5. Verify ready
           </button>
         </li>
-        <li className={sealedNow ? "on" : ""}>
+        <li className={liveBook || sealedNow ? "on" : ""}>
           <button type="button" className="linkish" onClick={() => (best ? onResearch(best.coin) : onGo("research"))}>
-            7. Sealed research
-          </button>
-        </li>
-        <li className={awaitingAuth ? "on" : ""}>
-          <button type="button" className="linkish" onClick={() => onGo("research")}>
-            8. AUTHORIZE on this computer
+            6. Use agent
           </button>
         </li>
       </ol>
@@ -349,7 +339,7 @@ export function DeskHome({
       <EvidenceStrip onOpen={() => onGo("activity")} />
       {lastEvent ? <p className="fine">Recently: {lastEvent}</p> : null}
       {!paired ? (
-        <p className="fine">Browser unpaired. This desk still runs. Pairing is for the website, not for orders.</p>
+        <p className="fine">Pair this browser first. Session keys stay on this computer.</p>
       ) : null}
     </main>
   );

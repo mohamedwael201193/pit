@@ -22,8 +22,7 @@ export function AccountPage() {
       <Bezel>
         {addr ? <p className="font-mono text-[0.9375rem] break-all text-[var(--guide-cream)]">{addr}</p> : null}
         <p className="mt-4 max-w-[48ch] text-[0.9375rem] leading-6 text-[rgb(240_231_212/0.7)]">
-          This page does not collect a SIWE or a seed. Pairing and Protect my strategy run on PIT Desktop after you have
-          seen radar and proof.
+          This page does not collect a SIWE or a seed. Pairing is step 1. Protect my strategy is step 2. Both run on this computer.
         </p>
         <NoSession />
         <div className="mt-6 flex flex-wrap gap-2">

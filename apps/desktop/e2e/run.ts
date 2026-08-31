@@ -14,6 +14,14 @@ import { assertCapitalFloorIgnoresDust, assertDeskRanksExecutableFirst, assertPo
 import { assertShellFilters } from "./shell.spec.ts";
 import { assertChatAgentCopy } from "./chat-agent.spec.ts";
 import { assertLiveAgentPipeline } from "./pipeline.spec.ts";
+import {
+  assertOnboardPairFirst,
+  assertOnboardDoesNotInventReady,
+  assertOnboardReadyRequiresAllGates,
+  assertNextFixPairsFirst,
+  assertNextFixDoesNotSkipPairWhenSessionExists,
+  assertOnboardInputFromDoctor,
+} from "./onboard.spec.ts";
 
 assertOfficialLinks();
 assertHonesty();
@@ -39,4 +47,10 @@ assertDeskHeadlinePrefersExecutable();
 assertShellFilters();
 assertChatAgentCopy();
 assertLiveAgentPipeline();
+assertOnboardPairFirst();
+assertOnboardDoesNotInventReady();
+assertOnboardReadyRequiresAllGates();
+assertNextFixPairsFirst();
+assertNextFixDoesNotSkipPairWhenSessionExists();
+assertOnboardInputFromDoctor();
 console.log("desktop e2e copy harness ok");

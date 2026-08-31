@@ -15,7 +15,7 @@ export function AppShell() {
   }, []);
 
   if (location.pathname === "/app/start" || location.pathname.startsWith("/app/start/")) {
-    return <Navigate to="/protect" replace />;
+    return <Navigate to="/pair" replace />;
   }
 
   if (!ready) {

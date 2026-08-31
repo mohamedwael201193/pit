@@ -76,10 +76,10 @@ export function probes(checks: DoctorCheck[], status: LocalStatus | null, compan
     ? {
         id: "pairing",
         label: "Pairing",
-        state: status?.paired ? "ok" : "optional",
+        state: status?.paired ? "ok" : "waiting",
         detail: status?.paired
-          ? `Browser paired (${status.pairingDevices || 1} device). Desktop is the signer.`
-          : "Browser unpaired. This desk still runs. Pairing is for the website, not for orders.",
+          ? `Browser paired (${status.pairingDevices || 1} device). Session key remains on this computer.`
+          : "Pair this browser first. Type the one-time code on the website. Session keys never leave this computer.",
       }
     : { id: "pairing", label: "Pairing", state: "waiting", detail: "Launch PIT Desktop first." };
   const identity: Probe = {
@@ -89,8 +89,8 @@ export function probes(checks: DoctorCheck[], status: LocalStatus | null, compan
     detail: "Mint is optional and live on Aristotle. iTransfer is UNAVAILABLE. Trading does not wait on mint.",
   };
   const execution: Probe =
-    policy.state === "ok" && session.state === "ok" && agent.state === "ok" && kill.state === "ok"
-      ? { id: "execution", label: "Execution readiness", state: "ok", detail: "Pinned policy, live session, and Hyperliquid agent. AUTHORIZE still required." }
+    policy.state === "ok" && session.state === "ok" && agent.state === "ok" && kill.state === "ok" && pairing.state === "ok"
+      ? { id: "execution", label: "Execution readiness", state: "ok", detail: "Paired, pinned policy, live session, and Hyperliquid agent. AUTHORIZE still required." }
       : {
           id: "execution",
           label: "Execution readiness",

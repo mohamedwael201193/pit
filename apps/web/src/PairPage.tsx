@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { PageHead } from "./ui/PageHead";
 import { Bezel } from "./ui/Surface";
 import { windowsInstallerUrl } from "./public/facts";
+import { OnboardRail } from "./public/OnboardRail";
 
 const COMPANION = "http://127.0.0.1:17373";
 
@@ -14,6 +15,7 @@ export function PairPage() {
   const [desk, setDesk] = useState("Checking this computer…");
   const [deskOk, setDeskOk] = useState(false);
   const [busy, setBusy] = useState(false);
+  const already = Boolean(typeof window !== "undefined" && sessionStorage.getItem("pit_device"));
 
   async function probeDesktop() {
     try {
@@ -64,7 +66,7 @@ export function PairPage() {
           return;
         }
         if (text.includes("pairing_denied")) {
-          setErr("Pairing refused. Open PIT Desktop and type the code shown there.");
+          setErr("That code is wrong or already used. Open PIT Desktop and type the code shown there.");
           return;
         }
         setErr("Pairing refused. Open PIT Desktop and type the code shown there.");
@@ -73,8 +75,8 @@ export function PairPage() {
       if (body.device) {
         sessionStorage.setItem("pit_device", body.device);
       }
-      setMsg("PAIRING COMPLETE. This browser can view. It cannot sign and cannot hold a session key.");
-      window.setTimeout(() => navigate("/protect"), 600);
+      setMsg("PAIRING COMPLETE.");
+      window.setTimeout(() => navigate("/protect"), 900);
     } catch {
       setErr(
         "PIT is not reachable on this computer. Launch the Windows app first. If Chrome asks to access other apps on this device, choose Allow. PIT only uses 127.0.0.1.",
@@ -89,10 +91,11 @@ export function PairPage() {
       <div>
         <PageHead
           title="Pair this browser with PIT on this machine."
-          lede="PIT never asks for a seed phrase. The one-time code lives on your desktop. This site never receives your session key. After pairing, sign Protect my strategy from the bound wallet."
+          lede="PIT never asks for a seed phrase. The one-time code lives on your desktop. This site never receives your session key. After pairing, Protect my strategy is step 2."
         />
-        <p className="mt-6 text-[0.875rem] text-[rgb(240_231_212/0.5)]">
-          Pairing is a late step. Explore radar and proof first.
+        <OnboardRail current={1} />
+        <p className="mt-2 text-[0.875rem] text-[rgb(240_231_212/0.5)]">
+          Pairing is step 1. Protect my strategy is step 2.
         </p>
         <ol className="mt-8 grid gap-3 text-[0.975rem] leading-6 text-[rgb(240_231_212/0.75)]">
           <li>1. Open PIT Desktop on this computer. A pairing code appears there with an expiry.</li>
@@ -103,6 +106,9 @@ export function PairPage() {
         <p className={`mt-6 text-[0.975rem] ${deskOk ? "text-[#7dffb3]" : "text-[#ff7a7a]"}`} role="status">
           {desk}
         </p>
+        {already && !msg ? (
+          <p className="mt-4 text-[0.975rem] text-[#7dffb3]">This browser already has a pairing token for this computer.</p>
+        ) : null}
         <div className="mt-6 flex flex-wrap gap-3">
           {deskOk ? (
             <button
@@ -158,10 +164,13 @@ export function PairPage() {
         </button>
         {msg ? (
           <div className="mt-6">
-            <p className="text-[0.975rem] text-[#f0e7d4]">{msg}</p>
-            <p className="mt-2 text-[0.975rem] leading-6 text-[rgb(240_231_212/0.75)]">
-              Your browser is read-only. The private authorization stays on this computer.
-            </p>
+            <p className="text-[0.975rem] font-semibold text-[#7dffb3]">{msg}</p>
+            <ul className="mt-3 grid gap-1 text-[0.975rem] text-[#f0e7d4]">
+              <li>Browser paired ✓</li>
+              <li>Desktop connected ✓</li>
+              <li>Secure local channel ✓</li>
+              <li>Session key remains on this computer ✓</li>
+            </ul>
             <Link className="mt-4 inline-block rounded-full bg-[#d82f2f] px-6 py-3 font-semibold text-[#f0e7d4]" to="/protect">
               Protect my strategy
             </Link>
@@ -182,12 +191,13 @@ export function PairPage() {
         ) : null}
       </div>
       <Bezel>
-        <p className="font-mono text-[0.7rem] tracking-[0.14em] text-[rgb(240_231_212/0.45)]">WHAT THIS SITE CANNOT DO</p>
+        <p className="font-mono text-[0.7rem] tracking-[0.14em] text-[rgb(240_231_212/0.45)]">WHAT PAIRING DOES NOT DO</p>
         <ul className="mt-4 grid gap-2 text-[0.95rem] leading-6 text-[rgb(240_231_212/0.7)]">
-          <li>Sign orders</li>
-          <li>Hold a session key</li>
-          <li>Authorize a trade</li>
-          <li>Change policy</li>
+          <li>Does not transfer a session key</li>
+          <li>Does not transfer a Direct token</li>
+          <li>Does not ask for a seed phrase</li>
+          <li>Does not let this site sign orders</li>
+          <li>Does not change policy</li>
         </ul>
         <p className="mt-8 text-[0.875rem] text-[rgb(240_231_212/0.5)]">
           macOS and Linux installers are not claimed until they are packaged and tested. Source build is documented in

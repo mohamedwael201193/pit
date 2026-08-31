@@ -29,14 +29,25 @@ export function nextFix(
       fix: "Close old PIT windows and open this app again.",
     };
   }
+  if (!status?.paired) {
+    return {
+      title: "Pair this browser",
+      why: "A one-time code opens a read-only channel. Session keys, Direct tokens, and seed phrases never leave this computer.",
+      fix: "Open Pair this computer on the website. Type the code shown here. It expires in two minutes and works once.",
+      href: LINKS.pair,
+      hrefLabel: "Open pairing",
+      go: "security",
+      goLabel: "Show code",
+    };
+  }
   const wallet = checkNamed(checks, "wallet");
   if (!wallet?.ok) {
     return {
       title: "Connect your wallet",
       why: "A public 0x address binds this machine. PIT never asks for a seed phrase.",
-      fix: "Pair the browser or paste the public address on Home setup.",
-      href: LINKS.pair,
-      hrefLabel: "Open pairing",
+      fix: "Sign in the bound wallet on Protect my strategy, or use Advanced recovery on this computer.",
+      href: LINKS.protect,
+      hrefLabel: "Protect my strategy",
     };
   }
   const direct = checkNamed(checks, "direct_auth");
@@ -44,9 +55,9 @@ export function nextFix(
     return {
       title: "Protect my strategy",
       why: "Sealed research needs a wallet signature on this computer. The website never receives the token.",
-      fix: "Pair this browser, then sign Protect my strategy from the bound wallet.",
+      fix: "Open Protect my strategy, connect the bound wallet, and sign. PIT then checks that this computer stored the authorization.",
       href: LINKS.protect,
-      hrefLabel: "Sign in to link desktop",
+      hrefLabel: "Protect my strategy",
     };
   }
   if (status?.kill) {
@@ -61,8 +72,8 @@ export function nextFix(
   if (!sessionAlive) {
     return {
       title: "Create a local session",
-      why: "Orders and cancels are signed on this computer. Withdraw is impossible through PIT.",
-      fix: "Create the session here, then approve that agent on Hyperliquid.",
+      why: "PIT generates the agent on this computer. You approve order and cancel only. Withdraw is impossible through PIT.",
+      fix: "Create the PIT Agent here, then approve it on Hyperliquid with the master wallet.",
       href: hyperliquidAPI(net),
       hrefLabel: "Open Hyperliquid API",
       go: "security",
@@ -73,10 +84,10 @@ export function nextFix(
   if (agent && !agent.ok) {
     return {
       title: "Approve PIT on Hyperliquid",
-      why: "Hyperliquid must list this session before AUTHORIZE can send an order.",
-      fix: "Open Hyperliquid API. Authorize API Wallet using the PIT agent name and address on Security. PIT still cannot withdraw.",
+      why: "Hyperliquid must list this PIT Agent under your master wallet before AUTHORIZE can send an order.",
+      fix: "Open Hyperliquid API with the connected master wallet. Authorize the printed PIT Agent. PIT still cannot withdraw. Check again reads live extraAgents.",
       href: hyperliquidAPI(net),
-      hrefLabel: "Open Hyperliquid API",
+      hrefLabel: "Approve PIT on Hyperliquid",
       go: "security",
       goLabel: "Open Security",
     };
@@ -150,7 +161,7 @@ export function nextFix(
   }
   return {
     title: "Desk is ready",
-    why: "Markets is public marks. Research stays sealed. Authorize stays on this computer.",
+    why: "Pairing, Protect, Hyperliquid, session, and policy all checked on this computer. Markets is public marks. Research stays sealed. Authorize stays here.",
     fix: "Pick a market, run research, then type AUTHORIZE on the exact preview, or arm a Sleep Mission on Automation.",
     go: "markets",
     goLabel: "Open Markets",

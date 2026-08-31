@@ -2,6 +2,36 @@
 
 ---
 
+## M135 — New-user onboarding: pair first, then Protect, Hyperliquid, policy, ready. PIT 0.9.12
+
+- **Source:** Security showed pairing-unpaired while Desk is ready. Pairing was labeled optional. SetupWizard started at Connect wallet and mixed a public 0x paste into first-run. Web copy still said pairing is a late step. Hyperliquid API is a name+address form; PIT must generate the agent locally and never ask a new user to invent one.
+- **Discovery:** Go pairing (one-time 8-char, 2 min TTL, replay deny, device token not session key) was already correct. The gap was orchestration: `nextFix` and Security spine skipped pairing, READY did not require it, and HyperliquidCard mixed master+agent on one line.
+- **Candidate:** Shared `onboard.ts` stepper. Pair is step 1. Protect is step 2. Connect Hyperliquid creates/reuses the local PIT Agent, primary action Approve PIT on Hyperliquid, verify from live extraAgents on the **master** wallet. Policy pin remains host-authoritative. Ready only after pair + protect + session + extraAgents + pin. No fake success.
+- **Kill:** Remint `PIT-4bbee556`. Flatten OID `529167222216`. Session key / Direct token to the website. Manual API-wallet paste in the normal path. Authenticode claim. Fake FILLED.
+
+DATE/TIME: 2026-08-31 18:10+03
+PHASE: Onboarding audit + 0.9.12 ship. No new live trade.
+GOAL: Brand-new user can go zero → paired → protected → Hyperliquid verified → pinned → ready without inventing an API wallet.
+RESULT:
+- **IMPLEMENTED:** Desktop Security/SetupWizard/DeskHome stepper Pair → Protect → Hyperliquid → Policy → Ready. Web `/pair` step 1, `/protect` locked until paired, `/signin` and `/app/start` redirect to `/pair`. Hyperliquid card splits Your wallet vs PIT Agent. Copy PIT Agent address only for the official Hyperliquid API page. Advanced public 0x bind is folded. Compact pairing strip only when unpaired and not on Security.
+- **TESTED:** Desktop e2e copy harness ok (onboard pair-first + no invented ready). `go test ./... -count=1` **654 PASS / 0 FAIL** including `TestExpiredCodeDenied`. Web Playwright **30 passed**. `pit-os` 2 pass. `pit-mcp` 3 pass. Desktop `tsc -b` ok. Web `tsc -b` ok. NSIS `PIT_0.9.12_x64-setup.exe`. Sidecar `pit version` → `PIT 0.9.12`.
+- **LIVE extraAgents (master 0xbdfc…0034, not agent address):** `PIT-4bbee556` `0xfc64e36babe7dfe9eb779ee3a9f2362d16881d52` still listed, validUntil 1803441284611. Not reminted. No new AUTHORIZE.
+- **UNVERIFIED:** Foundry (forge not on PATH). Overlay `D:\PIT\pit.exe` copy blocked because that process is running. Fresh-install UI on a wiped machine (this desk already has session+agent). Production `/windows` after this deploy.
+- **BLOCKED:** iTransfer UNAVAILABLE. Authenticode absent. macOS/Linux not packaged.
+
+SECURITY RESULT: Pairing still returns `{sign:false, canSign:false, device}` only. `writeLocal` leak guard unchanged. Chat/web/MCP/SDK cannot pin, authorize, or export. extraAgents queried with master wallet.
+TX HASH / OID: Venue OID `531667200134` FILLED (unchanged). Research 0G `0x1d2113bd…510b`. Order 0G `0x8c28051b…11fb`. Historical ETH OID `529167222216` unchanged.
+CLASSIFICATION:
+- Pairing as step 1: **IMPLEMENTED + TESTED**
+- Protect locked until paired: **IMPLEMENTED + PLAYWRIGHT**
+- Hyperliquid local agent + live extraAgents: **IMPLEMENTED** (live listing **VERIFIED** for existing desk; new-user approve click **UNVERIFIED** on this machine because already approved)
+- Policy host pin: **UNCHANGED**
+- Real TRADE NOW path: **NOT RE-RUN** (existing HYPE fill stands; do not fabricate)
+PRODUCTION READY: 0.9.12 installer after GitHub Latest + health `/windows` point at these bytes.
+NEXT STEP: Commit, tag `v0.9.12`, upload tested NSIS, Vercel + Render, verify production `/windows` 302 to the `.exe`.
+
+---
+
 ## M134 — Final audit: npm, direct download, README, this-job proof on web. PIT 0.9.11
 
 - **Source:** Release audit. Website download CTAs must file `PIT_0.9.11_x64-setup.exe` without opening GitHub Releases HTML. JS SDK / MCP must be real read-only packages. README must describe the actual product. Public `/proof` and `/missions` still led with historical ETH OID `529167222216` while the latest matching job was HYPE `531667200134`.

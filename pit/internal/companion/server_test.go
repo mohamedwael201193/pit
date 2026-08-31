@@ -98,6 +98,29 @@ func TestWrongCodeDenied(t *testing.T) {
 	}
 }
 
+func TestExpiredCodeDenied(t *testing.T) {
+	h := New(t.TempDir())
+	h.mu.Lock()
+	old := h.code
+	h.codeExp = time.Now().Add(-time.Second)
+	h.mu.Unlock()
+	body, _ := json.Marshal(map[string]string{"code": old})
+	req := local(httptest.NewRequest(http.MethodPost, "/pair", bytes.NewReader(body)))
+	req.Header.Set("Origin", "https://pit0g.vercel.app")
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+	h.Handler().ServeHTTP(rec, req)
+	if rec.Code != http.StatusForbidden {
+		t.Fatal(rec.Code)
+	}
+	if !strings.Contains(rec.Body.String(), "pairing_expired") {
+		t.Fatal(rec.Body.String())
+	}
+	if strings.Contains(strings.ToLower(rec.Body.String()), "session") {
+		t.Fatal("secret")
+	}
+}
+
 func TestLocalStatusAllowsLoopbackOmitsCode(t *testing.T) {
 	h := New(t.TempDir())
 	code, _ := h.Code()
@@ -234,7 +257,7 @@ func TestLocalStatusVersionNoSecret(t *testing.T) {
 	if got["sign"] == true || got["trade"] == true {
 		t.Fatal(got)
 	}
-	if got["version"] != "0.9.11" {
+	if got["version"] != "0.9.12" {
 		t.Fatalf("version %v", got["version"])
 	}
 }

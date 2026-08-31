@@ -36,6 +36,24 @@ export function PairingDock({
     return () => window.clearInterval(id);
   }, [expires]);
 
+  if (paired && !compact) {
+    return (
+      <section className="pairing-dock pair-verified" aria-label="Browser pairing">
+        <p className="label">Browser pairing</p>
+        <ul className="onboard-checks">
+          <li>Browser paired ✓</li>
+          <li>Desktop {companionUp ? "connected" : "disconnected"} {companionUp ? "✓" : ""}</li>
+          <li>Secure local channel ✓</li>
+          <li>Session key remains on this computer ✓</li>
+        </ul>
+        <p className="fine">
+          {devices ? `${devices} browser device recorded. ` : ""}Pairing does not transfer a session key, Direct token, seed
+          phrase, or trading secret.
+        </p>
+      </section>
+    );
+  }
+
   return (
     <section className={compact ? "pairing-dock pair-strip" : "pairing-dock"} aria-label="Browser pairing">
       <div>
@@ -44,11 +62,23 @@ export function PairingDock({
           {display}
         </p>
         <p className="fine" style={{ margin: 0 }}>
-          {left ? `Expires ${left}. ` : ""}One-time. The website never receives a session key.
+          {left ? `Expires ${left}. ` : companionUp ? "" : "Desktop disconnected. "}
+          One-time. The website never receives a session key.
         </p>
-        <p className="fine" style={{ margin: 0 }}>
-          Desktop {companionUp ? "connected" : "offline"} · Browser {paired ? `connected (${devices || 1})` : "unpaired"}
-        </p>
+        {!compact ? (
+          <>
+            <p className="fine" style={{ margin: "8px 0 0" }}>
+              Does: lets this browser view desk state on this computer.
+            </p>
+            <p className="fine" style={{ margin: 0 }}>
+              Does not: transfer a session key, Direct token, seed phrase, private key, or trading secret.
+            </p>
+          </>
+        ) : (
+          <p className="fine" style={{ margin: 0 }}>
+            Desktop {companionUp ? "connected" : "offline"} · Browser unpaired
+          </p>
+        )}
       </div>
       <div className="cta-row">
         {onRotate ? (
@@ -68,6 +98,6 @@ function remaining(expires: string) {
   const t = Date.parse(expires);
   if (Number.isNaN(t)) return expires;
   const sec = Math.max(0, Math.round((t - Date.now()) / 1000));
-  if (sec <= 0) return "now - regenerate";
+  if (sec <= 0) return "now — regenerate";
   return `${sec}s`;
 }
