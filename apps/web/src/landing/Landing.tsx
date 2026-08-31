@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { Hero } from "./Hero";
+import { WatchFilm } from "./WatchFilm";
 import { Story } from "./Story";
 import { PipelineRing } from "./PipelineRing";
 import { Moments } from "./Moments";
@@ -24,6 +25,7 @@ export function Landing() {
       <div className="guide-shell relative min-h-[100dvh] w-full max-w-full overflow-x-hidden">
         <LandingNav />
         <Hero />
+        <WatchFilm />
         <Story />
         <PipelineRing />
         <Moments />

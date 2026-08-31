@@ -5,6 +5,7 @@ import { expect, test } from "./fixture";
 test("home is intelligence, not a wallet-first landing", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByRole("heading", { name: /It hunts while you sleep/ })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Watch PIT in action" })).toBeVisible();
   await expect(page.getByText("Your keys never leave your machine.")).toBeVisible();
   await expect(page.getByRole("link", { name: "Explore PIT" }).first()).toBeVisible();
   await expect(page.getByRole("link", { name: "Download PIT Desktop" }).first()).toBeVisible();

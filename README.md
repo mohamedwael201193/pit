@@ -1,52 +1,52 @@
 # PIT
 
-PIT is a private trading desk that seals your book into 0G Direct TeeML, runs a sequential researcher → challenger → risk committee, and sizes the order on the **host**. The model cannot set size. Manual trading requires you to confirm an exact preview on this computer. A Sleep Mission is optional bounded host execution and only arms from this computer. The web discovers and proves. The desktop protects and acts.
+PIT is a private trading desk whose **heart is 0G**. The private book never sits on a public chat API. It enters 0G Direct TeeML on Aristotle 16661, is independently challenged inside sealed envelopes, verified on the host, sized by policy, and only then turned into an exact Hyperliquid action you authorize on this computer. The model cannot set size. Sleep Mission is optional bounded host execution and only arms here. The web discovers and proves. The desktop protects and acts.
 
 **Product 0.9.13** · companion `127.0.0.1:17373` · website [pit0g.vercel.app](https://pit0g.vercel.app) · health [pit-health.onrender.com](https://pit-health.onrender.com/health) (`sign: false`, version `0.9.13`) · installer [direct Windows download](https://pit-health.onrender.com/windows)
 
 ---
 
-## Watch the product
+## Watch PIT in action
 
-The launch film is the product, not a storyboard. It walks a real desk through:
+The launch film is the live desk path, not a storyboard.
 
-**Pair → Protect my strategy → Connect Hyperliquid → Pin Policy → Agent → live market discovery → private 0G research → committee → exact preview → user authorization → Hyperliquid execution → OID → 0G proof → Activity → Sleep Mission.**
+**Pair → Protect → Hyperliquid → Policy → Agent → 0G Direct → Researcher → Challenger → Risk → VerifyE2EE → exact preview → AUTHORIZE → fill → proof.**
 
 - Watch: [https://youtu.be/zYgxDTI7jIk](https://youtu.be/zYgxDTI7jIk)
 - Local master: `edit/PIT-launch.mp4`
 
-The film shows the live desk path on this computer. The matching recorded research → AUTHORIZE → Hyperliquid **FILLED** evidence published with the product is HYPE OID `531667200134` (job `4a1d45ec-8c3f-4883-a162-19739accb9cf`), with this-job 0G research and order filings on Aristotle 16661. PIT paints FILLED only when Hyperliquid reports filled.
+Matching recorded evidence (job `4a1d45ec-8c3f-4883-a162-19739accb9cf`): HYPE OID **531667200134** FILLED, with this-job 0G research and order filings on Aristotle. PIT paints FILLED only when Hyperliquid `user_fills` reports filled.
 
-![PIT end-to-end architecture](docs/diagrams/architecture.svg)
-
----
-
-## Core idea
-
-Pasting a trading book into a public chat API leaks alpha. Giving a bot a withdraw key is how accounts die.
-
-PIT splits the job:
-
-| Layer | What it does | Bound |
-|---|---|---|
-| Your wallet | Connect, bind, mint Desk ID, pin policy | Never collected as a seed |
-| 0G Direct TeeML | Sealed inference over the private book plus public market | Router `sk-` path is forbidden for the book |
-| Host engine | Size, policy, preview hash, kill switch | LLM JSON cannot raise clip or leverage |
-| Your session | Hyperliquid `order` and `cancel` | Withdraw, leverage change, `approveAgent`, transfers |
-| 0G Storage | Encrypted objects with `--proof` | TypeScript SDK is not used for proofs |
-| Calibration | Brier / ECE when N is large enough | Empty sample prints NOT ENOUGH DATA |
+![0G is the heart](docs/diagrams/pipeline.svg)
 
 ---
 
-## Why PIT exists
+## Why 0G is the heart
 
-Research needs the private book. Execution needs a Hyperliquid session. Those must not live in the same place as the website.
+A trading book in a public router leaks alpha. A withdraw key empties an account. PIT exists because **private inference, sealed research, TEE verification, provenance, storage proofs, and verifiable order evidence** have to live on 0G — not in the browser, not in MCP, not in a cloud LLM.
 
-- The sealed prompt never enters Vercel, the browser bundle, MCP, or the JS SDK.
-- TRADE NOW on desktop calls the existing host path `authorizePreview("AUTHORIZE", previewHash)`.
-- Chat, the website, MCP, and `pit-os` cannot AUTHORIZE.
+| 0G capability | What PIT uses it for |
+|---|---|
+| Direct TeeML glm-5.2 | Wallet-signed `app-sk-` inference over the private book plus live Hyperliquid facts |
+| Native sealer | HPKE seal of the prompt; host `VerifyE2EE` against on-chain `teeSigner` |
+| Private committee | Sequential Researcher → Challenger → Risk, each a sealed Direct envelope |
+| Storage `--proof` | Official Go client files this-job research and order objects |
+| Aristotle 16661 | Production chain for Serving, Ledger, Flow, Desk ID, and explorer proofs |
+| Provenance | This-job roots and txs — historical receipts are not used as fallback |
+
+**0G Direct + glm-5.2.** Provider URL comes from on-chain `getService`. The Direct token stays in the OS keychain under `pit/{network}/{workspace}/direct`. The Router may **list** models. It is forbidden as the inference URL for the sealed book. If Direct fails, PIT **stops**.
+
+**Native sealer / HPKE / VerifyE2EE.** `pit-sealer` seals the book into Direct TeeML and verifies the TEE transcript on the host against `teeSigner` `0xA46EA4FC5889AD35A1487e1Ed04dCcfa872146B9`. Provider `0x7DCFe6AEa70350C2090041524c9B4A9262DCe87D`. Serving `0x47340d900bdFec2BD393c626E12ea0656F938d84`. Ledger `0x2dE54c845Cd948B72D2e32e39586fe89607074E3`.
+
+**0G Storage `--proof`.** Object keys are `{network}/ws/{workspaceId}/...`. Flow [`0x62D4144dB0F0a6fBBaeb6296c785C71B3D57C526`](https://chainscan.0g.ai/address/0x62D4144dB0F0a6fBBaeb6296c785C71B3D57C526). Indexer [indexer-storage-turbo.0g.ai](https://indexer-storage-turbo.0g.ai). The TypeScript SDK is not used for proofs.
+
+**Aristotle 16661.** Explorer [chainscan.0g.ai](https://chainscan.0g.ai). `PIT_NETWORK` binds 0G chain and Hyperliquid venue together (Aristotle with `api.hyperliquid.xyz`).
+
+The sealed prompt never enters Vercel, the browser bundle, MCP, or `pit-os`. TRADE NOW on desktop calls `authorizePreview("AUTHORIZE", previewHash)`. Chat, the website, MCP, and the JS SDK cannot AUTHORIZE.
 
 ![Authority boundary](docs/diagrams/authority.svg)
+
+![PIT end-to-end architecture](docs/diagrams/architecture.svg)
 
 ---
 
@@ -60,12 +60,13 @@ Research needs the private book. Execution needs a Hyperliquid session. Those mu
 6. **Pin policy** on Security (clip, assets, 1x, kill). Chat cannot pin. You can edit and re-pin after Ready.
 7. Open **Agent**. Ask **Find the best opportunity**, **Find the best long**, **Find the best short**, or **What can I trade now?**
 8. Watch live scan and ranking against Hyperliquid marks, oracle, funding, open interest, and venue minimums.
-9. Watch private 0G Direct: Researcher, then Challenger (with the thesis), then Risk.
-10. If a side survives, the host builds an exact preview. TRADE NOW appears only on `READY_ELIGIBLE`.
-11. You authorize on this computer, or you walk away.
-12. Hyperliquid returns an OID. PIT says FILLED only when `user_fills` reports filled.
-13. This-job 0G research and order proofs file to Aristotle Storage. Historical receipts are not used as fallback.
-14. **Activity** is the ledger. **Portfolio** is the venue. **Sleep Mission** is optional and arms only here.
+9. The **private book enters 0G Direct TeeML**. Researcher, then Challenger (with the thesis), then Risk — sequential sealed envelopes.
+10. Host `VerifyE2EE` via `pit-sealer`. Policy and host sizing clip the order. The model cannot set size.
+11. If a side survives, the host builds an exact preview. TRADE NOW appears only on `READY_ELIGIBLE`.
+12. You authorize on this computer, or you walk away.
+13. Hyperliquid returns an OID. PIT says FILLED only when `user_fills` reports filled.
+14. This-job 0G research and order proofs file to Aristotle Storage.
+15. **Activity** is the ledger. **Portfolio** is the venue. Encrypted Skillbook / experience stay on this computer. **Sleep Mission** is optional and arms only here.
 
 ---
 
@@ -179,17 +180,16 @@ If Direct fails, PIT **stops**. It does not fall back to the Router. Researcher,
 
 ## Researcher / Challenger / Risk / TEE / Policy pipeline
 
-![Research to execution](docs/diagrams/pipeline.svg)
-
 1. **Scanning** live Hyperliquid facts.
 2. **Ranking** remaining executable books.
-3. **Private 0G** job for this book.
+3. **Private 0G** job for this book (Direct TeeML glm-5.2).
 4. **Researcher** proposes a side from live facts (does not echo `hypothesis: none`).
 5. **Challenger** receives `researcher_thesis` after the researcher job.
 6. **Risk** sees the same sequential envelope.
 7. **TEE** — host `VerifyE2EE` via `pit-sealer`.
-8. **Policy** — host clip, 1x, allowlist, kill.
+8. **Policy** — host clip, 1x, allowlist, kill. Host sizes. The model cannot set size.
 9. **Decision** — READY preview or named NO TRADE with this-job 0G.
+10. **AUTHORIZE** on this computer → Hyperliquid OID → this-job Storage `--proof`.
 
 Forecasts are labeled as committee output. Live market facts come from the venue.
 
@@ -257,20 +257,33 @@ Desktop **Activity** is the ledger of this workspace: approvals, orders, fills, 
 
 **Portfolio** is Hyperliquid positions and buying power for the bound wallet.
 
-**Health** (Strategy Health) shows calibration. Brier / ECE stays **NOT ENOUGH DATA** until the sample is large enough.
+**Health** (Strategy Health) shows calibration. Brier / ECE stays **NOT ENOUGH DATA** until the sample is large enough. Skills are listed only from resolved observations.
 
 The public website does not show your book.
 
 ---
 
+## Memory / Skillbook
+
+PIT preserves workspace knowledge on this computer. It does not claim the model learned to trade.
+
+- **Skillbook** (`skillbook.enc`) is AES-sealed on disk. Entries are typed memory rows (observation, forecast, execution, outcome, and related kinds). `PublicSkillbook` returns **NOT ENOUGH DATA** until `experience.MinSamples` (5) verified memory rows. Skills never carry `sign`, `trade`, or `authorize`.
+- **Experience** (`experience.enc`) is a workspace-local journal of verified cases: coin, decision, preview hash, OID, and a why line. Research, fills, and resting OIDs append here. Chat “why this setup” reads `experience.why`. It cannot AUTHORIZE.
+- **Strategy Health** UI copy is “Resolved observations only.” A skill with no resolved outcomes stays NOT ENOUGH DATA. Calibration (Brier / ECE) stays unpublished until the sample floor.
+- **Forget** is desktop Security: `POST /local/memory/forget`. Two wallets never share a workspace, session, policy, or memory key.
+- **MCP / pit-os** experience surfaces are read-only. They print NOT ENOUGH DATA rather than invent skill performance.
+- `PIT_PRODUCT_MODE` refuses a global `PIT_MEMORY_KEY`. Future agent behavior on this desk can retrieve those sealed rows; PIT will not invent that the desk already learned.
+
+---
+
 ## Sleep Missions / bounded automation
 
-A Sleep Mission is optional bounded host execution while this computer stays awake.
+A Sleep Mission is optional bounded host execution while this computer stays awake. The bound runs on the same host that holds the session, the policy pin, and `pit-sealer`. The website cannot keep a mission alive.
 
 - Desktop Automation posts `ARM SLEEP MISSION` (or `ENABLE GUARDED AUTONOMY`) to `/local/mission` (desktop origin, pin required).
 - CLI `pit mission arm` requires a TTY.
 - Chat, the website, MCP, the JS SDK, and the model cannot arm it.
-- If the machine sleeps, the mission stops.
+- If the machine sleeps, the mission stops. That gap is not backfilled.
 
 ---
 
