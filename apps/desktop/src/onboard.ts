@@ -125,7 +125,7 @@ export function computeOnboard(input: OnboardInput): { steps: OnboardStep[]; cur
       done: policyDone,
       current: current === "policy",
       locked: !hlDone,
-      why: "You set clip and assets. The model cannot raise them.",
+      why: "You set clip and assets. Re-pin anytime. The model cannot raise them.",
     },
     {
       id: "ready",

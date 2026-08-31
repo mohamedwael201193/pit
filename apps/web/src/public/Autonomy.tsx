@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { windowsInstallerUrl } from "./facts";
 import { PageHead } from "../ui/PageHead";
 
 const BEATS = [
@@ -35,9 +35,9 @@ export function AutonomyPage() {
         <p className="mt-2 max-w-[52ch] text-[0.9375rem] leading-6 text-[rgb(240_231_212/0.6)]">
           Private strategy remains on desktop. Public pages show hashes, OIDs when public-safe, and named no-trades. They never show prompts, memory, or session keys.
         </p>
-        <Link to="/download" className="intel-cta mt-6 inline-flex">
-          Open PIT Desktop
-        </Link>
+        <a href={windowsInstallerUrl()} className="intel-cta mt-6 inline-flex">
+          Download PIT Desktop
+        </a>
       </div>
     </div>
   );

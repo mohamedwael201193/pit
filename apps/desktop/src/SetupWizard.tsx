@@ -179,7 +179,7 @@ export function SetupWizard({
       {viewId === "policy" ? (
         <>
           <h1>Pin policy.</h1>
-          <p className="lead">The model cannot raise clip, leverage, or permissions.</p>
+          <p className="lead">The model cannot raise clip, leverage, or permissions. After pin, Security keeps the editor so you can change and re-pin anytime.</p>
           <PolicyLaw pinned={pinned} onPin={onPolicy} busy={bindBusy || !boundWallet} />
         </>
       ) : null}
@@ -191,7 +191,7 @@ export function SetupWizard({
             <li>Browser paired ✓</li>
             <li>Strategy protected ✓</li>
             <li>Hyperliquid agent verified ✓</li>
-            <li>Policy pinned ✓</li>
+            <li>Policy pinned — edit anytime on Security ✓</li>
           </ul>
         </>
       ) : null}

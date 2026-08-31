@@ -59,7 +59,7 @@ export function setupPath(
     {
       id: "policy",
       title: "Pin policy",
-      why: "Clip, assets, and kill live on this computer. The model cannot raise them.",
+      why: "Clip, assets, and kill live on this computer. Re-pin anytime. The model cannot raise them.",
       tone: policy?.ok ? "READY" : agent?.ok ? "ACTION" : "BLOCKED",
       go: "policy",
       goLabel: "Open Policy",

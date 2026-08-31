@@ -106,7 +106,7 @@ export function SecurityCenter({
         <div>
           <p className="eyebrow">Setup</p>
           <h1>{ready ? "Workspace ready" : `Step ${current.n} of 5`}</h1>
-          <p className="sec-line">{current.why}</p>
+          <p className="sec-line">{ready ? "Policy stays on this page. Edit and re-pin anytime. Chat cannot pin." : current.why}</p>
         </div>
         <button type="button" className="linkish" onClick={onCheck} disabled={busy}>
           Check again
@@ -130,7 +130,7 @@ export function SecurityCenter({
         />
       </section>
 
-      {current.id === "pair" || (board.steps[0].done && current.id === "protect") ? (
+      {companionUp ? (
         <section className="sec-block" id="pairing">
           <h2>1. Pair this browser</h2>
           <PairingDock
@@ -144,7 +144,7 @@ export function SecurityCenter({
         </section>
       ) : null}
 
-      {current.id === "protect" ? (
+      {current.id === "protect" || checkNamed(checks, "direct_auth")?.ok ? (
         <section className="sec-block" id="protect">
           <h2>2. Protect my strategy</h2>
           <p className="sec-line">
@@ -162,7 +162,7 @@ export function SecurityCenter({
         </section>
       ) : null}
 
-      {current.id === "hyperliquid" ? (
+      {current.id === "hyperliquid" || ready || sessionAlive ? (
         <section className="sec-block" id="session">
           <h2>3. Connect Hyperliquid</h2>
           <p className="sec-line">
@@ -187,33 +187,33 @@ export function SecurityCenter({
         </section>
       ) : null}
 
-      {current.id === "policy" ? (
-        <section className="sec-block" id="policy">
-          <h2>4. Pin policy</h2>
-          <p className="sec-line">You edit. You pin. The model cannot raise clip, leverage, or permissions.</p>
-          <PolicyEditor
-            current={policy}
-            consequences={consequences}
-            allowed={allowed}
-            refused={refused}
-            pinned={pinned}
-            policyHash={policyHash}
-            busy={busy}
-            onPreview={onPolicyPreview}
-            onPin={onPolicyPin}
-          />
-        </section>
-      ) : null}
+      <section className="sec-block" id="policy">
+        <h2>{pinned ? "Policy" : "4. Pin policy"}</h2>
+        <p className="sec-line">
+          You edit. You pin. Re-pin anytime. Chat cannot pin. The model cannot raise clip, leverage, or permissions.
+        </p>
+        <PolicyEditor
+          current={policy}
+          consequences={consequences}
+          allowed={allowed}
+          refused={refused}
+          pinned={pinned}
+          policyHash={policyHash}
+          busy={busy}
+          onPreview={onPolicyPreview}
+          onPin={onPolicyPin}
+        />
+      </section>
 
       {ready ? (
         <section className="sec-block" id="ready">
           <h2>5. Ready to trade</h2>
-          <p className="sec-line">Research, preview, and AUTHORIZE stay on this computer. Chat cannot authorize.</p>
+          <p className="sec-line">Research, preview, and AUTHORIZE stay on this computer. Chat cannot authorize. Policy above stays editable.</p>
           <ul className="onboard-checks">
             <li>Browser paired ✓</li>
             <li>Strategy protected ✓</li>
             <li>Hyperliquid agent verified ✓</li>
-            <li>Policy pinned ✓</li>
+            <li>Policy pinned — edit and re-pin anytime ✓</li>
           </ul>
         </section>
       ) : null}
@@ -370,10 +370,17 @@ function NextControl({
       </button>
     );
   }
-  if (/Pin a trading policy|Policy cap/i.test(t)) {
+  if (/Pin a trading policy/i.test(t)) {
     return (
       <a className="primary" href="#policy">
         Pin policy
+      </a>
+    );
+  }
+  if (/Policy cap/i.test(t)) {
+    return (
+      <a className="primary" href="#policy">
+        Pin updated policy
       </a>
     );
   }
@@ -421,8 +428,8 @@ function NextControl({
   }
   if (/Desk is ready/i.test(t)) {
     return (
-      <a className="primary" href="#ready">
-        View ready state
+      <a className="primary" href="#policy">
+        Edit policy
       </a>
     );
   }

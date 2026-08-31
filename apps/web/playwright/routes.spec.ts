@@ -42,6 +42,10 @@ test("proof does not badge verified without a check", async ({ page }) => {
   await expect(page.getByText("529167222216")).toBeVisible();
   await expect(page.getByRole("link", { name: /Research 0x1d2113bd/ })).toBeVisible();
   await expect(page.getByRole("link", { name: /Order 0x8c28051b/ })).toBeVisible();
+  await expect(page.getByText("RECORDED ROOTS")).toBeVisible();
+  await expect(page.getByText("0x9fd42770545ecaacbfff12e3ef7a537b564e31c9ef5515b3a820fd276c22f72e").first()).toBeVisible();
+  await expect(page.getByText("0x8c94ec8e643c90fe69276ff20f50a0bc3121f007d611e10e6ab9f24d26f2ff66").first()).toBeVisible();
+  await expect(page.getByRole("link", { name: /DOGE job b4ed73ce/ })).toBeVisible();
 });
 
 test("agent shows iTransfer not live and desk id", async ({ page }) => {

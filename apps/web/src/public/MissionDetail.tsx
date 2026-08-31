@@ -1,5 +1,5 @@
 import { Link, useParams } from "react-router-dom";
-import { HISTORICAL_FILL, VERIFIED_FILL } from "./facts";
+import { HISTORICAL_FILL, VERIFIED_FILL, windowsInstallerUrl } from "./facts";
 import { PageHead } from "../ui/PageHead";
 
 export function MissionDetailPage() {
@@ -41,9 +41,9 @@ export function MissionDetailPage() {
               Open replay
             </Link>
           ) : null}
-          <Link to="/download" className="intel-ghost inline-flex">
-            Open PIT Desktop
-          </Link>
+          <a href={windowsInstallerUrl()} className="intel-ghost inline-flex">
+            Download PIT Desktop
+          </a>
         </div>
       </div>
     </div>

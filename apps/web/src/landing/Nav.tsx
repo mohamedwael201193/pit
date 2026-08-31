@@ -3,13 +3,13 @@ import { Link, NavLink, useLocation } from "react-router-dom";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { List, X } from "@phosphor-icons/react";
 import { PitMark } from "../brand/PitMark";
+import { windowsInstallerUrl } from "../public/facts";
 
 const LINKS = [
   { to: "/radar", label: "Radar" },
   { to: "/missions", label: "Missions" },
   { to: "/proof", label: "Proof" },
   { to: "/how-it-works", label: "How it works" },
-  { to: "/download", label: "Download" },
 ] as const;
 
 export function LandingNav() {
@@ -54,6 +54,14 @@ export function LandingNav() {
                 </NavLink>
               </li>
             ))}
+            <li>
+              <a
+                href={windowsInstallerUrl()}
+                className="inline-flex h-9 items-center rounded-full px-3.5 text-[0.9375rem] font-medium text-black no-underline hover:bg-black/5"
+              >
+                Download
+              </a>
+            </li>
           </ul>
 
           <div className="flex h-10 w-10 shrink-0 items-center justify-end">
@@ -89,6 +97,11 @@ export function LandingNav() {
                   </Link>
                 </li>
               ))}
+              <li className="border-b border-white/10">
+                <a href={windowsInstallerUrl()} className="block py-4 text-[1.25rem] font-medium text-[#f0e7d4] no-underline">
+                  Download
+                </a>
+              </li>
               <li className="pt-6">
                 <Link
                   to="/radar"

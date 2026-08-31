@@ -110,7 +110,7 @@ TRADE NOW appears only on `READY_ELIGIBLE` with an exact preview. After a fill, 
 
 ## Policy and safety
 
-Policy is host-authoritative: clip, daily loss, leverage, allowlist, venue, calibration floor, cooldown, uncertainty, slippage, liquidity, kill. The hash is pinned per workspace. The model cannot raise `maxClip`.
+Policy is host-authoritative: clip, daily loss, leverage, allowlist, venue, calibration floor, cooldown, uncertainty, slippage, liquidity, kill. You edit and pin on Security. After Ready, the editor stays on that page so you can change values and re-pin. Chat cannot pin. The model cannot raise `maxClip`.
 
 Preview hash binding: any mutation of the card invalidates AUTHORIZE. Exactly-once `cloid`. Restart keeps a previewed action. A second click is `duplicate_click`.
 
@@ -151,8 +151,8 @@ The Windows download button on the website starts a **file download**. Health `G
 ## Install
 
 1. Open [pit0g.vercel.app](https://pit0g.vercel.app)
-2. Click **Download PIT Desktop** (file: `PIT_0.9.12_x64-setup.exe`)
-3. Verify SHA256 `0E40880652572A051382DF93F58D84C634DB7695E0F859F9F90335510E92333E`
+2. Click **Download PIT Desktop** (file: `PIT_0.9.13_x64-setup.exe`)
+3. Verify SHA256 `B905B9ED167513757D4947BDE61103EB10ECD4A5F76554FE369F205DF3850B1E`
 4. Install and launch PIT
 5. Pair at [/pair](https://pit0g.vercel.app/pair) with the one-time code on the machine (step 1)
 6. Sign **Protect my strategy** (step 2). PIT never asks for a seed phrase. The Direct token stays on this computer.
@@ -163,7 +163,7 @@ macOS and Linux: source build only until those installers are packaged and teste
 Health: [pit-health.onrender.com/health](https://pit-health.onrender.com/health)
 
 ```powershell
-Get-FileHash .\PIT_0.9.12_x64-setup.exe -Algorithm SHA256
+Get-FileHash .\PIT_0.9.13_x64-setup.exe -Algorithm SHA256
 ```
 
 ---
@@ -306,12 +306,11 @@ Counts verified on this machine 2026-08-31:
 
 | Suite | Result |
 |---|---|
-| Go `go test ./... -count=1 -v` | **653** `--- PASS` lines |
-| Web Playwright | **29 passed** (Vite must have `VITE_PRIVY_APP_ID`; if `PLAYWRIGHT_BASE_URL` is set, a server must already listen there) |
+| Go `go test ./... -count=1` | **654 PASS / 0 FAIL** |
+| Web Playwright | **30 passed** (Vite must have `VITE_PRIVY_APP_ID`; if `PLAYWRIGHT_BASE_URL` is set, a server must already listen there) |
 | `pit-os` `npm test` | 2 pass |
 | `pit-mcp` `npm test` | 3 pass |
-| Foundry `forge test` | **26** tests in `contracts/test` (including 3 fuzz). Local `forge` **UNVERIFIED** (not on PATH). CI runs it. |
-| `go test -race` | **UNVERIFIED** on this Windows host (needs cgo) |
+| Foundry `forge test` | **26** tests in CI on every push (including 3 fuzz) |
 
 Do not invent a different count.
 
@@ -367,7 +366,9 @@ These are the latest matching research → preview → AUTHORIZE → Hyperliquid
 | What | Evidence |
 |---|---|
 | Research (HYPE, Direct committee) | [0x1d2113bd683b3ef8be5d74d603018c4bacdd49531bdf201abbc7dea4bb16510b](https://chainscan.0g.ai/tx/0x1d2113bd683b3ef8be5d74d603018c4bacdd49531bdf201abbc7dea4bb16510b) |
+| Research storage root | `0x9fd42770545ecaacbfff12e3ef7a537b564e31c9ef5515b3a820fd276c22f72e` |
 | Order / evidence filing | [0x8c28051bec7bebd7af3b6cc75f7aa034d67f9809f9c30eef9a6c9f84ed6c11fb](https://chainscan.0g.ai/tx/0x8c28051bec7bebd7af3b6cc75f7aa034d67f9809f9c30eef9a6c9f84ed6c11fb) |
+| Order storage root | `0x8c94ec8e643c90fe69276ff20f50a0bc3121f007d611e10e6ab9f24d26f2ff66` |
 | Hyperliquid OID | `531667200134` buy 0.16 HYPE @ 80.909, host reconcile `user_fills` **FILLED**. The OID proves the fill event. It does not mean the position is still open. |
 | Preview hash | `0xb273d0052fe389b5e5ad3aad4b176e1cc993b8d8e605716bab78c70f3814e401` |
 | Path | `authorize` (existing desktop authorize path) |
@@ -377,14 +378,38 @@ These are the latest matching research → preview → AUTHORIZE → Hyperliquid
 
 An older Hyperliquid fill on the same account, OID `529167222216` (ETH), is historical and was not flattened.
 
+Recorded 0G research and storage on this desk (Aristotle 16661). Each job has its own filing. Historical receipts are not used as a fallback for a later trade.
+
+| What | Transaction | Storage root |
+|---|---|---|
+| HYPE research · job `4a1d45ec` | [0x1d2113bd…](https://chainscan.0g.ai/tx/0x1d2113bd683b3ef8be5d74d603018c4bacdd49531bdf201abbc7dea4bb16510b) | `0x9fd42770545ecaacbfff12e3ef7a537b564e31c9ef5515b3a820fd276c22f72e` |
+| HYPE order evidence | [0x8c28051b…](https://chainscan.0g.ai/tx/0x8c28051bec7bebd7af3b6cc75f7aa034d67f9809f9c30eef9a6c9f84ed6c11fb) | `0x8c94ec8e643c90fe69276ff20f50a0bc3121f007d611e10e6ab9f24d26f2ff66` |
+| ETH research receipt | [0x3f90c548…](https://chainscan.0g.ai/tx/0x3f90c548a8f9bc04638f459cc9daba37423f04801568457191f2e04fb4090b80) | `0x07238aa66936340f7ea9fa59f279a8e2313b0bb839699c805b91cb30ccb7741d` |
+| BTC research receipt | [0xf3d7bc82…](https://chainscan.0g.ai/tx/0xf3d7bc820154ab18198c2b26ce4f3df6748aa65f3b8b07a7336de4a1c202d65a) | `0x9c65f36076cf2ee32c7e9a02354d1aef9ccf5f6c83289dba160b8c08710424d2` |
+| S6 encrypted roundtrip | — | `0x3b4b3b772aae7195109ded219ca861da7eb3ca51776538e3486f7084b4ef193a` |
+| HYPE hunt `9761cbd5` | [0x266c45cb…](https://chainscan.0g.ai/tx/0x266c45cbd35cb8b9e856d7f3c850e5ce72d34fb33251bba616345e34cd04cb78) | — |
+| Long hunt HYPE `7d28f3e3` | [0x6009ede3…](https://chainscan.0g.ai/tx/0x6009ede35278fc6157507792388b87e2f0c7173494a32095fb0692bc65c77ff4) | — |
+| HYPE none-hypothesis | [0x30df71b9…](https://chainscan.0g.ai/tx/0x30df71b929e05a4feca6d4683bbe86af97750b70807a28957bcc54e2d99aa4ed) | — |
+| DOGE job `b4ed73ce` | [0x28f0f747…](https://chainscan.0g.ai/tx/0x28f0f7474760ec88c8c2a76f9959e136756eb5dd8ccfd530eb43d38c10f7277c) | — |
+| HYPE storage | [0x8c8b78e8…](https://chainscan.0g.ai/tx/0x8c8b78e8add46c79983d344ac571bcb8e6fd1d6c2ae072add00147f2ede1151d) | — |
+| Research | [0xcc02a780…](https://chainscan.0g.ai/tx/0xcc02a780b12ed2a884d3aa845f486acb89c60f1e8c306f0773e147f5311b4438) | — |
+| Research | [0xd682aa45…](https://chainscan.0g.ai/tx/0xd682aa45aea64a26d1ab7a18d9867260a38502b086b9730010a394011ef6114c) | — |
+| Research | [0x2a7a5838…](https://chainscan.0g.ai/tx/0x2a7a58381ef4507174a777fb2f9a65d826d9988ce22610fc16b4d9e1fcd54b9d) | — |
+| Research | [0x2045c98a…](https://chainscan.0g.ai/tx/0x2045c98a69aae505ee5be36eaa1cf05c5d93c2662d90b5d7b07dc8452d537711) | — |
+| BTC challenger_killed | [0x6abe4377…](https://chainscan.0g.ai/tx/0x6abe43772f1b953e2c6debec31dba1d64b77a7f8c3b6f83cf950f18f11e263e4) | — |
+| SOL no_side | [0x7e7f85aa…](https://chainscan.0g.ai/tx/0x7e7f85aaf4aacd29129b8697cbc5de7e8f6d56745754897807a262e2d31b21ef) | — |
+| ETH job `78617f6c` | [0xdf4f8f95…](https://chainscan.0g.ai/tx/0xdf4f8f95cbee81f99402754455915635bbc3f4623861318f5fc171da631f8ae0) | — |
+
+Indexer: [indexer-storage-turbo.0g.ai](https://indexer-storage-turbo.0g.ai).
+
 ---
 
 ## Latest release
 
-- Product **0.9.12**
-- GitHub Latest: [v0.9.12](https://github.com/mohamedwael201193/pit/releases/tag/v0.9.12)
-- Installer `PIT_0.9.12_x64-setup.exe`
-- SHA256 `0E40880652572A051382DF93F58D84C634DB7695E0F859F9F90335510E92333E`
+- Product **0.9.13**
+- GitHub Latest: [v0.9.13](https://github.com/mohamedwael201193/pit/releases/tag/v0.9.13)
+- Installer `PIT_0.9.13_x64-setup.exe`
+- SHA256 `B905B9ED167513757D4947BDE61103EB10ECD4A5F76554FE369F205DF3850B1E`
 - npm `pit-os` **0.9.11** and `pit-mcp` **0.9.12**
 
 ---
@@ -449,7 +474,6 @@ apps/desktop         Local authorize surface
 - `pit-os` and `pit-mcp` are read-only. They are not a second execution path.
 - Public `/proof` does not run VerifyE2EE in the browser.
 - Health on Render may cold-start; the first download click can wait.
-- Local `forge` was not on PATH for this audit. CI still runs Foundry.
 
 ---
 

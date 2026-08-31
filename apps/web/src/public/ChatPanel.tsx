@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
 import { answerChat, STARTERS, type ChatTurn } from "./chat";
+import { windowsInstallerUrl } from "./facts";
 import { useWatchSafe } from "./Watch";
 
 export function ChatPanel({
@@ -90,9 +90,9 @@ export function ChatPanel({
           </form>
           <p className="mt-3 text-[0.75rem] text-[rgb(240_231_212/0.45)]">
             Private command lives on desktop.{" "}
-            <Link to="/download" className="text-[#d82f2f]">
-              Open PIT Desktop
-            </Link>
+            <a href={windowsInstallerUrl()} className="text-[#d82f2f]">
+              Download PIT Desktop
+            </a>
           </p>
         </aside>
       ) : null}

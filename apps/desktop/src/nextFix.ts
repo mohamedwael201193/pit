@@ -97,7 +97,7 @@ export function nextFix(
     return {
       title: "Pin a trading policy",
       why: "The model cannot raise clip, leverage, or permissions. Pin writes a hash on this computer.",
-      fix: "Open Security and pin the default until you change it on purpose.",
+      fix: "Open Security. Edit clip, assets, or kill. Preview. Pin. Re-pin anytime. Chat cannot pin.",
       go: "security",
       goLabel: "Open Security",
     };

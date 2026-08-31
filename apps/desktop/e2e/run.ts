@@ -21,6 +21,7 @@ import {
   assertNextFixPairsFirst,
   assertNextFixDoesNotSkipPairWhenSessionExists,
   assertOnboardInputFromDoctor,
+  assertPolicyEditorStaysAfterReady,
 } from "./onboard.spec.ts";
 
 assertOfficialLinks();
@@ -53,4 +54,5 @@ assertOnboardReadyRequiresAllGates();
 assertNextFixPairsFirst();
 assertNextFixDoesNotSkipPairWhenSessionExists();
 assertOnboardInputFromDoctor();
+assertPolicyEditorStaysAfterReady();
 console.log("desktop e2e copy harness ok");

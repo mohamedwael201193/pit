@@ -7,7 +7,8 @@ test("autonomy page never arms", async ({ page }) => {
   await expect(page.getByRole("heading", { name: /Sleep Missions/ })).toBeVisible();
   await expect(page.getByRole("button", { name: /arm/i })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Authorize" })).toHaveCount(0);
-  await expect(page.getByRole("link", { name: "Open PIT Desktop" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Download PIT Desktop" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Download PIT Desktop" })).toHaveAttribute("href", /\/windows$/);
   await expect(page.getByText("Cannot arm, authorize, pin, or execute")).toBeVisible();
   await expect(page.getByText(/must stay awake for the bound/i)).toBeVisible();
 });

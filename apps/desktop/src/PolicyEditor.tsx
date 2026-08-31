@@ -187,7 +187,7 @@ export function PolicyEditor({
         ))}
       </details>
       {pinned && policyHash ? (
-        <p className="fine">Pinned {policyHash.slice(0, 18)}… Chat cannot change it.</p>
+        <p className="fine">Pinned {policyHash.slice(0, 18)}… You can edit and re-pin. Chat cannot pin.</p>
       ) : (
         <p className="fine">Preview until you pin. Pinning writes host law on this computer.</p>
       )}

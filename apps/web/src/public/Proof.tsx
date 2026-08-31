@@ -6,7 +6,9 @@ import {
   HISTORICAL_TEE_SIGNER,
   IDENTITY_8004,
   PIT_AGENT,
+  RESEARCH_TXS,
   STORAGE_INDEXER,
+  STORAGE_PROOFS,
   VERIFIED_FILL,
 } from "./facts";
 import { PageHead } from "../ui/PageHead";
@@ -62,9 +64,27 @@ export function ProofPage() {
         />
         <ProofRow
           name="0G Storage"
-          status="NO PUBLIC ROOT"
-          proves="Resolve the proof object and recompute the hash where the client supports it."
-          how={`Open the indexer ${STORAGE_INDEXER} with a real root. This site will not badge a missing object.`}
+          status="RECORDED ROOTS"
+          proves="This desk filed research and order objects on Aristotle Flow. Roots are Flow event topics from those transactions. Open the indexer with a real root. This site will not badge a missing object."
+          how={`Indexer ${STORAGE_INDEXER}. Confirm the root in the transaction log topic on ChainScan.`}
+          extra={
+            <ul className="mt-2 flex flex-col gap-2 text-[0.8125rem] leading-5">
+              {STORAGE_PROOFS.map((p) => (
+                <li key={p.root} className="break-all">
+                  <span className="text-[rgb(240_231_212/0.55)]">{p.label}</span>
+                  {p.tx ? (
+                    <>
+                      {" · "}
+                      <a className="text-[#d82f2f]" href={`${ARISTOTLE_EXPLORER}/tx/${p.tx}`} target="_blank" rel="noreferrer">
+                        tx {p.tx}
+                      </a>
+                    </>
+                  ) : null}
+                  <span className="block text-[rgb(240_231_212/0.75)]">root {p.root}</span>
+                </li>
+              ))}
+            </ul>
+          }
         />
         <ProofRow
           name="0G Chain"
@@ -82,10 +102,29 @@ export function ProofPage() {
               <a className="text-[#d82f2f] break-all" href={`${ARISTOTLE_EXPLORER}/tx/${VERIFIED_FILL.researchTx}`} target="_blank" rel="noreferrer">
                 Research {VERIFIED_FILL.researchTx}
               </a>
+              <span className="break-all text-[rgb(240_231_212/0.7)]">root {VERIFIED_FILL.researchRoot}</span>
               <a className="text-[#d82f2f] break-all" href={`${ARISTOTLE_EXPLORER}/tx/${VERIFIED_FILL.orderTx}`} target="_blank" rel="noreferrer">
                 Order {VERIFIED_FILL.orderTx}
               </a>
+              <span className="break-all text-[rgb(240_231_212/0.7)]">root {VERIFIED_FILL.orderRoot}</span>
             </p>
+          }
+        />
+        <ProofRow
+          name="Recorded research txs"
+          status="RECORDED"
+          proves="Earlier sealed research jobs on this desk, each with its own Aristotle filing. Not a historical fallback for the HYPE fill."
+          how="Open ChainScan. Each hash is a separate job receipt."
+          extra={
+            <ul className="mt-2 flex flex-col gap-1 text-[0.8125rem] leading-5">
+              {RESEARCH_TXS.map((p) => (
+                <li key={p.tx} className="break-all">
+                  <a className="text-[#d82f2f]" href={`${ARISTOTLE_EXPLORER}/tx/${p.tx}`} target="_blank" rel="noreferrer">
+                    {p.label} {p.tx}
+                  </a>
+                </li>
+              ))}
+            </ul>
           }
         />
         <ProofRow

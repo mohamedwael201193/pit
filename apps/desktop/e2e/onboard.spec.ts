@@ -1,6 +1,7 @@
 import { computeOnboard, onboardInput } from "../src/onboard";
 import { nextFix } from "../src/nextFix";
 import type { DoctorCheck, LocalStatus } from "../src/companion";
+import { readFileSync } from "node:fs";
 
 const base = {
   companionUp: true,
@@ -79,4 +80,13 @@ export function assertOnboardInputFromDoctor() {
     false,
   );
   if (!got.paired || !got.protectOk || !got.walletOk) throw new Error("onboardInput");
+}
+
+export function assertPolicyEditorStaysAfterReady() {
+  const src = readFileSync(new URL("../src/SecurityCenter.tsx", import.meta.url), "utf8");
+  if (/current\.id === ["']policy["'] \?/.test(src)) {
+    throw new Error("policy editor must stay on Security after pin");
+  }
+  if (!src.includes("Re-pin anytime")) throw new Error("re-pin copy");
+  if (!src.includes("id=\"policy\"")) throw new Error("policy section");
 }

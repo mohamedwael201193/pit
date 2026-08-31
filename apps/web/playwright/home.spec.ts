@@ -8,6 +8,7 @@ test("home is intelligence, not a wallet-first landing", async ({ page }) => {
   await expect(page.getByText("Your keys never leave your machine.")).toBeVisible();
   await expect(page.getByRole("link", { name: "Explore PIT" }).first()).toBeVisible();
   await expect(page.getByRole("link", { name: "Download PIT Desktop" }).first()).toBeVisible();
+  await expect(page.getByRole("link", { name: "Download", exact: true }).first()).toHaveAttribute("href", /\/windows$/);
   await expect(page.getByRole("link", { name: "See Sleep Missions" }).first()).toBeVisible();
   await expect(page.getByText("PIT never asks for a seed phrase.")).toHaveCount(0);
   await expect(page.locator('input[type="password"]')).toHaveCount(0);
