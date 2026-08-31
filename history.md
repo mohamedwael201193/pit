@@ -16,7 +16,7 @@ RESULT:
 - **IMPLEMENTED:** Security always shows PolicyEditor. Ready CTA is Edit policy. Pairing dock stays after Ready. Hyperliquid card stays when session is live. Web landing Download, Autonomy, Chat, Mission CTAs file `/windows`. `/proof` lists recorded roots including HYPE research `0x9fd42770545ecaacbfff12e3ef7a537b564e31c9ef5515b3a820fd276c22f72e` and order `0x8c94ec8e643c90fe69276ff20f50a0bc3121f007d611e10e6ab9f24d26f2ff66`.
 - **TESTED:** Desktop e2e including `assertPolicyEditorStaysAfterReady`. `go test ./... -count=1` PASS (pit + sealer). Web Playwright **30 passed**. `pit-os` 2 pass. `pit-mcp` 3 pass. Desktop `tsc -b` ok. Web `tsc -b` ok. NSIS `PIT_0.9.13_x64-setup.exe`. Sidecar `pit version` → `PIT 0.9.13`.
 - **LIVE extraAgents (master 0xbdfc…0034):** `PIT-4bbee556` `0xfc64e36babe7dfe9eb779ee3a9f2362d16881d52` reused. No remint. No new AUTHORIZE.
-- **SHIPPED:** Tag `v0.9.13`. NSIS SHA256 `B905B9ED167513757D4947BDE61103EB10ECD4A5F76554FE369F205DF3850B1E`. GitHub Latest → `v0.9.13`. Health `/windows` 302 to the `.exe`. Vercel `https://pit0g.vercel.app`. Health `https://pit-health.onrender.com`.
+- **SHIPPED:** Source `2637c4a` tagged `v0.9.13`. NSIS SHA256 `B905B9ED167513757D4947BDE61103EB10ECD4A5F76554FE369F205DF3850B1E`. GitHub Latest → `v0.9.13`. Health `/windows` 302 to the `.exe`. Vercel `https://pit0g.vercel.app`. Health `https://pit-health.onrender.com`.
 - **BLOCKED:** iTransfer UNAVAILABLE. Authenticode absent. macOS/Linux not packaged.
 
 SECURITY RESULT: Pin remains `pinLocalPolicy` on this computer. Chat/web/MCP/SDK cannot pin, authorize, or export. extraAgents still queried with master wallet.
