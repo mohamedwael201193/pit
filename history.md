@@ -21,7 +21,7 @@ RESULT:
 - **ACTIVITY:** `approval.accepted` + `order.submitted` + `order.filled` + `position.updated` for job `4a1d45ec-8c3f-4883-a162-19739accb9cf` and OID `531667200134`.
 - **THIS-JOB 0G:** Research tx `https://chainscan.0g.ai/tx/0x1d2113bd683b3ef8be5d74d603018c4bacdd49531bdf201abbc7dea4bb16510b` root `0x9fd427…f72e`. Order evidence tx `https://chainscan.0g.ai/tx/0x8c28051bec7bebd7af3b6cc75f7aa034d67f9809f9c30eef9a6c9f84ed6c11fb`. Both job `4a1d45ec…b9cf`. No historical fallback.
 - **SESSION:** Agent `PIT-4bbee556` `0xfc64e36babe7dfe9eb779ee3a9f2362d16881d52` reused. Policy pinned. Companion overlay `D:\PIT\pit.exe` **0.9.11**.
-- **SHIPPED:** See follow-up ship line after tag/NSIS/Vercel/Render.
+- **SHIPPED:** Code commit `69c0247` 2026-08-31 08:50:00 +0300. Cargo.lock NSIS fix `fff368b` 2026-08-31 08:52:00 +0300. Tag `v0.9.11` on `fff368b`. NSIS `PIT_0.9.11_x64-setup.exe` SHA256 `B621A10504EF1F9031C8C6D28E0B36FDB29B8AD186CEA86BCAC81F209A64515F`. Release https://github.com/mohamedwael201193/pit/releases/tag/v0.9.11. Vercel https://pit0g.vercel.app. Health https://pit-health.onrender.com **0.9.11**. Overlay companion `D:\PIT\pit.exe` is **0.9.11** (session reused, agent not reminted). Installer also at `D:\PIT\PIT_0.9.11_x64-setup.exe`.
 
 SECURITY RESULT: The model cannot AUTHORIZE. TRADE NOW used the existing desktop authorize path. Policy clip was not raised. Withdraw/transfer remain forbidden.
 TX HASH / OID: Venue OID `531667200134` FILLED. Research 0G `0x1d2113bd683b3ef8be5d74d603018c4bacdd49531bdf201abbc7dea4bb16510b`. Order 0G `0x8c28051bec7bebd7af3b6cc75f7aa034d67f9809f9c30eef9a6c9f84ed6c11fb`. Historical ETH OID `529167222216` unchanged.
@@ -31,8 +31,8 @@ CLASSIFICATION:
 - READY → TRADE NOW → real OID: **LIVE VERIFIED**
 - FILLED only when Hyperliquid reports filled: **IMPLEMENTED + LIVE VERIFIED**
 - Current-job 0G linked to the same preview/order: **LIVE VERIFIED**
-PRODUCTION READY: 0.9.11 overlay is live. NSIS/tag after this commit.
-NEXT STEP: Tag `v0.9.11`, NSIS, Vercel + Render, copy installer to `D:\PIT`. Close any 0.9.10 Tauri window before installing.
+PRODUCTION READY: 0.9.11 installer is on GitHub Latest and `D:\PIT`.
+NEXT STEP: Close any 0.9.10 Tauri window and run `D:\PIT\PIT_0.9.11_x64-setup.exe`. Vite localhost:3001 already talks to companion 0.9.11. Do not remint. Do not flatten.
 
 ---
 
