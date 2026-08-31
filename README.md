@@ -17,7 +17,7 @@ The launch film is the live desk path, not a storyboard.
 
 Matching recorded evidence (job `4a1d45ec-8c3f-4883-a162-19739accb9cf`): HYPE OID **531667200134** FILLED, with this-job 0G research and order filings on Aristotle. PIT paints FILLED only when Hyperliquid `user_fills` reports filled.
 
-![0G is the heart](docs/diagrams/pipeline.svg)
+<img src="docs/diagrams/pipeline.png" alt="0G is the heart" width="1280" />
 
 ---
 
@@ -38,15 +38,15 @@ A trading book in a public router leaks alpha. A withdraw key empties an account
 
 **Native sealer / HPKE / VerifyE2EE.** `pit-sealer` seals the book into Direct TeeML and verifies the TEE transcript on the host against `teeSigner` `0xA46EA4FC5889AD35A1487e1Ed04dCcfa872146B9`. Provider `0x7DCFe6AEa70350C2090041524c9B4A9262DCe87D`. Serving `0x47340d900bdFec2BD393c626E12ea0656F938d84`. Ledger `0x2dE54c845Cd948B72D2e32e39586fe89607074E3`.
 
-**0G Storage `--proof`.** Object keys are `{network}/ws/{workspaceId}/...`. Flow [`0x62D4144dB0F0a6fBBaeb6296c785C71B3D57C526`](https://chainscan.0g.ai/address/0x62D4144dB0F0a6fBBaeb6296c785C71B3D57C526). Indexer [indexer-storage-turbo.0g.ai](https://indexer-storage-turbo.0g.ai). The TypeScript SDK is not used for proofs.
+**0G Storage `--proof`.** Object keys are `{network}/ws/{workspaceId}/...`. Flow [`0x62D4144dB0F0a6fBBaeb6296c785C71B3D57C526`](https://chainscan.0g.ai/address/0x62D4144dB0F0a6fBBaeb6296c785C71B3D57C526). Explorer [storagescan.0g.ai](https://storagescan.0g.ai/). Recorded storage proof [submission 211566](https://storagescan.0g.ai/submission/211566). The TypeScript SDK is not used for proofs.
 
 **Aristotle 16661.** Explorer [chainscan.0g.ai](https://chainscan.0g.ai). `PIT_NETWORK` binds 0G chain and Hyperliquid venue together (Aristotle with `api.hyperliquid.xyz`).
 
 The sealed prompt never enters Vercel, the browser bundle, MCP, or `pit-os`. TRADE NOW on desktop calls `authorizePreview("AUTHORIZE", previewHash)`. Chat, the website, MCP, and the JS SDK cannot AUTHORIZE.
 
-![Authority boundary](docs/diagrams/authority.svg)
+![Authority boundary](docs/diagrams/authority.png)
 
-![PIT end-to-end architecture](docs/diagrams/architecture.svg)
+![PIT end-to-end architecture](docs/diagrams/architecture.png)
 
 ---
 
@@ -245,7 +245,7 @@ An older Hyperliquid fill on the same account, OID `529167222216` (ETH), is hist
 
 ## 0G storage / chain proof
 
-![0G and Hyperliquid evidence](docs/diagrams/proof.svg)
+![0G and Hyperliquid evidence](docs/diagrams/proof.png)
 
 Research proof and order proof are filed to 0G Storage for **that** job via the official Go client with `--proof`. `last-research.json` is not a 0G fallback. Public `/proof` lists recorded this-desk filings. It does not run VerifyE2EE in the browser.
 
@@ -552,6 +552,7 @@ These are the latest matching research → preview → AUTHORIZE → Hyperliquid
 | Order / evidence filing | [0x8c28051bec7bebd7af3b6cc75f7aa034d67f9809f9c30eef9a6c9f84ed6c11fb](https://chainscan.0g.ai/tx/0x8c28051bec7bebd7af3b6cc75f7aa034d67f9809f9c30eef9a6c9f84ed6c11fb) |
 | Order storage root | `0x8c94ec8e643c90fe69276ff20f50a0bc3121f007d611e10e6ab9f24d26f2ff66` |
 | Hyperliquid OID | `531667200134` buy 0.16 HYPE @ 80.909, host reconcile `user_fills` **FILLED** |
+| 0G StorageScan | [storagescan.0g.ai](https://storagescan.0g.ai/) · proof [submission 211566](https://storagescan.0g.ai/submission/211566) |
 | Preview hash | `0xb273d0052fe389b5e5ad3aad4b176e1cc993b8d8e605716bab78c70f3814e401` |
 | Agent | `PIT-4bbee556` `0xfc64e36babe7dfe9eb779ee3a9f2362d16881d52` |
 | Wallet | `0xbdfcee82bd42fefa58ee850b3709636a8b6b0034` |
@@ -578,7 +579,7 @@ Recorded 0G research and storage on this desk. Each job has its own filing.
 | SOL no_side | [0x7e7f85aa…](https://chainscan.0g.ai/tx/0x7e7f85aaf4aacd29129b8697cbc5de7e8f6d56745754897807a262e2d31b21ef) | — |
 | ETH job `78617f6c` | [0xdf4f8f95…](https://chainscan.0g.ai/tx/0xdf4f8f95cbee81f99402754455915635bbc3f4623861318f5fc171da631f8ae0) | — |
 
-Indexer: [indexer-storage-turbo.0g.ai](https://indexer-storage-turbo.0g.ai).
+Storage: [storagescan.0g.ai](https://storagescan.0g.ai/). Proof: [submission 211566](https://storagescan.0g.ai/submission/211566).
 
 ---
 

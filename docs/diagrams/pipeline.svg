@@ -1,9 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" role="img" aria-label="0G is the heart of PIT: Direct TeeML committee to Hyperliquid proof">
   <rect width="1280" height="720" fill="#f0e7d4"/>
   <rect x="0" y="0" width="8" height="720" fill="#d82f2f"/>
   <text x="40" y="44" font-family="ui-monospace, Menlo, Consolas, monospace" font-size="12" letter-spacing="4" fill="#d82f2f">0G IS THE HEART</text>
   <text x="40" y="82" font-family="Georgia, Times New Roman, serif" font-size="30" fill="#14120f">Private book sealed in Direct TeeML</text>
-  <text x="40" y="108" font-family="ui-sans-serif, system-ui, sans-serif" font-size="14" fill="#6b6458">Aristotle 16661 · glm-5.2 · HPKE · VerifyE2EE · Storage --proof · then host size, AUTHORIZE, Hyperliquid, this-job evidence</text>
+  <text x="40" y="108" font-family="ui-sans-serif, system-ui, sans-serif" font-size="14" fill="#6b6458">Aristotle 16661 | glm-5.2 | HPKE | VerifyE2EE | Storage --proof | host size | AUTHORIZE | Hyperliquid | this-job evidence</text>
 
   <g font-family="ui-sans-serif, system-ui, sans-serif">
     <rect x="40" y="132" width="188" height="88" fill="#faf6ee" stroke="#14120f" stroke-width="1.25"/>
@@ -17,12 +18,12 @@
   </g>
 
   <rect x="40" y="236" width="1200" height="196" fill="#d82f2f"/>
-  <text x="64" y="266" font-family="ui-monospace, Menlo, monospace" font-size="12" letter-spacing="3" fill="#f0e7d4">0G DIRECT TEEML  ·  SEALED COMMITTEE  ·  NO ROUTER ON THE BOOK</text>
+  <text x="64" y="266" font-family="ui-monospace, Menlo, monospace" font-size="12" letter-spacing="3" fill="#f0e7d4">0G DIRECT TEEML  |  SEALED COMMITTEE  |  NO ROUTER ON THE BOOK</text>
   <g font-family="ui-sans-serif, system-ui, sans-serif">
     <rect x="64" y="286" width="268" height="118" fill="#14120f"/>
     <text x="80" y="314" fill="#d82f2f" font-family="ui-monospace, Menlo, monospace" font-size="11">03</text>
     <text x="80" y="342" fill="#f0e7d4" font-size="18">Private 0G</text>
-    <text x="80" y="368" fill="#c4bba8" font-size="13">Direct glm-5.2 · app-sk-</text>
+    <text x="80" y="368" fill="#c4bba8" font-size="13">Direct glm-5.2  app-sk-</text>
     <rect x="348" y="286" width="268" height="118" fill="#f0e7d4"/>
     <text x="364" y="314" fill="#d82f2f" font-family="ui-monospace, Menlo, monospace" font-size="11">04</text>
     <text x="364" y="342" fill="#14120f" font-size="18">Researcher</text>
@@ -57,7 +58,7 @@
     <rect x="856" y="452" width="188" height="92" fill="#14120f"/>
     <text x="872" y="476" fill="#d82f2f" font-family="ui-monospace, Menlo, monospace" font-size="11">11</text>
     <text x="872" y="500" fill="#f0e7d4" font-size="15">Hyperliquid</text>
-    <text x="872" y="522" fill="#c4bba8" font-size="12">OID · user_fills</text>
+    <text x="872" y="522" fill="#c4bba8" font-size="12">OID / user_fills</text>
     <rect x="1060" y="452" width="180" height="92" fill="#d82f2f"/>
     <text x="1076" y="476" fill="#f0e7d4" font-family="ui-monospace, Menlo, monospace" font-size="11">12</text>
     <text x="1076" y="500" fill="#faf6ee" font-size="15">0G proof</text>
@@ -67,5 +68,5 @@
   <text x="40" y="580" font-family="Georgia, serif" font-size="16" fill="#14120f">If Direct fails, PIT stops. The sealed book never falls through to the 0G Router.</text>
   <text x="40" y="608" font-family="ui-sans-serif, system-ui, sans-serif" font-size="13" fill="#6b6458">Challenger and Risk receive the researcher thesis only after that sealed job finishes. TRADE NOW appears only on READY_ELIGIBLE.</text>
   <text x="40" y="632" font-family="ui-sans-serif, system-ui, sans-serif" font-size="13" fill="#6b6458">FILLED is painted only when Hyperliquid reports filled. Research and order proofs are this-job Storage filings, not historical receipts.</text>
-  <text x="40" y="668" font-family="ui-monospace, Menlo, monospace" font-size="12" fill="#d82f2f">PAIR  ?  PROTECT  ?  HYPERLIQUID  ?  POLICY  ?  AGENT  ?  0G RESEARCH  ?  PREVIEW  ?  AUTHORIZE  ?  FILL  ?  PROOF</text>
+  <text x="40" y="668" font-family="ui-monospace, Menlo, monospace" font-size="12" fill="#d82f2f">PAIR  -  PROTECT  -  HYPERLIQUID  -  POLICY  -  AGENT  -  0G RESEARCH  -  PREVIEW  -  AUTHORIZE  -  FILL  -  PROOF</text>
 </svg>
