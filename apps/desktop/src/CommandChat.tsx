@@ -75,7 +75,7 @@ export function CommandChat({
 }: {
   thread: string;
   onNavigate: (view: string) => void;
-  onResearch: (coin: string, hypothesis?: "none" | "long" | "short") => void;
+  onResearch: (coin: string, hypothesis?: "none" | "long" | "short", opts?: { fresh?: boolean }) => void;
   onOpenPreview: () => void;
   onConfirmAutonomy?: (hours: number) => void;
   onStop?: () => void;
@@ -163,7 +163,7 @@ export function CommandChat({
     const box = log.current;
     if (!box || !stick.current) return;
     box.scrollTop = box.scrollHeight;
-  }, [lines, island?.stage, island?.kind, island?.coin, island?.busy, island?.roles?.length, activity?.length]);
+  }, [lines, island?.busy]);
 
   async function ask(text: string) {
     if (!text || busy) return;
@@ -242,7 +242,9 @@ export function CommandChat({
     if (r.start_research) {
       const hyp = r.hypothesis === "long" || r.hypothesis === "short" ? r.hypothesis : undefined;
       const unnamed = /find (me )?(the )?(best|strongest|next)|what can i trade|research next|next opportunity|next eligible|next market/i.test(asked);
-      onResearch(unnamed ? "" : r.coin || "", hyp);
+      const nextHunt = /research next|next opportunity|next eligible|next market/i.test(asked);
+      const fresh = unnamed && !nextHunt;
+      onResearch(unnamed ? "" : r.coin || "", hyp, { fresh: fresh });
       return;
     }
     if (r.navigate === "preview") onOpenPreview();
@@ -299,7 +301,7 @@ export function CommandChat({
 
       <div className="agent-body">
         <div
-          className="agent-stream"
+          className={`agent-stream${island?.busy ? " is-busy" : ""}`}
           role="log"
           ref={log}
           onWheel={(e) => {

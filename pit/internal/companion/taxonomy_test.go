@@ -3,6 +3,9 @@ package companion
 import (
 	"strings"
 	"testing"
+	"time"
+
+	"github.com/mohamedwael201193/pit/internal/auto"
 )
 
 func TestHuntSkipSetIncludesStoodDown(t *testing.T) {
@@ -21,6 +24,41 @@ func TestHuntSkipSetIncludesPriorSlice(t *testing.T) {
 	skip := h.huntSkipSet()
 	if skip["AVAX"] == "" || skip["SOL"] == "" {
 		t.Fatalf("expected prior hunt skips, got %#v", skip)
+	}
+}
+
+func TestResolveChatCoinDoesNotWrap(t *testing.T) {
+	skip := map[string]string{"AVAX": "stood_down", "HYPE": "stood_down"}
+	if got := resolveChatCoin("AVAX", skip, "", false); got != "" {
+		t.Fatalf("wrap %q", got)
+	}
+	if got := resolveChatCoin("AVAX", skip, "DOGE", false); got != "DOGE" {
+		t.Fatalf("next %q", got)
+	}
+	if got := resolveChatCoin("AVAX", skip, "", true); got != "AVAX" {
+		t.Fatalf("fresh %q", got)
+	}
+	if got := resolveChatCoin("", skip, "SOL", false); got != "SOL" {
+		t.Fatalf("unnamed %q", got)
+	}
+}
+
+func TestHuntSkipPersistsAndMergesAuto(t *testing.T) {
+	dir := t.TempDir()
+	p := auto.Load(dir)
+	p.RememberSkip("AVAX", "no_side", auto.SkipStoodDown, time.Hour)
+	if err := auto.Save(dir, p); err != nil {
+		t.Fatal(err)
+	}
+	h := New(dir)
+	h.researchMu.Lock()
+	h.huntSkip = []string{"HYPE"}
+	h.persistHuntSkipLocked()
+	h.researchMu.Unlock()
+	h2 := New(dir)
+	skip := h2.huntSkipSet()
+	if skip["AVAX"] == "" || skip["HYPE"] == "" {
+		t.Fatalf("expected persisted + auto skip, got %#v", skip)
 	}
 }
 

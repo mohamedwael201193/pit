@@ -125,6 +125,27 @@ function eventLine(ev: ActivityEvent) {
 }
 
 const SETUP_KEY = "pit.desk.setup";
+const HUNT_TRIED_KEY = "pit.huntTried";
+const HUNT_REJ_KEY = "pit.huntRejected";
+
+function readSessionList(key: string): string[] {
+  try {
+    const raw = sessionStorage.getItem(key);
+    const arr = JSON.parse(raw || "[]") as unknown;
+    if (!Array.isArray(arr)) return [];
+    return arr.map((c) => String(c).toUpperCase()).filter(Boolean);
+  } catch {
+    return [];
+  }
+}
+
+function writeSessionList(key: string, coins: string[]) {
+  try {
+    sessionStorage.setItem(key, JSON.stringify(coins));
+  } catch {
+    /* ignore */
+  }
+}
 
 const RAIL: { id: View; label: string; glyph: string }[] = [
   { id: "home", label: "Desk", glyph: "D" },
@@ -233,10 +254,10 @@ export function App() {
   const [watchWhy, setWatchWhy] = useState("");
   const [routes, setRoutes] = useState<Array<{ action: string; coin?: string; reason: string; execution: string }>>([]);
   const [watchAt, setWatchAt] = useState(0);
-  const [huntRejected, setHuntRejected] = useState<string[]>([]);
+  const [huntRejected, setHuntRejected] = useState<string[]>(() => readSessionList(HUNT_REJ_KEY));
   const [huntSurvived, setHuntSurvived] = useState("");
+  const huntTried = useRef<string[]>(readSessionList(HUNT_TRIED_KEY));
   const huntRef = useRef<string[]>([]);
-  const huntTried = useRef<string[]>([]);
   const fillKey = useRef("");
   const lastNotify = useRef(0);
   researchBusyRef.current = researchBusy;
@@ -792,29 +813,33 @@ export function App() {
     setChecks(await doctor());
   }
 
-  async function researchThis(coin?: string, source: "chat" | "research_ui" = "research_ui", opts?: { hypothesis?: "none" | "long" | "short"; chained?: boolean }) {
+  async function researchThis(coin?: string, source: "chat" | "research_ui" = "research_ui", opts?: { hypothesis?: "none" | "long" | "short"; chained?: boolean; fresh?: boolean }) {
     const gen = ++researchGen.current;
     const ranked = [
       ...coins.filter((c) => c.executionFeasible).map((c) => String(c.coin).toUpperCase()),
       ...coins.filter((c) => (c.eligible || c.policyEligible) && !c.executionFeasible).map((c) => String(c.coin).toUpperCase()),
     ].filter((c, i, all) => c && all.indexOf(c) === i);
+    const fresh = Boolean(opts?.fresh);
+    if (fresh) {
+      huntTried.current = [];
+      setHuntRejected([]);
+      setHuntSurvived("");
+      writeSessionList(HUNT_TRIED_KEY, []);
+      writeSessionList(HUNT_REJ_KEY, []);
+    }
     if (source === "chat" && !opts?.chained && !coin) {
       huntRef.current = ranked;
-      if (huntTried.current.length >= ranked.length) {
-        huntTried.current = [];
-        setHuntRejected([]);
-        setHuntSurvived("");
-      }
     }
     const skip = new Set(huntTried.current.map((c) => c.toUpperCase()));
     for (const c of huntRejected) {
       if (c) skip.add(String(c).toUpperCase());
     }
-    if (source === "chat" && !opts?.chained && researchCoin && (researchKind === "READY_STOOD_DOWN" || researchKind === "MARKET_DENIED" || researchKind === "POLICY_DENIED" || researchKind === "COMMITTEE_INCOMPLETE")) {
+    if (source === "chat" && !opts?.chained && !fresh && researchCoin && (researchKind === "READY_STOOD_DOWN" || researchKind === "MARKET_DENIED" || researchKind === "POLICY_DENIED")) {
       const prev = researchCoin.toUpperCase();
       skip.add(prev);
       if (!huntTried.current.map((c) => c.toUpperCase()).includes(prev)) {
         huntTried.current = [...huntTried.current, prev];
+        writeSessionList(HUNT_TRIED_KEY, huntTried.current);
       }
     }
     const named = (coin || "").toUpperCase();
@@ -822,20 +847,30 @@ export function App() {
       ranked.find((c) => !skip.has(c)) ||
       huntRef.current.find((c) => !skip.has(c)) ||
       "";
-    const want = ((named && !skip.has(named) ? named : "") || nextBook || coins.find((c) => c.executionFeasible)?.coin || coins.find((c) => c.eligible)?.coin || "").toUpperCase();
+    const want = (
+      (named && (fresh || !skip.has(named)) ? named : "") ||
+      nextBook ||
+      (fresh ? coins.find((c) => c.executionFeasible)?.coin || coins.find((c) => c.eligible)?.coin || "" : "")
+    ).toUpperCase();
+    if (opts?.hypothesis && opts.hypothesis !== "none") setHypothesis(opts.hypothesis);
+    const hypo = opts?.hypothesis && opts.hypothesis !== "none" ? opts.hypothesis : hypothesis;
+    if (!want) {
+      setResearchNote(
+        source === "chat" && !fresh
+          ? "Checked every executable book. No side survived. Ask Find the best opportunity to scan again."
+          : "No eligible market yet. Live books have not arrived on this computer.",
+      );
+      if (source !== "chat") setView("markets");
+      return;
+    }
     setResearchNote(null);
     setResearchEvidence("");
     setAuthErr(null);
     setPollMiss(false);
+    setPreview(null);
+    setPreviewHash("");
     setResearchKind("");
     setResearchRoles([]);
-    if (opts?.hypothesis && opts.hypothesis !== "none") setHypothesis(opts.hypothesis);
-    const hypo = opts?.hypothesis && opts.hypothesis !== "none" ? opts.hypothesis : hypothesis;
-    if (!want) {
-      setResearchNote("No eligible market yet. Live books have not arrived on this computer.");
-      if (source !== "chat") setView("markets");
-      return;
-    }
     setResearchCoin(want);
     if (!companionUp) {
       setResearchStop("COMPANION_NOT_RUNNING");
@@ -871,8 +906,18 @@ export function App() {
     }, 250);
     let lastKind = "";
     try {
-      const started = await startResearch(want, hypo, source);
+      const started = await startResearch(want, hypo, source, fresh);
       if (gen !== researchGen.current) return;
+      if (Array.isArray(started.hunt_skip)) {
+        const extra = started.hunt_skip.map((c) => String(c).toUpperCase()).filter(Boolean);
+        huntTried.current = [...new Set([...huntTried.current, ...extra])];
+        writeSessionList(HUNT_TRIED_KEY, huntTried.current);
+      }
+      if (started.hunt_exhausted || started.error === "hunt_exhausted") {
+        setResearchBusy(false);
+        setResearchNote("Checked every executable book. No side survived. Ask Find the best opportunity to scan again.");
+        return;
+      }
       if (started.error && !started.running) {
         setResearchStop(started.error);
         return;
@@ -898,13 +943,17 @@ export function App() {
     }
 
     if (source === "chat" && gen === researchGen.current) {
-      huntTried.current = [...huntTried.current, want];
-      const stood = lastKind === "READY_STOOD_DOWN" || lastKind === "COMMITTEE_INCOMPLETE" || lastKind === "MARKET_DENIED" || lastKind === "POLICY_DENIED";
-      if (stood) setHuntRejected([...huntTried.current]);
+      huntTried.current = [...new Set([...huntTried.current, want])];
+      writeSessionList(HUNT_TRIED_KEY, huntTried.current);
+      const stood = lastKind === "READY_STOOD_DOWN" || lastKind === "MARKET_DENIED" || lastKind === "POLICY_DENIED";
+      if (stood) {
+        setHuntRejected([...huntTried.current]);
+        writeSessionList(HUNT_REJ_KEY, huntTried.current);
+      }
       if (lastKind === "READY_ELIGIBLE") setHuntSurvived(want);
       const tried = new Set(huntTried.current.map((c) => c.toUpperCase()));
       const next = huntRef.current.find((c) => !tried.has(String(c).toUpperCase()));
-      if (stood && next && huntTried.current.length < Math.min(6, Math.max(3, huntRef.current.length))) {
+      if (stood && next && (fresh || opts?.chained) && huntTried.current.length < Math.min(6, Math.max(3, huntRef.current.length))) {
         await researchThis(next, "chat", { chained: true, hypothesis: hypo });
       }
     }
@@ -920,12 +969,13 @@ export function App() {
         setResearchKind(String(st.terminal_kind));
         lastKind = String(st.terminal_kind);
       }
-      if (st.preview) {
+      const sealed = roles.length > 0 || Boolean(st.preview?.hash) || Boolean(st.preview?.eligible) || st.terminal_kind === "READY_STOOD_DOWN" || st.terminal_kind === "READY_ELIGIBLE";
+      if (st.preview && sealed) {
         setPreview(st.preview);
         setPreviewHash(st.preview_hash || st.preview.hash || "");
       }
       const denyNow = String(st.deny || st.preview?.deny || "");
-      if (!lastKind && (denyNow === "no_side" || denyNow === "challenger_killed" || denyNow === "risk_killed")) {
+      if (!lastKind && roles.length > 0 && (denyNow === "no_side" || denyNow === "challenger_killed" || denyNow === "risk_killed")) {
         lastKind = "READY_STOOD_DOWN";
       }
       if (typeof st.updated_at === "number") setResearchUpdated(st.updated_at);
@@ -950,12 +1000,12 @@ export function App() {
         const roles = applyStatus(st);
         const verified = committeeVerified(roles, st.verify);
         const deny = String(st.deny || st.preview?.deny || "");
-        if ((verified || st.verify || committeeDeny(deny)) && !st.running) {
+        if ((verified || st.verify || (committeeDeny(deny) && roles.length > 0)) && !st.running) {
           setResearchStop(null);
           setResearchNote(st.note || "Sealed committee verified on this computer.");
           if (!lastKind) {
             lastKind = String(st.terminal_kind || "");
-            if (!lastKind && (deny === "no_side" || deny === "challenger_killed" || deny === "risk_killed")) {
+            if (!lastKind && roles.length > 0 && (deny === "no_side" || deny === "challenger_killed" || deny === "risk_killed")) {
               lastKind = "READY_STOOD_DOWN";
             }
             if (!lastKind && (verified || st.verify) && st.eligible) lastKind = "READY_ELIGIBLE";
@@ -1366,7 +1416,7 @@ export function App() {
                 setOpenConfirm(true);
                 setView("automation");
               }}
-              onResearch={(c, hyp) => void researchThis(c, "chat", { hypothesis: hyp })}
+              onResearch={(c, hyp, hunt) => void researchThis(c, "chat", { hypothesis: hyp, fresh: hunt?.fresh })}
               onOpenPreview={() => setView("research")}
               onStop={() => void onCancelResearch()}
               onTradeNow={() => void onAgentTrade()}

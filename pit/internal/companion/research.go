@@ -382,6 +382,7 @@ func (h *Hub) snapshotResearch() map[string]any {
 		"deny":              h.job.deny,
 		"preview":           h.job.preview,
 		"preview_hash":      h.job.previewHash,
+		"hunt_skip":         append([]string{}, h.huntSkip...),
 	}
 	kind := TerminalKind(h.job.running, h.job.err, h.job.deny, verified, h.job.eligible, h.job.roles)
 	if kind != "" {
@@ -486,32 +487,97 @@ func mayHostGuardedExecute(source string) bool {
 	return normalizeResearchSource(source) == "automation"
 }
 
-func (h *Hub) beginResearch(coin, source string) {
-	want := strings.ToUpper(strings.TrimSpace(coin))
-	skip := h.huntSkipSet()
+func huntSkipFile(dir string) string {
+	return filepath.Join(dir, "hunt-skip.json")
+}
+
+func resolveChatCoin(want string, skip map[string]string, next string, fresh bool) string {
+	want = strings.ToUpper(strings.TrimSpace(want))
+	next = strings.ToUpper(strings.TrimSpace(next))
+	if fresh {
+		if want != "" {
+			return want
+		}
+		return next
+	}
 	if want != "" {
-		if _, hit := skip[want]; hit && normalizeResearchSource(source) == "chat" {
-			if next := h.pickBestCoinSkipping(skip); next != "" {
-				want = next
+		if _, hit := skip[want]; hit {
+			if next != "" && next != want {
+				return next
 			}
+			return ""
+		}
+		return want
+	}
+	return next
+}
+
+func (h *Hub) loadHuntSkipLocked() {
+	raw, err := os.ReadFile(huntSkipFile(h.Dir))
+	if err != nil || len(raw) == 0 {
+		return
+	}
+	var coins []string
+	if json.Unmarshal(raw, &coins) != nil {
+		return
+	}
+	out := make([]string, 0, len(coins))
+	seen := map[string]bool{}
+	for _, c := range coins {
+		c = strings.ToUpper(strings.TrimSpace(c))
+		if c == "" || seen[c] {
+			continue
+		}
+		seen[c] = true
+		out = append(out, c)
+	}
+	h.huntSkip = out
+}
+
+func (h *Hub) persistHuntSkipLocked() {
+	raw, err := json.Marshal(h.huntSkip)
+	if err != nil {
+		return
+	}
+	_ = os.WriteFile(huntSkipFile(h.Dir), raw, 0o600)
+}
+
+func (h *Hub) resetHuntSkip() {
+	h.researchMu.Lock()
+	h.huntSkip = nil
+	h.persistHuntSkipLocked()
+	h.researchMu.Unlock()
+	p := auto.Load(h.Dir)
+	p.Skips = nil
+	_ = auto.Save(h.Dir, p)
+}
+
+func (h *Hub) beginResearch(coin, source string, fresh bool) (exhausted bool) {
+	if fresh {
+		h.resetHuntSkip()
+	}
+	src := normalizeResearchSource(source)
+	skip := h.huntSkipSet()
+	next := h.pickBestCoinSkipping(skip)
+	var want string
+	if src == "chat" {
+		want = resolveChatCoin(coin, skip, next, fresh)
+		if want == "" {
+			return true
+		}
+	} else {
+		want = strings.ToUpper(strings.TrimSpace(coin))
+		if want == "" {
+			want = h.pickBestCoin()
 		}
 	}
 	if want == "" {
-		want = h.pickBestCoinSkipping(skip)
-	}
-	if want == "" {
-		h.researchMu.Lock()
-		h.huntSkip = nil
-		h.researchMu.Unlock()
-		want = h.pickBestCoin()
-	}
-	if want == "" {
-		return
+		return true
 	}
 	h.researchMu.Lock()
 	if h.job.running {
 		h.researchMu.Unlock()
-		return
+		return false
 	}
 	now := time.Now()
 	h.job = researchJob{
@@ -533,6 +599,7 @@ func (h *Hub) beginResearch(coin, source string) {
 	})
 	h.researchMu.Unlock()
 	go h.execResearch(want)
+	return false
 }
 
 func (h *Hub) execResearch(coin string) {
@@ -657,6 +724,7 @@ func (h *Hub) execResearch(coin string) {
 			if len(h.huntSkip) > 12 {
 				h.huntSkip = h.huntSkip[len(h.huntSkip)-12:]
 			}
+			h.persistHuntSkipLocked()
 		}
 	}
 	if noTrade {
@@ -692,6 +760,7 @@ func (h *Hub) localResearchStart(w http.ResponseWriter, r *http.Request) {
 		Coin       string `json:"coin"`
 		Hypothesis string `json:"hypothesis"`
 		Source     string `json:"source"`
+		Fresh      bool   `json:"fresh"`
 	}
 	_ = json.NewDecoder(r.Body).Decode(&body)
 	if strings.TrimSpace(body.Hypothesis) != "" {
@@ -700,7 +769,23 @@ func (h *Hub) localResearchStart(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	h.beginResearch(body.Coin, body.Source)
+	if exhausted := h.beginResearch(body.Coin, body.Source, body.Fresh); exhausted {
+		skip := h.huntSkipSet()
+		checked := make([]string, 0, len(skip))
+		for coin := range skip {
+			checked = append(checked, coin)
+		}
+		writeLocal(w, http.StatusOK, map[string]any{
+			"ok":             false,
+			"error":          "hunt_exhausted",
+			"hunt_exhausted": true,
+			"hunt_skip":      checked,
+			"sign":           false,
+			"trade":          false,
+			"note":           "Checked every executable book. No side survived. Ask Find the best opportunity to scan again.",
+		})
+		return
+	}
 	writeLocal(w, http.StatusOK, h.snapshotResearch())
 }
 

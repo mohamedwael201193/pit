@@ -2,6 +2,34 @@
 
 ---
 
+## M129 — Hunt does not wrap. Honest incomplete card. PIT 0.9.7
+
+- **Source:** Research next after HYPE restarted AVAX. Cancelled wrap painted NO TRADE with empty ○ roles. Stages hid after the job. Auto-scroll fought the wheel. 0G TRAIL showed only a TeeML job id.
+- **Discovery:** Host wrap cleared `huntSkip` then `pickBestCoin()`. Client reset `huntTried` when the skip set was full. Leftover `preview.deny=no_side` on an incomplete job. Scroll effect depended on `roles.length`. Version **0.9.7**.
+- **Candidate:** Persist skip. Fresh hunt resets. Next hunt never wraps. NO TRADE only on `READY_STOOD_DOWN`. Named stages stay on the completed card. 0G explorer links from filed evidence. TRADE NOW still `authorizePreview("AUTHORIZE", previewHash)`.
+- **Kill:** Second AUTHORIZE path. Fake fills. Flatten OID 529167222216. Remint PIT-4bbee556. Authenticode claim.
+- **Next:** Overlay `D:\PIT`, tag `v0.9.7`, NSIS, Vercel + Render. Do not remint. Do not flatten. Do not start a live trade unless TRADE NOW on an exact preview.
+
+DATE/TIME: 2026-08-31 05:35+03
+PHASE: Agent hunt honesty. Host remains execution authority.
+GOAL: Type Find the best opportunity, watch live 0G stages, skip a failed book, never wrap Research next, TRADE NOW only on READY.
+RESULT:
+- **IMPLEMENTED:** `hunt-skip.json` + auto skip (4h). `resolveChatCoin` returns empty instead of wrapping. `fresh` on Find the best. Client sessionStorage skip. Exhausted hunt returns `hunt_exhausted`. Incomplete/cancelled jobs are STOPPED. Named 9-stage pipe stays after seal. Stream `is-busy` keeps the pad from eating scroll. 0G receipts are explorer links. TRADE NOW still `authorizePreview("AUTHORIZE", previewHash)`.
+- **TESTED:** `go test ./...` PASS. Desktop `tsc -b` PASS. `npx tsx e2e/run.ts` PASS. Chrome http://localhost:3001 Agent 0.9.7: typed **Find the best opportunity**. Live pipe Researcher live on DOGE then chained AVAX, BTC, ETH, SOL, HYPE. `canScroll` true (2239/434).
+- **LIVE:** Overlay `D:\PIT` companion `/health` **0.9.7**. Session live. Policy pinned. Buying power $16.18. Sealed committee on **DOGE, AVAX, BTC, ETH, SOL, HYPE** — all `READY_STOOD_DOWN` `no_side`. UI: `checked DOGE, AVAX, BTC, ETH, SOL, HYPE`. Verdict NO TRADE HYPE with Researcher/Challenger/Risk ✓. Find the next opportunity after all six: **did not wrap**. Note: Checked every executable book. Scan again, not Research next. No new MAINNET fill. ETH OID `529167222216` untouched. Agent `PIT-4bbee556` not reminted.
+- **BLOCKED:** Authenticode still absent. iTransfer still not live. TRADE NOW not clicked: no READY_ELIGIBLE preview this pass (committee proposed none on every executable book).
+
+SECURITY RESULT: The model cannot AUTHORIZE. TRADE NOW is still an explicit desktop confirmation of the existing host path.
+TX HASH / OID: 0G storage `https://chainscan.0g.ai/tx/0x8c8b78e8add46c79983d344ac571bcb8e6fd1d6c2ae072add00147f2ede1151d` (HYPE). Also `0xcc02a780b12ed2a884d3aa845f486acb89c60f1e8c306f0773e147f5311b4438`, `0xd682aa45aea64a26d1ab7a18d9867260a38502b086b9730010a394011ef6114c`, `0x2a7a58381ef4507174a777fb2f9a65d826d9988ce22610fc16b4d9e1fcd54b9d`. Historical venue OID `529167222216` unchanged. No new order.
+CLASSIFICATION:
+- Next-book hunt without wrap: **IMPLEMENTED + LIVE VERIFIED** (DOGE→AVAX→BTC→ETH→SOL→HYPE, then exhausted)
+- Live stages + 0G receipts in the turn: **IMPLEMENTED + LIVE VERIFIED**
+- TRADE NOW existing authorize path: **UNCHANGED** (no eligible preview this pass)
+PRODUCTION READY: 0.9.7 installer after tag.
+NEXT STEP: Push. Tag `v0.9.7`. NSIS. Overlay `D:\PIT`. Vercel + Render. TRADE NOW only on an exact READY preview.
+
+---
+
 ## M128 — Hunt the next book. Live 0G in the turn. PIT 0.9.6
 
 - **Source:** Research next re-ran AVAX. Stages were a text list. Auto-scroll on every elapsed tick stole the wheel. The right rail split the stream. 0G txs were easy to miss. TRADE NOW exists only on a READY preview.

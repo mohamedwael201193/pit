@@ -68,6 +68,35 @@ function pipeState(i: number, current: number, done: boolean, failed: boolean) {
   return "";
 }
 
+function ResearchStages({ current, done, fail }: { current: number; done: boolean; fail: boolean }) {
+  return (
+    <>
+      <ol className="agent-track" aria-label="Research stage bar">
+        {PIPE.map((step, i) => {
+          const markState = pipeState(i, current, done, fail);
+          return (
+            <li key={step.id} className={markState} title={step.label}>
+              <span className="sr-only">{step.label}</span>
+            </li>
+          );
+        })}
+      </ol>
+      <ol className="agent-pipe" aria-label="Research stages">
+        {PIPE.map((step, i) => {
+          const markState = pipeState(i, current, done, fail);
+          return (
+            <li key={step.id} className={markState}>
+              <em>{markState === "done" ? "✓" : markState === "on" ? "●" : markState === "fail" ? "×" : "○"}</em>
+              <strong>{step.label}</strong>
+              {markState === "on" ? <span>live</span> : markState === "done" ? <span>done</span> : <span />}
+            </li>
+          );
+        })}
+      </ol>
+    </>
+  );
+}
+
 function orderKind(order?: LastOrder | null) {
   if (!order?.oid) return "";
   const life = String(order.lifecycle || order.status || "").toLowerCase();
@@ -178,9 +207,9 @@ export function AgentRun({
   const deny = String(preview?.deny || "");
   const policyBlock = kind === "POLICY_DENIED" || deny.includes("policy");
   const capitalBlock = kind === "MARKET_DENIED" || deny.includes("min_notional") || deny.includes("margin");
-  const noTrade = !busy && (kind === "READY_STOOD_DOWN" || deny === "no_side");
+  const noTrade = !busy && kind === "READY_STOOD_DOWN";
   const ready = !busy && kind === "READY_ELIGIBLE" && Boolean(preview?.eligible && (preview.hash || previewHash));
-  const fail = !busy && Boolean(researchStop) && !noTrade && !ready;
+  const fail = !busy && (Boolean(researchStop) || kind === "CANCELED_BY_USER" || kind === "CANCELED") && !noTrade && !ready;
   const stop = explainStop(researchStop || "");
   const researcher = roleOf(roles, "researcher");
   const challenger = roleOf(roles, "challenger");
@@ -202,10 +231,10 @@ export function AgentRun({
       rows.push({ label, text, href });
     }
     for (const e of activity) {
-      if (jobId) {
-        if (!e.job_id || e.job_id !== jobId) continue;
-      } else if (coin && e.market && String(e.market).toUpperCase() !== String(coin).toUpperCase() && !e.oid) {
-        continue;
+      const og = Boolean(e.tx || e.tx_link || e.root || e.digest);
+      if (!og) {
+        if (jobId && e.job_id && e.job_id !== jobId && !e.oid) continue;
+        if (!jobId && coin && e.market && String(e.market).toUpperCase() !== String(coin).toUpperCase() && !e.oid) continue;
       }
       if (e.root) add("0G storage root", shortHash(String(e.root)), e.tx_link || undefined);
       if (e.tx) add("0G transaction", shortHash(String(e.tx)), e.tx_link || explorerTx(String(e.tx), venue));
@@ -256,6 +285,7 @@ export function AgentRun({
     stop?.body ||
     "";
 
+  const huntDone = !busy && (String(researchNote || "").includes("every executable") || huntRejected.length >= 6);
   const follow = ready
     ? [
         ["Review", "__review"],
@@ -266,7 +296,7 @@ export function AgentRun({
       ]
     : noTrade || policyBlock || capitalBlock
       ? [
-          ["Research next", "Find the next opportunity"],
+          huntDone ? ["Scan again", "Find the best opportunity"] : ["Research next", "Find the next opportunity"],
           ["Show why", "__why"],
           ["Compare candidates", "Compare top opportunities"],
           ["Sleep Mission", "__sleep"],
@@ -274,7 +304,7 @@ export function AgentRun({
         ]
       : fail
         ? [
-            ["Research next", "Find the next opportunity"],
+            huntDone ? ["Scan again", "Find the best opportunity"] : ["Research next", "Find the next opportunity"],
             ["Show why", "__why"],
             ["Technical details", "__tech"],
           ]
@@ -302,28 +332,7 @@ export function AgentRun({
           <p className="agent-kicker">PRIVATE 0G RESEARCH</p>
           <p className="agent-live-coin">{asset || coin || "markets"}</p>
           <p className="agent-live-step">{liveStep.label}{elapsed ? ` · ${elapsed}` : ""}</p>
-          <ol className="agent-track" aria-label="Research stage bar">
-            {PIPE.map((step, i) => {
-              const markState = pipeState(i, current, false, fail);
-              return (
-                <li key={step.id} className={markState} title={step.label}>
-                  <span className="sr-only">{step.label}</span>
-                </li>
-              );
-            })}
-          </ol>
-          <ol className="agent-pipe" aria-label="Research stages">
-            {PIPE.map((step, i) => {
-              const markState = pipeState(i, current, false, fail);
-              return (
-                <li key={step.id} className={markState}>
-                  <em>{markState === "done" ? "✓" : markState === "on" ? "●" : markState === "fail" ? "×" : "○"}</em>
-                  <strong>{step.label}</strong>
-                  {markState === "on" ? <span>live</span> : markState === "done" ? <span>done</span> : <span />}
-                </li>
-              );
-            })}
-          </ol>
+          <ResearchStages current={current} done={false} fail={fail} />
           <p className="agent-note">
             Researcher {researcher?.proposed_side || (roleOk(roles, "researcher") ? "verified" : "waiting")}
             {" · "}Challenger {challenger?.survives === false ? "killed" : challenger?.proposed_side || (roleOk(roles, "challenger") ? "verified" : "waiting")}
@@ -358,6 +367,13 @@ export function AgentRun({
         </article>
       ) : scannedN ? (
         <p className="agent-note">{scannedN} scanned · {eligible.length} eligible · {executable.length} executable{huntRejected.length ? ` · checked ${huntRejected.join(", ")}` : ""}</p>
+      ) : null}
+
+      {!busy && (showVerdict || fail) ? (
+        <article className="agent-live done">
+          <p className="agent-kicker">{fail ? "COMMITTEE STOPPED" : "COMMITTEE"}</p>
+          <ResearchStages current={fail ? Math.max(current, 2) : PIPE.length} done={!fail} fail={fail} />
+        </article>
       ) : null}
 
       {showBook && focus ? (

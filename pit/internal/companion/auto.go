@@ -309,7 +309,7 @@ func (h *Hub) autoTick() {
 		m.Stage = "researching"
 		_ = auto.SaveMission(h.Dir, m)
 		_ = auto.Save(h.Dir, p)
-		h.beginResearch(pick.Coin, "automation")
+		h.beginResearch(pick.Coin, "automation", false)
 		return
 	}
 	if wantResearch && p.LastResearchCoin == pick.Coin && execOK {
@@ -394,20 +394,20 @@ func (h *Hub) maybeGuardedExecute(hash, coin string, started time.Time) {
 	}
 	pol := cli.ActivePolicy(h.Dir)
 	g := auto.ExecGate{
-		PreviewHash: hash,
-		StartedUnix: started.Unix(),
-		OpenCount:   h.openPositionCount(),
-		SessionOK:   sessOK,
-		Kill:        kill,
-		Now:         time.Now().Unix(),
-		Policy:      pol,
-		Coin:        coin,
-		WorkspaceID: workspaceID(h.Dir),
-		Venue:       "hyperliquid",
+		PreviewHash:      hash,
+		StartedUnix:      started.Unix(),
+		OpenCount:        h.openPositionCount(),
+		SessionOK:        sessOK,
+		Kill:             kill,
+		Now:              time.Now().Unix(),
+		Policy:           pol,
+		Coin:             coin,
+		WorkspaceID:      workspaceID(h.Dir),
+		Venue:            "hyperliquid",
 		ResearchRequired: true,
 		ResearchVerified: h.jobVerifiedLocked(),
-		TEERequired: true,
-		TEEVerified: h.jobVerifiedLocked(),
+		TEERequired:      true,
+		TEEVerified:      h.jobVerifiedLocked(),
 	}
 	if sf, serr := cli.LoadSession(h.Dir); serr == nil {
 		g.SessionID = sf.ID

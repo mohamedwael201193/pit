@@ -2082,6 +2082,14 @@ details.card > summary { cursor: pointer; font-weight: 600; letter-spacing: 0.08
   scrollbar-gutter: stable;
   scrollbar-width: auto;
   scrollbar-color: #8a909a #12141a;
+  touch-action: pan-y;
+}
+.agent-stream.is-busy .agent-stream-pad {
+  flex: 0 0 0;
+  min-height: 0;
+}
+.agent-stream.is-busy > .turn:first-of-type {
+  margin-top: 0;
 }
 .agent-stream::-webkit-scrollbar { width: 12px; }
 .agent-stream::-webkit-scrollbar-track { background: #12141a; }
@@ -2317,6 +2325,12 @@ details.card > summary { cursor: pointer; font-weight: 600; letter-spacing: 0.08
 .agent-track li.fail { background: var(--coral); }
 .agent-live .agent-pipe {
   margin-top: 8px;
+}
+.agent-live.done {
+  background: #0e1014;
+}
+.agent-live.done .agent-pipe li.on em {
+  animation: none;
 }
 .agent-live-proof {
   list-style: none;

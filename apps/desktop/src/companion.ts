@@ -106,6 +106,8 @@ export type BindResult = {
   preview_expired?: boolean;
   deny?: string;
   eligible?: boolean;
+  hunt_skip?: string[];
+  hunt_exhausted?: boolean;
   oid?: string;
   posted?: boolean;
   kind?: string;
@@ -431,20 +433,22 @@ export async function directStatus(): Promise<BindResult> {
   }
 }
 
-export async function startResearch(coin: string, hypothesis?: string, source?: string): Promise<BindResult> {
+export async function startResearch(coin: string, hypothesis?: string, source?: string, fresh?: boolean): Promise<BindResult> {
+  const payload = {
+    coin,
+    hypothesis: hypothesis || "none",
+    source: source || "research_ui",
+    fresh: Boolean(fresh),
+  };
   try {
-    const native = await nativeJsonOrError<BindResult>("local_research_start", {
-      coin,
-      hypothesis: hypothesis || "none",
-      source: source || "research_ui",
-    });
+    const native = await nativeJsonOrError<BindResult>("local_research_start", payload);
     if (native.sign || native.trade) return { error: "companion_denied" };
     return native;
   } catch (e) {
     const body = await fetchJson<BindResult>("/local/research/start", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ coin, hypothesis: hypothesis || "none", source: source || "research_ui" }),
+      body: JSON.stringify(payload),
     });
     if (body && !body.sign && !body.trade) return body;
     const msg = e instanceof Error ? e.message : "companion_http";

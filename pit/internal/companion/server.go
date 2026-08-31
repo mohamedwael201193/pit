@@ -67,6 +67,7 @@ func New(dir string) *Hub {
 	h.rotateLocked(time.Now())
 	h.researchMu.Lock()
 	h.loadJobLocked()
+	h.loadHuntSkipLocked()
 	h.researchMu.Unlock()
 	go h.recoverGuardedExecute()
 	go h.autoLoop()

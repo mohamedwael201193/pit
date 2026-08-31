@@ -20,7 +20,9 @@ export function assertChatAgentCopy() {
   if (!chat.includes("agent-stream")) throw new Error("one conversation stream");
   if (!chat.includes("agent-workspace")) throw new Error("one agent workspace");
   if (!chat.includes("unnamed ? \"\"")) throw new Error("next/best hunt must not reuse the last coin from the host");
-  if (!chat.includes("[lines, island?.stage, island?.kind, island?.coin, island?.busy")) throw new Error("elapsed ticks must not steal scroll");
+  if (!chat.includes("fresh: fresh")) throw new Error("Find the best must reset skip; Research next must not");
+  if (!chat.includes("[lines, island?.busy]")) throw new Error("elapsed ticks must not steal scroll");
+  if (chat.includes("island?.roles?.length")) throw new Error("role ticks must not steal scroll");
   const run = readFileSync(join(here, "../src/AgentRun.tsx"), "utf8");
   if (!run.includes("READY")) throw new Error("preview card");
   if (!run.includes("NO TRADE")) throw new Error("no-trade card");
@@ -30,6 +32,8 @@ export function assertChatAgentCopy() {
   if (!run.includes("agent-track")) throw new Error("live research track");
   if (!run.includes("agent-pipe")) throw new Error("named research stages");
   if (!run.includes("Find the next opportunity")) throw new Error("research next must skip the last book");
+  if (run.includes('kind === "READY_STOOD_DOWN" || deny === "no_side"')) throw new Error("leftover deny must not paint NO TRADE");
+  if (!run.includes("ResearchStages")) throw new Error("named stages stay on the completed card");
   if (!run.includes("0G PROOF") && !run.includes("0G TRAIL")) throw new Error("0G receipts in the turn");
   if (!run.includes("ORDER SUBMITTED")) throw new Error("execution card");
   if (!run.includes("oidBelongsToPreview")) throw new Error("stale fill must be gated");
@@ -63,6 +67,8 @@ export function assertChatAgentCopy() {
   if (!app.includes('label: "Agent"')) throw new Error("rail Agent");
   if (!app.includes("onAgentTrade")) throw new Error("desktop TRADE NOW handoff");
   if (!app.includes('authorizePreview("AUTHORIZE"')) throw new Error("TRADE NOW must use existing authorize path");
+  if (app.includes("huntTried.current.length >= ranked.length")) throw new Error("exhausted hunt must not wrap to ranked[0]");
+  if (!app.includes("hunt_exhausted")) throw new Error("host exhausted hunt");
   if (!app.includes("openResearchStream")) throw new Error("research event stream");
   if (!app.includes("unnamed hunts") && !chat.includes("unnamed ? \"\"")) throw new Error("next hunt must ignore host coin");
   const companion = readFileSync(join(here, "../src/companion.ts"), "utf8");

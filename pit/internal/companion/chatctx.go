@@ -213,7 +213,7 @@ func (h *Hub) pickBestCoin() string {
 }
 
 func (h *Hub) huntSkipSet() map[string]string {
-	skip := map[string]string{}
+	skip := auto.Load(h.Dir).SkipSet(time.Now().Unix())
 	h.researchMu.Lock()
 	defer h.researchMu.Unlock()
 	for _, c := range h.huntSkip {

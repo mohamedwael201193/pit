@@ -79,7 +79,7 @@ func ClassifyResearchSkip(jobErr, deny string, eligible bool) (kind string, hold
 	}
 	switch strings.ToLower(strings.TrimSpace(deny)) {
 	case "no_side", "challenger_killed", "risk_killed":
-		return SkipStoodDown, 10 * time.Minute, false
+		return SkipStoodDown, 4 * time.Hour, false
 	case "insufficient_margin", "below_min_notional":
 		return SkipCapital, 2 * time.Minute, false
 	}

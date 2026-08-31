@@ -151,7 +151,7 @@ async fn local_direct_status() -> Result<serde_json::Value, String> {
 }
 
 #[tauri::command]
-async fn local_research_start(coin: String, hypothesis: Option<String>, source: Option<String>) -> Result<serde_json::Value, String> {
+async fn local_research_start(coin: String, hypothesis: Option<String>, source: Option<String>, fresh: Option<bool>) -> Result<serde_json::Value, String> {
     let mut body = serde_json::json!({ "coin": coin });
     if let Some(h) = hypothesis {
         if !h.trim().is_empty() {
@@ -162,6 +162,9 @@ async fn local_research_start(coin: String, hypothesis: Option<String>, source: 
         if !s.trim().is_empty() {
             body["source"] = serde_json::Value::String(s);
         }
+    }
+    if fresh.unwrap_or(false) {
+        body["fresh"] = serde_json::Value::Bool(true);
     }
     json_post("/local/research/start".into(), body, 8).await
 }
@@ -393,7 +396,7 @@ async fn local_models() -> Result<serde_json::Value, String> {
 
 #[tauri::command]
 async fn local_research(coin: String) -> Result<serde_json::Value, String> {
-    local_research_start(coin, None, None).await
+    local_research_start(coin, None, None, None).await
 }
 
 #[tauri::command]
@@ -625,7 +628,7 @@ fn same_install(path: &Path) -> bool {
     path.parent().map(|p| p == dir).unwrap_or(false)
 }
 
-const SIDECAR_VERSION: &str = "0.9.6";
+const SIDECAR_VERSION: &str = "0.9.7";
 
 fn companion_version() -> Option<String> {
     let raw = loopback_get("/health").ok()?;
