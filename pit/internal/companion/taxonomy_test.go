@@ -5,6 +5,25 @@ import (
 	"testing"
 )
 
+func TestHuntSkipSetIncludesStoodDown(t *testing.T) {
+	h := New(t.TempDir())
+	h.job.coin = "AVAX"
+	h.job.deny = "no_side"
+	skip := h.huntSkipSet()
+	if skip["AVAX"] == "" {
+		t.Fatalf("expected AVAX skip, got %#v", skip)
+	}
+}
+
+func TestHuntSkipSetIncludesPriorSlice(t *testing.T) {
+	h := New(t.TempDir())
+	h.huntSkip = []string{"AVAX", "SOL"}
+	skip := h.huntSkipSet()
+	if skip["AVAX"] == "" || skip["SOL"] == "" {
+		t.Fatalf("expected prior hunt skips, got %#v", skip)
+	}
+}
+
 func TestNamedRolesVerifiedRequiresThree(t *testing.T) {
 	one := []map[string]any{{"role": "researcher", "verify_e2ee": "OK"}}
 	if namedRolesVerified(one) {

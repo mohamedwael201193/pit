@@ -197,6 +197,14 @@ func TestAutonomyIntents(t *testing.T) {
 	if r.Execute || !r.StartResearch || r.Tool != "research.best" {
 		t.Fatalf("%+v", r)
 	}
+	r = Parse("Find the next opportunity")
+	if r.Execute || !r.StartResearch || r.Tool != "research.best" {
+		t.Fatalf("next %+v", r)
+	}
+	r = Parse("Research next")
+	if r.Execute || !r.StartResearch || r.Tool != "research.best" {
+		t.Fatalf("research next %+v", r)
+	}
 	r = Parse("I accept")
 	if r.Execute || r.StartResearch || r.Tool != "preview.show" || r.Navigate != "" {
 		t.Fatalf("%+v", r)
@@ -220,6 +228,10 @@ func TestAutonomyIntents(t *testing.T) {
 	r = Parse("why should I enter it")
 	if r.Execute || r.StartResearch || r.Tool != "experience.why" {
 		t.Fatalf("%+v", r)
+	}
+	r = Parse("Find the next opportunity")
+	if r.Execute || !r.StartResearch || r.Tool != "research.best" {
+		t.Fatalf("next %+v", r)
 	}
 	r = Parse("Trade the strongest setup.")
 	if r.Execute || !r.StartResearch || r.Tool != "research.best" || r.Navigate == "markets" {

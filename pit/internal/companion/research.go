@@ -488,8 +488,16 @@ func mayHostGuardedExecute(source string) bool {
 
 func (h *Hub) beginResearch(coin, source string) {
 	want := strings.ToUpper(strings.TrimSpace(coin))
+	skip := h.huntSkipSet()
+	if want != "" {
+		if _, hit := skip[want]; hit && normalizeResearchSource(source) == "chat" {
+			if next := h.pickBestCoinSkipping(skip); next != "" {
+				want = next
+			}
+		}
+	}
 	if want == "" {
-		want = h.pickBestCoin()
+		want = h.pickBestCoinSkipping(skip)
 	}
 	if want == "" {
 		return
@@ -629,6 +637,22 @@ func (h *Hub) execResearch(coin string) {
 	auto.RecordStage(h.Dir, "researched", "research_done:"+kind, kind, h.job.coin)
 	h.rememberResearchOutcome(h.job.coin, h.job.err, h.job.deny, h.job.eligible, h.job.previewHash)
 	noTrade := h.job.deny == "no_side" || h.job.deny == "challenger_killed" || h.job.deny == "risk_killed" || strings.Contains(kind, "STOOD_DOWN")
+	if noTrade && h.job.coin != "" {
+		coin := strings.ToUpper(h.job.coin)
+		seen := false
+		for _, c := range h.huntSkip {
+			if c == coin {
+				seen = true
+				break
+			}
+		}
+		if !seen {
+			h.huntSkip = append(h.huntSkip, coin)
+			if len(h.huntSkip) > 12 {
+				h.huntSkip = h.huntSkip[len(h.huntSkip)-12:]
+			}
+		}
+	}
 	if noTrade {
 		node := "CHALLENGER"
 		if h.job.deny == "risk_killed" {

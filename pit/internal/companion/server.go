@@ -42,6 +42,7 @@ type Hub struct {
 
 	researchMu sync.Mutex
 	job        researchJob
+	huntSkip   []string
 	autoMu     sync.Mutex
 }
 

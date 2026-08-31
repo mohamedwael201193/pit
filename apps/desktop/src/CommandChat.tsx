@@ -24,7 +24,7 @@ const PRIMARY = [
 ];
 
 function huntLike(text: string) {
-  return /find (me )?(the )?(best|strongest)|scan all markets|what can i trade|research (btc|eth|avax|sol)|research the strongest|compare top/i.test(
+  return /find (me )?(the )?(best|strongest|next)|scan all markets|what can i trade|research (next|btc|eth|avax|sol)|research the strongest|compare top|next opportunity/i.test(
     text,
   );
 }
@@ -71,6 +71,7 @@ export function CommandChat({
   autonomy,
   authBusy,
   authErr,
+  net,
 }: {
   thread: string;
   onNavigate: (view: string) => void;
@@ -111,6 +112,7 @@ export function CommandChat({
   autonomy?: string;
   authBusy?: boolean;
   authErr?: string | null;
+  net?: string;
 }) {
   const [draft, setDraft] = useState("");
   const [busy, setBusy] = useState(false);
@@ -159,10 +161,9 @@ export function CommandChat({
 
   useEffect(() => {
     const box = log.current;
-    if (!box) return;
-    if (stick.current) box.scrollTop = box.scrollHeight;
-    else end.current?.scrollIntoView({ block: "nearest" });
-  }, [lines, busy, island?.stage, island?.kind, island?.elapsedMs]);
+    if (!box || !stick.current) return;
+    box.scrollTop = box.scrollHeight;
+  }, [lines, island?.stage, island?.kind, island?.coin, island?.busy, island?.roles?.length, activity?.length]);
 
   async function ask(text: string) {
     if (!text || busy) return;
@@ -200,19 +201,19 @@ export function CommandChat({
             return next;
           });
         }
-        applyReply(r);
-        return;
+      applyReply(r, text);
+      return;
+    }
+    const reply = r.reply || r.error || "PIT could not complete that command.";
+    setLines((cur) => {
+      const next = [...cur];
+      if (streamIdx.n >= 0 && next[streamIdx.n]?.role === "pit") {
+        next[streamIdx.n] = { ...next[streamIdx.n], text: reply, tool: r.tool, coin: r.coin };
+        return next;
       }
-      const reply = r.reply || r.error || "PIT could not complete that command.";
-      setLines((cur) => {
-        const next = [...cur];
-        if (streamIdx.n >= 0 && next[streamIdx.n]?.role === "pit") {
-          next[streamIdx.n] = { ...next[streamIdx.n], text: reply, tool: r.tool, coin: r.coin };
-          return next;
-        }
-        return [...next, { role: "pit", text: reply, tool: r.tool, coin: r.coin, ts: Date.now(), thread }];
-      });
-      applyReply(r);
+      return [...next, { role: "pit", text: reply, tool: r.tool, coin: r.coin, ts: Date.now(), thread }];
+    });
+    applyReply(r, text);
     } catch (e) {
       if (ac.signal.aborted) return;
       const msg = e instanceof Error && e.name === "AbortError" ? "Stopped." : "Local PIT did not answer. A sealed job is not cancelled by a missed chat poll.";
@@ -231,7 +232,7 @@ export function CommandChat({
     await ask(text);
   }
 
-  function applyReply(r: ChatReply) {
+  function applyReply(r: ChatReply, asked = "") {
     if (r.execute || r.sign || r.trade) return;
     if (r.open_url) void openExternal(r.open_url);
     if (r.tool === "mission.enable_required") {
@@ -240,7 +241,8 @@ export function CommandChat({
     }
     if (r.start_research) {
       const hyp = r.hypothesis === "long" || r.hypothesis === "short" ? r.hypothesis : undefined;
-      onResearch(r.coin || "", hyp);
+      const unnamed = /find (me )?(the )?(best|strongest|next)|what can i trade|research next|next opportunity|next eligible|next market/i.test(asked);
+      onResearch(unnamed ? "" : r.coin || "", hyp);
       return;
     }
     if (r.navigate === "preview") onOpenPreview();
@@ -295,18 +297,20 @@ export function CommandChat({
         </div>
       </div>
 
-      <div className={island?.busy ? "agent-body with-rail" : "agent-body"}>
+      <div className="agent-body">
         <div
           className="agent-stream"
           role="log"
           ref={log}
+          onWheel={(e) => {
+            if (e.deltaY < 0) stick.current = false;
+          }}
           onScroll={() => {
             const box = log.current;
             if (!box) return;
             stick.current = box.scrollHeight - box.scrollTop - box.clientHeight < 96;
           }}
         >
-          <div className="agent-stream-pad" aria-hidden="true" />
           {lines.length === 0 && !showMission ? (
             <p className="chat-empty">Ask PIT what to trade. It will scan live books, research privately, and wait for TRADE NOW on this computer.</p>
           ) : null}
@@ -355,6 +359,7 @@ export function CommandChat({
                   onOpenActivity={() => onNavigate("activity")}
                   onStop={() => onStop?.()}
                   onTradeNow={onTradeNow}
+                  net={net || "mainnet"}
                 />
               </article>
             ) : (
@@ -369,14 +374,6 @@ export function CommandChat({
           )}
           <div ref={end} />
         </div>
-        {island?.busy ? (
-          <aside className="agent-rail" aria-label="Live context">
-            <p className="agent-kicker">Working</p>
-            <p className="agent-rail-coin">{island.coin || "markets"}</p>
-            <p>{(island.stage || "scanning").replaceAll("_", " ").toLowerCase()}</p>
-            {island.elapsedMs > 0 ? <p>{(island.elapsedMs / 1000).toFixed(0)}s</p> : null}
-          </aside>
-        ) : null}
       </div>
 
       <form className="composer" onSubmit={onSubmit}>

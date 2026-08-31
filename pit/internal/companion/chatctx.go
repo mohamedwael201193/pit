@@ -73,6 +73,14 @@ func (h *Hub) decorateChat(parsed deskcmd.Result) deskcmd.Result {
 			}
 		}
 		parsed = h.decorateWatchAgent(parsed)
+		if parsed.StartResearch && (parsed.Tool == "research.best" || strings.TrimSpace(parsed.Coin) == "") {
+			if next := h.pickBestCoinSkipping(h.huntSkipSet()); next != "" {
+				parsed.Coin = next
+				if parsed.Agent != nil {
+					parsed.Agent.Best = next
+				}
+			}
+		}
 		parsed.Navigate = ""
 		if parsed.StartResearch {
 			parsed.Reply = strings.TrimSpace(strings.ReplaceAll(parsed.Reply, " Starting sealed 0G Direct on this computer. Chat cannot AUTHORIZE.", ""))
@@ -201,6 +209,28 @@ func (h *Hub) replyWatch(parsed deskcmd.Result) string {
 }
 
 func (h *Hub) pickBestCoin() string {
+	return h.pickBestCoinSkipping(nil)
+}
+
+func (h *Hub) huntSkipSet() map[string]string {
+	skip := map[string]string{}
+	h.researchMu.Lock()
+	defer h.researchMu.Unlock()
+	for _, c := range h.huntSkip {
+		if c != "" {
+			skip[strings.ToUpper(c)] = "stood_down"
+		}
+	}
+	if !h.job.running && h.job.coin != "" {
+		kind := TerminalKind(false, h.job.err, h.job.deny, namedRolesVerified(h.job.roles), h.job.eligible, h.job.roles)
+		if h.job.deny == "no_side" || kind == TermReadyStoodDown || kind == TermMarketDenied || kind == TermPolicyDenied {
+			skip[strings.ToUpper(h.job.coin)] = "stood_down"
+		}
+	}
+	return skip
+}
+
+func (h *Hub) pickBestCoinSkipping(extra map[string]string) string {
 	st, err := cli.Load(h.Dir)
 	netName := "mainnet"
 	if err == nil && strings.TrimSpace(st.Network) != "" {
@@ -216,6 +246,11 @@ func (h *Hub) pickBestCoin() string {
 		return ""
 	}
 	skip := auto.Load(h.Dir).SkipSet(time.Now().Unix())
+	for k, v := range extra {
+		if k != "" {
+			skip[strings.ToUpper(k)] = v
+		}
+	}
 	if best, _, ok := watch.NextCandidate(cands, h.capitalNow(), pol, h.sessionAliveNow(), h.policyPinnedNow(), skip); ok {
 		return best.Coin
 	}

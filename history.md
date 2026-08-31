@@ -2,6 +2,34 @@
 
 ---
 
+## M128 — Hunt the next book. Live 0G in the turn. PIT 0.9.6
+
+- **Source:** Research next re-ran AVAX. Stages were a text list. Auto-scroll on every elapsed tick stole the wheel. The right rail split the stream. 0G txs were easy to miss. TRADE NOW exists only on a READY preview.
+- **Discovery:** A new "Find the best opportunity" reset `huntTried` to ranked[0]. Host chat left Coin empty, so the same top book started again. `island.elapsedMs` in the scroll effect pinned the log. Version **0.9.6**.
+- **Candidate:** Host + desktop skip stood-down coins. Live track + receipts in the turn. No side rail. TRADE NOW still `authorizePreview("AUTHORIZE", previewHash)`.
+- **Kill:** Second AUTHORIZE path. Fake fills. Flatten OID 529167222216. Remint PIT-4bbee556. Authenticode claim.
+- **Next:** Overlay `D:\PIT`, tag `v0.9.6`, NSIS, Vercel + Render. Do not remint. Do not flatten. Do not start a live trade unless TRADE NOW on an exact preview.
+
+DATE/TIME: 2026-08-31 04:42+03
+PHASE: Agent hunt + live proof. Host remains execution authority.
+GOAL: Type Find the best opportunity, watch live 0G stages, skip a failed book, TRADE NOW, see a real OID when the preview is eligible.
+RESULT:
+- **IMPLEMENTED:** Stood-down coins go on `huntSkip` + persisted `auto.SkipSet`. Unnamed hunts ("Find the next opportunity") send an empty coin so the desktop skips `huntTried`. Live named 9-stage pipe. 0G receipts scoped to the current job. Cream Research next. Stream scroll no longer depends on elapsed ticks. TRADE NOW still `authorizePreview("AUTHORIZE", previewHash)`.
+- **TESTED:** `go test` deskcmd/companion/version PASS. Desktop `tsc -b` PASS. `npx tsx e2e/run.ts` PASS. Chrome localhost:3001 Agent: Research next started **DOGE** not AVAX, then **ETH** not AVAX/DOGE. Live pipe showed Scanning → Ranking → Private 0G research → Researcher live. Header `Researching ETH`.
+- **LIVE:** Overlay `D:\PIT` companion `/health` **0.9.6**. Session live. Policy pinned. Buying power $16.18. Direct credit 3.5945 0G. AVAX/DOGE sealed `no_side`. ETH researcher VerifyE2EE OK then `JOB_CRASHED` after companion overlay (Direct token missing until Protect my strategy). No new MAINNET fill. ETH OID `529167222216` untouched. Agent `PIT-4bbee556` not reminted.
+- **BLOCKED:** Authenticode still absent. iTransfer still not live. TRADE NOW not clicked: no READY_ELIGIBLE preview this pass.
+
+SECURITY RESULT: The model cannot AUTHORIZE. TRADE NOW is still an explicit desktop confirmation of the existing host path.
+TX HASH / OID: Historical OID `529167222216` unchanged. No new order.
+CLASSIFICATION:
+- Next-book hunt: **IMPLEMENTED + LIVE VERIFIED** (DOGE then ETH, not AVAX)
+- Live stages in the turn: **IMPLEMENTED + LIVE VERIFIED**
+- TRADE NOW existing authorize path: **UNCHANGED** (no eligible preview this pass)
+PRODUCTION READY: 0.9.6 installer after tag.
+NEXT STEP: Push. Tag `v0.9.6`. NSIS. Vercel + Render. Protect my strategy after overlay, then TRADE NOW only on an exact READY preview.
+
+---
+
 ## M127 — Dark Agent controls. One current hunt. PIT 0.9.5
 
 - **Source:** Live Agent on localhost:3001 still showed a native white Windows button under Research next / Show why / Compare candidates. The Desk thread wall sat above the mission, so the page still read as two stacked apps.

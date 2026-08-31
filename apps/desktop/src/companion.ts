@@ -441,6 +441,12 @@ export async function startResearch(coin: string, hypothesis?: string, source?: 
     if (native.sign || native.trade) return { error: "companion_denied" };
     return native;
   } catch (e) {
+    const body = await fetchJson<BindResult>("/local/research/start", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ coin, hypothesis: hypothesis || "none", source: source || "research_ui" }),
+    });
+    if (body && !body.sign && !body.trade) return body;
     const msg = e instanceof Error ? e.message : "companion_http";
     return { error: msg || "companion_http" };
   }
@@ -489,6 +495,12 @@ export async function cancelResearch(): Promise<BindResult> {
     if (native.sign || native.trade) return { error: "companion_denied" };
     return native;
   } catch (e) {
+    const body = await fetchJson<BindResult>("/local/research/cancel", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: "{}",
+    });
+    if (body && !body.sign && !body.trade) return body;
     const msg = e instanceof Error ? e.message : "companion_http";
     return { error: msg || "companion_http" };
   }
@@ -514,6 +526,12 @@ export async function authorizePreview(typed: string, hash: string): Promise<Bin
     if (native.sign || native.trade) return { error: "companion_denied" };
     return native;
   } catch (e) {
+    const body = await fetchJson<BindResult>("/local/authorize", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ typed, hash }),
+    });
+    if (body && !body.sign && !body.trade) return body;
     const msg = e instanceof Error ? e.message : "companion_http";
     return { error: msg || "companion_http" };
   }

@@ -4,7 +4,7 @@ import { compactNum, compactUsd, pctFunding } from "./format";
 import { committeeVerified, oidBelongsToPreview } from "./honesty";
 import { explainStop } from "./explain";
 import { researchWhyCopy } from "./researchWhy";
-import { LINKS } from "./links";
+import { explorerTx, hyperliquidTrade } from "./links";
 import type { ActivityEvent, BindResult, DirectModel } from "./companion";
 import type { MarketCoin } from "./WatchBook";
 
@@ -124,6 +124,7 @@ export function AgentRun({
   onOpenActivity,
   onStop,
   onTradeNow,
+  net,
 }: {
   busy: boolean;
   coin: string;
@@ -163,6 +164,7 @@ export function AgentRun({
   onOpenActivity: () => void;
   onStop: () => void;
   onTradeNow: () => void;
+  net?: string;
 }) {
   const [whyOpen, setWhy] = useState(false);
   const [sleepOpen, setSleep] = useState(false);
@@ -176,9 +178,9 @@ export function AgentRun({
   const deny = String(preview?.deny || "");
   const policyBlock = kind === "POLICY_DENIED" || deny.includes("policy");
   const capitalBlock = kind === "MARKET_DENIED" || deny.includes("min_notional") || deny.includes("margin");
-  const noTrade = kind === "READY_STOOD_DOWN" || deny === "no_side";
-  const ready = kind === "READY_ELIGIBLE" && Boolean(preview?.eligible && (preview.hash || previewHash));
-  const fail = Boolean(researchStop) && !noTrade && !ready;
+  const noTrade = !busy && (kind === "READY_STOOD_DOWN" || deny === "no_side");
+  const ready = !busy && kind === "READY_ELIGIBLE" && Boolean(preview?.eligible && (preview.hash || previewHash));
+  const fail = !busy && Boolean(researchStop) && !noTrade && !ready;
   const stop = explainStop(researchStop || "");
   const researcher = roleOf(roles, "researcher");
   const challenger = roleOf(roles, "challenger");
@@ -188,17 +190,49 @@ export function AgentRun({
   const alreadyPosted = Boolean(lastOrder?.posted && lastOrder.hash && hash && lastOrder.hash === hash);
   const canTrade = ready && Boolean(hash) && sessionAlive && pinned && !authBusy && !alreadyPosted;
   const current = stageIndex(stage, roles, busy, scannedN);
-  const done = verified || ready || noTrade;
-  const proof = useMemo(() => {
-    const fromAct = activity.find((e) => (e.job_id && e.job_id === jobId) || e.root || e.tx);
+  const venue = net || "mainnet";
+  const proofRows = useMemo(() => {
     const ev = evidence && typeof evidence === "object" ? (evidence as Record<string, unknown>) : null;
-    const root = String(fromAct?.root || ev?.root || ev?.storage_root || "");
-    const tx = String(fromAct?.tx || ev?.tx || "");
-    const txLink = String(fromAct?.tx_link || ev?.tx_link || "");
-    const digest = String(fromAct?.digest || ev?.digest || "");
-    if (!root && !tx && !jobId) return null;
-    return { root, tx, txLink, digest, jobId };
-  }, [activity, evidence, jobId]);
+    const rows: Array<{ label: string; href?: string; text: string }> = [];
+    const seen = new Set<string>();
+    function add(label: string, text: string, href?: string) {
+      const key = `${label}:${text}:${href || ""}`;
+      if (!text || seen.has(key)) return;
+      seen.add(key);
+      rows.push({ label, text, href });
+    }
+    for (const e of activity) {
+      if (jobId) {
+        if (!e.job_id || e.job_id !== jobId) continue;
+      } else if (coin && e.market && String(e.market).toUpperCase() !== String(coin).toUpperCase() && !e.oid) {
+        continue;
+      }
+      if (e.root) add("0G storage root", shortHash(String(e.root)), e.tx_link || undefined);
+      if (e.tx) add("0G transaction", shortHash(String(e.tx)), e.tx_link || explorerTx(String(e.tx), venue));
+      if (e.tx_link && !e.tx) add("0G explorer", "Open", e.tx_link);
+      if (e.digest) add("0G digest", shortHash(String(e.digest)));
+      if (e.oid) add("Hyperliquid OID", String(e.oid), e.link || hyperliquidTrade(venue, String(e.market || "").split(":").pop()));
+      const kindName = String(e.kind || "");
+      if ((kindName.includes("verified") || kindName.includes("sealed") || kindName.includes("filed")) && (e.tx || e.root || e.digest || e.tx_link)) {
+        add(kindName.replaceAll(".", " "), e.status || "ok", e.tx_link || explorerTx(String(e.tx || ""), venue) || undefined);
+      }
+    }
+    if (ev) {
+      const evJob = String(ev.job_id || ev.jobId || "");
+      const evMarket = String(ev.market || ev.coin || "").toUpperCase();
+      const jobOk = !jobId || !evJob || evJob === jobId;
+      const mktOk = !coin || !evMarket || evMarket === String(coin).toUpperCase();
+      if (jobOk && mktOk) {
+        const root = String(ev.root || ev.storage_root || "");
+        const tx = String(ev.tx || "");
+        const txLink = String(ev.tx_link || "");
+        if (root) add("0G storage root", shortHash(root), txLink || undefined);
+        if (tx) add("0G transaction", shortHash(tx), txLink || explorerTx(tx, venue));
+      }
+    }
+    if (jobId) add("Direct TeeML job", shortHash(jobId));
+    return rows.slice(0, 12);
+  }, [activity, evidence, jobId, venue, coin]);
   const orderState = oidBelongsToPreview(lastOrder?.hash, previewHash, hash) ? orderKind(lastOrder) : "";
   const elapsed = elapsedMs > 0 ? `${(elapsedMs / 1000).toFixed(1)}s` : "";
   const why = researchWhyCopy({
@@ -211,7 +245,7 @@ export function AgentRun({
     roles,
     snap: focus ? { mark: focus.mark, reason: focus.reason, why: focus.why } : undefined,
   });
-  const asset = preview?.market || coin || focus?.coin || "";
+  const asset = (busy ? coin : preview?.market) || coin || focus?.coin || "";
   const verdict = ready && (side === "LONG" || side === "SHORT") ? side : noTrade || policyBlock || capitalBlock ? "NO TRADE" : fail ? "STOPPED" : "";
   const reason =
     researchNote ||
@@ -232,7 +266,7 @@ export function AgentRun({
       ]
     : noTrade || policyBlock || capitalBlock
       ? [
-          ["Research next", "Find the best opportunity"],
+          ["Research next", "Find the next opportunity"],
           ["Show why", "__why"],
           ["Compare candidates", "Compare top opportunities"],
           ["Sleep Mission", "__sleep"],
@@ -240,7 +274,7 @@ export function AgentRun({
         ]
       : fail
         ? [
-            ["Research next", "Find the best opportunity"],
+            ["Research next", "Find the next opportunity"],
             ["Show why", "__why"],
             ["Technical details", "__tech"],
           ]
@@ -249,14 +283,14 @@ export function AgentRun({
           : [];
 
   const showBook = Boolean(focus && (busy || ready));
-  const showPipe = busy;
   const showVerdict = !busy && Boolean(verdict);
+  const liveStep = current >= 0 ? PIPE[Math.min(current, PIPE.length - 1)] : PIPE[0];
 
   return (
     <div className="agent-mission" aria-label="PIT agent turn">
       <p className="agent-lead">
         {busy
-          ? "Scanning live Hyperliquid markets…"
+          ? `Researching ${asset || coin || "live books"} on 0G Direct…`
           : showVerdict
             ? "Research complete"
             : "Live Hyperliquid books are on this computer."}
@@ -264,22 +298,66 @@ export function AgentRun({
       </p>
 
       {busy ? (
-      <ul className="agent-checks">
-        <li className={scannedN ? "done" : "on"}>
-          {scannedN ? `${scannedN} markets scanned` : "Waiting for live books"}
-        </li>
-        <li className={eligible.length ? "done" : scannedN ? "on" : ""}>
-          {eligible.length ? `policy filtered · ${eligible.length} eligible` : "policy filter pending"}
-        </li>
-        <li className={executable.length ? "done" : eligible.length ? "on" : ""}>
-          {executable.length ? `capital checked · ${executable.length} executable` : "capital check pending"}
-        </li>
-        <li className={executable.length ? "done" : ""}>
-          {executable.length ? `${executable.length} executable candidates` : "no executable candidate yet"}
-        </li>
-      </ul>
+        <article className="agent-live" aria-live="polite">
+          <p className="agent-kicker">PRIVATE 0G RESEARCH</p>
+          <p className="agent-live-coin">{asset || coin || "markets"}</p>
+          <p className="agent-live-step">{liveStep.label}{elapsed ? ` · ${elapsed}` : ""}</p>
+          <ol className="agent-track" aria-label="Research stage bar">
+            {PIPE.map((step, i) => {
+              const markState = pipeState(i, current, false, fail);
+              return (
+                <li key={step.id} className={markState} title={step.label}>
+                  <span className="sr-only">{step.label}</span>
+                </li>
+              );
+            })}
+          </ol>
+          <ol className="agent-pipe" aria-label="Research stages">
+            {PIPE.map((step, i) => {
+              const markState = pipeState(i, current, false, fail);
+              return (
+                <li key={step.id} className={markState}>
+                  <em>{markState === "done" ? "✓" : markState === "on" ? "●" : markState === "fail" ? "×" : "○"}</em>
+                  <strong>{step.label}</strong>
+                  {markState === "on" ? <span>live</span> : markState === "done" ? <span>done</span> : <span />}
+                </li>
+              );
+            })}
+          </ol>
+          <p className="agent-note">
+            Researcher {researcher?.proposed_side || (roleOk(roles, "researcher") ? "verified" : "waiting")}
+            {" · "}Challenger {challenger?.survives === false ? "killed" : challenger?.proposed_side || (roleOk(roles, "challenger") ? "verified" : "waiting")}
+            {" · "}Risk {risk?.kill ? "kill" : risk?.proposed_side || (roleOk(roles, "risk") ? "verified" : "waiting")}
+          </p>
+          <p className="agent-note">
+            {scannedN ? `${scannedN} live Hyperliquid perps scanned` : "Waiting for live books"}
+            {eligible.length ? ` · ${eligible.length} eligible` : ""}
+            {executable.length ? ` · ${executable.length} executable` : ""}
+            {jobId ? ` · TeeML ${shortHash(jobId)}` : ""}
+          </p>
+          {proofRows.length ? (
+            <ul className="agent-live-proof">
+              {proofRows.map((row) => (
+                <li key={`live-${row.label}-${row.text}`}>
+                  {row.href ? (
+                    <ExternalLink className="ghost" href={row.href}>
+                      {row.label} {row.text}
+                    </ExternalLink>
+                  ) : (
+                    <span>{row.label} {row.text}</span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="agent-note">0G receipts appear here when Direct files a root or chain tx.</p>
+          )}
+          <button type="button" className="ghost" onClick={onStop}>
+            Stop
+          </button>
+        </article>
       ) : scannedN ? (
-        <p className="agent-note">{scannedN} scanned · {eligible.length} eligible · {executable.length} executable</p>
+        <p className="agent-note">{scannedN} scanned · {eligible.length} eligible · {executable.length} executable{huntRejected.length ? ` · checked ${huntRejected.join(", ")}` : ""}</p>
       ) : null}
 
       {showBook && focus ? (
@@ -308,32 +386,6 @@ export function AgentRun({
             </div>
           </dl>
           {bestWhy ? <p className="agent-note">{bestWhy}</p> : null}
-        </article>
-      ) : null}
-
-      {showPipe ? (
-        <article className="agent-card pipe" aria-live="polite">
-          <p className="agent-kicker">PRIVATE 0G RESEARCH</p>
-          <ol className="agent-pipe">
-            {PIPE.map((step, i) => {
-              const markState = pipeState(i, current, done, fail);
-              return (
-                <li key={step.id} className={markState}>
-                  <em aria-hidden>
-                    {markState === "done" ? "✓" : markState === "on" ? "●" : markState === "fail" ? "✕" : "○"}
-                  </em>
-                  <strong>{step.label}</strong>
-                  {markState === "on" ? <span>{stage.replaceAll("_", " ").toLowerCase() || "live"}</span> : null}
-                  {markState === "fail" && stop ? <span>{stop.title}</span> : null}
-                </li>
-              );
-            })}
-          </ol>
-          {busy ? (
-            <button type="button" className="ghost" onClick={onStop}>
-              Stop
-            </button>
-          ) : null}
         </article>
       ) : null}
 
@@ -391,10 +443,13 @@ export function AgentRun({
           {!pinned ? <p className="agent-note">Pin policy on this computer first.</p> : null}
           {alreadyPosted ? <p className="agent-note">This preview already produced OID {lastOrder?.oid}.</p> : null}
           {authErr ? <p className="agent-note" role="alert">{authErr}</p> : null}
-          <div className="cta-row">
+          <div className="cta-row trade-now-row">
             <button type="button" className="primary" aria-label="TRADE NOW" disabled={!canTrade} onClick={onTradeNow}>
               {authBusy ? "Submitting…" : "TRADE NOW"}
             </button>
+            <ExternalLink className="ghost" href={hyperliquidTrade(venue, String(preview.market || asset).split(":").pop())}>
+              Open Hyperliquid
+            </ExternalLink>
             <button type="button" className="ghost" onClick={onOpenPreview}>
               REVIEW
             </button>
@@ -475,11 +530,11 @@ export function AgentRun({
                     : orderState.toUpperCase()}
           </p>
           <div className="cta-row">
-            <ExternalLink className="ghost" href={LINKS.hl}>Open Hyperliquid</ExternalLink>
+            <ExternalLink className="ghost" href={hyperliquidTrade(venue, String(lastOrder.market || asset).split(":").pop())}>Open Hyperliquid</ExternalLink>
             <button type="button" className="ghost" onClick={onOpenActivity}>
               Open Activity
             </button>
-            {proof?.root || proof?.tx ? (
+            {proofRows.length ? (
               <button type="button" className="ghost" onClick={onOpenActivity}>
                 Verify on 0G
               </button>
@@ -488,26 +543,33 @@ export function AgentRun({
         </article>
       ) : null}
 
-      {proof && (proof.root || proof.tx) && !busy ? (
-        <p className="agent-proof">
-          {verified ? "TEE verified" : "Proof on file, not claimed verified"}
-          {proof.root ? ` · root ${shortHash(proof.root)}` : ""}
-          {proof.txLink ? (
-            <>
-              {" "}
-              <ExternalLink className="ghost" href={proof.txLink}>Open 0G explorer</ExternalLink>
-            </>
-          ) : null}
-        </p>
+      {proofRows.length ? (
+        <article className="agent-receipts">
+          <p className="agent-kicker">{verified ? "0G PROOF" : "0G TRAIL"}</p>
+          <ul>
+            {proofRows.map((row) => (
+              <li key={`${row.label}-${row.text}`}>
+                <span>{row.label}</span>
+                {row.href ? (
+                  <ExternalLink className="ghost" href={row.href}>
+                    {row.text}
+                  </ExternalLink>
+                ) : (
+                  <strong>{row.text}</strong>
+                )}
+              </li>
+            ))}
+          </ul>
+        </article>
       ) : null}
 
       {follow.length ? (
         <div className="agent-follow">
-          {follow.map(([label, q]) => (
+          {follow.map(([label, q], i) => (
             <button
               key={label}
               type="button"
-              className="chip-btn"
+              className={i === 0 && !ready && !busy ? "chip-btn lead" : "chip-btn"}
               onClick={() => {
                 if (q === "Stop research") {
                   onStop();

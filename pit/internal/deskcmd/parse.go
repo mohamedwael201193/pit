@@ -112,7 +112,7 @@ func Parse(text string) Result {
 		out.Reply = "Scanning every live Hyperliquid perp PIT can read, then filtering by your policy. Empty is honest. Side is not decided here."
 		return out
 	}
-	if wantsBest(low) || wantsTradeStrongest(low) || wantsResearchBest(low) {
+	if wantsNext(low) || wantsBest(low) || wantsTradeStrongest(low) || wantsResearchBest(low) {
 		out.Tool = "research.best"
 		out.StartResearch = true
 		out.Mutate = true
@@ -529,6 +529,13 @@ func wantsScanAll(low string) bool {
 		strings.Contains(low, "what's moving") ||
 		strings.Contains(low, "what is executable") ||
 		(strings.Contains(low, "scan") && strings.Contains(low, "policy"))
+}
+
+func wantsNext(low string) bool {
+	return strings.Contains(low, "next opportunity") ||
+		strings.Contains(low, "research next") ||
+		strings.Contains(low, "next eligible") ||
+		strings.Contains(low, "next market")
 }
 
 func wantsBest(low string) bool {

@@ -2074,11 +2074,23 @@ details.card > summary { cursor: pointer; font-weight: 600; letter-spacing: 0.08
   display: flex;
   flex-direction: column;
   min-height: 0;
-  overflow-y: auto;
+  overflow-y: scroll;
   overflow-x: hidden;
   padding: 16px 24px 12px;
   overscroll-behavior: contain;
+  overflow-anchor: none;
+  scrollbar-gutter: stable;
+  scrollbar-width: auto;
+  scrollbar-color: #8a909a #12141a;
 }
+.agent-stream::-webkit-scrollbar { width: 12px; }
+.agent-stream::-webkit-scrollbar-track { background: #12141a; }
+.agent-stream::-webkit-scrollbar-thumb {
+  background: #6a707a;
+  border-radius: 8px;
+  border: 2px solid #12141a;
+}
+.agent-stream::-webkit-scrollbar-thumb:hover { background: #8a909a; }
 .agent-stream-pad {
   flex: 1 0 0;
   min-height: 0;
@@ -2248,7 +2260,106 @@ details.card > summary { cursor: pointer; font-weight: 600; letter-spacing: 0.08
 }
 .agent-reason strong { display: block; margin-bottom: 4px; color: var(--mute); font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; }
 .agent-note { margin: 8px 0 0; font-size: 14px; color: var(--mute); max-width: 52ch; }
-.agent-follow { display: flex; flex-wrap: wrap; gap: 6px; }
+.agent-follow .chip-btn {
+  background: #1a1e26;
+  border: 1px solid #3a424e;
+  color: var(--cream);
+}
+.agent-follow .chip-btn:hover {
+  border-color: var(--coral);
+  color: var(--cream);
+}
+.agent-follow .chip-btn.lead {
+  background: var(--cream);
+  border-color: var(--cream);
+  color: #1a1a1a;
+  font-weight: 600;
+}
+.agent-follow .chip-btn.lead:hover {
+  filter: brightness(1.05);
+  color: #1a1a1a;
+  border-color: var(--cream);
+}
+.agent-live {
+  display: grid;
+  gap: 8px;
+  padding: 4px 0 8px;
+}
+.agent-live-coin {
+  margin: 0;
+  font-size: 28px;
+  letter-spacing: -0.04em;
+}
+.agent-live-step {
+  margin: 0;
+  font-size: 18px;
+  color: var(--coral);
+  letter-spacing: -0.02em;
+}
+.agent-track {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(9, minmax(0, 1fr));
+  gap: 4px;
+  margin: 4px 0 0;
+  padding: 0;
+}
+.agent-track li {
+  height: 8px;
+  background: #1c1f24;
+  border-radius: 4px;
+}
+.agent-track li.done { background: #3d6b4a; }
+.agent-track li.on {
+  background: var(--coral);
+  animation: agent-pulse 1.4s ease-in-out infinite;
+}
+.agent-track li.fail { background: var(--coral); }
+.agent-live .agent-pipe {
+  margin-top: 8px;
+}
+.agent-live-proof {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+.agent-live-proof li {
+  font-size: 13px;
+  color: var(--cream);
+}
+.trade-now-row .primary {
+  min-height: 44px;
+  padding: 10px 22px;
+  font-size: 15px;
+  letter-spacing: 0.04em;
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+.agent-receipts ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+.agent-receipts li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--mute);
+}
+.agent-receipts a.ghost {
+  padding: 5px 10px;
+}
 .agent-follow .chip-btn,
 .agent-mission .ghost,
 .agent-proof a,
@@ -2258,6 +2369,11 @@ a.ghost {
   color: var(--cream);
   border-radius: 8px;
   text-decoration: none;
+}
+.agent-follow .chip-btn.lead {
+  background: var(--cream);
+  border-color: var(--cream);
+  color: #1a1a1a;
 }
 .agent-proof a {
   display: inline-flex;
