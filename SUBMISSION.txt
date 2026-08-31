@@ -1,11 +1,36 @@
-PIT is a private trading desk for 0G and Hyperliquid. It seals your book into 0G Direct TeeML, runs a sequential researcher, challenger, and risk committee, and sizes every order on the host. The model cannot set size. You confirm an exact preview on this computer before anything reaches Hyperliquid. The website discovers and proves. The desktop protects and acts.
+PIT  PRODUCT 0.9.13
+Private trading desk on 0G and Hyperliquid. Shipped 0.1.0 to 0.9.13 this window.
 
-A trading book in a public chat leaks alpha. A session that can withdraw is how accounts die. PIT splits the job. Pairing is first: an eight-character code, two minutes, a device token, never the session key. Protect my strategy is next. The wallet signs. The Direct token stays in the OS keychain. Connect Hyperliquid generates PIT-{workspace8} locally. Your master wallet signs approveAgent. The session cannot. PIT verifies extraAgents on the master wallet. Policy is pinned on Security: clip, assets, 1x, kill. Chat cannot pin. After Ready you can still edit and re-pin.
+✅ WAVE 3 BUILD
+Go companion on 127.0.0.1:17373, Tauri desktop, website, native 0G sealer, Direct TeeML committee, Hyperliquid order+cancel session, pairing, Protect my strategy, host policy pin, Agent hunt, exact preview, TRADE NOW, Activity, Sleep Mission, CLI, pit-os, pit-mcp, PitDeskID on Aristotle, CI, Windows installer. Live: https://pit0g.vercel.app  Health sign:false  https://pit-health.onrender.com/health
 
-Agent is the cockpit. Find the best opportunity, Find the best long, Find the best short, and What can I trade now? start a hunt. The host scans live Hyperliquid books, ranks what is executable under your policy, and runs private 0G Direct on each remaining book. Researcher proposes a side from live facts. Challenger then sees that thesis. Risk follows. The native sealer performs HPKE and VerifyE2EE. Policy is applied on the host. NO TRADE is a real stand-down. The hunt continues and never wraps a tested book.
+✅ WHAT IT SOLVES
+A book in a public chat leaks alpha. A withdraw key empties an account. PIT seals the book into 0G Direct TeeML. The host sizes. You authorize on this computer. The model cannot set size. Session can order and cancel only. Web, SDK, and MCP cannot authorize.
 
-If a side survives, the host builds an exact READY preview. TRADE NOW is authorizePreview("AUTHORIZE", previewHash) on this computer. Web, SDK, and MCP cannot authorize. Hyperliquid returns an OID. FILLED is painted only when user_fills reports filled. This-job 0G research and order proofs file to Aristotle Storage with --proof. Historical receipts are not reused.
+✅ FLOW
+Pair (8-char, 2 min, device token) → Protect (Direct token stays on this machine) → Connect Hyperliquid (PIT-4bbee556, master wallet signs approveAgent) → Pin policy (chat cannot pin) → Agent live scan → private 0G Researcher, Challenger, Risk + VerifyE2EE → exact READY preview → AUTHORIZE on desktop → Hyperliquid OID → this-job 0G Storage --proof → Activity. Sleep Mission arms only here.
 
-The recorded matching path is job 4a1d45ec. Research https://chainscan.0g.ai/tx/0x1d2113bd683b3ef8be5d74d603018c4bacdd49531bdf201abbc7dea4bb16510b. Order https://chainscan.0g.ai/tx/0x8c28051bec7bebd7af3b6cc75f7aa034d67f9809f9c30eef9a6c9f84ed6c11fb. Hyperliquid OID 531667200134, buy 0.16 HYPE at 80.909, FILLED. Agent PIT-4bbee556 0xfc64e36babe7dfe9eb779ee3a9f2362d16881d52. Activity is the ledger. A Sleep Mission is optional bounded automation while this computer stays awake. It arms only here.
+✅ WHY 0G
+The private book cannot sit on a public router. Aristotle 16661 glm-5.2 TeeML. HPKE + VerifyE2EE. If Direct fails, PIT stops. Official Go storage client --proof. No in-memory storage. No Router inference for the book. Serving 0x47340d900bdFec2BD393c626E12ea0656F938d84  Ledger 0x2dE54c845Cd948B72D2e32e39586fe89607074E3  Flow 0x62D4144dB0F0a6fBBaeb6296c785C71B3D57C526  Indexer https://indexer-storage-turbo.0g.ai
 
-0G Direct is essential: glm-5.2 TeeML on Aristotle 16661. The Router may list models. The sealed book never uses it. If Direct fails, PIT stops. Session allowlist is order and cancel. CLI, pit-os, and pit-mcp are read-only. Desk ID 0xfdB3a8D39F1E2b77a8261b359eABaaa2F08f8c35. Product 0.9.13. Direct Windows download https://pit-health.onrender.com/windows files PIT_0.9.13_x64-setup.exe. SHA256 B905B9ED167513757D4947BDE61103EB10ECD4A5F76554FE369F205DF3850B1E. Health https://pit-health.onrender.com/health version 0.9.13. Go tests 654 PASS / 0 FAIL. Demo https://youtu.be/zYgxDTI7jIk
+✅ AGENTIC ID ERC-7857
+PitDeskID 0xfdB3a8D39F1E2b77a8261b359eABaaa2F08f8c35
+IDs 0x2afbede9 / 0xdf597d99 / 0x74f8628b / 0x80ac58cd
+Deploy https://chainscan.0g.ai/tx/0x2d5b688bf09bb72cb44b092da0c27cbe87a623141872e62b84cb95ecf7e90c24
+Mint https://chainscan.0g.ai/tx/0x9494e3faec6d950942d1bfec53c4a13e6f28378da8e01ecd24b3e3de62e5c7d0
+ERC-8004 Identity 0x8004A169FB4a3325136EB29fA0ceB6D2e539a432 agent 3489333
+https://chainscan.0g.ai/tx/0xa2f67529745a662163b84fe10f855a3aa25596f9bc4d4c604d2abefbc3f3ff7d
+
+✅ PROOF  job 4a1d45ec  OID 531667200134 FILLED 0.16 HYPE
+Research https://chainscan.0g.ai/tx/0x1d2113bd683b3ef8be5d74d603018c4bacdd49531bdf201abbc7dea4bb16510b
+root 0x9fd42770545ecaacbfff12e3ef7a537b564e31c9ef5515b3a820fd276c22f72e
+Order https://chainscan.0g.ai/tx/0x8c28051bec7bebd7af3b6cc75f7aa034d67f9809f9c30eef9a6c9f84ed6c11fb
+root 0x8c94ec8e643c90fe69276ff20f50a0bc3121f007d611e10e6ab9f24d26f2ff66
+Agent PIT-4bbee556 0xfc64e36babe7dfe9eb779ee3a9f2362d16881d52
+Demo https://youtu.be/zYgxDTI7jIk
+Download https://pit-health.onrender.com/windows  PIT_0.9.13_x64-setup.exe
+SHA256 B905B9ED167513757D4947BDE61103EB10ECD4A5F76554FE369F205DF3850B1E
+
+✅ TESTS + CI
+Go 654 PASS. Sealer 6 PASS. Foundry 26 PASS. Playwright 30 PASS. pit-os 2. pit-mcp 3. Desktop e2e PASS. CI green.
+https://github.com/mohamedwael201193/pit/actions/runs/33413773180
