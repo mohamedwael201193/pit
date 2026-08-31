@@ -43,6 +43,46 @@ func TestResolveChatCoinDoesNotWrap(t *testing.T) {
 	}
 }
 
+func TestThisHuntSkipIgnoresStaleAuto(t *testing.T) {
+	dir := t.TempDir()
+	p := auto.Load(dir)
+	p.RememberSkip("BTC", "no_side", auto.SkipStoodDown, 4*time.Hour)
+	p.RememberSkip("ETH", "no_side", auto.SkipStoodDown, 4*time.Hour)
+	p.RememberSkip("SOL", "no_side", auto.SkipStoodDown, 4*time.Hour)
+	p.RememberSkip("HYPE", "challenger_killed", auto.SkipStoodDown, 4*time.Hour)
+	if err := auto.Save(dir, p); err != nil {
+		t.Fatal(err)
+	}
+	h := New(dir)
+	h.huntSkip = []string{"DOGE", "AVAX"}
+	this := h.thisHuntSkipSet()
+	if this["BTC"] != "" || this["ETH"] != "" || this["SOL"] != "" || this["HYPE"] != "" {
+		t.Fatalf("chat hunt must not inherit 4h auto skips, got %#v", this)
+	}
+	if this["DOGE"] == "" || this["AVAX"] == "" {
+		t.Fatalf("this hunt skips missing, got %#v", this)
+	}
+	if got := resolveChatCoin("BTC", this, "ETH", false); got != "BTC" {
+		t.Fatalf("named remaining book %q", got)
+	}
+	merged := h.huntSkipSet()
+	if merged["BTC"] == "" {
+		t.Fatal("automation skip set still includes 4h BTC")
+	}
+}
+
+func TestChatSourceDoesNotAutoContinue(t *testing.T) {
+	if normalizeResearchSource("chat") == "automation" {
+		t.Fatal("chat must not kick autoTick")
+	}
+	if normalizeResearchSource("research_ui") == "automation" {
+		t.Fatal("research_ui must not kick autoTick")
+	}
+	if normalizeResearchSource("automation") != "automation" {
+		t.Fatal("automation keeps autoTick")
+	}
+}
+
 func TestHuntSkipPersistsAndMergesAuto(t *testing.T) {
 	dir := t.TempDir()
 	p := auto.Load(dir)

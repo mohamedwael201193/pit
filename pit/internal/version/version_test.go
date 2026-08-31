@@ -3,7 +3,7 @@ package version
 import "testing"
 
 func TestString(t *testing.T) {
-	if String() != "PIT 0.9.9" {
+	if String() != "PIT 0.9.10" {
 		t.Fatal(String())
 	}
 }

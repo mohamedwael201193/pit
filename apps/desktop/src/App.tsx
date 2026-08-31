@@ -835,11 +835,10 @@ export function App() {
       writeSessionList(HUNT_TRIED_KEY, []);
       writeSessionList(HUNT_REJ_KEY, []);
     }
-    if (source === "chat" && !opts?.chained && !coin) {
+    if (source === "chat" && (fresh || (!opts?.chained && !coin))) {
       huntRef.current = ranked;
-    }
-    if (source === "chat" && huntRef.current.length === 0) {
-      huntRef.current = ranked;
+    } else if (source === "chat") {
+      huntRef.current = [...new Set([...huntRef.current, ...ranked])];
     }
     const skip = new Set(huntTried.current.map((c) => c.toUpperCase()));
     if (!fresh && !opts?.chained) {
@@ -878,13 +877,8 @@ export function App() {
       return;
     }
     setResearchNote(null);
-    setResearchEvidence("");
     setAuthErr(null);
     setPollMiss(false);
-    setPreview(null);
-    setPreviewHash("");
-    setResearchKind("");
-    setResearchRoles([]);
     setResearchJobId("");
     setResearchStage("READING_MARKET");
     setResearchCoin(want);
@@ -935,6 +929,13 @@ export function App() {
         writeSessionList(HUNT_TRIED_KEY, huntTried.current);
       }
       if (started.hunt_exhausted || started.error === "hunt_exhausted") {
+        const pool = huntRef.current.length ? huntRef.current : ranked;
+        const tried = new Set(huntTried.current.map((c) => c.toUpperCase()));
+        const remain = pool.find((c) => c && !tried.has(c) && c !== want);
+        if (source === "chat" && remain && gen === researchGen.current) {
+          await researchThis(remain, "chat", { chained: true, hypothesis: hypo });
+          return;
+        }
         setResearchBusy(false);
         setResearchNote("Checked every executable book. No side survived. Ask Find the best opportunity to scan again.");
         return;
@@ -944,6 +945,11 @@ export function App() {
         setResearchBusy(false);
         return;
       }
+      setResearchEvidence("");
+      setPreview(null);
+      setPreviewHash("");
+      setResearchKind("");
+      setResearchRoles([]);
       applyStatus(started);
       await followJob(gen, wall);
       void fetchActivity().then((ev) => {
@@ -973,7 +979,7 @@ export function App() {
         writeSessionList(HUNT_REJ_KEY, huntTried.current);
       }
       if (lastKind === "READY_ELIGIBLE") setHuntSurvived(want);
-      const pool = huntRef.current.length ? huntRef.current : ranked;
+      const pool = [...new Set([...huntRef.current, ...ranked])];
       const tried = new Set(huntTried.current.map((c) => c.toUpperCase()));
       const next = pool.find((c) => !tried.has(String(c).toUpperCase()));
       if (stood && next && !canceled) {

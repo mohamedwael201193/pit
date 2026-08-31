@@ -562,8 +562,11 @@ func (h *Hub) beginResearch(coin, source string, fresh bool) (exhausted bool) {
 		h.resetHuntSkip()
 	}
 	src := normalizeResearchSource(source)
-	skip := h.huntSkipSet()
-	next := h.pickBestCoinSkipping(skip)
+	skip := h.thisHuntSkipSet()
+	if src == "automation" {
+		skip = h.huntSkipSet()
+	}
+	next := h.pickNextCoin(skip)
 	var want string
 	if src == "chat" {
 		want = resolveChatCoin(coin, skip, next, fresh)
@@ -573,7 +576,10 @@ func (h *Hub) beginResearch(coin, source string, fresh bool) (exhausted bool) {
 	} else {
 		want = strings.ToUpper(strings.TrimSpace(coin))
 		if want == "" {
-			want = h.pickBestCoin()
+			want = next
+			if want == "" {
+				want = h.pickBestCoin()
+			}
 		}
 	}
 	if want == "" {
@@ -754,7 +760,9 @@ func (h *Hub) execResearch(coin string) {
 		go h.maybeGuardedExecute(hash, coin, started)
 		return
 	}
-	continueNext = true
+	if normalizeResearchSource(h.job.source) == "automation" {
+		continueNext = true
+	}
 }
 
 func (h *Hub) localResearchStart(w http.ResponseWriter, r *http.Request) {
@@ -775,7 +783,10 @@ func (h *Hub) localResearchStart(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if exhausted := h.beginResearch(body.Coin, body.Source, body.Fresh); exhausted {
-		skip := h.huntSkipSet()
+		skip := h.thisHuntSkipSet()
+		if normalizeResearchSource(body.Source) == "automation" {
+			skip = h.huntSkipSet()
+		}
 		checked := make([]string, 0, len(skip))
 		for coin := range skip {
 			checked = append(checked, coin)

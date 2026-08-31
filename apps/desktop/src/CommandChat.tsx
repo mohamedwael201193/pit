@@ -263,7 +263,6 @@ export function CommandChat({
   return (
     <section className="command agent-workspace" aria-label="PIT agent">
       <div className="command-head">
-        <p className="fine">{CHAT_AGENT_COPY.cannotAuthorize}</p>
         <div className="model-pick">
           <button type="button" aria-haspopup="listbox" aria-expanded={modelOpen} onClick={() => setModelOpen((v) => !v)}>
             {picked?.private_book ? "Private + Verified" : "Desk command"}
@@ -405,7 +404,7 @@ export function CommandChat({
           }}
         />
         <div className="composer-row">
-          <p className="fine">Enter send · Shift+Enter newline · Esc stop research · Ctrl+K command</p>
+          <p className="fine">{CHAT_AGENT_COPY.cannotAuthorize} · Enter send · Shift+Enter newline · Esc stop research · Ctrl+K command</p>
           <button type="submit" className="primary" disabled={busy || !draft.trim()}>
             Send
           </button>

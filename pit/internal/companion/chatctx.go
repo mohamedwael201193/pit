@@ -74,7 +74,7 @@ func (h *Hub) decorateChat(parsed deskcmd.Result) deskcmd.Result {
 		}
 		parsed = h.decorateWatchAgent(parsed)
 		if parsed.StartResearch && (parsed.Tool == "research.best" || strings.TrimSpace(parsed.Coin) == "") {
-			if next := h.pickBestCoinSkipping(h.huntSkipSet()); next != "" {
+			if next := h.pickNextCoin(h.thisHuntSkipSet()); next != "" {
 				parsed.Coin = next
 				if parsed.Agent != nil {
 					parsed.Agent.Best = next
@@ -212,8 +212,8 @@ func (h *Hub) pickBestCoin() string {
 	return h.pickBestCoinSkipping(nil)
 }
 
-func (h *Hub) huntSkipSet() map[string]string {
-	skip := auto.Load(h.Dir).SkipSet(time.Now().Unix())
+func (h *Hub) thisHuntSkipSet() map[string]string {
+	skip := map[string]string{}
 	h.researchMu.Lock()
 	defer h.researchMu.Unlock()
 	for _, c := range h.huntSkip {
@@ -230,7 +230,15 @@ func (h *Hub) huntSkipSet() map[string]string {
 	return skip
 }
 
-func (h *Hub) pickBestCoinSkipping(extra map[string]string) string {
+func (h *Hub) huntSkipSet() map[string]string {
+	skip := auto.Load(h.Dir).SkipSet(time.Now().Unix())
+	for k, v := range h.thisHuntSkipSet() {
+		skip[k] = v
+	}
+	return skip
+}
+
+func (h *Hub) pickNextCoin(skip map[string]string) string {
 	st, err := cli.Load(h.Dir)
 	netName := "mainnet"
 	if err == nil && strings.TrimSpace(st.Network) != "" {
@@ -245,16 +253,23 @@ func (h *Hub) pickBestCoinSkipping(extra map[string]string) string {
 	if lerr != nil {
 		return ""
 	}
+	if skip == nil {
+		skip = map[string]string{}
+	}
+	if best, _, ok := watch.NextCandidate(cands, h.capitalNow(), pol, h.sessionAliveNow(), h.policyPinnedNow(), skip); ok {
+		return best.Coin
+	}
+	return ""
+}
+
+func (h *Hub) pickBestCoinSkipping(extra map[string]string) string {
 	skip := auto.Load(h.Dir).SkipSet(time.Now().Unix())
 	for k, v := range extra {
 		if k != "" {
 			skip[strings.ToUpper(k)] = v
 		}
 	}
-	if best, _, ok := watch.NextCandidate(cands, h.capitalNow(), pol, h.sessionAliveNow(), h.policyPinnedNow(), skip); ok {
-		return best.Coin
-	}
-	return ""
+	return h.pickNextCoin(skip)
 }
 
 func formatBookFloors(bp float64, coins []watch.PublicCoin) string {

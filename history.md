@@ -2,6 +2,37 @@
 
 ---
 
+## M132 — Chat hunts ignore stale 4h auto skips. PIT 0.9.10
+
+- **Source:** Find me the best short researched DOGE then AVAX and painted “Checked every executable book” with only two names. Host `hunt-skip.json` was only `DOGE,AVAX`. Remaining BTC/ETH/SOL/HYPE were still in automation.json 4h skips from the earlier long hunt. Client then cleared the last-book card.
+- **Discovery:** `beginResearch` + `pickBestCoinSkipping` merged `auto.SkipSet` (4h) into chat hunt skip. `resolveChatCoin("BTC", skip, "", false)` returned empty when BTC was in that 4h set, so the host returned `hunt_exhausted`. `autoTick` while a job was running also saved a stale Prefs copy and restored those skips after `resetHuntSkip`. Version **0.9.10**.
+- **Candidate:** Chat and research_ui hunts skip only this-hunt `hunt-skip.json`. Automation keeps 4h skips. Chat research does not kick `autoTick`. `autoTick` does not persist Prefs while a job is running. Client keeps last-book analysis until a new job actually starts, continues if host says exhausted while untried books remain, and only paints universe-exhausted when every executable was checked. TRADE NOW still `authorizePreview("AUTHORIZE", previewHash)` only on `READY_ELIGIBLE`.
+- **Kill:** Second AUTHORIZE path. Fake fills. Flatten OID 529167222216. Remint PIT-4bbee556. Authenticode claim. Historical tx fallback. Loosening policy to force a fill.
+- **Next:** Overlay `D:\PIT`, tag `v0.9.10`, NSIS, Vercel + Render. Do not remint. Do not flatten. Do not TRADE NOW unless an exact READY preview exists.
+
+DATE/TIME: 2026-08-31 07:45+03
+PHASE: Chat hunt isolation from automation 4h skips.
+GOAL: Find the best / long / short / next → live scan → private 0G on every remaining executable book → useful analysis + this-job 0G → TRADE NOW only if READY, else genuine exhausted NO TRADE.
+RESULT:
+- **IMPLEMENTED:** `thisHuntSkipSet` / `pickNextCoin`. Chat hunts no longer inherit stale automation skips. Last-book LIVE MARKET + committee why stay on screen. AUTHORIZE copy lives in the composer, not as a header wall. TRADE NOW still `authorizePreview("AUTHORIZE", previewHash)`.
+- **TESTED:** `go test ./...` PASS. Desktop `tsc -b` PASS. `npx tsx e2e/run.ts` PASS. Companion overlayed to **0.9.10** without remint: agent `PIT-4bbee556` `0xfc64e36babe7dfe9eb779ee3a9f2362d16881d52`, session live. Buying power $16.18. Policy pinned. ETH OID `529167222216` untouched.
+- **LIVE:** **Find the next opportunity** at 7:38:53 AM (short hypothesis still sealed) chained **BTC → SOL → ETH → HYPE** after the earlier DOGE+AVAX stand-downs. Did not wrap. Universe exhausted: all six executable books. No `READY_ELIGIBLE`, so TRADE NOW was not shown and was not clicked.
+- **THIS-JOB 0G:** BTC job `8c8d331d…84fb` challenger_killed after proposed sell, tx `https://chainscan.0g.ai/tx/0x6abe43772f1b953e2c6debec31dba1d64b77a7f8c3b6f83cf950f18f11e263e4`. SOL job `d3b198f7…42c3` `no_side`, tx `https://chainscan.0g.ai/tx/0x7e7f85aaf4aacd29129b8697cbc5de7e8f6d56745754897807a262e2d31b21ef`. ETH job `78617f6c…845c` tx `https://chainscan.0g.ai/tx/0xdf4f8f95cbee81f99402754455915635bbc3f4623861318f5fc171da631f8ae0`. HYPE job `9761cbd5…c980` `no_side` proposed none, tx `https://chainscan.0g.ai/tx/0x266c45cbd35cb8b9e856d7f3c850e5ce72d34fb33251bba616345e34cd04cb78`.
+- **BLOCKED:** Authenticode still absent. iTransfer still not live. TRADE NOW not clicked: short hypothesis still produced no `READY_ELIGIBLE` preview. Forcing a fill would be a fake demo.
+
+SECURITY RESULT: The model cannot AUTHORIZE. TRADE NOW is still an explicit desktop confirmation of the existing host path.
+TX HASH / OID: HYPE 0G `https://chainscan.0g.ai/tx/0x266c45cbd35cb8b9e856d7f3c850e5ce72d34fb33251bba616345e34cd04cb78` (job `9761cbd5…c980`). Historical venue OID `529167222216` unchanged. No new order.
+CLASSIFICATION:
+- Chat hunt continues after genuine NO TRADE until READY or exhausted: **IMPLEMENTED + LIVE VERIFIED**
+- Stale 4h automation skips no longer stop a chat hunt: **IMPLEMENTED + LIVE VERIFIED**
+- Current-job 0G receipts: **IMPLEMENTED + LIVE VERIFIED**
+- TRADE NOW existing authorize path: **UNCHANGED** (no eligible preview this pass)
+PRODUCTION READY: 0.9.10 installer after tag.
+NEXT STEP: Push. Tag `v0.9.10`. NSIS. Overlay `D:\PIT`. Vercel + Render. TRADE NOW only on an exact READY preview.
+
+---
+
+
 ## M131 — Operator Agent hunts the universe. Live facts on NO TRADE. PIT 0.9.9
 
 - **Source:** AVAX NO TRADE after “Find the next opportunity” showed a sparse card (no live mark/oracle/funding/OI, no stages, no thesis) and a giant empty area. Research next stopped after one book. 0G receipts were job-scoped (good) but unused below the fold.

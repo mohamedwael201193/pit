@@ -164,10 +164,10 @@ func (h *Hub) decorateWatchAgent(parsed deskcmd.Result) deskcmd.Result {
 	}
 	parsed.Agent = agent
 	if parsed.StartResearch && parsed.Coin == "" && agent.Best != "" && agent.Best != "none" {
-		skip := h.huntSkipSet()
+		skip := h.thisHuntSkipSet()
 		if skip[strings.ToUpper(agent.Best)] == "" {
 			parsed.Coin = agent.Best
-		} else if next := h.pickBestCoinSkipping(skip); next != "" {
+		} else if next := h.pickNextCoin(skip); next != "" {
 			parsed.Coin = next
 			agent.Best = next
 		}

@@ -28,7 +28,9 @@ export function assertChatAgentCopy() {
   if (!run.includes("Waiting for this research run")) throw new Error("waiting receipt copy");
   if (!run.includes("collectJobReceipts")) throw new Error("job-scoped receipts");
   if (!run.includes("evidenceObjectForJob")) throw new Error("evidence must match job");
-  if (run.includes("{CHAT_AGENT_COPY.cannotAuthorize}")) throw new Error("cannot authorize belongs in the header once");
+  if (run.includes("{CHAT_AGENT_COPY.cannotAuthorize}")) throw new Error("cannot authorize belongs in the composer once");
+  if (!chat.includes("CHAT_AGENT_COPY.cannotAuthorize")) throw new Error("authorize hint once in composer");
+  if (chat.includes("<p className=\"fine\">{CHAT_AGENT_COPY.cannotAuthorize}</p>")) throw new Error("cannot AUTHORIZE must not sit as a header wall");
   if (!run.includes("CANCELED_BY_USER")) throw new Error("cancelled job must not paint NO TRADE");
   if (!run.includes('kind === "READY_ELIGIBLE"')) throw new Error("TRADE NOW only on READY");
   if (!run.includes('id: "DECISION"')) throw new Error("decision stage");
@@ -63,6 +65,8 @@ export function assertChatAgentCopy() {
   if (!run.includes("agent-receipts")) throw new Error("0G receipts in the turn");
   if (!run.includes("hyperliquidTrade")) throw new Error("Hyperliquid trade link");
   if (!run.includes("LIVE MARKET")) throw new Error("live facts labeled");
+  if (!run.includes("huntRejected.length >= executable.length")) throw new Error("universe exhausted only after every executable was checked");
+  if (run.includes('String(researchNote || "").includes("every executable")')) throw new Error("exhausted copy must not hide a partial hunt");
   if (!run.includes("<h4>Thesis</h4>")) throw new Error("NO TRADE thesis");
   if (!run.includes("<h4>Rejected side</h4>")) throw new Error("rejected side");
   if (!run.includes("LiveFacts")) throw new Error("live book facts");
@@ -91,6 +95,8 @@ export function assertChatAgentCopy() {
   if (!app.includes("chain = next")) throw new Error("Find the best must continue after NO TRADE");
   if (!app.includes('setResearchJobId("")')) throw new Error("new book must drop previous job id");
   if (app.includes("Math.min(6")) throw new Error("hunt must not stop at six books");
+  if (!app.includes("new Set([...huntRef.current, ...ranked])")) throw new Error("hunt universe must grow with live books");
+  if (!app.includes("remain")) throw new Error("host exhausted must not stop while untried books remain");
   if (!app.includes("unnamed hunts") && !chat.includes("unnamed ? \"\"")) throw new Error("next hunt must ignore host coin");
   const companion = readFileSync(join(here, "../src/companion.ts"), "utf8");
   if (!companion.includes("/local/research/stream")) throw new Error("research SSE");

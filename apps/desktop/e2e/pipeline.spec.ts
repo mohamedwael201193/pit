@@ -73,6 +73,7 @@ export function assertLiveAgentPipeline() {
   if (!app.includes("openResearchStream")) throw new Error("live research stream");
   if (!app.includes("startResearch")) throw new Error("Find the best must start a real job");
   if (!app.includes("chain = next")) throw new Error("chat hunt must continue after a genuine NO TRADE");
+  if (!app.includes("remain")) throw new Error("host exhausted must keep scanning remaining books");
   if (!chat.includes("Find best opportunity") && !chat.includes("Find the best opportunity")) {
     throw new Error("user can type Find the best opportunity");
   }

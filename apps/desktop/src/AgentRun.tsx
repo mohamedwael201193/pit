@@ -303,7 +303,7 @@ export function AgentRun({
     stop?.body ||
     "";
 
-  const huntDone = !busy && (String(researchNote || "").includes("every executable") || (huntRejected.length > 0 && huntRejected.length >= executable.length && executable.length > 0));
+  const huntDone = !busy && huntRejected.length > 0 && executable.length > 0 && huntRejected.length >= executable.length;
   const follow = ready
     ? []
     : noTrade || policyBlock || capitalBlock

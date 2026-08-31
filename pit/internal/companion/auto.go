@@ -291,7 +291,6 @@ func (h *Hub) autoTick() {
 		m.Stage = "researching"
 		m.LastAction = "research_running"
 		_ = auto.SaveMission(h.Dir, m)
-		_ = auto.Save(h.Dir, p)
 		return
 	}
 	if wantResearch && p.LastResearchCoin != pick.Coin {
