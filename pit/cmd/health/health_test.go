@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/mohamedwael201193/pit/internal/config"
@@ -133,11 +134,15 @@ func TestWindowsRedirectsToInstallerNotReleasePage(t *testing.T) {
 	if loc != "https://github.com/mohamedwael201193/pit/releases/download/v0.9.11/PIT_0.9.11_x64-setup.exe" {
 		t.Fatal(loc)
 	}
-	if rec.Header().Get("Content-Type") == "text/html" {
-		t.Fatal("html")
+	ct := strings.ToLower(rec.Header().Get("Content-Type"))
+	if strings.Contains(ct, "html") {
+		t.Fatal("html", ct)
 	}
 	if rec.Header().Get("Content-Disposition") == "" {
 		t.Fatal("disposition")
+	}
+	if strings.Contains(strings.ToLower(rec.Body.String()), "<html") || strings.Contains(strings.ToLower(rec.Body.String()), "<a href") {
+		t.Fatal("html body")
 	}
 	req = httptest.NewRequest(http.MethodGet, "/checksums", nil)
 	rec = httptest.NewRecorder()

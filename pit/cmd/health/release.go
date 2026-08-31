@@ -80,7 +80,8 @@ func redirectLatestAsset(w http.ResponseWriter, r *http.Request, url, filename s
 	if filename != "" {
 		w.Header().Set("Content-Disposition", `attachment; filename="`+filename+`"`)
 	}
-	http.Redirect(w, r, dest, http.StatusFound)
+	w.Header().Set("Location", dest)
+	w.WriteHeader(http.StatusFound)
 }
 
 func cachedRelease() (publicRelease, bool) {
