@@ -259,10 +259,7 @@ export function CommandChat({
   return (
     <section className="command agent-workspace" aria-label="PIT agent">
       <div className="command-head">
-        <div>
-          <p className="label">PIT Agent</p>
-          <p className="fine">{CHAT_AGENT_COPY.cannotAuthorize}</p>
-        </div>
+        <p className="fine">{CHAT_AGENT_COPY.cannotAuthorize}</p>
         <div className="model-pick">
           <button type="button" aria-haspopup="listbox" aria-expanded={modelOpen} onClick={() => setModelOpen((v) => !v)}>
             {picked?.private_book ? "Private + Verified" : "Desk command"}
@@ -309,6 +306,7 @@ export function CommandChat({
             stick.current = box.scrollHeight - box.scrollTop - box.clientHeight < 96;
           }}
         >
+          <div className="agent-stream-pad" aria-hidden="true" />
           {lines.length === 0 && !showMission ? (
             <p className="chat-empty">Ask PIT what to trade. It will scan live books, research privately, and wait for TRADE NOW on this computer.</p>
           ) : null}
@@ -456,29 +454,15 @@ function lastHuntUserIndex(lines: ChatMessage[]) {
 function composeStream(lines: ChatMessage[], showMission: boolean) {
   const vis = visibleTurns(lines);
   if (!showMission) return vis.map((row) => ({ ...row, mission: false as const }));
+  if (!vis.length) return [{ mission: true as const }];
   const huntAt = lastHuntUserIndex(lines);
-  const out: Array<{ m?: ChatMessage; text?: string; mission?: boolean }> = [];
-  let placed = false;
-  if (!vis.length) {
-    return [{ mission: true }];
+  const huntUser = huntAt >= 0 ? vis.find((row) => row.m === lines[huntAt]) : undefined;
+  if (huntUser) return [{ ...huntUser, mission: false as const }, { mission: true as const }];
+  const lastUser = [...vis].reverse().find((r) => r.m.role === "user");
+  if (lastUser && huntLike(String(lastUser.m.text || ""))) {
+    return [{ ...lastUser, mission: false as const }, { mission: true as const }];
   }
-  for (const row of vis) {
-    out.push({ ...row, mission: false });
-    if (!placed && huntAt >= 0 && row.m === lines[huntAt]) {
-      out.push({ mission: true });
-      placed = true;
-    }
-  }
-  if (!placed) {
-    const lastUser = [...vis].reverse().find((r) => r.m.role === "user");
-    if (lastUser && huntLike(String(lastUser.m.text || ""))) {
-      const idx = out.findIndex((r) => r.m === lastUser.m);
-      out.splice(idx + 1, 0, { mission: true });
-      placed = true;
-    }
-  }
-  if (!placed) out.push({ mission: true });
-  return out;
+  return [{ mission: true as const }];
 }
 
 function TurnBody({ text }: { text: string }) {

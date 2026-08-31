@@ -21,9 +21,19 @@ html, body, #root {
   font-family: "Host Grotesk", "Geist", system-ui, sans-serif;
   font-size: clamp(13px, 0.18vw + 12.4px, 15px);
   letter-spacing: -0.01em;
+  color-scheme: dark;
 }
 button, input, textarea, select { font: inherit; color: inherit; }
-button { cursor: pointer; }
+button, summary {
+  appearance: none;
+  -webkit-appearance: none;
+}
+button {
+  cursor: pointer;
+  background: #14161c;
+  color: var(--cream);
+  border: 1px solid var(--hair);
+}
 a { color: var(--cream); }
 :focus-visible { outline: 1px solid var(--coral); outline-offset: 2px; }
 .tabular { font-variant-numeric: tabular-nums; font-feature-settings: "tnum"; }
@@ -255,7 +265,7 @@ a { color: var(--cream); }
   display: flex;
   flex-direction: column;
   border-right: 1px solid var(--line);
-  background: var(--panel);
+  background: #090a0c;
   min-height: 0;
   overflow: hidden;
 }
@@ -293,7 +303,6 @@ a { color: var(--cream); }
 .thread-list .meta { font-size: 10px; color: var(--mute); margin-top: 4px; }
 
 .command {
-  border-right: 1px solid var(--line);
   padding: 0;
   display: flex;
   flex-direction: column;
@@ -356,18 +365,19 @@ a { color: var(--cream); }
 }
 .turn .who { font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--mute); display: block; margin-bottom: 4px; }
 .composer {
-  padding: 10px 14px 14px;
+  padding: 8px 18px 14px;
   border-top: 1px solid var(--line);
   flex-shrink: 0;
+  background: #090a0c;
 }
 .command textarea {
   width: 100%;
   margin: 0;
-  background: var(--lift);
+  background: #0e1014;
   border: 1px solid var(--hair);
   color: var(--cream);
-  padding: 10px 12px;
-  border-radius: 4px;
+  padding: 12px 12px;
+  border-radius: 8px;
   resize: none;
   min-height: 72px;
 }
@@ -412,9 +422,9 @@ a { color: var(--cream); }
   font-weight: 700;
 }
 .agent-card {
-  border: 1px solid var(--line);
-  padding: 12px;
-  background: #101216;
+  border: 0;
+  padding: 8px 0 4px;
+  background: transparent;
 }
 .agent-card.og { box-shadow: inset 3px 0 0 var(--coral); }
 .agent-card.preview { background: #16110f; }
@@ -991,6 +1001,16 @@ select {
 .snap span { display: block; color: var(--mute); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; }
 .snap strong { display: block; margin-top: 4px; font-variant-numeric: tabular-nums; }
 .card.stop { border-color: #4a1c1c; }
+.stage > article.card.stop {
+  margin: 0;
+  border-radius: 0;
+  border-left: 0;
+  border-right: 0;
+  border-top: 0;
+  padding: 8px 18px;
+  background: #120b0b;
+}
+.stage > article.card.stop p { margin: 0; }
 .pair-card .pair-code {
   font-family: ui-monospace, monospace;
   font-size: 28px;
@@ -1074,6 +1094,17 @@ button.on, .cta-row .on, .beats .on, .nav button.on, .row .on, button.linkish.on
 }
 .primary:hover { filter: brightness(1.06); }
 .primary:disabled { opacity: 0.4; }
+button.ghost, .ghost {
+  background: #14161c;
+  border: 1px solid var(--hair);
+  color: var(--cream);
+  border-radius: 8px;
+  padding: 7px 12px;
+}
+button.ghost:hover, .ghost:hover {
+  background: #1a1d24;
+  border-color: #2a2e36;
+}
 
 .contract {
   border: 1px solid #3a2222;
@@ -2040,11 +2071,21 @@ details.card > summary { cursor: pointer; font-weight: 600; letter-spacing: 0.08
   grid-template-columns: minmax(0, 1fr) 148px;
 }
 .agent-stream {
+  display: flex;
+  flex-direction: column;
   min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 22px 28px 36px;
+  padding: 16px 24px 12px;
   overscroll-behavior: contain;
+}
+.agent-stream-pad {
+  flex: 1 0 0;
+  min-height: 0;
+}
+.agent-stream > .turn:first-of-type,
+.agent-stream > .chat-empty {
+  margin-top: auto;
 }
 .agent-rail {
   border-left: 1px solid var(--line);
@@ -2098,7 +2139,9 @@ details.card > summary { cursor: pointer; font-weight: 600; letter-spacing: 0.08
 .agent-checks li.on { color: var(--cream); }
 .agent-checks li.on::before { content: "● "; color: var(--coral); }
 .agent-card {
-  padding: 4px 0 2px;
+  padding: 8px 0 4px;
+  border: 0;
+  background: transparent;
 }
 .agent-card.book header,
 .agent-trade-head {
@@ -2206,16 +2249,46 @@ details.card > summary { cursor: pointer; font-weight: 600; letter-spacing: 0.08
 .agent-reason strong { display: block; margin-bottom: 4px; color: var(--mute); font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; }
 .agent-note { margin: 8px 0 0; font-size: 14px; color: var(--mute); max-width: 52ch; }
 .agent-follow { display: flex; flex-wrap: wrap; gap: 6px; }
+.agent-follow .chip-btn,
+.agent-mission .ghost,
+.agent-proof a,
+a.ghost {
+  background: #14161c;
+  border: 1px solid var(--hair);
+  color: var(--cream);
+  border-radius: 8px;
+  text-decoration: none;
+}
+.agent-proof a {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 10px;
+  margin-left: 8px;
+}
 .agent-proof { margin: 0; font-size: 13px; color: var(--mute); }
-.agent-tech { color: var(--mute); font-size: 12px; }
-.agent-sleep-link { margin: 0; }
-.agent-sleep-link .linkish {
+.agent-tech {
+  color: var(--mute);
+  font-size: 12px;
+  background: transparent;
+  border: 0;
+}
+.agent-tech summary {
+  cursor: pointer;
+  color: var(--mute);
   background: transparent;
   border: 0;
   padding: 0;
-  color: var(--mute);
-  text-decoration: underline;
-  text-underline-offset: 3px;
+  list-style: none;
+}
+.agent-tech summary::-webkit-details-marker { display: none; }
+.agent-workspace .composer .primary {
+  background: #14161c;
+  border: 1px solid var(--hair);
+  color: var(--cream);
+}
+.agent-workspace .composer .primary:hover {
+  border-color: var(--coral);
+  color: var(--cream);
 }
 .prompt-chips.more { margin-top: 8px; }
 .composer textarea { min-height: 64px; font-size: 16px; }

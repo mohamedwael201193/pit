@@ -34,7 +34,12 @@ export function assertChatAgentCopy() {
   if (!chat.includes("visibleTurns")) throw new Error("duplicate pit lines must collapse");
   if (!chat.includes("Live numbers stay on the cards")) throw new Error("old hunt dump must collapse");
   if (!chat.includes("composeStream")) throw new Error("mission must live inside the conversation");
+  if (!chat.includes("if (huntUser) return")) throw new Error("mission view must drop the old desk wall");
   if (chat.includes("Still researching ${island.coin}")) throw new Error("busy hunt must not append a second canned line");
+  const css = readFileSync(join(here, "../src/styles.css"), "utf8");
+  if (!css.includes("button.ghost")) throw new Error("ghost buttons must be dark-styled");
+  if (!css.includes("color-scheme: dark")) throw new Error("native widgets must follow the dark desk");
+  if (run.includes("agent-sleep-link")) throw new Error("sleep must not be a standalone native button");
   const collapsed = displayTurn({
     role: "pit",
     text: "AVAX is the strongest executable book among 6 of 232 live Hyperliquid perps. Mark 7.32. Venue min $10.02. Host clip $12.95. Buying power $16.18. Starting sealed 0G Direct on this computer. Chat cannot AUTHORIZE.",

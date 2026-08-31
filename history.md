@@ -2,6 +2,34 @@
 
 ---
 
+## M127 — Dark Agent controls. One current hunt. PIT 0.9.5
+
+- **Source:** Live Agent on localhost:3001 still showed a native white Windows button under Research next / Show why / Compare candidates. The Desk thread wall sat above the mission, so the page still read as two stacked apps.
+- **Discovery:** `className="ghost"` had no stylesheet. Windows painted a white `<button>`. Unclassed `ExternalLink` and `<details>` summary could do the same. `composeStream` kept the whole Desk log when a hunt result was live.
+- **Candidate:** Dark ghost/chip controls, `color-scheme: dark`, Sleep Mission and Technical details as chips, one hunt turn plus the live mission. Version stays **0.9.5**.
+- **Kill:** Second AUTHORIZE path. Fake fills. Flatten OID 529167222216. Remint PIT-4bbee556. Authenticode claim.
+- **Next:** Overlay `D:\PIT`, tag `v0.9.5`, NSIS, Vercel + Render. Do not remint. Do not flatten. Do not start a live trade unless the user clicks TRADE NOW on an exact preview.
+
+DATE/TIME: 2026-08-31 03:01+03
+PHASE: Agent visual polish. Host remains execution authority.
+GOAL: Every Agent control is dark. The current hunt is the conversation. TRADE NOW is still the existing desktop authorize path.
+RESULT:
+- **IMPLEMENTED:** Global dark `button` + `.ghost`. Sleep Mission is a chip, not a native slab. Technical details is a chip. Composer Send is dark. Completed research hides the live pipe and book stack. `composeStream` shows the last hunt ask plus the mission.
+- **TESTED:** `go test ./...` PASS. Desktop `tsc -b` pass. `npx tsx e2e/run.ts` pass. Chrome on localhost:3001: no button luminance above 0.55. Chips are `rgb(20, 22, 28)` / cream. TRADE NOW path unchanged.
+- **LIVE:** Companion overlaid to `D:\PIT`. `pit.exe version` = PIT 0.9.5. `/health` = 0.9.5. No new MAINNET fill. ETH OID `529167222216` untouched.
+- **BLOCKED:** Authenticode still absent. iTransfer still not live.
+
+SECURITY RESULT: The model cannot AUTHORIZE. TRADE NOW is still an explicit desktop confirmation of the existing host path.
+TX HASH / OID: Historical OID `529167222216` unchanged.
+CLASSIFICATION:
+- Dark Agent controls: **IMPLEMENTED + TESTED**
+- TRADE NOW existing authorize path: **UNCHANGED**
+- Live MAINNET fill: **NOT STARTED**
+PRODUCTION READY: 0.9.5 installer after tag.
+NEXT STEP: Overlay `D:\PIT`. `python _scripts/push_head.py`. `python _scripts/tag_push.py v0.9.5`. Deploy web.
+
+---
+
 ## M126 — One Agent conversation. PIT 0.9.5
 
 - **Source:** 0.9.4 still stacked a cockpit above a transcript. Nested scrollbars. Hunt chips and "Researching AVAX" repeated while the AVAX no-trade card sat in another pane. Screenshots showed two apps, not one operator.

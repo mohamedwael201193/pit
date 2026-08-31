@@ -166,6 +166,7 @@ export function AgentRun({
 }) {
   const [whyOpen, setWhy] = useState(false);
   const [sleepOpen, setSleep] = useState(false);
+  const [techOpen, setTech] = useState(false);
   const verified = committeeVerified(roles);
   const executable = coins.filter((c) => c.executionFeasible);
   const eligible = coins.filter((c) => c.eligible || c.policyEligible);
@@ -226,24 +227,29 @@ export function AgentRun({
         ["Review", "__review"],
         ["Compare candidates", "Compare top opportunities"],
         ["Show why", "__why"],
+        ["Sleep Mission", "__sleep"],
+        ["Technical details", "__tech"],
       ]
     : noTrade || policyBlock || capitalBlock
       ? [
           ["Research next", "Find the best opportunity"],
           ["Show why", "__why"],
           ["Compare candidates", "Compare top opportunities"],
+          ["Sleep Mission", "__sleep"],
+          ["Technical details", "__tech"],
         ]
       : fail
         ? [
             ["Research next", "Find the best opportunity"],
             ["Show why", "__why"],
+            ["Technical details", "__tech"],
           ]
         : busy
           ? [["Stop research", "Stop research"]]
           : [];
 
-  const showBook = Boolean(focus && (busy || ready || noTrade || kind));
-  const showPipe = busy || Boolean(stage) || Boolean(jobId);
+  const showBook = Boolean(focus && (busy || ready));
+  const showPipe = busy;
   const showVerdict = !busy && Boolean(verdict);
 
   return (
@@ -257,20 +263,24 @@ export function AgentRun({
         {busy && elapsed ? <span className="agent-elapsed">{elapsed}{pollMiss ? " reconnecting" : ""}</span> : null}
       </p>
 
+      {busy ? (
       <ul className="agent-checks">
-        <li className={scannedN ? "done" : busy ? "on" : ""}>
+        <li className={scannedN ? "done" : "on"}>
           {scannedN ? `${scannedN} markets scanned` : "Waiting for live books"}
         </li>
-        <li className={eligible.length ? "done" : busy && scannedN ? "on" : ""}>
+        <li className={eligible.length ? "done" : scannedN ? "on" : ""}>
           {eligible.length ? `policy filtered · ${eligible.length} eligible` : "policy filter pending"}
         </li>
-        <li className={executable.length ? "done" : busy && eligible.length ? "on" : ""}>
+        <li className={executable.length ? "done" : eligible.length ? "on" : ""}>
           {executable.length ? `capital checked · ${executable.length} executable` : "capital check pending"}
         </li>
         <li className={executable.length ? "done" : ""}>
           {executable.length ? `${executable.length} executable candidates` : "no executable candidate yet"}
         </li>
       </ul>
+      ) : scannedN ? (
+        <p className="agent-note">{scannedN} scanned · {eligible.length} eligible · {executable.length} executable</p>
+      ) : null}
 
       {showBook && focus ? (
         <article className="agent-card book">
@@ -465,7 +475,7 @@ export function AgentRun({
                     : orderState.toUpperCase()}
           </p>
           <div className="cta-row">
-            <ExternalLink href={LINKS.hl}>Open Hyperliquid</ExternalLink>
+            <ExternalLink className="ghost" href={LINKS.hl}>Open Hyperliquid</ExternalLink>
             <button type="button" className="ghost" onClick={onOpenActivity}>
               Open Activity
             </button>
@@ -485,7 +495,7 @@ export function AgentRun({
           {proof.txLink ? (
             <>
               {" "}
-              <ExternalLink href={proof.txLink}>Open 0G explorer</ExternalLink>
+              <ExternalLink className="ghost" href={proof.txLink}>Open 0G explorer</ExternalLink>
             </>
           ) : null}
         </p>
@@ -511,6 +521,14 @@ export function AgentRun({
                   onOpenPreview();
                   return;
                 }
+                if (q === "__sleep") {
+                  setSleep(true);
+                  return;
+                }
+                if (q === "__tech") {
+                  setTech((v) => !v);
+                  return;
+                }
                 onAsk(q);
               }}
             >
@@ -534,22 +552,13 @@ export function AgentRun({
         <article className="agent-card">
           <p>Sleep Mission stays bound by current policy. This Agent may prepare it. Desktop still arms.</p>
           <button type="button" className="ghost" onClick={onOpenAutomation}>
-            Review Sleep Mission
+            Open Automation
           </button>
         </article>
       ) : null}
 
-      {!busy && (ready || noTrade) ? (
-        <p className="agent-sleep-link">
-          <button type="button" className="ghost" onClick={() => setSleep(true)}>
-            Review Sleep Mission
-          </button>
-        </p>
-      ) : null}
-
-      {!busy && (jobId || kind) ? (
-        <details className="agent-tech">
-          <summary>Technical details</summary>
+      {techOpen && !busy ? (
+        <article className="agent-card agent-tech">
           <p>
             Direct TeeML · {researchSku?.model || "not this chat stream"} · {researchSku?.proven_e2ee ? "sealed" : "privacy not claimed here"}
           </p>
@@ -557,7 +566,7 @@ export function AgentRun({
             Job {jobId ? shortHash(jobId) : "none"} · {kind || "idle"}
           </p>
           <p>Private book never uses Router.</p>
-        </details>
+        </article>
       ) : null}
     </div>
   );
