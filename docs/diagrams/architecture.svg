@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" role="img" aria-label="PIT end-to-end architecture">
+  <rect width="1280" height="720" fill="#f0e7d4"/>
+  <rect x="0" y="0" width="8" height="720" fill="#d82f2f"/>
+  <text x="40" y="48" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="12" letter-spacing="4" fill="#d82f2f">PIT 0.9.13</text>
+  <text x="40" y="86" font-family="Georgia, Times New Roman, serif" font-size="32" fill="#14120f">End-to-end architecture</text>
+  <text x="40" y="114" font-family="ui-sans-serif, system-ui, sans-serif" font-size="14" fill="#6b6458">Web discovers. Desktop hosts. 0G seals the book. Hyperliquid executes after you authorize.</text>
+
+  <rect x="40" y="160" width="280" height="200" rx="4" fill="#faf6ee" stroke="#14120f" stroke-width="1.25"/>
+  <text x="60" y="192" font-family="ui-monospace, Menlo, monospace" font-size="11" letter-spacing="3" fill="#d82f2f">01  WEB</text>
+  <text x="60" y="228" font-family="Georgia, serif" font-size="20" fill="#14120f">pit0g.vercel.app</text>
+  <text x="60" y="256" font-family="ui-sans-serif, system-ui, sans-serif" font-size="13" fill="#6b6458">Radar, Proof, Pair, Protect</text>
+  <text x="60" y="278" font-family="ui-sans-serif, system-ui, sans-serif" font-size="13" fill="#6b6458">Download via /windows</text>
+  <text x="60" y="316" font-family="ui-sans-serif, system-ui, sans-serif" font-size="13" fill="#14120f">Device token only. No session key.</text>
+  <text x="60" y="338" font-family="ui-sans-serif, system-ui, sans-serif" font-size="13" fill="#14120f">Cannot AUTHORIZE, pin, or arm.</text>
+
+  <line x1="320" y1="260" x2="390" y2="260" stroke="#d82f2f" stroke-width="2"/>
+  <polygon points="390,254 406,260 390,266" fill="#d82f2f"/>
+  <text x="322" y="246" font-family="ui-monospace, Menlo, monospace" font-size="10" fill="#d82f2f">8-CHAR CODE / 2 MIN</text>
+
+  <rect x="406" y="148" width="468" height="424" rx="4" fill="#14120f"/>
+  <text x="432" y="184" font-family="ui-monospace, Menlo, monospace" font-size="11" letter-spacing="3" fill="#d82f2f">02  DESKTOP HOST</text>
+  <text x="432" y="222" font-family="Georgia, serif" font-size="24" fill="#f0e7d4">PIT Desktop</text>
+  <text x="432" y="248" font-family="ui-sans-serif, system-ui, sans-serif" font-size="13" fill="#c4bba8">127.0.0.1:17373  execution authority</text>
+  <rect x="432" y="272" width="200" height="56" fill="#1f1c18"/>
+  <text x="448" y="296" font-family="ui-sans-serif, system-ui, sans-serif" font-size="12" fill="#f0e7d4">Policy pin</text>
+  <text x="448" y="314" font-family="ui-sans-serif, system-ui, sans-serif" font-size="12" fill="#c4bba8">host envelope</text>
+  <rect x="648" y="272" width="200" height="56" fill="#1f1c18"/>
+  <text x="664" y="296" font-family="ui-sans-serif, system-ui, sans-serif" font-size="12" fill="#f0e7d4">Session keyring</text>
+  <text x="664" y="314" font-family="ui-sans-serif, system-ui, sans-serif" font-size="12" fill="#c4bba8">order + cancel only</text>
+  <rect x="432" y="340" width="200" height="56" fill="#1f1c18"/>
+  <text x="448" y="364" font-family="ui-sans-serif, system-ui, sans-serif" font-size="12" fill="#f0e7d4">Committee sealer</text>
+  <text x="448" y="382" font-family="ui-sans-serif, system-ui, sans-serif" font-size="12" fill="#c4bba8">HPKE + VerifyE2EE</text>
+  <rect x="648" y="340" width="200" height="56" fill="#1f1c18"/>
+  <text x="664" y="364" font-family="ui-sans-serif, system-ui, sans-serif" font-size="12" fill="#f0e7d4">TRADE NOW</text>
+  <text x="664" y="382" font-family="ui-sans-serif, system-ui, sans-serif" font-size="12" fill="#c4bba8">AUTHORIZE + preview hash</text>
+  <rect x="432" y="408" width="416" height="48" fill="#d82f2f"/>
+  <text x="448" y="438" font-family="ui-sans-serif, system-ui, sans-serif" font-size="13" fill="#faf6ee">Agent  Markets  Research  Portfolio  Activity  Automation  Security</text>
+  <text x="432" y="486" font-family="ui-sans-serif, system-ui, sans-serif" font-size="13" fill="#c4bba8">Host sizes the order. The model cannot set size or raise clip.</text>
+  <text x="432" y="508" font-family="ui-sans-serif, system-ui, sans-serif" font-size="13" fill="#c4bba8">CLI, SDK, and MCP read the desk. They cannot authorize.</text>
+  <text x="432" y="544" font-family="ui-monospace, Menlo, monospace" font-size="11" fill="#8a8174">SIDECARS  pit + pit-sealer</text>
+
+  <rect x="900" y="160" width="340" height="196" rx="4" fill="#faf6ee" stroke="#14120f" stroke-width="1.25"/>
+  <text x="920" y="192" font-family="ui-monospace, Menlo, monospace" font-size="11" letter-spacing="3" fill="#d82f2f">03  0G DIRECT</text>
+  <text x="920" y="228" font-family="Georgia, serif" font-size="20" fill="#14120f">Aristotle 16661</text>
+  <text x="920" y="256" font-family="ui-sans-serif, system-ui, sans-serif" font-size="13" fill="#6b6458">TeeML glm-5.2, wallet-signed app-sk-</text>
+  <text x="920" y="278" font-family="ui-sans-serif, system-ui, sans-serif" font-size="13" fill="#6b6458">Router lists models. Book path is Direct.</text>
+  <text x="920" y="308" font-family="ui-sans-serif, system-ui, sans-serif" font-size="13" fill="#14120f">Storage: official Go client --proof</text>
+  <text x="920" y="330" font-family="ui-sans-serif, system-ui, sans-serif" font-size="13" fill="#14120f">Flow 0x62D4...7526</text>
+
+  <rect x="900" y="376" width="340" height="196" rx="4" fill="#faf6ee" stroke="#14120f" stroke-width="1.25"/>
+  <text x="920" y="408" font-family="ui-monospace, Menlo, monospace" font-size="11" letter-spacing="3" fill="#d82f2f">04  HYPERLIQUID</text>
+  <text x="920" y="444" font-family="Georgia, serif" font-size="20" fill="#14120f">api.hyperliquid.xyz</text>
+  <text x="920" y="472" font-family="ui-sans-serif, system-ui, sans-serif" font-size="13" fill="#6b6458">Agent PIT-{workspace8}</text>
+  <text x="920" y="494" font-family="ui-sans-serif, system-ui, sans-serif" font-size="13" fill="#6b6458">Wallet signs approveAgent. Session never does.</text>
+  <text x="920" y="524" font-family="ui-sans-serif, system-ui, sans-serif" font-size="13" fill="#14120f">Allowlisted: order, cancel</text>
+  <text x="920" y="546" font-family="ui-sans-serif, system-ui, sans-serif" font-size="13" fill="#14120f">FILLED only from user_fills</text>
+
+  <line x1="874" y1="248" x2="900" y2="248" stroke="#14120f" stroke-width="1.5"/>
+  <line x1="874" y1="464" x2="900" y2="464" stroke="#14120f" stroke-width="1.5"/>
+
+  <text x="40" y="680" font-family="ui-sans-serif, system-ui, sans-serif" font-size="13" fill="#6b6458">Health  pit-health.onrender.com  /  sign:false  /  GET /windows 302 to the NSIS asset</text>
+  <text x="40" y="702" font-family="ui-sans-serif, system-ui, sans-serif" font-size="13" fill="#6b6458">Nothing in this diagram is a live order. Execution starts only after desktop AUTHORIZE.</text>
+</svg>

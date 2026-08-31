@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" role="img" aria-label="PIT research to execution flow">
+  <rect width="1280" height="720" fill="#f0e7d4"/>
+  <rect x="0" y="0" width="8" height="720" fill="#d82f2f"/>
+  <text x="40" y="48" font-family="ui-monospace, Menlo, Consolas, monospace" font-size="12" letter-spacing="4" fill="#d82f2f">RESEARCH TO EXECUTION</text>
+  <text x="40" y="86" font-family="Georgia, Times New Roman, serif" font-size="32" fill="#14120f">Hunt, committee, authorize, fill</text>
+  <text x="40" y="114" font-family="ui-sans-serif, system-ui, sans-serif" font-size="14" fill="#6b6458">Live Hyperliquid facts. Private 0G Direct for the book. Host size. Human AUTHORIZE. Venue status.</text>
+
+  <g font-family="ui-sans-serif, system-ui, sans-serif">
+    <rect x="40" y="150" width="188" height="110" fill="#14120f"/>
+    <text x="56" y="176" fill="#d82f2f" font-family="ui-monospace, Menlo, monospace" font-size="11">01</text>
+    <text x="56" y="204" fill="#f0e7d4" font-size="16">Live scan</text>
+    <text x="56" y="228" fill="#c4bba8" font-size="12">marks, oracle, OI</text>
+    <rect x="244" y="150" width="188" height="110" fill="#faf6ee" stroke="#14120f" stroke-width="1.25"/>
+    <text x="260" y="176" fill="#d82f2f" font-family="ui-monospace, Menlo, monospace" font-size="11">02</text>
+    <text x="260" y="204" fill="#14120f" font-size="16">Rank books</text>
+    <text x="260" y="228" fill="#6b6458" font-size="12">executable vs policy</text>
+    <rect x="448" y="150" width="188" height="110" fill="#14120f"/>
+    <text x="464" y="176" fill="#d82f2f" font-family="ui-monospace, Menlo, monospace" font-size="11">03</text>
+    <text x="464" y="204" fill="#f0e7d4" font-size="16">Private 0G</text>
+    <text x="464" y="228" fill="#c4bba8" font-size="12">Direct TeeML glm-5.2</text>
+    <rect x="652" y="150" width="188" height="110" fill="#faf6ee" stroke="#14120f" stroke-width="1.25"/>
+    <text x="668" y="176" fill="#d82f2f" font-family="ui-monospace, Menlo, monospace" font-size="11">04</text>
+    <text x="668" y="204" fill="#14120f" font-size="16">Researcher</text>
+    <text x="668" y="228" fill="#6b6458" font-size="12">sealed thesis</text>
+    <rect x="856" y="150" width="188" height="110" fill="#14120f"/>
+    <text x="872" y="176" fill="#d82f2f" font-family="ui-monospace, Menlo, monospace" font-size="11">05</text>
+    <text x="872" y="204" fill="#f0e7d4" font-size="16">Challenger</text>
+    <text x="872" y="228" fill="#c4bba8" font-size="12">sees the thesis</text>
+    <rect x="1060" y="150" width="180" height="110" fill="#faf6ee" stroke="#14120f" stroke-width="1.25"/>
+    <text x="1076" y="176" fill="#d82f2f" font-family="ui-monospace, Menlo, monospace" font-size="11">06</text>
+    <text x="1076" y="204" fill="#14120f" font-size="16">Risk</text>
+    <text x="1076" y="228" fill="#6b6458" font-size="12">stand-down or side</text>
+  </g>
+
+  <line x1="40" y1="292" x2="1240" y2="292" stroke="#d82f2f" stroke-width="2"/>
+
+  <g font-family="ui-sans-serif, system-ui, sans-serif">
+    <rect x="40" y="324" width="188" height="110" fill="#faf6ee" stroke="#14120f" stroke-width="1.25"/>
+    <text x="56" y="350" fill="#d82f2f" font-family="ui-monospace, Menlo, monospace" font-size="11">07</text>
+    <text x="56" y="378" fill="#14120f" font-size="16">TEE</text>
+    <text x="56" y="402" fill="#6b6458" font-size="12">VerifyE2EE on host</text>
+    <rect x="244" y="324" width="188" height="110" fill="#14120f"/>
+    <text x="260" y="350" fill="#d82f2f" font-family="ui-monospace, Menlo, monospace" font-size="11">08</text>
+    <text x="260" y="378" fill="#f0e7d4" font-size="16">Policy</text>
+    <text x="260" y="402" fill="#c4bba8" font-size="12">clip, 1x, allowlist</text>
+    <rect x="448" y="324" width="188" height="110" fill="#d82f2f"/>
+    <text x="464" y="350" fill="#faf6ee" font-family="ui-monospace, Menlo, monospace" font-size="11">09</text>
+    <text x="464" y="378" fill="#faf6ee" font-size="16">Exact preview</text>
+    <text x="464" y="402" fill="#f0e7d4" font-size="12">READY_ELIGIBLE</text>
+    <rect x="652" y="324" width="188" height="110" fill="#14120f"/>
+    <text x="668" y="350" fill="#d82f2f" font-family="ui-monospace, Menlo, monospace" font-size="11">10</text>
+    <text x="668" y="378" fill="#f0e7d4" font-size="16">You authorize</text>
+    <text x="668" y="402" fill="#c4bba8" font-size="12">desktop only</text>
+    <rect x="856" y="324" width="188" height="110" fill="#faf6ee" stroke="#14120f" stroke-width="1.25"/>
+    <text x="872" y="350" fill="#d82f2f" font-family="ui-monospace, Menlo, monospace" font-size="11">11</text>
+    <text x="872" y="378" fill="#14120f" font-size="16">Hyperliquid</text>
+    <text x="872" y="402" fill="#6b6458" font-size="12">OID, user_fills</text>
+    <rect x="1060" y="324" width="180" height="110" fill="#14120f"/>
+    <text x="1076" y="350" fill="#d82f2f" font-family="ui-monospace, Menlo, monospace" font-size="11">12</text>
+    <text x="1076" y="378" fill="#f0e7d4" font-size="16">0G proof</text>
+    <text x="1076" y="402" fill="#c4bba8" font-size="12">this-job storage</text>
+  </g>
+
+  <rect x="40" y="468" width="1200" height="200" fill="#faf6ee" stroke="#14120f" stroke-width="1.25"/>
+  <text x="64" y="504" font-family="Georgia, serif" font-size="18" fill="#14120f">Host rules that do not move</text>
+  <text x="64" y="536" font-family="ui-sans-serif, system-ui, sans-serif" font-size="14" fill="#6b6458">Sequential committee: Challenger and Risk receive the researcher thesis after that job finishes.</text>
+  <text x="64" y="560" font-family="ui-sans-serif, system-ui, sans-serif" font-size="14" fill="#6b6458">NO TRADE is a real stand-down. The hunt continues on remaining executable books and never wraps a tested book.</text>
+  <text x="64" y="584" font-family="ui-sans-serif, system-ui, sans-serif" font-size="14" fill="#6b6458">TRADE NOW appears only on READY_ELIGIBLE. Duplicate TRADE NOW on the same preview is not offered after an OID.</text>
+  <text x="64" y="608" font-family="ui-sans-serif, system-ui, sans-serif" font-size="14" fill="#6b6458">FILLED is painted only when Hyperliquid reports filled. RESTING stays RESTING until the venue says otherwise.</text>
+  <text x="64" y="640" font-family="ui-sans-serif, system-ui, sans-serif" font-size="13" fill="#14120f">If Direct fails, PIT stops. The sealed book does not fall through to the 0G Router.</text>
+</svg>

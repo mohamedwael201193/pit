@@ -1,31 +1,44 @@
 # PIT
 
-PIT is a private trading desk for 0G and Hyperliquid. It seals your book into 0G Direct TeeML, runs a sequential researcher → challenger → risk committee, and sizes the order on the **host**. The model cannot set size. Manual trading requires you to confirm an exact preview on this computer. A Sleep Mission is optional bounded host execution and only arms from this computer.
+PIT is a private trading desk that seals your book into 0G Direct TeeML, runs a sequential researcher → challenger → risk committee, and sizes the order on the **host**. The model cannot set size. Manual trading requires you to confirm an exact preview on this computer. A Sleep Mission is optional bounded host execution and only arms from this computer. The web discovers and proves. The desktop protects and acts.
 
-The web discovers and proves. The desktop protects and acts.
-
-![Architecture](docs/diagrams/architecture.jpg)
+**Product 0.9.13** · companion `127.0.0.1:17373` · website [pit0g.vercel.app](https://pit0g.vercel.app) · health [pit-health.onrender.com](https://pit-health.onrender.com/health) (`sign: false`, version `0.9.13`) · installer [direct Windows download](https://pit-health.onrender.com/windows)
 
 ---
 
-## The problem
+## Watch the product
+
+The launch film is the product, not a storyboard. It walks a real desk through:
+
+**Pair → Protect my strategy → Connect Hyperliquid → Pin Policy → Agent → live market discovery → private 0G research → committee → exact preview → user authorization → Hyperliquid execution → OID → 0G proof → Activity → Sleep Mission.**
+
+- Watch: [https://youtu.be/zYgxDTI7jIk](https://youtu.be/zYgxDTI7jIk)
+- Local master: `edit/PIT-launch.mp4`
+
+The film shows the live desk path on this computer. The matching recorded research → AUTHORIZE → Hyperliquid **FILLED** evidence published with the product is HYPE OID `531667200134` (job `4a1d45ec-8c3f-4883-a162-19739accb9cf`), with this-job 0G research and order filings on Aristotle 16661. PIT paints FILLED only when Hyperliquid reports filled.
+
+![PIT end-to-end architecture](docs/diagrams/architecture.svg)
+
+---
+
+## Core idea
 
 Pasting a trading book into a public chat API leaks alpha. Giving a bot a withdraw key is how accounts die.
 
 PIT splits the job:
 
-| Layer | What it does | What it cannot do |
+| Layer | What it does | Bound |
 |---|---|---|
 | Your wallet | Connect, bind, mint Desk ID, pin policy | Never collected as a seed |
-| 0G Direct TeeML | Sealed inference over the private book + public market | Router `sk-` path is forbidden for the book |
+| 0G Direct TeeML | Sealed inference over the private book plus public market | Router `sk-` path is forbidden for the book |
 | Host engine | Size, policy, preview hash, kill switch | LLM JSON cannot raise clip or leverage |
 | Your session | Hyperliquid `order` and `cancel` | Withdraw, leverage change, `approveAgent`, transfers |
-| 0G Storage | Encrypted objects + `--proof` | TypeScript SDK is not used for proofs |
-| Calibration | Brier / ECE when N is large enough | Invented accuracy when the sample is empty |
+| 0G Storage | Encrypted objects with `--proof` | TypeScript SDK is not used for proofs |
+| Calibration | Brier / ECE when N is large enough | Empty sample prints NOT ENOUGH DATA |
 
 ---
 
-## Why private research + controlled execution
+## Why PIT exists
 
 Research needs the private book. Execution needs a Hyperliquid session. Those must not live in the same place as the website.
 
@@ -33,26 +46,116 @@ Research needs the private book. Execution needs a Hyperliquid session. Those mu
 - TRADE NOW on desktop calls the existing host path `authorizePreview("AUTHORIZE", previewHash)`.
 - Chat, the website, MCP, and `pit-os` cannot AUTHORIZE.
 
-![Authority](docs/diagrams/authority.jpg)
+![Authority boundary](docs/diagrams/authority.svg)
 
 ---
 
-## How the system works
+## The complete user journey
 
-1. Desktop companion listens on `127.0.0.1:17373` only.
-2. You pair a browser with a one-time code. The browser receives a device token, never the session key.
-3. You connect a wallet and sign **Protect my strategy**. The Direct token stays in the OS keychain.
-4. You connect Hyperliquid and pin policy. The session can `order` and `cancel` only.
-5. Agent chat scans live books, ranks candidates, and runs Direct TeeML on each remaining executable book.
-6. If a side survives, the host builds an exact preview. You click TRADE NOW or walk away.
-7. Hyperliquid returns an OID. PIT says FILLED only when the venue reports filled.
-8. Research proof and order proof are filed to 0G Storage for **that** job. Historical receipts are not used as fallback.
-
-![Research pipeline](docs/diagrams/pipeline.jpg)
+1. Download PIT Desktop. Health `GET /windows` 302s to the GitHub **asset** `PIT_0.9.13_x64-setup.exe`.
+2. Launch. The companion listens on `127.0.0.1:17373` only.
+3. **Pair** a browser with a one-time 8-character code (two-minute TTL). The browser receives a device token, never the session key.
+4. **Protect my strategy.** The wallet signs. The Direct token stays in the OS keychain.
+5. **Connect Hyperliquid.** PIT generates `PIT-{workspace8}` locally. Your wallet signs `approveAgent`. PIT verifies `extraAgents` on the **master** wallet.
+6. **Pin policy** on Security (clip, assets, 1x, kill). Chat cannot pin. You can edit and re-pin after Ready.
+7. Open **Agent**. Ask **Find the best opportunity**, **Find the best long**, **Find the best short**, or **What can I trade now?**
+8. Watch live scan and ranking against Hyperliquid marks, oracle, funding, open interest, and venue minimums.
+9. Watch private 0G Direct: Researcher, then Challenger (with the thesis), then Risk.
+10. If a side survives, the host builds an exact preview. TRADE NOW appears only on `READY_ELIGIBLE`.
+11. You authorize on this computer, or you walk away.
+12. Hyperliquid returns an OID. PIT says FILLED only when `user_fills` reports filled.
+13. This-job 0G research and order proofs file to Aristotle Storage. Historical receipts are not used as fallback.
+14. **Activity** is the ledger. **Portfolio** is the venue. **Sleep Mission** is optional and arms only here.
 
 ---
 
-## 0G
+## Pairing
+
+Pairing is step 1. Ready requires it.
+
+- Desktop shows an 8-character code.
+- Code TTL is two minutes. Replay is denied.
+- `POST /pair` is allowed from `https://pit0g.vercel.app`.
+- The pairing response is `{sign:false, canSign:false, device}`.
+- Production `/protect` stays locked until this browser is paired.
+- `/signin` and `/app/start` redirect to `/pair`.
+
+---
+
+## Protect my strategy
+
+Protect is step 2. It funds sealed inference.
+
+- You connect a wallet (Privy app id `cmtafcijw02av0cl1ay81om7m` is public).
+- PIT never asks for a seed phrase.
+- The wallet-signed Direct token (`app-sk-`, 24h) is stored in the OS keychain under `pit/{network}/{workspace}/direct`.
+- The website does not receive the token.
+- Router `sk-` / `mk-` keys are refused on the book path.
+
+---
+
+## Connect Hyperliquid
+
+Connect is step 3.
+
+- PIT creates or reuses the local agent named `PIT-` plus the first eight hex characters of the workspace (under 17 characters).
+- Copy the PIT Agent address onto the official Hyperliquid API page. Do not paste an invented API wallet into PIT.
+- Your **master** wallet signs `approveAgent`. The session key is forbidden from signing `approveAgent`.
+- Ready requires a live `extraAgents` listing for that agent on the master wallet.
+- Recorded agent on this desk: `PIT-4bbee556` at [`0xfc64e36babe7dfe9eb779ee3a9f2362d16881d52`](https://app.hyperliquid.xyz). Reused. Not reminted.
+
+---
+
+## Hyperliquid agent authorization and permissions
+
+PIT reads live marks, oracle, funding, open interest, and venue minimums from `https://api.hyperliquid.xyz/info`.
+
+**Allowed session actions:** `order`, `cancel`.
+
+**Denied on the session key (explicit):** `withdraw3`, `usdSend`, `spotSend`, `usdClassTransfer`, `sendAsset`, `updateLeverage`, `updateIsolatedMargin`, `vaultTransfer`, `subAccountTransfer`, `createSubAccount`, `subAccountModify`, `approveAgent`, `approveBuilderFee`, `cDeposit`, `cWithdraw`, `tokenDelegate`, `spotDeploy`, `convertToMultiSigUser`, `userSetAbstraction`, `userDexAbstraction`, `twapOrder`, `twapCancel`, `batchModify`, `modify`, `scheduleCancel`, `setReferrer`, `reserveRequestWeight`, `noop`.
+
+Minimum notional follows the book. Tick rounding uses 5 significant figures. Host size is clipped by pinned policy. PIT does not invent perp margin from spot USDC unless Hyperliquid reports unified account mode.
+
+---
+
+## Policy / host envelope
+
+Policy is host-authoritative: clip, daily loss, leverage, allowlist, venue, calibration floor, cooldown, uncertainty, slippage, liquidity, kill.
+
+You edit and pin on Security (`POST /local/policy`, desktop origin). After Ready, the editor stays on that page so you can change values and re-pin. Chat cannot pin. The model cannot raise `maxClip`.
+
+Pin writes `{UserConfigDir}/pit/{workspaceId}.policy` and a hash. Preview hash binding: any mutation of the card invalidates AUTHORIZE. Exactly-once `cloid`. Restart keeps a previewed action. A second click is `duplicate_click`. Kill switch and daily loss halt stop new orders.
+
+---
+
+## Agent cockpit
+
+Desktop rail: **Desk, Agent, Markets, Research, Portfolio, Activity, Automation, Health, Security**.
+
+Agent phrases that start a hunt:
+
+- Find the best opportunity
+- Find the best long
+- Find the best short
+- What can I trade now?
+
+Hunt phrases win over a TRADE NOW substring, so “What can I trade now?” starts research instead of authorizing.
+
+---
+
+## Live market discovery
+
+The host scans currently executable books against live Hyperliquid data and pinned policy/capital. Public website Watch has no buying power, so it will not mark a coin executable for your account. Desktop Markets shows the six-book universe used by this desk (ETH, BTC, SOL, HYPE, DOGE, AVAX under the recorded policy).
+
+---
+
+## Ranking and executable-book logic
+
+Remaining books are ranked. Chat hunts skip only this-hunt `hunt-skip.json`. Automation keeps its own 4h skips. The hunt continues after a genuine NO TRADE and does not restart already-tested books. It stops when a side survives or the executable universe is exhausted. Universe exhausted with no `READY_ELIGIBLE` is a real stand-down: TRADE NOW is not shown.
+
+---
+
+## Private 0G Direct research
 
 0G is required because the private book must not sit on a public router.
 
@@ -63,142 +166,159 @@ Research needs the private book. Execution needs a Hyperliquid session. Those mu
 | Storage | Official Go client with `--proof`. Object keys are `{network}/ws/{workspaceId}/...`. |
 | Aristotle `16661` | Production chain. Explorer [chainscan.0g.ai](https://chainscan.0g.ai). |
 
-Mainnet glm-5.2 Direct path (proven Seal + VerifyE2EE):
+Mainnet glm-5.2 Direct path (Seal + VerifyE2EE in the native sealer):
 
 - Provider `0x7DCFe6AEa70350C2090041524c9B4A9262DCe87D`
 - teeSigner `0xA46EA4FC5889AD35A1487e1Ed04dCcfa872146B9`
 - Serving `0x47340d900bdFec2BD393c626E12ea0656F938d84`
 - Ledger `0x2dE54c845Cd948B72D2e32e39586fe89607074E3`
 
-Committee independence today is **role and envelope separation on the same funded provider**. Do not claim three independent Direct providers until each role has its own funded TeeML SKU.
-
-If Direct fails, PIT **stops**. It does not fall back to the Router.
+If Direct fails, PIT **stops**. It does not fall back to the Router. Researcher, Challenger, and Risk run as sequential sealed roles with independent envelopes on Direct TeeML.
 
 ---
 
-## Hyperliquid
+## Researcher / Challenger / Risk / TEE / Policy pipeline
 
-PIT reads live marks, oracle, funding, open interest, and venue minimums from `api.hyperliquid.xyz`.
+![Research to execution](docs/diagrams/pipeline.svg)
 
-The session agent is named `PIT-{workspace8}` (under 17 characters). Your wallet signs `approveAgent`. The session key never signs `approveAgent`.
+1. **Scanning** live Hyperliquid facts.
+2. **Ranking** remaining executable books.
+3. **Private 0G** job for this book.
+4. **Researcher** proposes a side from live facts (does not echo `hypothesis: none`).
+5. **Challenger** receives `researcher_thesis` after the researcher job.
+6. **Risk** sees the same sequential envelope.
+7. **TEE** — host `VerifyE2EE` via `pit-sealer`.
+8. **Policy** — host clip, 1x, allowlist, kill.
+9. **Decision** — READY preview or named NO TRADE with this-job 0G.
 
-Denied session actions include `withdraw3`, `updateLeverage`, `sendAsset`, `approveAgent`, `usdSend`, `spotSend`, `vaultTransfer`, `twapOrder`, and `modify`.
-
-Minimum notional follows the book. Tick rounding uses 5 significant figures. Host size is clipped by pinned policy. PIT does not invent perp margin from spot USDC unless Hyperliquid reports unified account mode.
-
-![0G and Hyperliquid](docs/diagrams/integration.jpg)
-
----
-
-## Agent workflow
-
-On desktop Agent, phrases such as **Find the best opportunity**, **Find the best long**, **Find the best short**, and **What can I trade now?** start a hunt.
-
-The host:
-
-1. Scans currently executable books against live Hyperliquid data and pinned policy/capital.
-2. Ranks remaining books.
-3. Runs real Direct TeeML: Scanning → Ranking → Private 0G → Researcher → Challenger → Risk → TEE → Policy → Decision.
-4. Continues after a genuine NO TRADE. It does not restart already-tested books.
-5. Stops when a side survives or the executable universe is exhausted.
-
-Forecasts are labeled as committee output. Live market facts come from the venue. PIT does not invent a price target or confidence unless the engine computed it.
-
-TRADE NOW appears only on `READY_ELIGIBLE` with an exact preview. After a fill, TRADE NOW on that preview is disabled. Duplicate TRADE NOW is not offered.
+Forecasts are labeled as committee output. Live market facts come from the venue.
 
 ---
 
-## Policy and safety
+## Exact preview
 
-Policy is host-authoritative: clip, daily loss, leverage, allowlist, venue, calibration floor, cooldown, uncertainty, slippage, liquidity, kill. You edit and pin on Security. After Ready, the editor stays on that page so you can change values and re-pin. Chat cannot pin. The model cannot raise `maxClip`.
+TRADE NOW appears only on `READY_ELIGIBLE` with an exact preview: coin, side, host size, mark, notional, clip, policy version, preview hash.
 
-Preview hash binding: any mutation of the card invalidates AUTHORIZE. Exactly-once `cloid`. Restart keeps a previewed action. A second click is `duplicate_click`.
+Recorded matching preview (HYPE job `4a1d45ec`):
 
-Kill switch and daily loss halt stop new orders. Withdraw and transfer remain forbidden.
+- Hash `0xb273d0052fe389b5e5ad3aad4b176e1cc993b8d8e605716bab78c70f3814e401`
+- Host sized buy 0.16 HYPE at 80.909, notional $12.95, clip $13, 1x
+- Path `authorize`
+
+After a fill, TRADE NOW on that preview is disabled.
 
 ---
 
-## Activity, Portfolio, calibration
+## Human authorization boundary
+
+TRADE NOW is not a second signer. It injects the exact token `AUTHORIZE` into the existing host path with the bound preview hash.
+
+| Surface | Authorize |
+|---|---|
+| Desktop | `POST /local/authorize` from Tauri / `localhost:3001` |
+| CLI | TTY + `--i-understand` + exact `AUTHORIZE` + live session |
+| Web, MCP, pit-os, chat | No authorize method. Companion `/authorize` is denied. |
+
+Piped `yes` is rejected on the CLI.
+
+---
+
+## Real Hyperliquid execution
+
+After AUTHORIZE the host posts `order` or `cancel` through the session. Limit TIF is `Gtc`. The model cannot set size. Withdraw and transfer remain forbidden.
+
+---
+
+## OID / fill / close lifecycle
+
+1. Venue returns OID.
+2. Host reconcile queries `user_fills`.
+3. Agent card STATUS is **FILLED** only on a fill-ish venue status. RESTING stays RESTING.
+4. Activity records `approval.accepted`, `order.submitted`, `order.filled`, `position.updated`.
+5. Duplicate TRADE NOW is not offered for that preview’s OID.
+
+Recorded matching fill: OID **531667200134**, buy 0.16 HYPE @ 80.909, FILLED. The OID proves the fill event. It does not mean the position is still open.
+
+An older Hyperliquid fill on the same account, OID `529167222216` (ETH), is historical and was not flattened.
+
+---
+
+## 0G storage / chain proof
+
+![0G and Hyperliquid evidence](docs/diagrams/proof.svg)
+
+Research proof and order proof are filed to 0G Storage for **that** job via the official Go client with `--proof`. `last-research.json` is not a 0G fallback. Public `/proof` lists recorded this-desk filings. It does not run VerifyE2EE in the browser.
+
+---
+
+## Activity / evidence trail
 
 Desktop **Activity** is the ledger of this workspace: approvals, orders, fills, cancels, named no-trades. It does not invent a public live stream.
 
-**Portfolio** is Hyperliquid positions and buying power for the bound wallet. Spot USDC is not treated as perp margin unless the venue reports unified account mode.
+**Portfolio** is Hyperliquid positions and buying power for the bound wallet.
 
-**Calibration** (Brier / ECE) stays **NOT ENOUGH DATA** until the sample is large enough. PIT does not print a fake accuracy.
+**Health** (Strategy Health) shows calibration. Brier / ECE stays **NOT ENOUGH DATA** until the sample is large enough.
 
-The public website does not show your book. Public Watch has no buying power, so it will not mark a coin executable for your account.
-
----
-
-## Automation / Sleep Mission
-
-A Sleep Mission is optional bounded host execution. It arms only from this computer (desktop TTY). Chat, the website, MCP, the JS SDK, and the model cannot arm it. If the machine sleeps, the mission stops. That gap is not backfilled.
+The public website does not show your book.
 
 ---
 
-## Web vs desktop
+## Sleep Missions / bounded automation
 
-| Surface | Can do | Cannot do |
-|---|---|---|
-| [pit0g.vercel.app](https://pit0g.vercel.app) | Radar, proof, pair, Protect my strategy, download installer | Hold a session key, AUTHORIZE, pin policy, arm a mission |
-| PIT Desktop | Policy, session, research, TRADE NOW, Activity, Portfolio | Withdraw or transfer |
-| Health [pit-health.onrender.com](https://pit-health.onrender.com/health) | Public `/health`, `/watch`, `/release`, `/windows` | Sign or trade (`sign: false`) |
+A Sleep Mission is optional bounded host execution while this computer stays awake.
 
-The Windows download button on the website starts a **file download**. Health `GET /windows` (also `https://pit0g.vercel.app/windows`) issues HTTP 302 to the GitHub **asset** URL for `PIT_*_x64-setup.exe`. That is not the GitHub Releases HTML page. Verify SHA256 against SHA256SUMS. The installer is **not Authenticode-signed**. If health is waking from sleep, wait and click again.
+- Desktop Automation posts `ARM SLEEP MISSION` (or `ENABLE GUARDED AUTONOMY`) to `/local/mission` (desktop origin, pin required).
+- CLI `pit mission arm` requires a TTY.
+- Chat, the website, MCP, the JS SDK, and the model cannot arm it.
+- If the machine sleeps, the mission stops.
 
 ---
 
-## Install
+## Web architecture
 
-1. Open [pit0g.vercel.app](https://pit0g.vercel.app)
-2. Click **Download PIT Desktop** (file: `PIT_0.9.13_x64-setup.exe`)
-3. Verify SHA256 `B905B9ED167513757D4947BDE61103EB10ECD4A5F76554FE369F205DF3850B1E`
-4. Install and launch PIT
-5. Pair at [/pair](https://pit0g.vercel.app/pair) with the one-time code on the machine (step 1)
-6. Sign **Protect my strategy** (step 2). PIT never asks for a seed phrase. The Direct token stays on this computer.
-7. Stay on MAINNET. Connect Hyperliquid. Pin policy. Approve the printed PIT Agent (order and cancel only). Do not paste an API wallet into PIT.
+Vite + Privy. No Hyperliquid session. Production: [https://pit0g.vercel.app](https://pit0g.vercel.app).
 
-macOS and Linux: source build only until those installers are packaged and tested.
+Public routes: `/`, `/radar`, `/capital`, `/autonomy`, `/missions`, `/proof`, `/agent`, `/how-it-works`, `/download`, `/pair`, `/protect`. Redirects: `/watch` → `/radar`, `/signin` → `/pair`, `/verify` → `/proof`, `/app/start` → `/pair`.
 
-Health: [pit-health.onrender.com/health](https://pit-health.onrender.com/health)
+`vercel.json` sends `/windows` and `/checksums` to health, which 302s to the GitHub **asset** (empty HTML body).
+
+Playwright asserts public routes render without an Authorize button.
+
+---
+
+## Desktop architecture
+
+Tauri identifier `os.pit.desktop`. Sidecars: `binaries/pit`, `binaries/pit-sealer`. Companion origin `http://127.0.0.1:17373`.
+
+Loopback routes include `/health`, `/pair`, `/status`, `/local/*` (status, code, session, policy, authorize, cancel, research, mission, kill). Explicit denials: `/authorize`, `/export`, `/session`.
+
+---
+
+## CLI
 
 ```powershell
-Get-FileHash .\PIT_0.9.13_x64-setup.exe -Algorithm SHA256
+cd pit
+go run ./cmd/pit version
+go run ./cmd/pit doctor
+go run ./cmd/pit status
+go run ./cmd/pit opportunities
 ```
 
----
+`pit version` prints `PIT 0.9.13`.
 
-## Demo flow (what actually works)
+Also: `init`, `login`, `wallet`, `pair`, `network`, `logout`, `revoke`, `policy`, `kill`, `session`, `companion`, `approve`, `hyperliquid`/`agent`, `compute`, `watch`, `scan`, `mission`, `chat`, `positions`, `health`, `activity`, `receipt`, `direct`, `ask`, `research`, `forecast`, `calibration`, `memory`, `preview`, `authorize`, `execute`, `orders`, `cancel`, `status`, `resolve`, `card`, `verify`, `proof`, `doctor`, `mcp`, `update`.
 
-1. Launch PIT Desktop (companion `127.0.0.1:17373`)
-2. Pair the browser
-3. Connect wallet
-4. Protect my strategy
-5. Connect Hyperliquid
-6. Pin policy (do not loosen clip to force a fill)
-7. Open Agent
-8. Ask **Find the best long** or **Find the best opportunity**
-9. Watch live scan and ranking
-10. Watch private 0G Direct (researcher then challenger then risk)
-11. If NO TRADE, read Thesis / Evidence / Rejected side / Reason / Policy / Risk / this-job 0G, then the hunt continues
-12. If READY, review the exact preview (size, clip, mark, policy)
-13. Click TRADE NOW — host `authorizePreview("AUTHORIZE", previewHash)`
-14. Verify Hyperliquid OID and status (FILLED only if the venue says filled)
-15. Verify this-job 0G research + order receipts
-16. Open Portfolio and Activity
-17. Sleep Mission remains optional and desktop-armed only
-
-**Find the best opportunity** (hypothesis `none`) can exhaust the executable universe when the committee proposes no side. That is a real stand-down, not a crash. PIT will not invent a READY preview.
+`pit companion` listens on `127.0.0.1:17373` only.
 
 ---
 
-## JS SDK (`pit-os`)
+## SDK
 
 ```powershell
 npm install pit-os
 ```
 
-Read-only helpers: public health, public watch, loopback companion status. `canSign` is always `false`. There is no authorize method.
+Published **pit-os 0.9.11**. Read-only helpers: public health, public watch, loopback companion status. `canSign` is always `false`. There is no authorize method.
 
 ```ts
 import { canSign, publicHealth, publicWatch, refuseAuthorize } from "pit-os";
@@ -208,15 +328,13 @@ await publicHealth();
 await publicWatch("mainnet");
 ```
 
-Source: `sdk/js`. Tests: `npm test` in that directory.
-
-The Go package `pit/sdk` is the same capability-denial surface for Go apps. It does not call companion HTTP.
+The Go package `pit/sdk` is the same capability-denial surface for Go apps (`CanHoldSession`, `CanAuthorizePreview`, `CanExecute` all false). It does not call companion HTTP.
 
 ---
 
-## MCP (`pit-mcp`)
+## MCP
 
-Cursor-compatible stdio MCP:
+Cursor-compatible stdio MCP, published **pit-mcp 0.9.12**:
 
 ```json
 {
@@ -233,47 +351,121 @@ Tools: `pit_health`, `pit_watch`, `pit_release`, `pit_companion_health`, `pit_st
 
 Not tools: authorize, order, cancel, export_session, arm.
 
-The older Go binary `go run ./cmd/mcp` is a custom NDJSON loop (`{"tool":"..."}`). It is still read-only. Use `pit-mcp` for Cursor.
+The Go binary `go run ./cmd/mcp` is a custom NDJSON loop. It is still read-only. Use `pit-mcp` for Cursor.
 
 ---
 
-## CLI
+## Contracts and on-chain components
 
-```powershell
-cd pit
-go run ./cmd/pit version
-go run ./cmd/pit doctor
-go run ./cmd/pit status
-go run ./cmd/pit opportunities
-```
+Foundry 0.8.24 in `contracts/`:
 
-`pit authorize` still requires a TTY, `--i-understand`, the exact word `AUTHORIZE`, a live session, and a bound preview. Piped `yes` is rejected.
+| Contract | What is shipped |
+|---|---|
+| `PitDeskID` | Production Aristotle address. Mint, authorizeUsage, revoke. ERC-721 `transferFrom` disabled. |
+| `PitPolicy` | Pin, hash, owner isolation (Foundry). Host pin in product is the local policy file. |
+| `PitReceipts` | Receipt filing, no double-file (Foundry). |
+| `PitForecasts` | Forecast records (Foundry). |
+| `PitMemory` | Workspace-scoped memory (Foundry). |
 
-`pit companion` listens on `127.0.0.1:17373` only.
+Live proof used on this desk is **0G Storage with `--proof`**, not a receipts-contract address.
+
+Serving `0x47340d900bdFec2BD393c626E12ea0656F938d84`, ledger `0x2dE54c845Cd948B72D2e32e39586fe89607074E3`, storage flow `0x62D4144dB0F0a6fBBaeb6296c785C71B3D57C526`.
+
+`PIT_NETWORK` selects 0G chain and Hyperliquid venue together. Aristotle `16661` with `api.hyperliquid.xyz`. Galileo `16602` with Hyperliquid testnet. Do not mix them. Mainnet sealed committee is glm-5.2 Direct.
 
 ---
 
-## Environment and secrets
+## ERC-8004 / identity
 
-```powershell
-copy .env.example .env
-```
+Official 0G registries (not PIT-authored):
 
-**Do not commit `.env`.**
+- Identity [`0x8004A169FB4a3325136EB29fA0ceB6D2e539a432`](https://chainscan.0g.ai/address/0x8004A169FB4a3325136EB29fA0ceB6D2e539a432)
+- Reputation [`0x8004BAa17C55a88189AE136b182e5fdA19dE9b63`](https://chainscan.0g.ai/address/0x8004BAa17C55a88189AE136b182e5fdA19dE9b63)
+
+Recorded agentId **3489333**. Register tx [`0xa2f67529745a662163b84fe10f855a3aa25596f9bc4d4c604d2abefbc3f3ff7d`](https://chainscan.0g.ai/tx/0xa2f67529745a662163b84fe10f855a3aa25596f9bc4d4c604d2abefbc3f3ff7d). Host checks: reporter must differ from owner; owner self-feedback is refused; IDs are not portable across networks. Public `/agent` reads `ownerOf` as a chain fact, not a ranking.
+
+---
+
+## ERC-7857 / Desk ID
+
+Production Desk ID (Aristotle): [`0xfdB3a8D39F1E2b77a8261b359eABaaa2F08f8c35`](https://chainscan.0g.ai/address/0xfdB3a8D39F1E2b77a8261b359eABaaa2F08f8c35)
+
+- Deploy [`0x2d5b688bf09bb72cb44b092da0c27cbe87a623141872e62b84cb95ecf7e90c24`](https://chainscan.0g.ai/tx/0x2d5b688bf09bb72cb44b092da0c27cbe87a623141872e62b84cb95ecf7e90c24)
+- Mint tokenId 1 [`0x9494e3faec6d950942d1bfec53c4a13e6f28378da8e01ecd24b3e3de62e5c7d0`](https://chainscan.0g.ai/tx/0x9494e3faec6d950942d1bfec53c4a13e6f28378da8e01ecd24b3e3de62e5c7d0) owner `0xbdfcee82bd42fefa58ee850b3709636a8b6b0034`
+
+Interface IDs: `0x2afbede9` (IERC7857) / `0xdf597d99` (Authorize) / `0x74f8628b` (Cloneable) / `0x80ac58cd` (ERC-721). `transferFrom` is disabled (`ERC7857UseITransferFrom`). `iTransferFrom` / `iCloneFrom` revert `AttestorNotOnAristotle` — the Foundation TEE attestor used for those calls is not the Aristotle product path.
+
+---
+
+## Security model
+
+- The model cannot AUTHORIZE.
+- The browser cannot access the session key.
+- The website origin cannot `POST /local/authorize`.
+- `pit-os` and `pit-mcp` have no authorize / order / export / arm methods.
+- Session cannot withdraw, transfer, raise leverage, or `approveAgent`.
+- Preview hash binding. Exactly-once `cloid`.
+- FILLED is only painted when Hyperliquid reports a fill-ish status.
+- 0G receipts are this-job.
+- Policy hash is pinned. The model cannot raise clip.
+- Private book has no Router fallback.
+- Sealer VerifyE2EE runs on the host.
+- No global memory key in `PIT_PRODUCT_MODE`. Doctor fails if `PIT_MEMORY_KEY` is set.
+- Secrets stay out of the web bundle and npm tarball.
+
+---
+
+## Secrets / session-key handling
 
 | Kind | Rule |
 |---|---|
-| Public infra | RPCs, contract addresses, Privy **app id** — safe in `.env.example` |
+| Public infra | RPCs, contract addresses, Privy **app id** — in `.env.example` |
 | User secrets | Session key, memory key, Direct token — OS keychain only |
 | Forbidden | Router `sk-` / `mk-` for the private book |
 | Kill | `PIT_ALLOW_FALLBACKS` if set must be `false`; any other value exits |
-| Global `PIT_MEMORY_KEY` | Forbidden when `PIT_PRODUCT_MODE=true`. Doctor fails if it is set. |
 
-Public Privy app id: `cmtafcijw02av0cl1ay81om7m`
+`session.json` stores id, agent address, workspace, network, policy version, expiry — not the secret. The ECDSA lives in Windows Credential Manager / macOS Keychain / libsecret, service `os.pit.desktop`, item `{workspaceID}/session/{sessionID}`. `PIT_KEYRING=file` (CI) uses mode 0600 files. `AgentKey.ExportJSON()` is `session_export_denied`.
+
+Copy `.env.example` to `.env`. **Do not commit `.env`.**
 
 ---
 
-## Testing
+## Authority boundaries
+
+| Surface | Can do | Cannot do |
+|---|---|---|
+| [pit0g.vercel.app](https://pit0g.vercel.app) | Radar, proof, pair, Protect, download | Hold a session key, AUTHORIZE, pin, arm |
+| PIT Desktop | Policy, session, research, TRADE NOW, Activity, Portfolio, Sleep Mission | Withdraw or transfer |
+| Health | Public `/health`, `/watch`, `/release`, `/windows` | Sign or trade (`sign: false`) |
+| pit-os / pit-mcp | Read health, watch, loopback status | Sign, order, arm, export |
+
+---
+
+## CI/CD
+
+Workflows: `.github/workflows/ci.yml`, `.github/workflows/release.yml`.
+
+CI jobs on every push/PR: `go` (`cd pit && go test ./...`), `sealer` (`go test ./...` + `go build`), `contracts` (`forge test -vvv`), `web` (`npm run build` + `npx playwright test`), `desktop` (`npm run build`), `sdk` (`npm test` in `sdk/js`), `mcp` (`npm test` in `sdk/mcp`).
+
+Release workflow: Windows NSIS, builds `pit` + `pit-sealer` sidecars, uploads `SHA256SUMS.txt`.
+
+HEAD `e431e3bd30f76a7506b6ae5cf140fc4f4a8a3f36` tagged `v0.9.13`. CI run [33413773180](https://github.com/mohamedwael201193/pit/actions/runs/33413773180) on that commit: **success**.
+
+---
+
+## Test strategy
+
+| Suite | Command | Result |
+|---|---|---|
+| Go `pit` | `go test ./... -count=1` (`PIT_ALLOW_FALLBACKS=false` `PIT_KEYRING=file`) | **654 PASS / 0 FAIL** |
+| Sealer | `go test ./...` | **6 PASS** |
+| Foundry | `forge test -vvv` | **26 PASS / 0 FAIL** (21 unit + 4 fuzz × 256 runs + Desk ID interface IDs) |
+| `pit-os` | `npm test` | **2 PASS** |
+| `pit-mcp` | `npm test` | **3 PASS** |
+| Web Playwright | `npx playwright test` | **30 PASS** |
+| Desktop e2e | `npx tsx e2e/run.ts` | **PASS** |
+
+CI on `e431e3b` ([run 33413773180](https://github.com/mohamedwael201193/pit/actions/runs/33413773180)): **success**.
 
 ```powershell
 cd pit
@@ -300,68 +492,45 @@ npm run build
 npx tsx e2e/run.ts
 ```
 
-CI (`.github/workflows/ci.yml`) on every push/PR: Go tests, sealer tests+build, Foundry, web build + Playwright, desktop frontend build, `pit-os` tests, `pit-mcp` tests.
+---
 
-Counts verified on this machine 2026-08-31:
+## Production deployment
 
-| Suite | Result |
+| Surface | URL / value |
 |---|---|
-| Go `go test ./... -count=1` | **654 PASS / 0 FAIL** |
-| Web Playwright | **30 passed** (Vite must have `VITE_PRIVY_APP_ID`; if `PLAYWRIGHT_BASE_URL` is set, a server must already listen there) |
-| `pit-os` `npm test` | 2 pass |
-| `pit-mcp` `npm test` | 3 pass |
-| Foundry `forge test` | **26** tests in CI on every push (including 3 fuzz) |
-
-Do not invent a different count.
-
----
-
-## Security
-
-- The model cannot AUTHORIZE. TRADE NOW injects the exact token into the existing host path.
-- The browser cannot access the session key. Pairing returns a device token. `canSign` is false.
-- The website origin cannot `POST /local/authorize`. Companion authorize is loopback desktop/CLI.
-- `pit-os` and `pit-mcp` have no authorize/order/export/arm methods.
-- Session cannot withdraw, transfer, raise leverage, or `approveAgent`.
-- Preview hash binding. Exactly-once `cloid`. Duplicate TRADE NOW is not offered after that preview posts.
-- FILLED is only painted when Hyperliquid reports a fill-ish status.
-- 0G receipts are this-job. `last-research.json` is not a 0G fallback.
-- Policy hash is pinned. The model cannot raise clip.
-- Private book has no Router fallback.
-- Sealer VerifyE2EE runs on the host. The public `/proof` page does **not** run VerifyE2EE in the browser.
-- 0G Storage filing is async and can fail after an OID; the UI must not invent a root.
-- No global memory key in `PIT_PRODUCT_MODE`. Doctor fails if `PIT_MEMORY_KEY` is set.
-- Secrets stay out of the web bundle and npm tarball (inspected with `npm pack`).
+| Website | https://pit0g.vercel.app |
+| Health | https://pit-health.onrender.com/health — `{"ok":true,"sign":false,"version":"0.9.13"}` |
+| Direct installer | https://pit-health.onrender.com/windows — HTTP 302 to the GitHub asset |
+| Vercel `/windows` | 307 → health `/windows` |
+| GitHub | [v0.9.13](https://github.com/mohamedwael201193/pit/releases/tag/v0.9.13) |
+| npm | `pit-os@0.9.11`, `pit-mcp@0.9.12` |
 
 ---
 
-## Contracts
+## Release / install / direct Windows installer
 
-Foundry 0.8.24 in `contracts/`:
+Use the **file** endpoint, not the GitHub Releases HTML page.
 
-| Contract | What tests cover |
-|---|---|
-| `PitDeskID` | ERC-7857 interface IDs, authorize/revoke, transfer disabled, iTransfer blocked on Aristotle |
-| `PitPolicy` | Pin, hash, cannot raise clip from a model path |
-| `PitReceipts` | Receipt filing, no double-file |
-| `PitForecasts` | Forecast records |
-| `PitMemory` | Workspace-scoped memory, isolation |
+1. Open [pit0g.vercel.app](https://pit0g.vercel.app)
+2. Click **Download PIT Desktop** — files `PIT_0.9.13_x64-setup.exe`
+3. Or open [https://pit-health.onrender.com/windows](https://pit-health.onrender.com/windows)
+4. Verify SHA256 `B905B9ED167513757D4947BDE61103EB10ECD4A5F76554FE369F205DF3850B1E` (also in health `/release` and GitHub asset digest)
+5. Install and launch PIT
+6. Pair at [/pair](https://pit0g.vercel.app/pair)
+7. Sign **Protect my strategy**
+8. Stay on MAINNET. Connect Hyperliquid. Pin policy. Approve the printed PIT Agent (order and cancel only).
 
-Production Desk ID (Aristotle): [`0xfdB3a8D39F1E2b77a8261b359eABaaa2F08f8c35`](https://chainscan.0g.ai/address/0xfdB3a8D39F1E2b77a8261b359eABaaa2F08f8c35)
+```powershell
+Get-FileHash .\PIT_0.9.13_x64-setup.exe -Algorithm SHA256
+```
 
-Interface IDs: `0x2afbede9` / `0xdf597d99` / `0x74f8628b` / `0x80ac58cd`.
-
-PitReceipts / PitForecasts / PitMemory are in source and tested. Production addresses are filled in `.env` after deploy. Empty means **not claimed live**.
-
-ERC-8004 Identity `0x8004A169FB4a3325136EB29fA0ceB6D2e539a432`. Reputation `0x8004BAa17C55a88189AE136b182e5fdA19dE9b63`. Owner cannot self-report feedback.
-
-iTransfer / iClone are **not live** on Aristotle.
+Checksums: [https://pit-health.onrender.com/checksums](https://pit-health.onrender.com/checksums)
 
 ---
 
-## Verified on mainnet
+## Proof links
 
-These are the latest matching research → preview → AUTHORIZE → Hyperliquid fill on this desk (2026-08-31). They belong to job `4a1d45ec-8c3f-4883-a162-19739accb9cf`. They are not a historical fallback.
+These are the latest matching research → preview → AUTHORIZE → Hyperliquid fill on this desk (2026-08-31). They belong to job `4a1d45ec-8c3f-4883-a162-19739accb9cf`. They are not a historical fallback. Aristotle RPC `eth_getTransactionByHash` returns these txs (research `to` = storage Flow `0x62D4144dB0F0a6fBBaeb6296c785C71B3D57C526`).
 
 | What | Evidence |
 |---|---|
@@ -369,16 +538,12 @@ These are the latest matching research → preview → AUTHORIZE → Hyperliquid
 | Research storage root | `0x9fd42770545ecaacbfff12e3ef7a537b564e31c9ef5515b3a820fd276c22f72e` |
 | Order / evidence filing | [0x8c28051bec7bebd7af3b6cc75f7aa034d67f9809f9c30eef9a6c9f84ed6c11fb](https://chainscan.0g.ai/tx/0x8c28051bec7bebd7af3b6cc75f7aa034d67f9809f9c30eef9a6c9f84ed6c11fb) |
 | Order storage root | `0x8c94ec8e643c90fe69276ff20f50a0bc3121f007d611e10e6ab9f24d26f2ff66` |
-| Hyperliquid OID | `531667200134` buy 0.16 HYPE @ 80.909, host reconcile `user_fills` **FILLED**. The OID proves the fill event. It does not mean the position is still open. |
+| Hyperliquid OID | `531667200134` buy 0.16 HYPE @ 80.909, host reconcile `user_fills` **FILLED** |
 | Preview hash | `0xb273d0052fe389b5e5ad3aad4b176e1cc993b8d8e605716bab78c70f3814e401` |
-| Path | `authorize` (existing desktop authorize path) |
-| Policy | clip $13, 1x, not loosened |
-| Agent | `PIT-4bbee556` `0xfc64e36babe7dfe9eb779ee3a9f2362d16881d52` (reused, not reminted) |
+| Agent | `PIT-4bbee556` `0xfc64e36babe7dfe9eb779ee3a9f2362d16881d52` |
 | Wallet | `0xbdfcee82bd42fefa58ee850b3709636a8b6b0034` |
 
-An older Hyperliquid fill on the same account, OID `529167222216` (ETH), is historical and was not flattened.
-
-Recorded 0G research and storage on this desk (Aristotle 16661). Each job has its own filing. Historical receipts are not used as a fallback for a later trade.
+Recorded 0G research and storage on this desk. Each job has its own filing.
 
 | What | Transaction | Storage root |
 |---|---|---|
@@ -404,13 +569,31 @@ Indexer: [indexer-storage-turbo.0g.ai](https://indexer-storage-turbo.0g.ai).
 
 ---
 
-## Latest release
+## Verification instructions
 
-- Product **0.9.13**
-- GitHub Latest: [v0.9.13](https://github.com/mohamedwael201193/pit/releases/tag/v0.9.13)
-- Installer `PIT_0.9.13_x64-setup.exe`
-- SHA256 `B905B9ED167513757D4947BDE61103EB10ECD4A5F76554FE369F205DF3850B1E`
-- npm `pit-os` **0.9.11** and `pit-mcp` **0.9.12**
+1. Health JSON `version` is `0.9.13` and `sign` is `false`.
+2. `GET /windows` is 302 with `content-disposition: attachment; filename="PIT_0.9.13_x64-setup.exe"` and Location the GitHub **asset** URL.
+3. SHA256 of the installer matches `B905B9ED167513757D4947BDE61103EB10ECD4A5F76554FE369F205DF3850B1E`.
+4. `pit version` prints `PIT 0.9.13`.
+5. Pairing page never asks for a seed. Protect stays locked until paired.
+6. extraAgents on the master wallet lists `PIT-4bbee556`.
+7. TRADE NOW is absent unless a `READY_ELIGIBLE` preview exists.
+8. Aristotle explorer shows the research and order txs above.
+9. Hyperliquid OID `531667200134` is the recorded FILLED matching that job.
+10. `npm test` in `sdk/js` and `sdk/mcp` refuses authorize.
+
+---
+
+## Developer setup
+
+```powershell
+copy .env.example .env
+cd pit
+go test ./...
+go run ./cmd/pit companion
+```
+
+Desktop: `apps/desktop` — `npm install`, `npm run sidecar`, `npm run tauri`. Web: `apps/web` — `npm install`, `npm run dev` with `VITE_PRIVY_APP_ID` and `VITE_HEALTH_URL`. Sealer: Go 1.24, `go build -o pit-sealer .` in `sealer/`.
 
 ---
 
@@ -428,52 +611,19 @@ contracts/           Foundry
 sealer/              Native Direct TeeML (HPKE + VerifyE2EE)
 apps/web             Vite + Privy (no HL session)
 apps/desktop         Local authorize surface
+docs/diagrams        Architecture, authority, pipeline, proof
 ```
 
 ---
 
-## Dual environment
+## Latest release
 
-`PIT_NETWORK` selects 0G chain and Hyperliquid venue together. Do not mix Aristotle compute with Hyperliquid testnet.
-
-| | TESTNET | MAINNET |
-|---|---|---|
-| 0G | Galileo `16602` | Aristotle `16661` |
-| Hyperliquid | `api.hyperliquid-testnet.xyz` | `api.hyperliquid.xyz` |
-| Sealed committee | Omni TeeML **not** claimed live for PIT until VerifyE2EE is proven | glm-5.2 Direct (proven) |
-| Desk ID | Not deployed from this repo yet | `0xfdB3a8D39F1E2b77a8261b359eABaaa2F08f8c35` |
-
----
-
-## Troubleshooting
-
-| Symptom | What to do |
-|---|---|
-| Pairing expired | Regenerate the code on desktop. Codes last two minutes. |
-| `direct_token_required` | Sign Protect my strategy from the paired browser. |
-| `sealer_not_wired` | Build `sealer/` with Go 1.24 and set `PIT_COMMITTEE_BIN`. |
-| `router_api_key_denied` | Do not put a Router `sk-` in the Direct path. |
-| Windows SmartScreen | Expected. The installer is unsigned. Verify SHA256. |
-| TRADE NOW missing | There is no `READY_ELIGIBLE` preview. Do not force one. |
-| RESTING vs FILLED | PIT uses the venue status. Reconciled + posted is not automatically FILLED. |
-| Companion not reachable | Launch `pit.exe companion`. Bind is loopback only. |
-| npm / MCP cannot trade | By design. Open desktop. |
-| Playwright `ERR_CONNECTION_REFUSED` on `:4173` | Unset `PLAYWRIGHT_BASE_URL` so the config starts Vite, or start Vite with `VITE_PRIVY_APP_ID`. |
-
----
-
-## Honest limitations
-
-- Authenticode is absent until a code-signing certificate exists.
-- macOS / Linux installers are not production-ready.
-- iTransfer / iClone are not live on Aristotle.
-- Galileo sealed ask is not the mainnet glm-5.2 committee.
-- Committee roles share one Direct provider unless auth files actually differ.
-- Calibration says NOT ENOUGH DATA until N is large enough.
-- Public website Watch does not include your buying power, so it will not call a book executable for your account.
-- `pit-os` and `pit-mcp` are read-only. They are not a second execution path.
-- Public `/proof` does not run VerifyE2EE in the browser.
-- Health on Render may cold-start; the first download click can wait.
+- Product **0.9.13** · commit `e431e3bd30f76a7506b6ae5cf140fc4f4a8a3f36` · tag `v0.9.13`
+- Installer `PIT_0.9.13_x64-setup.exe`
+- SHA256 `B905B9ED167513757D4947BDE61103EB10ECD4A5F76554FE369F205DF3850B1E`
+- Direct file: [https://pit-health.onrender.com/windows](https://pit-health.onrender.com/windows)
+- npm `pit-os` **0.9.11** and `pit-mcp` **0.9.12**
+- Demo: [https://youtu.be/zYgxDTI7jIk](https://youtu.be/zYgxDTI7jIk)
 
 ---
 

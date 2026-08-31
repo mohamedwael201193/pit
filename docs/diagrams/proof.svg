@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" role="img" aria-label="PIT 0G and Hyperliquid evidence flow">
+  <rect width="1280" height="720" fill="#f0e7d4"/>
+  <rect x="0" y="0" width="8" height="720" fill="#d82f2f"/>
+  <text x="40" y="48" font-family="ui-monospace, Menlo, Consolas, monospace" font-size="12" letter-spacing="4" fill="#d82f2f">EVIDENCE</text>
+  <text x="40" y="86" font-family="Georgia, Times New Roman, serif" font-size="32" fill="#14120f">0G proof and Hyperliquid OID</text>
+  <text x="40" y="114" font-family="ui-sans-serif, system-ui, sans-serif" font-size="14" fill="#6b6458">Each job files its own storage proof. Historical receipts are not reused as a later trade's evidence.</text>
+
+  <rect x="40" y="148" width="600" height="420" fill="#14120f"/>
+  <text x="64" y="188" font-family="ui-monospace, Menlo, monospace" font-size="11" letter-spacing="3" fill="#d82f2f">0G ARISTOTLE 16661</text>
+  <text x="64" y="228" font-family="Georgia, serif" font-size="22" fill="#f0e7d4">This-job storage</text>
+  <text x="64" y="264" font-family="ui-sans-serif, system-ui, sans-serif" font-size="14" fill="#c4bba8">1. Native sealer emits committee evidence (prompt stripped)</text>
+  <text x="64" y="292" font-family="ui-sans-serif, system-ui, sans-serif" font-size="14" fill="#c4bba8">2. Official 0g-storage-client uploads with --proof</text>
+  <text x="64" y="320" font-family="ui-sans-serif, system-ui, sans-serif" font-size="14" fill="#c4bba8">3. Flow contract 0x62D4...7526 emits the root</text>
+  <text x="64" y="348" font-family="ui-sans-serif, system-ui, sans-serif" font-size="14" fill="#c4bba8">4. chainscan.0g.ai shows the tx for that job id</text>
+  <text x="64" y="388" font-family="ui-sans-serif, system-ui, sans-serif" font-size="14" fill="#f0e7d4">Recorded matching job 4a1d45ec</text>
+  <text x="64" y="416" font-family="ui-monospace, Menlo, monospace" font-size="12" fill="#c4bba8">research  0x1d2113bd...510b</text>
+  <text x="64" y="436" font-family="ui-monospace, Menlo, monospace" font-size="12" fill="#c4bba8">root      0x9fd42770...f72e</text>
+  <text x="64" y="460" font-family="ui-monospace, Menlo, monospace" font-size="12" fill="#c4bba8">order     0x8c28051b...11fb</text>
+  <text x="64" y="480" font-family="ui-monospace, Menlo, monospace" font-size="12" fill="#c4bba8">root      0x8c94ec8e...ff66</text>
+  <text x="64" y="520" font-family="ui-sans-serif, system-ui, sans-serif" font-size="13" fill="#c4bba8">Indexer  indexer-storage-turbo.0g.ai</text>
+  <text x="64" y="544" font-family="ui-sans-serif, system-ui, sans-serif" font-size="13" fill="#c4bba8">Desk ID  0xfdB3...8c35  token 1</text>
+
+  <rect x="660" y="148" width="580" height="420" fill="#faf6ee" stroke="#14120f" stroke-width="1.25"/>
+  <text x="684" y="188" font-family="ui-monospace, Menlo, monospace" font-size="11" letter-spacing="3" fill="#d82f2f">HYPERLIQUID</text>
+  <text x="684" y="228" font-family="Georgia, serif" font-size="22" fill="#14120f">OID, fill, Activity</text>
+  <text x="684" y="264" font-family="ui-sans-serif, system-ui, sans-serif" font-size="14" fill="#6b6458">1. Preview hash bound. cloid exactly once.</text>
+  <text x="684" y="292" font-family="ui-sans-serif, system-ui, sans-serif" font-size="14" fill="#6b6458">2. Desktop AUTHORIZE posts order or cancel</text>
+  <text x="684" y="320" font-family="ui-sans-serif, system-ui, sans-serif" font-size="14" fill="#6b6458">3. Venue returns OID</text>
+  <text x="684" y="348" font-family="ui-sans-serif, system-ui, sans-serif" font-size="14" fill="#6b6458">4. Host reconcile reads user_fills</text>
+  <text x="684" y="388" font-family="ui-sans-serif, system-ui, sans-serif" font-size="14" fill="#14120f">Recorded matching fill</text>
+  <text x="684" y="416" font-family="ui-monospace, Menlo, monospace" font-size="13" fill="#14120f">OID  531667200134</text>
+  <text x="684" y="440" font-family="ui-sans-serif, system-ui, sans-serif" font-size="14" fill="#6b6458">buy 0.16 HYPE @ 80.909, FILLED</text>
+  <text x="684" y="464" font-family="ui-sans-serif, system-ui, sans-serif" font-size="14" fill="#6b6458">Agent PIT-4bbee556</text>
+  <text x="684" y="488" font-family="ui-sans-serif, system-ui, sans-serif" font-size="13" fill="#6b6458">0xfc64e36babe7dfe9eb779ee3a9f2362d16881d52</text>
+  <text x="684" y="520" font-family="ui-sans-serif, system-ui, sans-serif" font-size="13" fill="#6b6458">Activity: approval.accepted, order.submitted,</text>
+  <text x="684" y="544" font-family="ui-sans-serif, system-ui, sans-serif" font-size="13" fill="#6b6458">order.filled, position.updated</text>
+
+  <rect x="40" y="588" width="1200" height="92" fill="#d82f2f"/>
+  <text x="64" y="624" font-family="ui-sans-serif, system-ui, sans-serif" font-size="16" fill="#faf6ee">Public /proof lists recorded this-desk filings. It does not run VerifyE2EE in the browser.</text>
+  <text x="64" y="652" font-family="ui-sans-serif, system-ui, sans-serif" font-size="14" fill="#f0e7d4">An older ETH OID 529167222216 on the same wallet remains historical and is not flattened into a later job.</text>
+</svg>

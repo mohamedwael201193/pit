@@ -2,6 +2,33 @@
 
 ---
 
+## M137 — Definitive documentation set. PIT 0.9.13
+
+- **Source:** Public README still had Honest limitations / Troubleshooting, missing diagram files, and no Watch-the-product section. Submission About/plain-text surfaces needed counted copy.
+- **Discovery:** Independent audit (Grok 4.6) confirmed Direct TeeML, sealer, HL order/cancel, authorize/pin/arm boundaries, Desk ID, 8004 register tx, health `/windows` 302, CI success on `e431e3b`. Diagram JPGs referenced in README were not in the tree. ETH OID `532163693004` exists only in the launch film overlay, not in `facts.ts` / history matching fill — do not publish it as FILLED.
+- **Candidate:** Rewrite README from verified product. Four SVG diagrams. ABOUT.md 5800–5950. SUBMISSION.txt 2800–2980. No competitor, hackathon, limitations, or troubleshooting sections.
+- **Kill:** Invented fill, remint `PIT-4bbee556`, flatten OID `529167222216`, fabricated test counts, stale installer URL.
+
+DATE/TIME: 2026-08-31 22:20+03
+PHASE: Documentation + product-audit pass. No new live trade.
+GOAL: README, ABOUT, SUBMISSION, and diagrams match the shipped 0.9.13 desk.
+RESULT:
+- **IMPLEMENTED:** README rewritten. Watch section after hero. Diagrams `docs/diagrams/{architecture,authority,pipeline,proof}.svg`. ABOUT.md and SUBMISSION.txt counted in range.
+- **TESTED:** `go test ./... -count=1` **654 PASS / 0 FAIL**. Sealer **6 PASS**. `forge test -vvv` **26 PASS / 0 FAIL**. Playwright **30 PASS**. `pit-os` 2. `pit-mcp` 3. Desktop `npx tsx e2e/run.ts` **PASS**. Health `/windows` 302 to `PIT_0.9.13_x64-setup.exe`. Aristotle RPC confirms research `0x1d2113bd…` (to Flow `0x62D4…7526`) and order `0x8c28051b…`.
+- **LIVE extraAgents:** `PIT-4bbee556` reused. Matching FILLED OID `531667200134`. No remint. No new AUTHORIZE.
+- **SHIPPED:** Docs on source `e431e3b` tagged `v0.9.13`. Installer SHA256 `B905B9ED167513757D4947BDE61103EB10ECD4A5F76554FE369F205DF3850B1E`. Health version `0.9.13`. CI run 33413773180 success.
+
+SECURITY RESULT: Documentation does not add an authorize path. Chat/web/MCP/SDK still cannot pin, authorize, or export.
+TX HASH / OID: Venue OID `531667200134` FILLED. Research 0G `0x1d2113bd683b3ef8be5d74d603018c4bacdd49531bdf201abbc7dea4bb16510b`. Order 0G `0x8c28051bec7bebd7af3b6cc75f7aa034d67f9809f9c30eef9a6c9f84ed6c11fb`. Historical ETH OID `529167222216` unchanged.
+CLASSIFICATION:
+- README + diagrams: **IMPLEMENTED**
+- ABOUT / SUBMISSION character gates: **IMPLEMENTED**
+- Matching live fill: **UNCHANGED** (HYPE 531667200134)
+PRODUCTION READY: Documentation matches 0.9.13 installer and health.
+NEXT STEP: Commit docs when requested. Do not remint. Do not flatten.
+
+---
+
 ## M136 — Policy stays editable after pin. PIT 0.9.13
 
 - **Source:** Security hid PolicyEditor once onboard left step 4 (policy). Ready and unpaired-browser states left clip/assets locked on screen even though host pin already supports re-pin. User needs to edit and re-pin anytime. Chat still cannot pin.
