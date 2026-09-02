@@ -5,12 +5,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"os"
 	"path/filepath"
 	"strings"
 	"time"
 
 	"github.com/mohamedwael201193/pit/internal/cli"
+	"github.com/mohamedwael201193/pit/internal/compute"
 	"github.com/mohamedwael201193/pit/internal/config"
 	"github.com/mohamedwael201193/pit/internal/evidence"
 	"github.com/mohamedwael201193/pit/internal/httpx"
@@ -253,5 +253,5 @@ func (h *Hub) localProofVerify(w http.ResponseWriter, r *http.Request) {
 // evidenceModels reports the sealed models used for research so the receipt can
 // name them without the desktop guessing.
 func researchModels() (string, string) {
-	return strings.TrimSpace(os.Getenv("PIT_MODEL_RESEARCH")), "0g-compute-direct"
+	return compute.MainnetChat().Model, "0g-compute-direct"
 }

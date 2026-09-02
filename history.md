@@ -2,6 +2,35 @@
 
 ---
 
+## M138 — Direct TeeML glm-5.3 cutover resolver. Live metadata still glm-5.2 TeeML.
+
+- **Source:** 0G upgrade notice: GLM-5.2 Private/TeeML on provider `0x7DCFe6AEa70350C2090041524c9B4A9262DCe87D` / `compute-network-19.integratenetwork.work` retires; maintain TEE-private GLM by switching to `glm-5.3`. Maintenance window 2026-09-03 02:00–12:00 UTC.
+- **Discovery:** Live Aristotle `getService` still matches glm-5.2 TeeML + teeAck + teeSigner `0xA46EA4FC5889AD35A1487e1Ed04dCcfa872146B9`. Provider `/v1/models` lists only glm-5.2 TeeML. Router catalog: glm-5.3 = TeeTLS (2 providers). `getAllServices` listed **0** glm-5.3 TeeML rows. Sealed PONG with existing `app-sk-` returned `session token expired` — no Router fallback, no TeeTLS, no fake inference.
+- **Candidate:** Keep the Direct pin (provider/url/teeSigner). Pick glm-5.3 only when THIS provider lists TeeML. Until then use live getService glm-5.2. Refuse TeeTLS/Router. Stop if TeeML chat SKU disappears.
+- **Kill:** Claiming live glm-5.3 TeeML. Router inference. Silent glm-5.2 after 5.3 TeeML is listed. Remint `PIT-4bbee556`. Flatten OID `529167222216`. New AUTHORIZE. Fake 0G Pay / DA / Memory contract.
+
+DATE/TIME: 2026-09-02 23:19+03
+PHASE: Compute SKU resolver. No new live trade. No new installer.
+GOAL: Real Direct TeeML cutover to glm-5.3 when on-chain/provider metadata proves TeeML. Do not freeze TeeTLS.
+RESULT:
+- **IMPLEMENTED:** `PickDirectModel` + `MatchDirectPin` + provider `/v1/models` + `getAllServices` listing. Product ask uses resolved SKU. Receipts no longer read `PIT_MODEL_RESEARCH` env as the sealed model.
+- **TESTED:** `go test ./... -count=1` **659 PASS / 0 FAIL / 4 SKIP**. Sealer **7 PASS**. Playwright **31 PASS**. pit-os 2. pit-mcp 3. Desktop e2e PASS. Live getService + pubkey + catalog + getAllServices as above. Foundry **UNVERIFIED** this pass (`forge` not on PATH).
+- **LIVE extraAgents:** `PIT-4bbee556` not reminted. Matching FILLED OID `531667200134` unchanged. Historical ETH OID `529167222216` unchanged.
+- **BLOCKED:** Fresh wallet-signed Direct token (existing `app-sk-` expired). Companion `127.0.0.1:17373` down. Therefore no new VerifyE2EE committee and no new Hyperliquid AUTHORIZE.
+- **SHIPPED:** Source on `main` after this commit. Installer remains **0.9.13** / SHA256 `B905B9ED167513757D4947BDE61103EB10ECD4A5F76554FE369F205DF3850B1E`. ABOUT.md and SUBMISSION.txt updated locally and **not** pushed.
+
+SECURITY RESULT: Router still forbidden for the book. TeeTLS glm-5.3 is not selectable. Chat/web/MCP/SDK still cannot pin, authorize, or export.
+TX HASH / OID: Venue OID `531667200134` FILLED (unchanged). Research 0G `0x1d2113bd683b3ef8be5d74d603018c4bacdd49531bdf201abbc7dea4bb16510b`. Order 0G `0x8c28051bec7bebd7af3b6cc75f7aa034d67f9809f9c30eef9a6c9f84ed6c11fb`. Historical ETH OID `529167222216` unchanged.
+CLASSIFICATION:
+- glm-5.3 TeeML on pinned Direct provider: **NOT LIVE** (0 on-chain TeeML rows; provider catalog glm-5.2 only)
+- glm-5.3 TeeTLS via Router: **REFUSED**
+- Direct pin + resolver: **IMPLEMENTED + LIVE METADATA VERIFIED**
+- New sealed committee / fill: **NOT RUN** (expired Direct token)
+PRODUCTION READY: 0.9.13 installer unchanged. Sealed path will pick glm-5.3 when the pinned provider lists TeeML.
+NEXT STEP: After the provider upgrade, re-run live getService + `/v1/models` + Protect to refresh `app-sk-` + sealed PONG VerifyE2EE. Do not remint. Do not flatten.
+
+---
+
 ## M137 — Definitive documentation set. PIT 0.9.13
 
 - **Source:** Public README still had Honest limitations / Troubleshooting, missing diagram files, and no Watch-the-product section. Submission About/plain-text surfaces needed counted copy.

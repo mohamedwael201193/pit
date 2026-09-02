@@ -121,5 +121,10 @@ func CatalogUsableForChat(model string, net config.Network) (ok bool, why string
 	if strings.EqualFold(m, sku.Model) && sku.ProvenE2EE && sku.Verifiability == "TeeML" {
 		return true, "direct_teeml_research_sku"
 	}
+	if net == config.Mainnet && sku.ProvenE2EE && sku.Verifiability == "TeeML" {
+		if strings.EqualFold(m, "glm-5.3") || strings.EqualFold(m, "glm-5.2") {
+			return true, "direct_teeml_research_sku"
+		}
+	}
 	return false, "not_direct_on_this_workspace"
 }

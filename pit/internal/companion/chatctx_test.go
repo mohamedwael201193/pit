@@ -93,7 +93,10 @@ func TestLocalModelsDirectOnly(t *testing.T) {
 		t.Fatal(rec.Body.String())
 	}
 	body := strings.ToLower(rec.Body.String())
-	if !strings.Contains(body, "glm-5.2") || !strings.Contains(body, `"path":"direct"`) {
+	if !strings.Contains(body, `"path":"direct"`) {
+		t.Fatal(rec.Body.String())
+	}
+	if !strings.Contains(body, "glm-5.2") && !strings.Contains(body, "glm-5.3") {
 		t.Fatal(rec.Body.String())
 	}
 	if strings.Contains(body, "router-api") {

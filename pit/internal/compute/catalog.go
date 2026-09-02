@@ -49,7 +49,7 @@ func ForNetwork(n config.Network) SKU {
 
 func RefuseSKUCopy(n config.Network, model string) error {
 	m := strings.ToLower(strings.TrimSpace(model))
-	if n == config.Testnet && strings.Contains(m, "glm-5.2") {
+	if n == config.Testnet && (strings.Contains(m, "glm-5.2") || strings.Contains(m, "glm-5.3")) {
 		return fmt.Errorf("sku_copy_denied")
 	}
 	if n == config.Mainnet && strings.Contains(m, "qwen2.5-omni") {

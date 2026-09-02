@@ -178,17 +178,22 @@ func checkDirectSKU(dir string) Check {
 		}
 	}
 	if net != config.Mainnet {
-		return Check{Name: "direct_sku", OK: true, Detail: "Galileo sealed ask stays off. Frozen Direct SKU is Aristotle glm-5.2."}
+		return Check{Name: "direct_sku", OK: true, Detail: "Galileo sealed ask stays off. Direct TeeML pin is Aristotle."}
 	}
 	sku := compute.MainnetChat()
 	got, err := compute.GetService(config.MainnetChain(), sku.Provider)
 	if err != nil {
-		return Check{Name: "direct_sku", OK: true, Detail: "on-chain SKU unread this pass. Frozen Direct glm-5.2 was not replaced."}
+		return Check{Name: "direct_sku", OK: true, Detail: "on-chain SKU unread this pass. Direct pin was not replaced."}
 	}
-	if err := compute.MatchFrozenSKU(got, sku); err != nil {
-		return Check{Name: "direct_sku", Detail: "LIVE getService drifted from frozen Direct glm-5.2 (" + err.Error() + "). PIT will not auto-swap."}
+	if err := compute.MatchDirectPin(got, sku); err != nil {
+		return Check{Name: "direct_sku", Detail: "LIVE getService drifted from Direct pin (" + err.Error() + "). PIT will not auto-swap."}
 	}
-	return Check{Name: "direct_sku", OK: true, Detail: "LIVE getService matches frozen Direct glm-5.2 TeeML. Router is not this path."}
+	models, _ := compute.FetchProviderModels(sku.URL)
+	model, err := compute.PickDirectModel(got, models)
+	if err != nil {
+		return Check{Name: "direct_sku", Detail: "LIVE Direct TeeML SKU unavailable (" + err.Error() + "). PIT will not use Router or TeeTLS."}
+	}
+	return Check{Name: "direct_sku", OK: true, Detail: "LIVE Direct TeeML " + model + " on the pinned provider. Router is not this path."}
 }
 
 func checkDirectAuth(dir string) Check {

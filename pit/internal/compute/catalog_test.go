@@ -10,6 +10,9 @@ func TestSKUIsolation(t *testing.T) {
 	if err := RefuseSKUCopy(config.Testnet, "glm-5.2"); err == nil {
 		t.Fatal("copied glm onto galileo")
 	}
+	if err := RefuseSKUCopy(config.Testnet, "glm-5.3"); err == nil {
+		t.Fatal("copied glm-5.3 onto galileo")
+	}
 	if err := RefuseSKUCopy(config.Mainnet, "qwen/qwen2.5-omni-7b"); err == nil {
 		t.Fatal("copied omni onto aristotle")
 	}

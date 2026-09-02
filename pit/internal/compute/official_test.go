@@ -30,6 +30,10 @@ func TestCatalogUsableForChat(t *testing.T) {
 	if !ok {
 		t.Fatal("direct sku")
 	}
+	ok, _ = CatalogUsableForChat("glm-5.3", config.Mainnet)
+	if !ok {
+		t.Fatal("direct sku alias")
+	}
 	ok, why = CatalogUsableForChat("claude-opus-5", config.Mainnet)
 	if ok || why != "not_direct_on_this_workspace" {
 		t.Fatalf("%v %s", ok, why)

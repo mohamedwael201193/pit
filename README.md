@@ -33,14 +33,14 @@ The launch film is the live desk path: private intelligence sealed in 0G, then a
 
 | 0G capability | What PIT uses it for |
 |---|---|
-| Direct TeeML glm-5.2 | Wallet-signed `app-sk-` inference over the private book plus live Hyperliquid facts |
+| Direct TeeML | Wallet-signed `app-sk-` inference on the pinned Direct provider. Live `getService` (2026-09-02) is glm-5.2 TeeML. glm-5.3 is used only when that same provider lists TeeML. |
 | Native sealer | HPKE seal of the prompt; host `VerifyE2EE` against on-chain `teeSigner` |
 | Private committee | Sequential Researcher → Challenger → Risk, each a sealed Direct envelope |
 | Storage `--proof` | Official Go client files this-job research and order objects |
 | Aristotle 16661 | Production chain for Serving, Ledger, Flow, Desk ID, and explorer proofs |
 | Provenance | This-job roots and txs on Aristotle and StorageScan |
 
-**0G Direct + glm-5.2.** Provider URL comes from on-chain `getService`. The Direct token stays in the OS keychain under `pit/{network}/{workspace}/direct`. The Router may **list** models. It is forbidden as the inference URL for the sealed book. If Direct fails, PIT **stops**.
+**0G Direct.** Provider URL comes from on-chain `getService` for `0x7DCFe6AEa70350C2090041524c9B4A9262DCe87D`. The Direct token stays in the OS keychain under `pit/{network}/{workspace}/direct`. Live metadata on 2026-09-02: model **glm-5.2**, verifiability **TeeML**, teeSigner `0xA46EA4FC5889AD35A1487e1Ed04dCcfa872146B9`, URL `https://compute-network-19.integratenetwork.work`. Official Router lists **glm-5.3 as TeeTLS** — that is not the private book. PIT selects **glm-5.3 only when this Direct provider's `/v1/models` reports TeeML**. If TeeML is gone, PIT **stops**. The Router may **list** models. It is forbidden as the inference URL.
 
 **Native sealer / HPKE / VerifyE2EE.** `pit-sealer` seals the book into Direct TeeML and verifies the TEE transcript on the host against `teeSigner` `0xA46EA4FC5889AD35A1487e1Ed04dCcfa872146B9`. Provider `0x7DCFe6AEa70350C2090041524c9B4A9262DCe87D`. Serving `0x47340d900bdFec2BD393c626E12ea0656F938d84`. Ledger `0x2dE54c845Cd948B72D2e32e39586fe89607074E3`.
 
@@ -173,14 +173,14 @@ Remaining books are ranked. Chat hunts skip only this-hunt `hunt-skip.json`. Aut
 | Storage | Official Go client with `--proof`. Object keys are `{network}/ws/{workspaceId}/...`. |
 | Aristotle `16661` | Production chain. Explorer [chainscan.0g.ai](https://chainscan.0g.ai). |
 
-Mainnet glm-5.2 Direct path (Seal + VerifyE2EE in the native sealer):
+Pinned Direct TeeML path (Seal + VerifyE2EE in the native sealer). Live `getService` 2026-09-02 still reports **glm-5.2 TeeML** on this provider. `getAllServices` listed **0** glm-5.3 TeeML rows. Router glm-5.3 is TeeTLS and is refused:
 
 - Provider `0x7DCFe6AEa70350C2090041524c9B4A9262DCe87D`
 - teeSigner `0xA46EA4FC5889AD35A1487e1Ed04dCcfa872146B9`
 - Serving `0x47340d900bdFec2BD393c626E12ea0656F938d84`
 - Ledger `0x2dE54c845Cd948B72D2e32e39586fe89607074E3`
 
-If Direct fails, PIT **stops**. It does not fall back to the Router. Researcher, Challenger, and Risk run as sequential sealed roles with independent envelopes on Direct TeeML.
+PIT freezes **glm-5.3** as the sealed model the moment this same provider lists it as TeeML. Until then the private SKU remains glm-5.2. If Direct fails, PIT **stops**. It does not fall back to the Router. Researcher, Challenger, and Risk run as sequential sealed roles with independent envelopes on Direct TeeML.
 
 ---
 
@@ -188,7 +188,7 @@ If Direct fails, PIT **stops**. It does not fall back to the Router. Researcher,
 
 1. **Scanning** live Hyperliquid facts.
 2. **Ranking** remaining executable books.
-3. **Private 0G** job for this book (Direct TeeML glm-5.2).
+3. **Private 0G** job for this book (Direct TeeML on the pinned provider; glm-5.3 when that provider lists TeeML, otherwise live getService glm-5.2).
 4. **Researcher** proposes a side from live facts (does not echo `hypothesis: none`).
 5. **Challenger** receives `researcher_thesis` after the researcher job.
 6. **Risk** sees the same sequential envelope.
@@ -390,7 +390,7 @@ Live proof used on this desk is **0G Storage with `--proof`**, not a receipts-co
 
 Serving `0x47340d900bdFec2BD393c626E12ea0656F938d84`, ledger `0x2dE54c845Cd948B72D2e32e39586fe89607074E3`, storage flow `0x62D4144dB0F0a6fBBaeb6296c785C71B3D57C526`.
 
-`PIT_NETWORK` selects 0G chain and Hyperliquid venue together. Aristotle `16661` with `api.hyperliquid.xyz`. Galileo `16602` with Hyperliquid testnet. Do not mix them. Mainnet sealed committee is glm-5.2 Direct.
+`PIT_NETWORK` selects 0G chain and Hyperliquid venue together. Aristotle `16661` with `api.hyperliquid.xyz`. Galileo `16602` with Hyperliquid testnet. Do not mix them. Mainnet sealed committee is Direct TeeML on the pinned provider (live getService glm-5.2 on 2026-09-02; glm-5.3 when that provider lists TeeML).
 
 ---
 
@@ -476,12 +476,12 @@ HEAD `e431e3bd30f76a7506b6ae5cf140fc4f4a8a3f36` tagged `v0.9.13`. CI run [334137
 
 | Suite | Command | Result |
 |---|---|---|
-| Go `pit` | `go test ./... -count=1` (`PIT_ALLOW_FALLBACKS=false` `PIT_KEYRING=file`) | **654 PASS / 0 FAIL** |
-| Sealer | `go test ./...` | **6 PASS** |
-| Foundry | `forge test -vvv` | **26 PASS / 0 FAIL** (21 unit + 4 fuzz × 256 runs + Desk ID interface IDs) |
+| Go `pit` | `go test ./... -count=1` (`PIT_ALLOW_FALLBACKS=false` `PIT_KEYRING=file`) | **659 PASS / 0 FAIL / 4 SKIP** |
+| Sealer | `go test ./...` | **7 PASS** |
+| Foundry | `forge test -vvv` | **26 PASS / 0 FAIL** (last local Foundry pass; `forge` not on PATH this audit) |
 | `pit-os` | `npm test` | **2 PASS** |
 | `pit-mcp` | `npm test` | **3 PASS** |
-| Web Playwright | `npx playwright test` | **30 PASS** |
+| Web Playwright | `npx playwright test` | **31 PASS** |
 | Desktop e2e | `npx tsx e2e/run.ts` | **PASS** |
 
 CI on `e431e3b` ([run 33413773180](https://github.com/mohamedwael201193/pit/actions/runs/33413773180)): **success**.

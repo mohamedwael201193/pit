@@ -73,9 +73,58 @@ func TestLiveGetServiceMatchesMainnetChat(t *testing.T) {
 	if err != nil {
 		t.Skip(err)
 	}
-	if err := MatchFrozenSKU(got, want); err != nil {
-		t.Fatalf("live getService drifted from frozen Direct glm-5.2: %v %+v", err, got)
+	if err := MatchDirectPin(got, want); err != nil {
+		t.Fatalf("live getService drifted from Direct pin: %v %+v", err, got)
 	}
+	models, merr := FetchProviderModels(want.URL)
+	if merr != nil {
+		t.Log("provider /v1/models", merr)
+	}
+	model, err := PickDirectModel(got, models)
+	if err != nil {
+		t.Fatalf("pick: %v live=%+v models=%+v", err, got, models)
+	}
+	t.Logf("direct_model=%s getService.model=%s teeml_rows=%d", model, got.Model, len(models))
+	for _, row := range models {
+		if strings.EqualFold(row.ID, "glm-5.3") && strings.EqualFold(row.Verifiability, "TeeTLS") && model == "glm-5.3" {
+			t.Fatal("picked TeeTLS glm-5.3")
+		}
+	}
+}
+
+func TestLiveListServicesHasPinnedTeeML(t *testing.T) {
+	want := MainnetChat()
+	var rows []LiveService
+	total := int64(0)
+	for off := int64(0); ; off += 50 {
+		chunk, n, err := ListServices(config.MainnetChain(), off, 50)
+		if err != nil {
+			t.Skip(err)
+		}
+		total = n
+		rows = append(rows, chunk...)
+		if off+50 >= n || len(chunk) == 0 {
+			break
+		}
+	}
+	if total < 1 || len(rows) < 1 {
+		t.Fatalf("services %d total %d", len(rows), total)
+	}
+	found := false
+	glm53TeeML := 0
+	for _, row := range rows {
+		t.Logf("svc model=%s ver=%s ack=%v url=%s provider=%s", row.Model, row.Verifiability, row.TeeAck, row.URL, row.Provider)
+		if addrEq(row.Provider, want.Provider) && strings.EqualFold(row.Verifiability, "TeeML") && row.TeeAck {
+			found = true
+		}
+		if strings.EqualFold(row.Model, "glm-5.3") && strings.EqualFold(row.Verifiability, "TeeML") {
+			glm53TeeML++
+		}
+	}
+	if !found {
+		t.Fatal("pinned Direct provider missing from getAllServices TeeML")
+	}
+	t.Logf("onchain_glm53_teeml=%d listed=%d total=%d", glm53TeeML, len(rows), total)
 }
 
 func TestLivePubkeyMatchesFrozenTeeSigner(t *testing.T) {

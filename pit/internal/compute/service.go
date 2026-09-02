@@ -159,8 +159,8 @@ func asString(v any) string {
 	return fmt.Sprint(v)
 }
 
-// MatchFrozenSKU fails closed. It never returns a replacement SKU.
-func MatchFrozenSKU(live LiveService, frozen SKU) error {
+// MatchDirectPin fails closed on provider identity. Model is chosen by PickDirectModel.
+func MatchDirectPin(live LiveService, pin SKU) error {
 	if !live.Present {
 		if live.Err != "" {
 			return fmt.Errorf("%s", live.Err)
@@ -173,17 +173,25 @@ func MatchFrozenSKU(live LiveService, frozen SKU) error {
 	if err := RequireTeeML(live.Verifiability); err != nil {
 		return err
 	}
-	if !strings.EqualFold(strings.TrimSpace(live.Model), frozen.Model) {
-		return fmt.Errorf("sku_drift_model")
-	}
-	if !strings.EqualFold(strings.TrimSpace(live.URL), frozen.URL) {
+	if !strings.EqualFold(strings.TrimSpace(live.URL), pin.URL) {
 		return fmt.Errorf("sku_drift_url")
 	}
-	if !addrEq(live.Provider, frozen.Provider) {
+	if !addrEq(live.Provider, pin.Provider) {
 		return fmt.Errorf("sku_drift_provider")
 	}
-	if !addrEq(live.TeeSigner, frozen.TeeSigner) {
+	if !addrEq(live.TeeSigner, pin.TeeSigner) {
 		return fmt.Errorf("sku_drift_teesigner")
+	}
+	return nil
+}
+
+// MatchFrozenSKU fails closed. It never returns a replacement SKU.
+func MatchFrozenSKU(live LiveService, frozen SKU) error {
+	if err := MatchDirectPin(live, frozen); err != nil {
+		return err
+	}
+	if !strings.EqualFold(strings.TrimSpace(live.Model), frozen.Model) {
+		return fmt.Errorf("sku_drift_model")
 	}
 	return nil
 }
@@ -195,18 +203,28 @@ func addrEq(a, b string) bool {
 	return strings.EqualFold(common.HexToAddress(a).Hex(), common.HexToAddress(b).Hex())
 }
 
-// FreezeLiveSKU is the sealed-path gate. Transport failure keeps the frozen SKU.
-// A successful getService that does not match the freeze refuses the ask.
-func FreezeLiveSKU(net config.Network) error {
+// FreezeLiveSKU is the sealed-path gate. Transport failure keeps the pinned SKU.
+// A successful getService that does not match the Direct pin refuses the ask.
+// Model is glm-5.3 only when THIS provider lists it as TeeML; TeeTLS/Router are never used.
+func FreezeLiveSKU(net config.Network) (SKU, error) {
+	sku := ForNetwork(net)
 	if net != config.Mainnet {
-		return nil
+		return sku, nil
 	}
-	sku := MainnetChat()
 	got, err := GetService(config.MainnetChain(), sku.Provider)
 	if err != nil {
-		return nil
+		return sku, nil
 	}
-	return MatchFrozenSKU(got, sku)
+	if err := MatchDirectPin(got, sku); err != nil {
+		return SKU{}, err
+	}
+	models, _ := FetchProviderModels(sku.URL)
+	model, err := PickDirectModel(got, models)
+	if err != nil {
+		return SKU{}, err
+	}
+	sku.Model = model
+	return sku, nil
 }
 
 func fetchPubkeySigner(ctx context.Context, rawURL string) (string, error) {
