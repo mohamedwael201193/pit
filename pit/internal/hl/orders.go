@@ -101,14 +101,34 @@ func OIDOnVenue(raw json.RawMessage, oid string) bool {
 }
 
 func OIDInFills(raw json.RawMessage, oid string) bool {
+	_, ok := FillByOID(raw, oid)
+	return ok
+}
+
+type FillRow struct {
+	OID  string
+	Coin string
+	Sz   string
+	Px   string
+	Side string
+}
+
+func FillByOID(raw json.RawMessage, oid string) (FillRow, bool) {
 	want := strings.TrimSpace(oid)
 	if want == "" {
-		return false
+		return FillRow{}, false
 	}
 	for _, r := range decodeRows(raw) {
-		if oidField(r["oid"]) == want {
-			return true
+		if oidField(r["oid"]) != want {
+			continue
 		}
+		return FillRow{
+			OID:  want,
+			Coin: strings.TrimSpace(fmt.Sprint(r["coin"])),
+			Sz:   strings.TrimSpace(fmt.Sprint(r["sz"])),
+			Px:   strings.TrimSpace(fmt.Sprint(r["px"])),
+			Side: strings.TrimSpace(fmt.Sprint(r["side"])),
+		}, true
 	}
-	return false
+	return FillRow{}, false
 }

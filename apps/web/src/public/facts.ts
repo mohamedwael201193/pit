@@ -32,6 +32,8 @@ export const DESK_TOKEN_ID = 1n;
 export const IDENTITY_8004 = "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432" as const;
 export const REPUTATION_8004 = "0x8004BAa17C55a88189AE136b182e5fdA19dE9b63" as const;
 export const AGENT_8004_ID = 3489333n;
+export const REPUTATION_CLIENT = "0xaAE3EAC0d6665832fe0E5036d61CE2DBC6ECAC2a" as const;
+export const AGENT_CARD_URL = "https://pit0g.vercel.app/.well-known/agent-card.json" as const;
 
 export const PIT_AGENT = {
   name: "PIT-4bbee556",

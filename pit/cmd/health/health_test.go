@@ -154,3 +154,21 @@ func TestWindowsRedirectsToInstallerNotReleasePage(t *testing.T) {
 		t.Fatal(rec.Header().Get("Location"))
 	}
 }
+
+func TestAgentCardJSON(t *testing.T) {
+	req := httptest.NewRequest(http.MethodGet, "/.well-known/agent-card.json", nil)
+	rec := httptest.NewRecorder()
+	newMux().ServeHTTP(rec, req)
+	if rec.Code != 200 {
+		t.Fatal(rec.Code)
+	}
+	if rec.Header().Get("Content-Type") != "application/json" {
+		t.Fatal(rec.Header().Get("Content-Type"))
+	}
+	if !strings.Contains(rec.Body.String(), `"agentId": 3489333`) && !strings.Contains(rec.Body.String(), `"agentId":3489333`) {
+		t.Fatal(rec.Body.String())
+	}
+	if strings.Contains(rec.Body.String(), "private_book") {
+		t.Fatal("book")
+	}
+}

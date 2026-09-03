@@ -68,6 +68,18 @@ func newMux() http.Handler {
 		rel, _ := cachedRelease()
 		redirectLatestAsset(w, r, checksumsAsset(rel), "SHA256SUMS.txt")
 	})
+	mux.HandleFunc("/.well-known/agent-card.json", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet && r.Method != http.MethodHead {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("Cache-Control", "public, max-age=300")
+		if r.Method == http.MethodHead {
+			return
+		}
+		_, _ = w.Write([]byte(agentCardJSON))
+	})
 	return httpx.Public(mux)
 }
 

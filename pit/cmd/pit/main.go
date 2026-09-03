@@ -93,6 +93,9 @@ Orders
 Proof
   pit verify --preview 0x... --root 0x... --network mainnet --workspace <id>
   pit proof --root 0x... --out file --key-file key.hex
+  pit identity verify
+  pit identity calldata authorize|revoke|set-uri
+  pit identity apply authorize-agent|set-uri|feedback --confirm
 
 System
   pit doctor
@@ -197,6 +200,8 @@ func main() {
 		cmdProof(rest[1:])
 	case "evidence":
 		cmdEvidence(rest[1:])
+	case "identity":
+		cmdIdentity(rest[1:])
 	case "doctor", "security":
 		cmdDoctor()
 	case "mcp":

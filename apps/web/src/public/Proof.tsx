@@ -48,7 +48,7 @@ export function ProofPage() {
         <ProofRow
           name="PIT agent"
           status="IDENTITY"
-          proves={`${PIT_AGENT.name} is the Hyperliquid API wallet name for ${shortAddr(PIT_AGENT.address)}. iTransfer is not live on mainnet.`}
+          proves={`${PIT_AGENT.name} is the Hyperliquid API wallet name for ${shortAddr(PIT_AGENT.address)}. Order and cancel only.`}
           how="Compare the printed agent on Hyperliquid API. This site does not hold the session key."
         />
         <ProofRow
@@ -169,7 +169,7 @@ export function ProofPage() {
       </form>
 
       <p className="mt-8 text-[0.8125rem] text-[rgb(240_231_212/0.45)]">
-        ERC-8004 identity {shortAddr(IDENTITY_8004)}. See /agent for a live ownerOf read. No ranking is invented.
+        ERC-8004 identity {shortAddr(IDENTITY_8004)}. See /agent for live ownerOf and reputation readback.
       </p>
       <Link to="/agent" className="intel-ghost mt-4 inline-flex">
         Open agent passport

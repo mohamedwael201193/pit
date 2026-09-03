@@ -373,11 +373,16 @@ func (h *Hub) localIdentity(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "origin_denied", http.StatusForbidden)
 		return
 	}
+	ch := config.For(config.Mainnet)
 	writeLocal(w, http.StatusOK, map[string]any{
-		"itransfer": "UNAVAILABLE",
-		"iclone":    "UNAVAILABLE",
-		"note":      "Mint is optional on Aristotle. iTransfer is UNAVAILABLE. Trading does not require a desk ID.",
-		"sign":      false, "trade": false,
+		"itransfer":    "UNAVAILABLE",
+		"iclone":       "UNAVAILABLE",
+		"desk":         ch.DeskID,
+		"desk_token":   1,
+		"identity8004": ch.Identity8004,
+		"agent8004":    3489333,
+		"note":         "Mint is optional on Aristotle. iTransfer is UNAVAILABLE. Trading does not require a desk ID.",
+		"sign":         false, "trade": false,
 	})
 }
 

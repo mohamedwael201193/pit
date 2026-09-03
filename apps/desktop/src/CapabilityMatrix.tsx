@@ -40,14 +40,14 @@ export const CAPABILITY: CapRow[] = [
     label: "Agentic ID",
     mainnet: "partial",
     testnet: "partial",
-    note: "TokenId 1 exists. Product reads ownerOf. iTransfer and iClone UNAVAILABLE (AttestorNotOnAristotle). Trading does not wait on mint.",
+    note: "TokenId 1 exists. Mint, ownerOf, authorizeUsage, and revoke are live on Aristotle. iTransfer and iClone UNAVAILABLE (AttestorNotOnAristotle). Trading does not wait on mint.",
   },
   {
     id: "erc8004",
     label: "ERC-8004",
     mainnet: "partial",
     testnet: "partial",
-    note: "Identity ownerOf is live. Product does not submit register or feedback. Self-feedback is rejected.",
+    note: "Identity ownerOf is live. Reputation giveFeedback is an on-chain write from a reporter that is not the owner. Self-feedback is rejected.",
   },
 ];
 

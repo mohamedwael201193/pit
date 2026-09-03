@@ -11,8 +11,10 @@ import (
 	"sync"
 	"time"
 
+	"github.com/mohamedwael201193/pit/internal/chain8004"
 	"github.com/mohamedwael201193/pit/internal/compute"
 	"github.com/mohamedwael201193/pit/internal/config"
+	"github.com/mohamedwael201193/pit/internal/deskid"
 	"github.com/mohamedwael201193/pit/internal/hl"
 	"github.com/mohamedwael201193/pit/internal/keyring"
 	"github.com/mohamedwael201193/pit/internal/policy"
@@ -302,7 +304,12 @@ func checkRegistry(dir string) Check {
 	if ch.Identity8004 == "" || ch.Reputation8004 == "" {
 		return Check{Name: "registry", Detail: "8004 addresses missing"}
 	}
-	return Check{Name: "registry", OK: true, Detail: "erc-8004 addresses pinned"}
+	owner, err := chain8004.OwnerOf(ch, chain8004.MainnetAgentID)
+	if err != nil {
+		return Check{Name: "registry", OK: true, Detail: "erc-8004 addresses pinned"}
+	}
+	deskOwner, _ := deskid.OwnerOf(ch, deskid.MainnetTokenID)
+	return Check{Name: "registry", OK: true, Detail: "8004 owner " + owner + " desk " + deskOwner}
 }
 
 func checkSession(dir string) Check {

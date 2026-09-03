@@ -52,11 +52,11 @@ export function HowPage() {
           </div>
           <div className="intel-pair">
             <dt>Agentic ID</dt>
-            <dd>Identity. iTransfer is not live on mainnet.</dd>
+            <dd>Mint, own, authorizeUsage, and revoke on Aristotle. Owner wallet signs.</dd>
           </div>
           <div className="intel-pair">
             <dt>ERC-8004</dt>
-            <dd>Identity ownerOf on Aristotle. PIT does not submit register or feedback. Never an invented leaderboard.</dd>
+            <dd>Identity ownerOf and reputation writes on Aristotle. Never an invented leaderboard.</dd>
           </div>
         </dl>
       </section>

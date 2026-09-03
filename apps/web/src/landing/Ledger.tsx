@@ -3,8 +3,8 @@ import { SectionHeading } from "../ui/SectionHeading";
 
 const ROWS = [
   { human: "Direct TeeML on Aristotle", call: "glm-5.3", status: "live" },
-  { human: "Galileo sealed ask", call: "VerifyE2EE", status: "unverified" },
-  { human: "Transfer of Agentic ID", call: "iTransfer", status: "unavailable" },
+  { human: "Desk ID ERC-7857", call: "mint / ownerOf / authorizeUsage", status: "live" },
+  { human: "ERC-8004 identity + reputation", call: "register / ownerOf / giveFeedback", status: "live" },
   { human: "Hyperliquid order", call: "Desktop AUTHORIZE or ARM SLEEP MISSION", status: "desktop" },
   { human: "Storage proof", call: "0g-storage-client upload/download --proof", status: "workspace key" },
 ] as const;
