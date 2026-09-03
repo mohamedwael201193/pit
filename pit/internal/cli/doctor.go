@@ -243,12 +243,19 @@ func checkDirectCredit(dir string) Check {
 		return Check{Name: "direct_credit", Detail: detail}
 	}
 	if probe.EnoughForCommittee() {
-		return Check{Name: "direct_credit", OK: true, Detail: "Private research balance " + probe.BalanceOG() + " 0G. Ready."}
+		return Check{Name: "direct_credit", OK: true, Detail: "Private research locked " + probe.LockedOG() + " 0G. Ready."}
 	}
 	if _, err := compute.LoadSponsorAuthFile(); err == nil {
-		return Check{Name: "direct_credit", OK: true, Detail: "Private research balance " + probe.BalanceOG() + " 0G. PIT can sponsor sealed research within a daily workspace cap."}
+		return Check{Name: "direct_credit", OK: true, Detail: "Private research locked " + probe.LockedOG() + " 0G. PIT can sponsor sealed research within a daily workspace cap."}
 	}
-	return Check{Name: "direct_credit", Detail: "This wallet needs Direct provider credit for sealed research. Balance " + probe.BalanceOG() + " 0G. Three sealed roles lock about 3 0G. PIT does not send you to a generic dashboard unless this exact account is short."}
+	return Check{Name: "direct_credit", Detail: "This wallet needs Direct provider credit for sealed research. " + lockedCreditDetail(probe) + " Three sealed roles lock about 3 0G. PIT does not send you to a generic dashboard unless this exact account is short."}
+}
+
+func lockedCreditDetail(probe compute.AccountProbe) string {
+	if probe.PendingRefundWei != nil && probe.PendingRefundWei.Sign() > 0 {
+		return "Locked " + probe.LockedOG() + " 0G (ledger " + probe.BalanceOG() + ", reclaiming " + probe.RefundOG() + ")."
+	}
+	return "Locked " + probe.LockedOG() + " 0G."
 }
 
 func checkTee(dir string) Check {

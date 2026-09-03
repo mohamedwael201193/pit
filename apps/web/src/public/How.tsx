@@ -56,7 +56,7 @@ export function HowPage() {
           </div>
           <div className="intel-pair">
             <dt>ERC-8004</dt>
-            <dd>Reputation / feedback. Never an invented leaderboard.</dd>
+            <dd>Identity ownerOf on Aristotle. PIT does not submit register or feedback. Never an invented leaderboard.</dd>
           </div>
         </dl>
       </section>

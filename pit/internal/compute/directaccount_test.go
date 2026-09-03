@@ -23,8 +23,15 @@ func TestApplyDecodedAccountSlice(t *testing.T) {
 	applyDecodedAccount([]any{
 		"user", "prov", big.NewInt(1), big.NewInt(5_000_000_000_000_000_000), big.NewInt(0), nil, "", true, big.NewInt(0), uint64(1), big.NewInt(0),
 	}, &out)
-	if !out.Present || !out.Acknowledged || out.BalanceOG() != "5" {
-		t.Fatalf("%+v %s", out, out.BalanceOG())
+	if !out.Present || !out.Acknowledged || out.BalanceOG() != "5" || out.LockedOG() != "5" || out.RefundOG() != "0" {
+		t.Fatalf("%+v bal=%s locked=%s refund=%s", out, out.BalanceOG(), out.LockedOG(), out.RefundOG())
+	}
+	var reclaim AccountProbe
+	applyDecodedAccount([]any{
+		"user", "prov", big.NewInt(1), big.NewInt(9_000_000_000_000_000_000), big.NewInt(7_000_000_000_000_000_000), nil, "", true, big.NewInt(1), uint64(0), big.NewInt(0),
+	}, &reclaim)
+	if reclaim.LockedOG() != "2" || reclaim.EnoughForCommittee() {
+		t.Fatalf("pendingRefund must reduce lock: %+v locked=%s", reclaim, reclaim.LockedOG())
 	}
 }
 

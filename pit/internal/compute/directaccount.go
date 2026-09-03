@@ -19,31 +19,57 @@ import (
 // AccountProbe is a public eth_call against InferenceServing.getAccount.
 // A missing account is generation 0 / not acknowledged — the official SDK catch path.
 type AccountProbe struct {
-	Generation   uint64   `json:"generation"`
-	Acknowledged bool     `json:"acknowledged"`
-	Present      bool     `json:"present"`
-	BalanceWei   *big.Int `json:"-"`
-	Err          string   `json:"error,omitempty"`
+	Generation        uint64   `json:"generation"`
+	Acknowledged      bool     `json:"acknowledged"`
+	Present           bool     `json:"present"`
+	BalanceWei        *big.Int `json:"-"`
+	PendingRefundWei  *big.Int `json:"-"`
+	Err               string   `json:"error,omitempty"`
 }
 
 // CommitteeFloorWei is 3 0G. Official Direct rejects a call when locked balance
 // is below the provider minimum; a three-role committee needs headroom after the first role.
+// Locked balance is getAccount.balance minus pendingRefund (reclaiming funds are not spendable).
 var CommitteeFloorWei = new(big.Int).Mul(big.NewInt(3), new(big.Int).Exp(big.NewInt(10), big.NewInt(18), nil))
 
-func (p AccountProbe) EnoughForCommittee() bool {
-	if p.BalanceWei == nil {
-		return false
+func (p AccountProbe) LockedWei() *big.Int {
+	bal := p.BalanceWei
+	if bal == nil {
+		bal = big.NewInt(0)
 	}
-	return p.Acknowledged && p.BalanceWei.Cmp(CommitteeFloorWei) >= 0
+	locked := new(big.Int).Set(bal)
+	if p.PendingRefundWei != nil {
+		locked.Sub(locked, p.PendingRefundWei)
+	}
+	if locked.Sign() < 0 {
+		return big.NewInt(0)
+	}
+	return locked
+}
+
+func (p AccountProbe) EnoughForCommittee() bool {
+	return p.Acknowledged && p.LockedWei().Cmp(CommitteeFloorWei) >= 0
+}
+
+func formatOG(n *big.Int) string {
+	if n == nil {
+		return "0"
+	}
+	r := new(big.Rat).SetInt(n)
+	r.Quo(r, new(big.Rat).SetInt(new(big.Int).Exp(big.NewInt(10), big.NewInt(18), nil)))
+	return strings.TrimRight(strings.TrimRight(r.FloatString(4), "0"), ".")
 }
 
 func (p AccountProbe) BalanceOG() string {
-	if p.BalanceWei == nil {
-		return "0"
-	}
-	r := new(big.Rat).SetInt(p.BalanceWei)
-	r.Quo(r, new(big.Rat).SetInt(new(big.Int).Exp(big.NewInt(10), big.NewInt(18), nil)))
-	return strings.TrimRight(strings.TrimRight(r.FloatString(4), "0"), ".")
+	return formatOG(p.BalanceWei)
+}
+
+func (p AccountProbe) LockedOG() string {
+	return formatOG(p.LockedWei())
+}
+
+func (p AccountProbe) RefundOG() string {
+	return formatOG(p.PendingRefundWei)
 }
 
 var (
@@ -57,6 +83,9 @@ func cloneProbe(p AccountProbe) AccountProbe {
 	out := p
 	if p.BalanceWei != nil {
 		out.BalanceWei = new(big.Int).Set(p.BalanceWei)
+	}
+	if p.PendingRefundWei != nil {
+		out.PendingRefundWei = new(big.Int).Set(p.PendingRefundWei)
 	}
 	return out
 }
@@ -142,6 +171,9 @@ func applyDecodedAccount(v any, out *AccountProbe) {
 	}
 	out.Present = true
 	out.BalanceWei = asBigInt(vals[3])
+	if len(vals) >= 5 {
+		out.PendingRefundWei = asBigInt(vals[4])
+	}
 	if ack, ok := vals[7].(bool); ok {
 		out.Acknowledged = ack
 	}

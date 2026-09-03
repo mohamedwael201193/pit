@@ -33,7 +33,7 @@ export function answerChat(raw: string, watch: WatchView | null): string {
   }
 
   if (q.includes("0g") || q.includes("tee") || q.includes("storage") || q.includes("compute")) {
-    return "0G Compute (Direct TeeML) is the private research path — the website never receives the sealed prompt. 0G Storage holds durable public-safe evidence when a receipt is published. 0G Chain is where a judge can read a transaction from the public RPC. Agentic ID is identity; iTransfer is not live on Aristotle mainnet. ERC-8004 is reputation when a registry record exists — this site does not invent a score.";
+    return "0G Compute (Direct TeeML) is the private research path — the website never receives the sealed prompt. 0G Storage holds durable public-safe evidence when a receipt is published. 0G Chain is where a judge can read a transaction from the public RPC. Agentic ID is identity; iTransfer is not live on Aristotle mainnet. ERC-8004 identity ownerOf is a chain fact — this site does not invent a score or submit feedback.";
   }
 
   if (q.includes("proof") || q.includes("verify") || q.includes("oid")) {

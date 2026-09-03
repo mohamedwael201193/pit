@@ -17,6 +17,18 @@ func TestEnoughForCommittee(t *testing.T) {
 	if (AccountProbe{Acknowledged: false, BalanceWei: new(big.Int).Set(CommitteeFloorWei)}).EnoughForCommittee() {
 		t.Fatal("ack")
 	}
+	ether := new(big.Int).Exp(big.NewInt(10), big.NewInt(18), nil)
+	reclaiming := AccountProbe{
+		Acknowledged:     true,
+		BalanceWei:       new(big.Int).Mul(big.NewInt(9), ether),
+		PendingRefundWei: new(big.Int).Mul(big.NewInt(7), ether),
+	}
+	if reclaiming.EnoughForCommittee() {
+		t.Fatal("reclaiming ledger must not count as locked committee credit")
+	}
+	if reclaiming.LockedOG() != "2" {
+		t.Fatalf("locked %s", reclaiming.LockedOG())
+	}
 }
 
 func TestSponsorQuotaIsolatesWorkspaces(t *testing.T) {
