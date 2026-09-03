@@ -16,9 +16,9 @@ func TestDenyRouter(t *testing.T) {
 
 func TestValidateCommittee(t *testing.T) {
 	t0 := Target{
-		URL: "https://compute-network-19.integratenetwork.work", Model: "glm-5.2",
+		URL: "https://compute-network-19.integratenetwork.work", Model: "glm-5.3",
 		Provider: "0x7DCFe6AEa70350C2090041524c9B4A9262DCe87D",
-		TeeSigner: "0xA46EA4FC5889AD35A1487e1Ed04dCcfa872146B9",
+		TeeSigner: "0x089EBc23206267FCD5ef46725c6196DF21bE45D7",
 		Verifiability: "TeeML", Role: "researcher",
 	}
 	if err := Validate(t0); err != nil {

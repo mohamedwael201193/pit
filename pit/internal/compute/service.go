@@ -224,6 +224,7 @@ func FreezeLiveSKU(net config.Network) (SKU, error) {
 		return SKU{}, err
 	}
 	sku.Model = model
+	sku.TeeSigner = got.TeeSigner
 	return sku, nil
 }
 

@@ -12,7 +12,7 @@ export const CAPABILITY: CapRow[] = [
     label: "0G Direct TeeML",
     mainnet: "live",
     testnet: "off",
-    note: "Aristotle glm-5.2. Galileo sealed ask stays off until VerifyE2EE is proven.",
+    note: "Aristotle glm-5.3. Galileo sealed ask stays off until VerifyE2EE is proven.",
   },
   {
     id: "tee",

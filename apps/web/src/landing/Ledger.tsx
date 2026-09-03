@@ -2,7 +2,7 @@ import { Reveal } from "../ui/Reveal";
 import { SectionHeading } from "../ui/SectionHeading";
 
 const ROWS = [
-  { human: "Direct TeeML on Aristotle", call: "glm-5.2", status: "live" },
+  { human: "Direct TeeML on Aristotle", call: "glm-5.3", status: "live" },
   { human: "Galileo sealed ask", call: "VerifyE2EE", status: "unverified" },
   { human: "Transfer of Agentic ID", call: "iTransfer", status: "unavailable" },
   { human: "Hyperliquid order", call: "Desktop AUTHORIZE or ARM SLEEP MISSION", status: "desktop" },

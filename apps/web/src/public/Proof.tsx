@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import {
   ARISTOTLE_EXPLORER,
   HISTORICAL_FILL,
+  EXPECTED_TEE_SIGNER,
   HISTORICAL_TEE_SIGNER,
   IDENTITY_8004,
   PIT_AGENT,
@@ -60,7 +61,7 @@ export function ProofPage() {
           name="TEE"
           status="NO LIVE RECEIPT"
           proves="Recover signer from Direct evidence, compare to the registered signer."
-          how={`Historical recovered signer ${shortAddr(HISTORICAL_TEE_SIGNER)} from a prior sealed job is HISTORICAL. Expected listed Direct teeSigner is ${shortAddr(HISTORICAL_TEE_SIGNER)}. This page does not run VerifyE2EE.`}
+          how={`Historical recovered signer ${shortAddr(HISTORICAL_TEE_SIGNER)} from a prior sealed job is HISTORICAL. Expected listed Direct teeSigner is ${shortAddr(EXPECTED_TEE_SIGNER)}. This page does not run VerifyE2EE.`}
         />
         <ProofRow
           name="0G Storage"

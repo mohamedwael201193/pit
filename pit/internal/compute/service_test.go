@@ -42,7 +42,7 @@ func TestMatchFrozenSKUNeverAutoSwaps(t *testing.T) {
 	unacked.TeeAck = false
 	unacked.URL = "https://compute-network-28.integratenetwork.work"
 	if err := MatchFrozenSKU(unacked, want); err == nil {
-		t.Fatal("unacked glm-5.2 twin")
+		t.Fatal("unacked twin")
 	}
 	drift := ok
 	drift.URL = "https://compute-network-28.integratenetwork.work"
@@ -84,7 +84,10 @@ func TestLiveGetServiceMatchesMainnetChat(t *testing.T) {
 	if err != nil {
 		t.Fatalf("pick: %v live=%+v models=%+v", err, got, models)
 	}
-	t.Logf("direct_model=%s getService.model=%s teeml_rows=%d", model, got.Model, len(models))
+	if !strings.EqualFold(model, "glm-5.3") || !strings.EqualFold(got.Model, "glm-5.3") {
+		t.Fatalf("expected glm-5.3 TeeML pin, picked=%s getService=%s", model, got.Model)
+	}
+	t.Logf("direct_model=%s getService.model=%s teeml_rows=%d teeSigner=%s", model, got.Model, len(models), got.TeeSigner)
 	for _, row := range models {
 		if strings.EqualFold(row.ID, "glm-5.3") && strings.EqualFold(row.Verifiability, "TeeTLS") && model == "glm-5.3" {
 			t.Fatal("picked TeeTLS glm-5.3")

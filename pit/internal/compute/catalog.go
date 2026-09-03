@@ -20,9 +20,9 @@ type SKU struct {
 func MainnetChat() SKU {
 	return SKU{
 		Network:       config.Mainnet,
-		Model:         "glm-5.2",
+		Model:         "glm-5.3",
 		Provider:      "0x7DCFe6AEa70350C2090041524c9B4A9262DCe87D",
-		TeeSigner:     "0xA46EA4FC5889AD35A1487e1Ed04dCcfa872146B9",
+		TeeSigner:     "0x089EBc23206267FCD5ef46725c6196DF21bE45D7",
 		URL:           "https://compute-network-19.integratenetwork.work",
 		Verifiability: "TeeML",
 		ProvenE2EE:    true,

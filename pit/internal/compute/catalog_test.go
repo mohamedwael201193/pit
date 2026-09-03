@@ -26,7 +26,7 @@ func TestSKUIsolation(t *testing.T) {
 		t.Fatal("same catalog")
 	}
 	m := MainnetChat()
-	if m.Model != "glm-5.2" || m.Verifiability != "TeeML" || !m.ProvenE2EE {
+	if m.Model != "glm-5.3" || m.Verifiability != "TeeML" || !m.ProvenE2EE {
 		t.Fatalf("%+v", m)
 	}
 	if m.Provider != "0x7DCFe6AEa70350C2090041524c9B4A9262DCe87D" {
@@ -35,7 +35,7 @@ func TestSKUIsolation(t *testing.T) {
 	if m.URL != "https://compute-network-19.integratenetwork.work" {
 		t.Fatal("do not swap url")
 	}
-	if m.TeeSigner != "0xA46EA4FC5889AD35A1487e1Ed04dCcfa872146B9" {
+	if m.TeeSigner != "0x089EBc23206267FCD5ef46725c6196DF21bE45D7" {
 		t.Fatal("do not swap teeSigner")
 	}
 }

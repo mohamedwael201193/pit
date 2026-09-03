@@ -5,7 +5,7 @@ export function Capabilities() {
         <div>
           <h2 className="text-4xl tracking-[-0.04em]">MAINNET is the product</h2>
           <p className="mt-4 max-w-[42ch] text-[1.05rem] leading-7 text-[rgb(240_231_212/0.75)]">
-            Aristotle 16661 and Hyperliquid mainnet. Direct glm-5.2. Transfer of Agentic ID is not live.
+            Aristotle 16661 and Hyperliquid mainnet. Direct glm-5.3. Transfer of Agentic ID is not live.
           </p>
         </div>
         <div>
