@@ -18,7 +18,7 @@ func TestValidateCommittee(t *testing.T) {
 	t0 := Target{
 		URL: "https://compute-network-19.integratenetwork.work", Model: "glm-5.3",
 		Provider: "0x7DCFe6AEa70350C2090041524c9B4A9262DCe87D",
-		TeeSigner: "0x089EBc23206267FCD5ef46725c6196DF21bE45D7",
+		TeeSigner: "0x041a09E5bEF30fd776D66Bb892d18B97637C7C7c",
 		Verifiability: "TeeML", Role: "researcher",
 	}
 	if err := Validate(t0); err != nil {

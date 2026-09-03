@@ -35,7 +35,7 @@ func TestSKUIsolation(t *testing.T) {
 	if m.URL != "https://compute-network-19.integratenetwork.work" {
 		t.Fatal("do not swap url")
 	}
-	if m.TeeSigner != "0x089EBc23206267FCD5ef46725c6196DF21bE45D7" {
+	if m.TeeSigner != "0x041a09E5bEF30fd776D66Bb892d18B97637C7C7c" {
 		t.Fatal("do not swap teeSigner")
 	}
 }

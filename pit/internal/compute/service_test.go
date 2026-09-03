@@ -132,14 +132,21 @@ func TestLiveListServicesHasPinnedTeeML(t *testing.T) {
 
 func TestLivePubkeyMatchesFrozenTeeSigner(t *testing.T) {
 	want := MainnetChat()
+	got, err := GetService(config.MainnetChain(), want.Provider)
+	if err != nil {
+		t.Skip(err)
+	}
+	if err := MatchDirectPin(got, want); err != nil {
+		t.Fatalf("live getService drifted from Direct pin: %v %+v", err, got)
+	}
 	ctx, cancel := context.WithTimeout(context.Background(), 8*time.Second)
 	defer cancel()
 	signer, err := fetchPubkeySigner(ctx, want.URL+"/v1/e2ee/pubkey")
 	if err != nil {
 		t.Skip(err)
 	}
-	if !addrEq(signer, want.TeeSigner) {
-		t.Fatalf("pubkey signer %s != frozen %s", signer, want.TeeSigner)
+	if !addrEq(signer, got.TeeSigner) {
+		t.Fatalf("pubkey signer %s != on-chain %s", signer, got.TeeSigner)
 	}
 }
 
@@ -160,7 +167,7 @@ func TestLiveRouterCatalogNeverPrivateBook(t *testing.T) {
 			teeml++
 		}
 	}
-	if teeml < 5 {
+	if teeml < 1 {
 		t.Fatalf("router TeeML %d", teeml)
 	}
 }

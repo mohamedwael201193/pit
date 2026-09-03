@@ -160,6 +160,7 @@ func asString(v any) string {
 }
 
 // MatchDirectPin fails closed on provider identity. Model is chosen by PickDirectModel.
+// teeSigner is taken from live getService after this check; TEE keys rotate.
 func MatchDirectPin(live LiveService, pin SKU) error {
 	if !live.Present {
 		if live.Err != "" {
@@ -179,7 +180,7 @@ func MatchDirectPin(live LiveService, pin SKU) error {
 	if !addrEq(live.Provider, pin.Provider) {
 		return fmt.Errorf("sku_drift_provider")
 	}
-	if !addrEq(live.TeeSigner, pin.TeeSigner) {
+	if strings.TrimSpace(live.TeeSigner) == "" {
 		return fmt.Errorf("sku_drift_teesigner")
 	}
 	return nil

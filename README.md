@@ -40,9 +40,9 @@ The launch film is the live desk path: private intelligence sealed in 0G, then a
 | Aristotle 16661 | Production chain for Serving, Ledger, Flow, Desk ID, and explorer proofs |
 | Provenance | This-job roots and txs on Aristotle and StorageScan |
 
-**0G Direct.** Provider URL comes from on-chain `getService` for `0x7DCFe6AEa70350C2090041524c9B4A9262DCe87D`. The Direct token stays in the OS keychain under `pit/{network}/{workspace}/direct`. Live metadata on 2026-09-03: model **glm-5.3**, verifiability **TeeML**, teeSigner `0x089EBc23206267FCD5ef46725c6196DF21bE45D7`, URL `https://compute-network-19.integratenetwork.work`. Provider `/v1/models` lists only glm-5.3 TeeML. The Router may **list** glm-5.3 as TeeML. It is still forbidden as the inference URL. If Direct TeeML is gone, PIT **stops**.
+**0G Direct.** Provider URL comes from on-chain `getService` for `0x7DCFe6AEa70350C2090041524c9B4A9262DCe87D`. The Direct token stays in the OS keychain under `pit/{network}/{workspace}/direct`. Live metadata on 2026-09-03: model **glm-5.3**, verifiability **TeeML**, teeSigner `0x041a09E5bEF30fd776D66Bb892d18B97637C7C7c`, URL `https://compute-network-19.integratenetwork.work`. Provider `/v1/models` lists only glm-5.3 TeeML. The Router may **list** glm-5.3 as TeeML. It is still forbidden as the inference URL. If Direct TeeML is gone, PIT **stops**.
 
-**Native sealer / HPKE / VerifyE2EE.** `pit-sealer` seals the book into Direct TeeML and verifies the TEE transcript on the host against on-chain `teeSigner` `0x089EBc23206267FCD5ef46725c6196DF21bE45D7`. Provider `0x7DCFe6AEa70350C2090041524c9B4A9262DCe87D`. Serving `0x47340d900bdFec2BD393c626E12ea0656F938d84`. Ledger `0x2dE54c845Cd948B72D2e32e39586fe89607074E3`. Historical glm-5.2 jobs recovered `0xA46EA4FC5889AD35A1487e1Ed04dCcfa872146B9`.
+**Native sealer / HPKE / VerifyE2EE.** `pit-sealer` seals the book into Direct TeeML and verifies the TEE transcript on the host against on-chain `teeSigner` `0x041a09E5bEF30fd776D66Bb892d18B97637C7C7c`. Provider `0x7DCFe6AEa70350C2090041524c9B4A9262DCe87D`. Serving `0x47340d900bdFec2BD393c626E12ea0656F938d84`. Ledger `0x2dE54c845Cd948B72D2e32e39586fe89607074E3`. Historical glm-5.2 jobs recovered `0xA46EA4FC5889AD35A1487e1Ed04dCcfa872146B9`.
 
 **0G Storage `--proof`.** Object keys are `{network}/ws/{workspaceId}/...`. Flow [`0x62D4144dB0F0a6fBBaeb6296c785C71B3D57C526`](https://chainscan.0g.ai/address/0x62D4144dB0F0a6fBBaeb6296c785C71B3D57C526). Explorer [storagescan.0g.ai](https://storagescan.0g.ai/). Recorded storage proof [submission 211566](https://storagescan.0g.ai/submission/211566). The TypeScript SDK is not used for proofs.
 
@@ -176,7 +176,7 @@ Remaining books are ranked. Chat hunts skip only this-hunt `hunt-skip.json`. Aut
 Pinned Direct TeeML path (Seal + VerifyE2EE in the native sealer). Live `getService` 2026-09-03 reports **glm-5.3 TeeML** on this provider. Provider `/v1/models` lists only glm-5.3 TeeML. `getAllServices` includes this row with teeAck. Router listing is not this path:
 
 - Provider `0x7DCFe6AEa70350C2090041524c9B4A9262DCe87D`
-- teeSigner `0x089EBc23206267FCD5ef46725c6196DF21bE45D7`
+- teeSigner `0x041a09E5bEF30fd776D66Bb892d18B97637C7C7c`
 - Serving `0x47340d900bdFec2BD393c626E12ea0656F938d84`
 - Ledger `0x2dE54c845Cd948B72D2e32e39586fe89607074E3`
 
